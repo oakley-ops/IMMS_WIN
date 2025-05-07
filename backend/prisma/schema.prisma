@@ -1,0 +1,146 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Parts management
+model Part {
+  part_id                Int             @id @default(autoincrement())
+  name                   String
+  description            String?
+  fiserv_part_number     String          @unique
+  manufacturer_part_number String?
+  quantity               Int             @default(0)
+  minimum_quantity       Int             @default(0)
+  order_quantity         Int?
+  unit_price             Float?
+  unit_cost              Float?
+  location               String?
+  is_serialized          Boolean         @default(false)
+  is_lot_tracked         Boolean         @default(false)
+  created_at             DateTime        @default(now())
+  updated_at             DateTime        @updatedAt
+  
+  // Relations
+  purchase_order_items   PurchaseOrderItem[]
+  part_suppliers         PartSupplier[]
+}
+
+// Vendors management
+model Vendor {
+  vendor_id              Int             @id @default(autoincrement())
+  name                   String
+  contact_name           String?
+  email                  String?
+  phone                  String?
+  address                String?
+  notes                  String?
+  created_at             DateTime        @default(now())
+  updated_at             DateTime        @updatedAt
+  
+  // Relations
+  purchase_orders        PurchaseOrder[]
+}
+
+// Suppliers management
+model Supplier {
+  supplier_id            Int             @id @default(autoincrement())
+  name                   String
+  contact_name           String?
+  email                  String?
+  phone                  String?
+  address                String?
+  notes                  String?
+  created_at             DateTime        @default(now())
+  updated_at             DateTime        @updatedAt
+  
+  // Relations
+  purchase_orders        PurchaseOrder[]
+  part_suppliers         PartSupplier[]
+}
+
+// Supplier options for parts
+model PartSupplier {
+  part_supplier_id       Int             @id @default(autoincrement())
+  part_id                Int
+  supplier_id            Int
+  unit_cost              Float
+  is_preferred           Boolean         @default(false)
+  lead_time_days         Int?
+  minimum_order_quantity Int?
+  notes                  String?
+  created_at             DateTime        @default(now())
+  updated_at             DateTime        @updatedAt
+  
+  // Relations
+  part                   Part            @relation(fields: [part_id], references: [part_id], onDelete: Cascade)
+  supplier               Supplier        @relation(fields: [supplier_id], references: [supplier_id], onDelete: Cascade)
+  
+  @@unique([part_id, supplier_id])
+  @@index([part_id])
+  @@index([supplier_id])
+}
+
+// Purchase order management
+model PurchaseOrder {
+  po_id                  Int             @id @default(autoincrement())
+  po_number              String?         @unique
+  vendor_id              Int?
+  supplier_id            Int?
+  contact_name           String?
+  status                 String          @default("pending")
+  approval_status        String?         @default("pending")
+  approval_date          DateTime?
+  approval_email         String?
+  total_amount           Float?
+  shipping_cost          Float?
+  tax_amount             Float?
+  notes                  String?
+  created_at             DateTime        @default(now())
+  updated_at             DateTime        @updatedAt
+  is_urgent              Boolean         @default(false)
+  next_day_air           Boolean         @default(false)
+  priority               String?
+  requested_by           String?
+  approved_by            String?
+  
+  // Relations
+  vendor                 Vendor?         @relation(fields: [vendor_id], references: [vendor_id])
+  supplier               Supplier?       @relation(fields: [supplier_id], references: [supplier_id])
+  items                  PurchaseOrderItem[]
+  
+  @@index([vendor_id])
+  @@index([supplier_id])
+}
+
+// Purchase order items
+model PurchaseOrderItem {
+  item_id                Int           @id @default(autoincrement())
+  po_id                  Int
+  part_id                Int?
+  part_name              String?
+  manufacturer_part_number String?
+  fiserv_part_number     String?
+  custom_part            Boolean?      @default(false)
+  custom_part_name       String?
+  custom_part_number     String?
+  quantity               Int
+  unit_price             Float
+  total_price            Float?
+  notes                  String?
+  created_at             DateTime      @default(now())
+  
+  // Relations
+  purchase_order         PurchaseOrder @relation(fields: [po_id], references: [po_id], onDelete: Cascade)
+  part                   Part?         @relation(fields: [part_id], references: [part_id])
+
+  @@index([po_id])
+  @@index([part_id])
+} 

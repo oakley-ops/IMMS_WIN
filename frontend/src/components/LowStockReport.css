@@ -1,0 +1,139 @@
+/* LowStock Report Container */
+.low-stock-report {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Table Styles */
+.low-stock-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  background: #ffffff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.low-stock-table thead th {
+  background-color: #f8f9fa;
+  padding: 0.75rem;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.low-stock-table thead th:hover {
+  background-color: #e9ecef;
+}
+
+.low-stock-table tbody td {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+  vertical-align: middle;
+  background-color: #ffffff;
+}
+
+/* Row Hover Effect */
+.low-stock-table tbody tr:hover {
+  background-color: #f8f9fa;
+}
+
+/* Status Chips */
+.status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  text-transform: uppercase;
+}
+
+.status-chip.out-of-stock {
+  background-color: #fef2f2;
+  color: #dc3545;
+  border: 1px solid #dc3545;
+}
+
+.status-chip.low-stock {
+  background-color: #fffbeb;
+  color: #ffc107;
+  border: 1px solid #ffc107;
+}
+
+.status-chip.in-stock {
+  background-color: #f0fdf4;
+  color: #28a745;
+  border: 1px solid #28a745;
+}
+
+/* Order Status Chips */
+.order-status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.order-status-chip.pending {
+  background-color: #fff7ed;
+  color: #f97316;
+}
+
+.order-status-chip.submitted {
+  background-color: #eff6ff;
+  color: #3b82f6;
+}
+
+.order-status-chip.approved {
+  background-color: #f0fdf4;
+  color: #22c55e;
+}
+
+.order-status-chip.received {
+  background-color: #f8fafc;
+  color: #64748b;
+}
+
+.order-status-chip.canceled {
+  background-color: #fef2f2;
+  color: #ef4444;
+}
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: #6c757d;
+  background-color: #ffffff;
+  border-radius: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .low-stock-table {
+    font-size: 0.9rem;
+  }
+
+  .low-stock-table thead th,
+  .low-stock-table tbody td {
+    padding: 0.5rem;
+  }
+
+  .status-chip,
+  .order-status-chip {
+    padding: 0.2rem 0.5rem;
+    font-size: 0.8rem;
+  }
+} 

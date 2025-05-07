@@ -1,0 +1,509 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Fiserv Inventory API Documentation",
+    "version": "1.0.0",
+    "description": "API documentation for the Fiserv Inventory Management System",
+    "license": {
+      "name": "Private",
+      "url": "https://yourcompany.com"
+    },
+    "contact": {
+      "name": "API Support",
+      "url": "https://yourcompany.com/support",
+      "email": "support@yourcompany.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Development server"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "csrfToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-Token"
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Error type"
+          },
+          "message": {
+            "type": "string",
+            "description": "Error message"
+          },
+          "details": {
+            "type": "object",
+            "description": "Additional error details"
+          }
+        }
+      },
+      "Part": {
+        "type": "object",
+        "required": [
+          "name",
+          "fiserv_part_number",
+          "quantity"
+        ],
+        "properties": {
+          "part_id": {
+            "type": "integer",
+            "description": "Unique identifier for the part"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name of the part"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description of the part"
+          },
+          "manufacturer_part_number": {
+            "type": "string",
+            "description": "Manufacturer part number"
+          },
+          "fiserv_part_number": {
+            "type": "string",
+            "description": "Fiserv part number"
+          },
+          "quantity": {
+            "type": "integer",
+            "description": "Current quantity in stock"
+          },
+          "minimum_quantity": {
+            "type": "integer",
+            "description": "Minimum quantity threshold"
+          },
+          "manufacturer": {
+            "type": "string",
+            "description": "Manufacturer name"
+          },
+          "cost": {
+            "type": "number",
+            "description": "Cost per unit"
+          },
+          "location": {
+            "type": "string",
+            "description": "Storage location"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "discontinued"
+            ],
+            "description": "Part status"
+          }
+        }
+      },
+      "Machine": {
+        "type": "object",
+        "required": [
+          "name",
+          "serial_number"
+        ],
+        "properties": {
+          "machine_id": {
+            "type": "integer",
+            "description": "Unique identifier for the machine"
+          },
+          "name": {
+            "type": "string",
+            "description": "Machine name"
+          },
+          "serial_number": {
+            "type": "string",
+            "description": "Machine serial number"
+          },
+          "model": {
+            "type": "string",
+            "description": "Machine model"
+          },
+          "location": {
+            "type": "string",
+            "description": "Machine location"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "inactive",
+              "maintenance"
+            ],
+            "description": "Machine status"
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": [
+          "username",
+          "role"
+        ],
+        "properties": {
+          "user_id": {
+            "type": "integer",
+            "description": "Unique identifier for the user"
+          },
+          "username": {
+            "type": "string",
+            "description": "Username"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "admin",
+              "user"
+            ],
+            "description": "User role"
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "Whether the user is active"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/v1/parts": {
+      "get": {
+        "summary": "Get all parts with pagination and filtering",
+        "tags": [
+          "Parts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "integer",
+              "default": 0
+            },
+            "description": "Page number"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer",
+              "default": 25
+            },
+            "description": "Number of items per page"
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search term for name, description, or part numbers"
+          },
+          {
+            "in": "query",
+            "name": "location",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Filter by location"
+          },
+          {
+            "in": "query",
+            "name": "minQuantity",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Minimum quantity filter"
+          },
+          {
+            "in": "query",
+            "name": "maxQuantity",
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Maximum quantity filter"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of parts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Part"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new part",
+        "tags": [
+          "Parts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Part"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Part created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Part"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/parts/{id}": {
+      "get": {
+        "summary": "Get a specific part by ID",
+        "tags": [
+          "Parts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Part ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Part details",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Part"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Part not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update a part",
+        "tags": [
+          "Parts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Part ID"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Part"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Part updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Part"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Part not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a part",
+        "tags": [
+          "Parts"
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Part ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Part deleted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Part not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "Parts",
+      "description": "Parts management endpoints"
+    }
+  ]
+}

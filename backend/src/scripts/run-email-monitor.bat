@@ -1,0 +1,3 @@
+@echo off
+echo Starting Email Monitor...
+PowerShell -ExecutionPolicy Bypass -File "%~dp0\run-email-monitor.ps1" 
