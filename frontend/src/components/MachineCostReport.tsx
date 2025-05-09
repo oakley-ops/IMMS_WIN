@@ -22,7 +22,8 @@ import {
   FormControl,
   InputLabel,
   Select,
-  SelectChangeEvent
+  SelectChangeEvent,
+  TablePagination
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -80,6 +81,8 @@ const MachineCostReport: React.FC = () => {
   const [timelineData, setTimelineData] = useState<TimelineData[]>([]);
   const [chartType, setChartType] = useState<'bar' | 'pie'>('bar');
   const [exportLoading, setExportLoading] = useState(false);
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   
   const navigate = useNavigate();
 
@@ -277,6 +280,15 @@ const MachineCostReport: React.FC = () => {
     );
   };
 
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Paper sx={{ p: 3, mb: 4 }}>
@@ -318,7 +330,9 @@ const MachineCostReport: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {machines.map((machine) => (
+                  {machines
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((machine) => (
                     <TableRow key={machine.machine_id}>
                       <TableCell>{machine.machine_name}</TableCell>
                       <TableCell>{machine.model || 'N/A'}</TableCell>
@@ -345,6 +359,15 @@ const MachineCostReport: React.FC = () => {
                 </TableBody>
               </Table>
             </TableContainer>
+            <TablePagination
+              component="div"
+              count={machines.length}
+              page={page}
+              onPageChange={handleChangePage}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+              rowsPerPageOptions={[5, 10, 25, 50]}
+            />
           </>
         )}
       </Paper>
