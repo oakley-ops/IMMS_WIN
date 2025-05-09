@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from '../utils/axios';
+import axiosInstance from '../utils/axios';
 import { hasPermission, getPermissionsForRole } from '../utils/permissions';
 
 interface User {
@@ -50,8 +50,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const token = localStorage.getItem('token');
       if (token) {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        const response = await axios.get('/api/v1/auth/verify');
+        axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        const response = await axiosInstance.get('/api/v1/auth/verify');
         setUser(response.data);
         setIsAuthenticated(true);
       }
@@ -65,17 +65,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
+    delete axiosInstance.defaults.headers.common['Authorization'];
     setUser(null);
     setIsAuthenticated(false);
   };
 
   const login = async (username: string, password: string) => {
     try {
-      const response = await axios.post('/api/v1/auth/login', { username, password });
+      const response = await axiosInstance.post('/api/v1/auth/login', { username, password });
       const { token, user } = response.data;
       localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
       setIsAuthenticated(true);
     } catch (error: any) {
@@ -86,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const changePassword = async (currentPassword: string, newPassword: string) => {
     try {
-      await axios.post('/api/v1/auth/change-password', {
+      await axiosInstance.post('/api/v1/auth/change-password', {
         currentPassword,
         newPassword
       });
@@ -103,7 +103,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Set up axios interceptor for token expiration
   useEffect(() => {
-    const interceptor = axios.interceptors.response.use(
+    const interceptor = axiosInstance.interceptors.response.use(
       response => response,
       error => {
         if (error.response?.status === 401) {
@@ -114,7 +114,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     );
 
     return () => {
-      axios.interceptors.response.eject(interceptor);
+      axiosInstance.interceptors.response.eject(interceptor);
     };
   }, []);
 

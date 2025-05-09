@@ -5,7 +5,6 @@ import axiosInstance from '../utils/axios';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../store/store';
 import { fetchMachines } from '../store';
-import mockMachines from '../mockData/machines';
 import { Machine } from '../types';
 
 interface MachineFormData {
@@ -60,32 +59,9 @@ const MachineForm: React.FC = () => {
     try {
       setInitialLoading(true);
       
-      // For development, use mock data instead of API call
-      const foundMachine = mockMachines.find(m => 
-        m.id === parseInt(id!) || m.machine_id === parseInt(id!)
-      );
-      
-      if (!foundMachine) {
-        throw new Error("Machine not found");
-      }
-      
-      // Convert the Machine to MachineFormData with appropriate type handling
-      setFormData({
-        name: foundMachine.name,
-        model: foundMachine.model,
-        serial_number: foundMachine.serial_number,
-        location: foundMachine.location || '',
-        notes: foundMachine.notes || '',
-        manufacturer: foundMachine.manufacturer || '',
-        status: foundMachine.status || 'active',
-        installation_date: foundMachine.installation_date || '',
-        last_maintenance_date: foundMachine.last_maintenance_date,
-        next_maintenance_date: foundMachine.next_maintenance_date || ''
-      });
-      
-      // When ready to connect to real API, uncomment this:
-      // const response = await axiosInstance.get(`/api/v1/machines/${id}`);
-      // setFormData(response.data);
+      // Use the real API call
+      const response = await axiosInstance.get(`/api/v1/machines/${id}`);
+      setFormData(response.data);
     } catch (error: any) {
       console.error('Error fetching machine:', error);
       setError(error.response?.data?.message || 'Failed to fetch machine details');
@@ -131,51 +107,6 @@ const MachineForm: React.FC = () => {
     }
   };
 
-  // Mock function to add a machine to our mock data
-  const mockAddMachine = (machine: MachineFormData): Promise<Machine> => {
-    return new Promise((resolve) => {
-      // Create a new machine with an ID
-      const newMachine = {
-        ...machine,
-        id: Math.max(...mockMachines.map(m => m.id || 0)) + 1,
-        status: machine.status || 'active'
-      } as Machine;
-      
-      // In a real implementation, this would add to the mockMachines array
-      // mockMachines.push(newMachine);
-      
-      // Just for simulation purposes
-      setTimeout(() => {
-        resolve(newMachine);
-      }, 500);
-    });
-  };
-
-  // Mock function to update a machine in our mock data
-  const mockUpdateMachine = (machineId: number, updatedMachine: MachineFormData): Promise<Machine> => {
-    return new Promise((resolve, reject) => {
-      const index = mockMachines.findIndex(m => m.id === machineId || m.machine_id === machineId);
-      
-      if (index === -1) {
-        reject(new Error("Machine not found"));
-        return;
-      }
-      
-      const updated = {
-        ...mockMachines[index],
-        ...updatedMachine
-      } as Machine;
-      
-      // In a real implementation, this would update the mockMachines array
-      // mockMachines[index] = updated;
-      
-      // Just for simulation purposes
-      setTimeout(() => {
-        resolve(updated);
-      }, 500);
-    });
-  };
-
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     
@@ -203,18 +134,12 @@ const MachineForm: React.FC = () => {
 
     try {
       if (id) {
-        // For development, use mock update
-        await mockUpdateMachine(parseInt(id), submissionData);
-        
-        // When ready to connect to real API, uncomment this:
-        // await axiosInstance.put(`/api/v1/machines/${id}`, submissionData);
+        // Use real API for update
+        await axiosInstance.put(`/api/v1/machines/${id}`, submissionData);
       } else {
-        // For development, use mock create
-        await mockAddMachine(submissionData);
-        
-        // When ready to connect to real API, uncomment this:
-        // const response = await axiosInstance.post('/api/v1/machines', submissionData);
-        // console.log('Machine created:', response.data);
+        // Use real API for create
+        const response = await axiosInstance.post('/api/v1/machines', submissionData);
+        console.log('Machine created:', response.data);
       }
       
       dispatch(fetchMachines());

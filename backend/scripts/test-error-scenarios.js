@@ -2,7 +2,7 @@ const axios = require('axios');
 const assert = require('assert');
 const FormData = require('form-data');
 
-const BASE_URL = 'http://localhost:3001';
+const BASE_URL = 'http://localhost:4000';
 const API_VERSION = 'v1';
 const API_BASE = `${BASE_URL}/api/${API_VERSION}`;
 

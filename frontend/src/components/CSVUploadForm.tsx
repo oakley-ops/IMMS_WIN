@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Button, Alert, ProgressBar } from 'react-bootstrap';
-import axios from 'axios';
+import axiosInstance from '../utils/axios';
 import { useDispatch } from 'react-redux';
 import { fetchParts } from '../store/partsSlice';
 import { AppDispatch } from '../store/store';
@@ -31,60 +31,41 @@ const CSVUploadForm: React.FC = () => {
     return true;
   };
 
-  const handleUpload = async (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    
     if (!file) {
-      setError('Please select a file to upload');
-      return;
-    }
-
-    if (!validateCSV(file)) {
+      setError('Please select a file');
       return;
     }
 
     setUploading(true);
-    setError(null);
-    setSuccess(null);
-    setUploadProgress(0);
+    setError('');
 
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-      console.log('Uploading file:', file.name);
-      const response = await axios.post('http://localhost:3001/api/v1/parts/upload', formData, {
+      const response = await axiosInstance.post('/api/v1/parts/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
-        onUploadProgress: (progressEvent) => {
-          const progress = progressEvent.total
-            ? Math.round((progressEvent.loaded * 100) / progressEvent.total)
-            : 0;
-          setUploadProgress(progress);
-        },
       });
 
-      console.log('Upload response:', response.data);
-      setSuccess(`Successfully uploaded ${response.data.partsAdded} parts`);
-      setFile(null);
+      setSuccess(`Successfully uploaded ${response.data.partsAdded || 'all'} parts`);
       // Reset file input
       const fileInput = document.getElementById('csvFile') as HTMLInputElement;
       if (fileInput) {
         fileInput.value = '';
       }
+      // Reset file state
+      setFile(null);
       // Refresh parts list
       dispatch(fetchParts());
-    } catch (err) {
-      console.error('Upload error:', err);
-      if (axios.isAxiosError(err)) {
-        setError(err.response?.data?.message || err.message || 'Failed to upload CSV file');
-      } else {
-        setError('Failed to upload CSV file');
-      }
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      setError(error.response?.data?.message || 'Failed to upload file');
     } finally {
       setUploading(false);
-      setUploadProgress(0);
     }
   };
 
@@ -92,7 +73,7 @@ const CSVUploadForm: React.FC = () => {
     <div className="p-3">
       <h3 className="mb-3">Import Parts from CSV</h3>
       
-      <Form onSubmit={handleUpload}>
+      <Form onSubmit={handleSubmit}>
         <Form.Group controlId="csvFile" className="mb-3">
           <Form.Label>Choose CSV File</Form.Label>
           <Form.Control

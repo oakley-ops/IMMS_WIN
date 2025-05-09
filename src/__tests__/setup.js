@@ -19,7 +19,7 @@ global.fetch = jest.fn();
 // Set environment variables for testing
 process.env.NODE_ENV = 'test';
 process.env.FRONTEND_URL = 'http://localhost:3000';
-process.env.API_URL = 'http://localhost:3001';
+process.env.API_URL = 'http://localhost:4000';
 
 // Clean up after each test
 global.beforeEach(() => {

@@ -19,7 +19,6 @@ import {
 } from '@mui/icons-material';
 import axios from '../utils/axios';
 import MachineList from './MachineList';
-import mockMachines from '../mockData/machines';
 import { Machine } from '../types';
 
 const MachineCategories: React.FC = () => {
@@ -36,12 +35,9 @@ const MachineCategories: React.FC = () => {
         setLoading(true);
         setError(null);
         
-        // For development, use mock data instead of API call
-        const machinesData = mockMachines;
-        
-        // When ready to connect to real API, uncomment this:
-        // const response = await axios.get('/api/v1/machines');
-        // const machinesData = response.data;
+        // Use real API call instead of mock data
+        const response = await axios.get('/api/v1/machines');
+        const machinesData = response.data;
         
         setMachines(machinesData);
         

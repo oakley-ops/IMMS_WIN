@@ -87,13 +87,10 @@ touch .env
 Open the file in your preferred text editor and add the following variables:
 
 ```
-PORT=3001
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=fiserv_inventory
-DB_USER=fiserv_user
-DB_PASSWORD=your_secure_password
-JWT_SECRET=your_secure_jwt_secret
+NODE_ENV=development
+PORT=4000
+MONGODB_URI=mongodb://localhost:27017/fiserv_inventory
+JWT_SECRET=your_jwt_secret_here
 ```
 
 #### Frontend Environment Setup
@@ -108,7 +105,7 @@ touch .env
 Add the following variables:
 
 ```
-REACT_APP_API_URL=http://localhost:3001/api
+REACT_APP_API_URL=http://localhost:4000/api
 ```
 
 ### 5. Install Dependencies
@@ -152,7 +149,7 @@ In the backend directory:
 npm run dev
 ```
 
-This will start the backend server, typically on port 3001.
+This will start the backend server, typically on port 4000.
 
 #### Start the Frontend Development Server
 

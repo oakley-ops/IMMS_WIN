@@ -1,7 +1,6 @@
 // frontend/src/store/machinesSlice.ts
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-import mockMachines from '../mockData/machines';
 
 interface Machine {
   id?: number;
@@ -31,12 +30,9 @@ const initialState: MachinesState = {
 };
 
 export const fetchMachines = createAsyncThunk('machines/fetchMachines', async () => {
-  // For development, use mock data instead of API call
-  return mockMachines;
-  
-  // When ready to connect to real API, uncomment this:
-  // const response = await axios.get<Machine[]>('/api/v1/machines');
-  // return response.data;
+  // Use real API instead of mock data
+  const response = await axios.get<Machine[]>('/api/v1/machines');
+  return response.data;
 });
 
 const machinesSlice = createSlice({

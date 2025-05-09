@@ -1,18 +1,17 @@
-import axios from 'axios';
+import axios, { AxiosInstance } from 'axios';
+import { API_URL } from '../config';
 
-// Get base URL from environment or use default
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
-
-// Create an isolated API instance for document operations
-const api = axios.create({
-  baseURL: API_BASE_URL,
+// Create document API instance with longer timeout
+const documentApi: AxiosInstance = axios.create({
+  baseURL: API_URL,
+  timeout: 180000, // 3 minutes
   headers: {
-    'Content-Type': 'application/json',
-  },
+    'Content-Type': 'multipart/form-data'
+  }
 });
 
 // Add auth token interceptor
-api.interceptors.request.use((config) => {
+documentApi.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -27,7 +26,7 @@ api.interceptors.request.use((config) => {
  */
 export const getDocumentsByPOId = (poId: number) => {
   console.log(`Fetching documents for PO ID: ${poId}`);
-  return api.get(`/purchase-orders/${poId}/documents`);
+  return documentApi.get(`/purchase-orders/${poId}/documents`);
 };
 
 /**
@@ -40,7 +39,7 @@ export const downloadPODocument = async (documentId: number): Promise<Blob> => {
   
   try {
     // Use axios with responseType blob to properly handle binary data
-    const response = await api.get(`/purchase-orders/documents/${documentId}/download`, {
+    const response = await documentApi.get(`/purchase-orders/documents/${documentId}/download`, {
       responseType: 'blob',
       // Add timeout to ensure we don't wait forever
       timeout: 30000
@@ -65,7 +64,7 @@ export const downloadPODocument = async (documentId: number): Promise<Blob> => {
  */
 export const uploadDocument = (poId: number, formData: FormData) => {
   console.log(`Uploading document for PO ID: ${poId}`);
-  return api.post(`/purchase-orders/${poId}/documents`, formData, {
+  return documentApi.post(`/purchase-orders/${poId}/documents`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 };
@@ -77,12 +76,7 @@ export const uploadDocument = (poId: number, formData: FormData) => {
  */
 export const deleteDocument = (documentId: number) => {
   console.log(`Deleting document ID: ${documentId}`);
-  return api.delete(`/purchase-orders/documents/${documentId}`);
+  return documentApi.delete(`/purchase-orders/documents/${documentId}`);
 };
 
-export default {
-  getDocumentsByPOId,
-  downloadPODocument,
-  uploadDocument,
-  deleteDocument
-};
+export default documentApi;

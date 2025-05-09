@@ -1,9 +1,9 @@
+// Get API URL from environment or use default
 const getApiUrl = () => {
-  if (process.env.NODE_ENV === 'production') {
-    return 'https://fiserv-inventory-api.fly.dev';
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
   }
-  // Development environment
-  return 'http://localhost:3001';
+  return 'http://localhost:4000';
 };
 
 export const API_URL = getApiUrl();

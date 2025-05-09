@@ -449,3 +449,508 @@
 {"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":18570,"timestamp":"2025-05-06 22:37:36:3736","waitingCount":0}
 {"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":18570,"timestamp":"2025-05-06 22:37:36:3736","waitingCount":0}
 {"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":18570,"timestamp":"2025-05-06 22:38:06:386","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":6872,"timestamp":"2025-05-08 08:35:16:3516","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6872,"timestamp":"2025-05-08 08:35:16:3516","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6872,"timestamp":"2025-05-08 08:35:17:3517","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6872,"timestamp":"2025-05-08 08:35:17:3517","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6872,"timestamp":"2025-05-08 08:35:17:3517","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6872,"timestamp":"2025-05-08 08:35:17:3517","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6872,"timestamp":"2025-05-08 08:35:17:3517","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6872,"timestamp":"2025-05-08 08:35:26:3526","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":6872,"timestamp":"2025-05-08 08:35:26:3526","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":5428,"timestamp":"2025-05-08 08:35:27:3527","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5428,"timestamp":"2025-05-08 08:35:27:3527","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5428,"timestamp":"2025-05-08 08:35:27:3527","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5428,"timestamp":"2025-05-08 08:35:27:3527","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":5428,"timestamp":"2025-05-08 08:35:27:3527","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:27:3527","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:27:3527","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:27:3527","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:35:3535","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:35:3535","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:36:3536","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:36:3536","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:36:3536","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:38:3538","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:38:3538","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:38:3538","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:38:3538","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:38:3538","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:38:3538","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:43:3543","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:43:3543","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:43:3543","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:43:3543","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:44:3544","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:44:3544","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7844,"timestamp":"2025-05-08 08:35:58:3558","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":7844,"timestamp":"2025-05-08 08:35:58:3558","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":16136,"timestamp":"2025-05-08 08:35:58:3558","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16136,"timestamp":"2025-05-08 08:35:58:3558","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16136,"timestamp":"2025-05-08 08:35:58:3558","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16136,"timestamp":"2025-05-08 08:35:58:3558","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":16136,"timestamp":"2025-05-08 08:35:58:3558","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":2716,"timestamp":"2025-05-08 08:35:58:3558","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":2716,"timestamp":"2025-05-08 08:35:58:3558","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":2716,"timestamp":"2025-05-08 08:35:58:3558","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":2716,"timestamp":"2025-05-08 08:36:28:3628","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":11032,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11032,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11032,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11032,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":11032,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":10852,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10852,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10852,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10852,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":10852,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":1172,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":1172,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":1172,"timestamp":"2025-05-08 08:37:10:3710","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":1172,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":1172,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":4992,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":4992,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":4992,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":4992,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":4992,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":2,"processID":1332,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":2,"processID":1332,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":2,"processID":3004,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":2,"processID":3004,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":1,"processID":3004,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":2,"processID":1332,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":1,"level":"info","message":"New client connected to the pool","poolSize":2,"processID":11268,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":1,"level":"debug","message":"Client checked out from pool","poolSize":2,"processID":11268,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":1,"level":"debug","message":"Client checked out from pool","poolSize":2,"processID":11268,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":1,"level":"info","message":"Client removed from pool","poolSize":1,"processID":11268,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":1332,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":1,"level":"info","message":"New client connected to the pool","poolSize":2,"processID":18676,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":1,"level":"debug","message":"Client checked out from pool","poolSize":2,"processID":18676,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":1,"level":"debug","message":"Client checked out from pool","poolSize":2,"processID":18676,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":1,"level":"debug","message":"Client checked out from pool","poolSize":2,"processID":18676,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":1,"level":"info","message":"Client removed from pool","poolSize":1,"processID":18676,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":1332,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":1332,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":1332,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":15492,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15492,"timestamp":"2025-05-08 08:37:13:3713","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15492,"timestamp":"2025-05-08 08:37:29:3729","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":15492,"timestamp":"2025-05-08 08:37:29:3729","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":10992,"timestamp":"2025-05-08 08:37:29:3729","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10992,"timestamp":"2025-05-08 08:37:29:3729","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10992,"timestamp":"2025-05-08 08:37:29:3729","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10992,"timestamp":"2025-05-08 08:37:29:3729","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":10992,"timestamp":"2025-05-08 08:37:29:3729","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":6572,"timestamp":"2025-05-08 08:37:30:3730","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6572,"timestamp":"2025-05-08 08:37:30:3730","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6572,"timestamp":"2025-05-08 08:37:30:3730","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6572,"timestamp":"2025-05-08 08:37:30:3730","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":6572,"timestamp":"2025-05-08 08:37:30:3730","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":13456,"timestamp":"2025-05-08 08:37:30:3730","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13456,"timestamp":"2025-05-08 08:37:30:3730","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":13456,"timestamp":"2025-05-08 08:38:00:380","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":3036,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3036,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":3036,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":16840,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16840,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16840,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16840,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":16840,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":18964,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":18964,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":18964,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":18964,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":18964,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":18480,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":18480,"timestamp":"2025-05-08 08:39:14:3914","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":18480,"timestamp":"2025-05-08 08:39:44:3944","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":5308,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5308,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":5308,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":6572,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6572,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6572,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6572,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":6572,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":6972,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6972,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6972,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6972,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":6972,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":13096,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13096,"timestamp":"2025-05-08 11:04:27:427","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13096,"timestamp":"2025-05-08 11:04:29:429","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13096,"timestamp":"2025-05-08 11:04:29:429","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13096,"timestamp":"2025-05-08 11:04:29:429","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13096,"timestamp":"2025-05-08 11:04:30:430","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13096,"timestamp":"2025-05-08 11:04:30:430","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13096,"timestamp":"2025-05-08 11:04:30:430","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13096,"timestamp":"2025-05-08 11:04:33:433","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":13096,"timestamp":"2025-05-08 11:04:33:433","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":3564,"timestamp":"2025-05-08 11:04:34:434","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3564,"timestamp":"2025-05-08 11:04:34:434","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3564,"timestamp":"2025-05-08 11:04:34:434","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3564,"timestamp":"2025-05-08 11:04:34:434","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":3564,"timestamp":"2025-05-08 11:04:34:434","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":19204,"timestamp":"2025-05-08 11:04:34:434","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19204,"timestamp":"2025-05-08 11:04:34:434","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19204,"timestamp":"2025-05-08 11:04:34:434","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19204,"timestamp":"2025-05-08 11:04:46:446","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19204,"timestamp":"2025-05-08 11:04:46:446","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19204,"timestamp":"2025-05-08 11:04:46:446","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19204,"timestamp":"2025-05-08 11:04:50:450","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":19204,"timestamp":"2025-05-08 11:04:50:450","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":16428,"timestamp":"2025-05-08 11:04:50:450","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16428,"timestamp":"2025-05-08 11:04:50:450","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16428,"timestamp":"2025-05-08 11:04:50:450","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16428,"timestamp":"2025-05-08 11:04:50:450","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":16428,"timestamp":"2025-05-08 11:04:50:450","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":10272,"timestamp":"2025-05-08 11:04:51:451","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10272,"timestamp":"2025-05-08 11:04:51:451","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10272,"timestamp":"2025-05-08 11:04:51:451","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":10272,"timestamp":"2025-05-08 11:05:21:521","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":10660,"timestamp":"2025-05-08 11:09:41:941","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10660,"timestamp":"2025-05-08 11:09:41:941","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":10660,"timestamp":"2025-05-08 11:09:41:941","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":13608,"timestamp":"2025-05-08 11:09:41:941","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13608,"timestamp":"2025-05-08 11:09:41:941","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13608,"timestamp":"2025-05-08 11:09:41:941","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":13608,"timestamp":"2025-05-08 11:10:11:1011","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":7244,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7244,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":7244,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":16864,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16864,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16864,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16864,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":16864,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":3592,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3592,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3592,"timestamp":"2025-05-08 11:13:23:1323","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3592,"timestamp":"2025-05-08 11:13:41:1341","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":3592,"timestamp":"2025-05-08 11:13:41:1341","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":11828,"timestamp":"2025-05-08 11:13:41:1341","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11828,"timestamp":"2025-05-08 11:13:41:1341","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11828,"timestamp":"2025-05-08 11:13:41:1341","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11828,"timestamp":"2025-05-08 11:13:41:1341","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":11828,"timestamp":"2025-05-08 11:13:41:1341","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":12380,"timestamp":"2025-05-08 11:13:41:1341","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12380,"timestamp":"2025-05-08 11:13:41:1341","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12380,"timestamp":"2025-05-08 11:13:41:1341","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12380,"timestamp":"2025-05-08 11:13:44:1344","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":12380,"timestamp":"2025-05-08 11:13:44:1344","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":19596,"timestamp":"2025-05-08 11:13:44:1344","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19596,"timestamp":"2025-05-08 11:13:44:1344","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19596,"timestamp":"2025-05-08 11:13:44:1344","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19596,"timestamp":"2025-05-08 11:13:44:1344","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":19596,"timestamp":"2025-05-08 11:13:44:1344","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":19304,"timestamp":"2025-05-08 11:13:44:1344","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19304,"timestamp":"2025-05-08 11:13:44:1344","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19304,"timestamp":"2025-05-08 11:13:44:1344","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19304,"timestamp":"2025-05-08 11:13:52:1352","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":19304,"timestamp":"2025-05-08 11:13:52:1352","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":916,"timestamp":"2025-05-08 11:13:52:1352","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":916,"timestamp":"2025-05-08 11:13:52:1352","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":916,"timestamp":"2025-05-08 11:13:52:1352","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":916,"timestamp":"2025-05-08 11:13:52:1352","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":916,"timestamp":"2025-05-08 11:13:57:1357","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":916,"timestamp":"2025-05-08 11:13:57:1357","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":4468,"timestamp":"2025-05-08 11:13:57:1357","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":4468,"timestamp":"2025-05-08 11:13:57:1357","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":4468,"timestamp":"2025-05-08 11:13:57:1357","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":4468,"timestamp":"2025-05-08 11:13:57:1357","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":4468,"timestamp":"2025-05-08 11:13:57:1357","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":17448,"timestamp":"2025-05-08 11:13:57:1357","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17448,"timestamp":"2025-05-08 11:13:57:1357","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17448,"timestamp":"2025-05-08 11:13:57:1357","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17448,"timestamp":"2025-05-08 11:14:01:141","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":17448,"timestamp":"2025-05-08 11:14:01:141","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":5316,"timestamp":"2025-05-08 11:14:01:141","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5316,"timestamp":"2025-05-08 11:14:01:141","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5316,"timestamp":"2025-05-08 11:14:01:141","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5316,"timestamp":"2025-05-08 11:14:01:141","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":5316,"timestamp":"2025-05-08 11:14:01:141","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":17228,"timestamp":"2025-05-08 11:14:01:141","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17228,"timestamp":"2025-05-08 11:14:01:141","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17228,"timestamp":"2025-05-08 11:14:01:141","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17228,"timestamp":"2025-05-08 11:14:07:147","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":17228,"timestamp":"2025-05-08 11:14:07:147","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":20092,"timestamp":"2025-05-08 11:14:07:147","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":20092,"timestamp":"2025-05-08 11:14:07:147","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":20092,"timestamp":"2025-05-08 11:14:07:147","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":20092,"timestamp":"2025-05-08 11:14:07:147","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":20092,"timestamp":"2025-05-08 11:14:07:147","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":10156,"timestamp":"2025-05-08 11:14:07:147","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10156,"timestamp":"2025-05-08 11:14:07:147","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10156,"timestamp":"2025-05-08 11:14:07:147","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10156,"timestamp":"2025-05-08 11:14:13:1413","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":10156,"timestamp":"2025-05-08 11:14:13:1413","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":18844,"timestamp":"2025-05-08 11:14:13:1413","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":18844,"timestamp":"2025-05-08 11:14:13:1413","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":18844,"timestamp":"2025-05-08 11:14:13:1413","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":18844,"timestamp":"2025-05-08 11:14:13:1413","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":18844,"timestamp":"2025-05-08 11:14:13:1413","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":17276,"timestamp":"2025-05-08 11:14:13:1413","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17276,"timestamp":"2025-05-08 11:14:13:1413","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17276,"timestamp":"2025-05-08 11:14:13:1413","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17276,"timestamp":"2025-05-08 11:14:15:1415","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":17276,"timestamp":"2025-05-08 11:14:15:1415","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":2064,"timestamp":"2025-05-08 11:14:15:1415","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":2064,"timestamp":"2025-05-08 11:14:15:1415","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":2064,"timestamp":"2025-05-08 11:14:15:1415","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":2064,"timestamp":"2025-05-08 11:14:15:1415","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":2064,"timestamp":"2025-05-08 11:14:17:1417","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":2064,"timestamp":"2025-05-08 11:14:17:1417","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":9052,"timestamp":"2025-05-08 11:14:17:1417","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":9052,"timestamp":"2025-05-08 11:14:17:1417","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":9052,"timestamp":"2025-05-08 11:14:17:1417","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":9052,"timestamp":"2025-05-08 11:14:17:1417","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":9052,"timestamp":"2025-05-08 11:14:17:1417","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":15868,"timestamp":"2025-05-08 11:14:17:1417","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15868,"timestamp":"2025-05-08 11:14:17:1417","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15868,"timestamp":"2025-05-08 11:14:17:1417","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15868,"timestamp":"2025-05-08 11:14:20:1420","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":15868,"timestamp":"2025-05-08 11:14:20:1420","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":16380,"timestamp":"2025-05-08 11:14:20:1420","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16380,"timestamp":"2025-05-08 11:14:20:1420","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16380,"timestamp":"2025-05-08 11:14:20:1420","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16380,"timestamp":"2025-05-08 11:14:20:1420","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":16380,"timestamp":"2025-05-08 11:14:20:1420","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":19360,"timestamp":"2025-05-08 11:14:20:1420","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19360,"timestamp":"2025-05-08 11:14:20:1420","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19360,"timestamp":"2025-05-08 11:14:20:1420","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19360,"timestamp":"2025-05-08 11:14:24:1424","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":19360,"timestamp":"2025-05-08 11:14:24:1424","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":17848,"timestamp":"2025-05-08 11:14:24:1424","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17848,"timestamp":"2025-05-08 11:14:24:1424","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17848,"timestamp":"2025-05-08 11:14:24:1424","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17848,"timestamp":"2025-05-08 11:14:24:1424","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":17848,"timestamp":"2025-05-08 11:14:24:1424","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":16980,"timestamp":"2025-05-08 11:14:24:1424","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16980,"timestamp":"2025-05-08 11:14:24:1424","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16980,"timestamp":"2025-05-08 11:14:24:1424","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16980,"timestamp":"2025-05-08 11:14:26:1426","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":16980,"timestamp":"2025-05-08 11:14:26:1426","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":16984,"timestamp":"2025-05-08 11:14:26:1426","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16984,"timestamp":"2025-05-08 11:14:26:1426","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16984,"timestamp":"2025-05-08 11:14:26:1426","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16984,"timestamp":"2025-05-08 11:14:26:1426","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":16984,"timestamp":"2025-05-08 11:14:26:1426","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":19168,"timestamp":"2025-05-08 11:14:26:1426","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19168,"timestamp":"2025-05-08 11:14:26:1426","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19168,"timestamp":"2025-05-08 11:14:26:1426","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19168,"timestamp":"2025-05-08 11:14:28:1428","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":19168,"timestamp":"2025-05-08 11:14:28:1428","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":4344,"timestamp":"2025-05-08 11:14:28:1428","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":4344,"timestamp":"2025-05-08 11:14:28:1428","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":4344,"timestamp":"2025-05-08 11:14:28:1428","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":4344,"timestamp":"2025-05-08 11:14:28:1428","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":4344,"timestamp":"2025-05-08 11:14:30:1430","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":4344,"timestamp":"2025-05-08 11:14:30:1430","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":11236,"timestamp":"2025-05-08 11:14:30:1430","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11236,"timestamp":"2025-05-08 11:14:30:1430","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11236,"timestamp":"2025-05-08 11:14:30:1430","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11236,"timestamp":"2025-05-08 11:14:30:1430","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":11236,"timestamp":"2025-05-08 11:14:30:1430","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":15876,"timestamp":"2025-05-08 11:14:30:1430","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15876,"timestamp":"2025-05-08 11:14:30:1430","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15876,"timestamp":"2025-05-08 11:14:30:1430","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15876,"timestamp":"2025-05-08 11:14:32:1432","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":15876,"timestamp":"2025-05-08 11:14:32:1432","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":19152,"timestamp":"2025-05-08 11:14:32:1432","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19152,"timestamp":"2025-05-08 11:14:32:1432","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19152,"timestamp":"2025-05-08 11:14:32:1432","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19152,"timestamp":"2025-05-08 11:14:32:1432","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":19152,"timestamp":"2025-05-08 11:14:32:1432","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":19964,"timestamp":"2025-05-08 11:14:32:1432","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19964,"timestamp":"2025-05-08 11:14:32:1432","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19964,"timestamp":"2025-05-08 11:14:32:1432","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":19964,"timestamp":"2025-05-08 11:14:37:1437","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":19964,"timestamp":"2025-05-08 11:14:37:1437","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":12580,"timestamp":"2025-05-08 11:14:37:1437","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12580,"timestamp":"2025-05-08 11:14:37:1437","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12580,"timestamp":"2025-05-08 11:14:37:1437","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12580,"timestamp":"2025-05-08 11:14:37:1437","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12580,"timestamp":"2025-05-08 11:14:39:1439","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":12580,"timestamp":"2025-05-08 11:14:39:1439","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":17112,"timestamp":"2025-05-08 11:14:39:1439","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17112,"timestamp":"2025-05-08 11:14:39:1439","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17112,"timestamp":"2025-05-08 11:14:39:1439","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17112,"timestamp":"2025-05-08 11:14:39:1439","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":17112,"timestamp":"2025-05-08 11:14:39:1439","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":20004,"timestamp":"2025-05-08 11:14:39:1439","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":20004,"timestamp":"2025-05-08 11:14:39:1439","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":20004,"timestamp":"2025-05-08 11:14:39:1439","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":20004,"timestamp":"2025-05-08 11:14:45:1445","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":20004,"timestamp":"2025-05-08 11:14:45:1445","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":7144,"timestamp":"2025-05-08 11:14:45:1445","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7144,"timestamp":"2025-05-08 11:14:45:1445","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":7144,"timestamp":"2025-05-08 11:14:45:1445","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":16704,"timestamp":"2025-05-08 11:14:46:1446","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16704,"timestamp":"2025-05-08 11:14:46:1446","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":16704,"timestamp":"2025-05-08 11:14:46:1446","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":7340,"timestamp":"2025-05-08 11:14:46:1446","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7340,"timestamp":"2025-05-08 11:14:46:1446","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7340,"timestamp":"2025-05-08 11:14:46:1446","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7340,"timestamp":"2025-05-08 11:14:46:1446","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":7340,"timestamp":"2025-05-08 11:14:46:1446","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":8736,"timestamp":"2025-05-08 11:14:47:1447","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":8736,"timestamp":"2025-05-08 11:14:47:1447","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":8736,"timestamp":"2025-05-08 11:14:47:1447","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":8736,"timestamp":"2025-05-08 11:14:50:1450","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":8736,"timestamp":"2025-05-08 11:14:50:1450","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":16976,"timestamp":"2025-05-08 11:14:50:1450","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16976,"timestamp":"2025-05-08 11:14:50:1450","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16976,"timestamp":"2025-05-08 11:14:50:1450","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":16976,"timestamp":"2025-05-08 11:14:50:1450","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":16976,"timestamp":"2025-05-08 11:14:50:1450","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":6672,"timestamp":"2025-05-08 11:14:50:1450","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6672,"timestamp":"2025-05-08 11:14:50:1450","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6672,"timestamp":"2025-05-08 11:14:50:1450","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6672,"timestamp":"2025-05-08 11:14:53:1453","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":6672,"timestamp":"2025-05-08 11:14:53:1453","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":10992,"timestamp":"2025-05-08 11:14:53:1453","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10992,"timestamp":"2025-05-08 11:14:53:1453","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10992,"timestamp":"2025-05-08 11:14:53:1453","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":10992,"timestamp":"2025-05-08 11:14:53:1453","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":15256,"timestamp":"2025-05-08 11:14:53:1453","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15256,"timestamp":"2025-05-08 11:14:53:1453","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15256,"timestamp":"2025-05-08 11:15:02:152","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":15256,"timestamp":"2025-05-08 11:15:02:152","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":11824,"timestamp":"2025-05-08 11:15:02:152","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11824,"timestamp":"2025-05-08 11:15:02:152","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11824,"timestamp":"2025-05-08 11:15:02:152","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":11824,"timestamp":"2025-05-08 11:15:02:152","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":11824,"timestamp":"2025-05-08 11:15:02:152","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":17204,"timestamp":"2025-05-08 11:15:02:152","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17204,"timestamp":"2025-05-08 11:15:02:152","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17204,"timestamp":"2025-05-08 11:15:02:152","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":17204,"timestamp":"2025-05-08 11:15:07:157","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":17204,"timestamp":"2025-05-08 11:15:07:157","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":12764,"timestamp":"2025-05-08 11:15:07:157","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12764,"timestamp":"2025-05-08 11:15:07:157","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12764,"timestamp":"2025-05-08 11:15:07:157","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12764,"timestamp":"2025-05-08 11:15:07:157","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":12764,"timestamp":"2025-05-08 11:15:07:157","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":7884,"timestamp":"2025-05-08 11:15:07:157","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7884,"timestamp":"2025-05-08 11:15:07:157","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7884,"timestamp":"2025-05-08 11:15:07:157","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7884,"timestamp":"2025-05-08 11:15:26:1526","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7884,"timestamp":"2025-05-08 11:15:26:1526","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7884,"timestamp":"2025-05-08 11:15:26:1526","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":7884,"timestamp":"2025-05-08 11:15:56:1556","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:18:918","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:18:918","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:18:918","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:18:918","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:18:918","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:18:918","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:26:926","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:26:926","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:26:926","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:26:926","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:26:926","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:26:926","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:29:929","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:29:929","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:29:929","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:29:929","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:30:930","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:30:930","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:36:936","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:36:936","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:57:957","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:57:957","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:58:958","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:58:958","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:59:959","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:09:59:959","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:10:05:105","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:10:05:105","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:10:14:1014","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:10:14:1014","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:10:31:1031","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":2,"processID":12712,"timestamp":"2025-05-08 12:10:31:1031","waitingCount":0}
+{"idleCount":1,"level":"info","message":"New client connected to the pool","poolSize":2,"processID":13424,"timestamp":"2025-05-08 12:10:31:1031","waitingCount":0}
+{"idleCount":1,"level":"debug","message":"Client checked out from pool","poolSize":2,"processID":13424,"timestamp":"2025-05-08 12:10:31:1031","waitingCount":0}
+{"idleCount":1,"level":"info","message":"Client removed from pool","poolSize":1,"processID":13424,"timestamp":"2025-05-08 12:10:31:1031","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":12712,"timestamp":"2025-05-08 12:10:31:1031","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":12712,"timestamp":"2025-05-08 12:11:00:110","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":5908,"timestamp":"2025-05-08 12:19:44:1944","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5908,"timestamp":"2025-05-08 12:19:44:1944","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5908,"timestamp":"2025-05-08 12:19:44:1944","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5908,"timestamp":"2025-05-08 12:19:48:1948","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5908,"timestamp":"2025-05-08 12:19:48:1948","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5908,"timestamp":"2025-05-08 12:19:50:1950","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5908,"timestamp":"2025-05-08 12:19:50:1950","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5908,"timestamp":"2025-05-08 12:19:52:1952","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5908,"timestamp":"2025-05-08 12:19:52:1952","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":5908,"timestamp":"2025-05-08 12:20:22:2022","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":13388,"timestamp":"2025-05-08 14:10:08:108","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13388,"timestamp":"2025-05-08 14:10:08:108","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13388,"timestamp":"2025-05-08 14:10:08:108","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13388,"timestamp":"2025-05-08 14:10:08:108","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13388,"timestamp":"2025-05-08 14:10:08:108","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13388,"timestamp":"2025-05-08 14:10:08:108","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13388,"timestamp":"2025-05-08 14:10:08:108","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13388,"timestamp":"2025-05-08 14:10:32:1032","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13388,"timestamp":"2025-05-08 14:10:32:1032","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13388,"timestamp":"2025-05-08 14:10:32:1032","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":13388,"timestamp":"2025-05-08 14:11:02:112","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":15864,"timestamp":"2025-05-09 08:12:24:1224","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15864,"timestamp":"2025-05-09 08:12:24:1224","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15864,"timestamp":"2025-05-09 08:12:24:1224","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15864,"timestamp":"2025-05-09 08:12:24:1224","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15864,"timestamp":"2025-05-09 08:12:24:1224","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15864,"timestamp":"2025-05-09 08:12:24:1224","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":15864,"timestamp":"2025-05-09 08:12:24:1224","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":15864,"timestamp":"2025-05-09 08:12:54:1254","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":5756,"timestamp":"2025-05-09 08:21:36:2136","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5756,"timestamp":"2025-05-09 08:21:36:2136","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5756,"timestamp":"2025-05-09 08:21:36:2136","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5756,"timestamp":"2025-05-09 08:21:36:2136","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5756,"timestamp":"2025-05-09 08:21:37:2137","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5756,"timestamp":"2025-05-09 08:21:37:2137","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":5756,"timestamp":"2025-05-09 08:21:37:2137","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":5756,"timestamp":"2025-05-09 08:22:07:227","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":6024,"timestamp":"2025-05-09 08:26:38:2638","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6024,"timestamp":"2025-05-09 08:26:38:2638","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6024,"timestamp":"2025-05-09 08:26:38:2638","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6024,"timestamp":"2025-05-09 08:26:38:2638","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6024,"timestamp":"2025-05-09 08:26:40:2640","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6024,"timestamp":"2025-05-09 08:26:40:2640","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":6024,"timestamp":"2025-05-09 08:26:40:2640","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":6024,"timestamp":"2025-05-09 08:27:10:2710","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":13200,"timestamp":"2025-05-09 08:27:25:2725","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13200,"timestamp":"2025-05-09 08:27:25:2725","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13200,"timestamp":"2025-05-09 08:27:25:2725","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13200,"timestamp":"2025-05-09 08:27:25:2725","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":13200,"timestamp":"2025-05-09 08:27:55:2755","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:01:261","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:01:261","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:01:261","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:01:261","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:27:2627","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:27:2627","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:27:2627","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:27:2627","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:27:2627","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:27:2627","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:29:2629","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:29:2629","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":3752,"timestamp":"2025-05-09 09:26:29:2629","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":3752,"timestamp":"2025-05-09 09:26:59:2659","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":10804,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":10804,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":10804,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":13928,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13928,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13928,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":13928,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":13928,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"info","message":"New client connected to the pool","poolSize":1,"processID":7828,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7828,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"debug","message":"Client checked out from pool","poolSize":1,"processID":7828,"timestamp":"2025-05-09 10:01:53:153","waitingCount":0}
+{"idleCount":0,"level":"info","message":"Client removed from pool","poolSize":0,"processID":7828,"timestamp":"2025-05-09 10:02:23:223","waitingCount":0}

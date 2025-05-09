@@ -47,12 +47,10 @@ app.use(morgan('dev'));
 
 // Apply CORS middleware before other route handlers
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3001"],
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  origin: ["http://localhost:3000", "http://localhost:4000"],
   credentials: true,
-  preflightContinue: false,
-  optionsSuccessStatus: 204
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
 }));
 
 // Body parser middleware

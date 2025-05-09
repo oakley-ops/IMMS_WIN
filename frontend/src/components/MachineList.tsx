@@ -29,7 +29,6 @@ import {
 import axios from '../utils/axios';
 import MachineDialogs from './MachineDialogs';
 import { Link } from 'react-router-dom';
-import mockMachines from '../mockData/machines';
 import { Machine } from '../types';
 
 interface MachineListProps {
@@ -69,12 +68,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
 
   const fetchMachines = async () => {
     try {
-      // For development, use mock data instead of API call
-      setMachines(mockMachines);
-      
-      // When ready to connect to real API, uncomment this:
-      // const response = await axios.get('/api/v1/machines');
-      // setMachines(response.data);
+      const response = await axios.get('/api/v1/machines');
+      setMachines(response.data);
     } catch (error) {
       console.error('Error fetching machines:', error);
       setSnackbar({

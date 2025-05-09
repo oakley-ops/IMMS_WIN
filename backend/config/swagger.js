@@ -20,9 +20,9 @@ const options = {
     },
     servers: [
       {
-        url: process.env.API_URL || 'http://localhost:3001',
-        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
-      },
+        url: process.env.API_URL || 'http://localhost:4000',
+        description: 'Development server'
+      }
     ],
     components: {
       securitySchemes: {

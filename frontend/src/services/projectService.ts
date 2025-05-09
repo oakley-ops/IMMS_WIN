@@ -1,4 +1,5 @@
 import axios from 'axios';
+import axiosInstance from '../utils/axios';
 import { 
   Project, 
   EquipmentInstallation, 
@@ -14,19 +15,13 @@ import mockMilestones from '../mockData/milestones';
 import mockTasks from '../mockData/tasks';
 import mockDependencies from '../mockData/dependencies';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001';
-
 // Projects
 export const getAllProjects = async (): Promise<Project[]> => {
   // Use mock data instead of API call
   return Promise.resolve(mockProjects);
   
   // Original API call code:
-  // const response = await axios.get(`${API_URL}/projects`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.get('/api/v1/projects');
   // return response.data;
 };
 
@@ -39,11 +34,7 @@ export const getProjectById = async (id: number): Promise<Project> => {
   return Promise.resolve(project);
   
   // Original API call code:
-  // const response = await axios.get(`${API_URL}/projects/${id}`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.get(`/api/v1/projects/${id}`);
   // return response.data;
 };
 
@@ -64,11 +55,7 @@ export const createProject = async (project: Omit<Project, 'project_id' | 'creat
   return Promise.resolve(newProject);
   
   // Original API call code:
-  // const response = await axios.post(`${API_URL}/projects`, project, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.post('/api/v1/projects', project);
   // return response.data;
 };
 
@@ -89,11 +76,7 @@ export const updateProject = async (id: number, project: Partial<Project>): Prom
   return Promise.resolve(updatedProject);
   
   // Original API call code:
-  // const response = await axios.put(`${API_URL}/projects/${id}`, project, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.put(`/api/v1/projects/${id}`, project);
   // return response.data;
 };
 
@@ -108,11 +91,7 @@ export const deleteProject = async (id: number): Promise<void> => {
   return Promise.resolve();
   
   // Original API call code:
-  // await axios.delete(`${API_URL}/projects/${id}`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // await axiosInstance.delete(`/api/v1/projects/${id}`);
 };
 
 // Equipment Installations
@@ -122,11 +101,7 @@ export const getProjectEquipment = async (projectId: number): Promise<EquipmentI
   return Promise.resolve(equipment);
   
   // Original API call code:
-  // const response = await axios.get(`${API_URL}/projects/${projectId}/equipment`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.get(`/api/v1/projects/${projectId}/equipment`);
   // return response.data;
 };
 
@@ -143,11 +118,7 @@ export const createEquipment = async (equipment: Omit<EquipmentInstallation, 'in
   return Promise.resolve(newEquipment);
   
   // Original API call code:
-  // const response = await axios.post(`${API_URL}/equipment`, equipment, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.post('/api/v1/equipment', equipment);
   // return response.data;
 };
 
@@ -168,11 +139,7 @@ export const updateEquipment = async (id: number, equipment: Partial<EquipmentIn
   return Promise.resolve(updatedEquipment);
   
   // Original API call code:
-  // const response = await axios.put(`${API_URL}/equipment/${id}`, equipment, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.put(`/api/v1/equipment/${id}`, equipment);
   // return response.data;
 };
 
@@ -187,11 +154,7 @@ export const deleteEquipment = async (id: number): Promise<void> => {
   return Promise.resolve();
   
   // Original API call code:
-  // await axios.delete(`${API_URL}/equipment/${id}`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // await axiosInstance.delete(`/api/v1/equipment/${id}`);
 };
 
 // Equipment Dependencies
@@ -201,11 +164,7 @@ export const getEquipmentDependencies = async (equipmentId: number): Promise<Equ
   return Promise.resolve(dependencies);
   
   // Original API call code:
-  // const response = await axios.get(`${API_URL}/equipment/${equipmentId}/dependencies`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.get(`/api/v1/equipment/${equipmentId}/dependencies`);
   // return response.data;
 };
 
@@ -224,11 +183,7 @@ export const addEquipmentDependency = async (equipmentId: number, dependency: { 
   return Promise.resolve(newDependency);
   
   // Original API call code:
-  // const response = await axios.post(`${API_URL}/equipment/${equipmentId}/dependencies`, dependency, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.post(`/api/v1/equipment/${equipmentId}/dependencies`, dependency);
   // return response.data;
 };
 
@@ -239,11 +194,7 @@ export const getProjectMilestones = async (projectId: number): Promise<ProjectMi
   return Promise.resolve(milestones);
   
   // Original API call code:
-  // const response = await axios.get(`${API_URL}/projects/${projectId}/milestones`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.get(`/api/v1/projects/${projectId}/milestones`);
   // return response.data;
 };
 
@@ -260,11 +211,7 @@ export const createMilestone = async (milestone: Omit<ProjectMilestone, 'milesto
   return Promise.resolve(newMilestone);
   
   // Original API call code:
-  // const response = await axios.post(`${API_URL}/milestones`, milestone, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.post('/api/v1/milestones', milestone);
   // return response.data;
 };
 
@@ -285,11 +232,7 @@ export const updateMilestone = async (id: number, milestone: Partial<ProjectMile
   return Promise.resolve(updatedMilestone);
   
   // Original API call code:
-  // const response = await axios.put(`${API_URL}/milestones/${id}`, milestone, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.put(`/api/v1/milestones/${id}`, milestone);
   // return response.data;
 };
 
@@ -304,11 +247,7 @@ export const deleteMilestone = async (id: number): Promise<void> => {
   return Promise.resolve();
   
   // Original API call code:
-  // await axios.delete(`${API_URL}/milestones/${id}`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // await axiosInstance.delete(`/api/v1/milestones/${id}`);
 };
 
 // Project Tasks
@@ -318,11 +257,7 @@ export const getProjectTasks = async (projectId: number): Promise<ProjectTask[]>
   return Promise.resolve(tasks);
   
   // Original API call code:
-  // const response = await axios.get(`${API_URL}/projects/${projectId}/tasks`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.get(`/api/v1/projects/${projectId}/tasks`);
   // return response.data;
 };
 
@@ -339,11 +274,7 @@ export const createTask = async (task: Omit<ProjectTask, 'task_id' | 'created_at
   return Promise.resolve(newTask);
   
   // Original API call code:
-  // const response = await axios.post(`${API_URL}/tasks`, task, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.post('/api/v1/tasks', task);
   // return response.data;
 };
 
@@ -364,11 +295,7 @@ export const updateTask = async (id: number, task: Partial<ProjectTask>): Promis
   return Promise.resolve(updatedTask);
   
   // Original API call code:
-  // const response = await axios.put(`${API_URL}/tasks/${id}`, task, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.put(`/api/v1/tasks/${id}`, task);
   // return response.data;
 };
 
@@ -383,11 +310,7 @@ export const deleteTask = async (id: number): Promise<void> => {
   return Promise.resolve();
   
   // Original API call code:
-  // await axios.delete(`${API_URL}/tasks/${id}`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // await axiosInstance.delete(`/api/v1/tasks/${id}`);
 };
 
 // Project Timeline
@@ -410,10 +333,27 @@ export const getProjectTimeline = async (projectId: number): Promise<ProjectTime
   });
   
   // Original API call code:
-  // const response = await axios.get(`${API_URL}/projects/${projectId}/timeline`, {
-  //   headers: {
-  //     Authorization: `Bearer ${localStorage.getItem('token')}`
-  //   }
-  // });
+  // const response = await axiosInstance.get(`/api/v1/projects/${projectId}/timeline`);
   // return response.data;
-}; 
+};
+
+// Remove all functions after this point
+// export const getProjects = () => {
+//   return axiosInstance.get('/api/v1/projects');
+// };
+
+// export const getProjectById = (id: number) => {
+//   return axiosInstance.get(`/api/v1/projects/${id}`);
+// };
+
+// export const createProject = (data: any) => {
+//   return axiosInstance.post('/api/v1/projects', data);
+// };
+
+// export const updateProject = (id: number, data: any) => {
+//   return axiosInstance.put(`/api/v1/projects/${id}`, data);
+// };
+
+// export const deleteProject = (id: number) => {
+//   return axiosInstance.delete(`/api/v1/projects/${id}`);
+// }; 

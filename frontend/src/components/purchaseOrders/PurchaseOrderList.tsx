@@ -32,7 +32,16 @@ const PurchaseOrderList: React.FC = () => {
         console.log('Fetching purchase orders...');
         const response = await purchaseOrdersApi.getAll();
         console.log('Purchase orders response:', response);
-        setPurchaseOrders(response.data || []);
+        // Check if response.data.items exists and is an array
+        if (response.data && response.data.items && Array.isArray(response.data.items)) {
+          setPurchaseOrders(response.data.items);
+        } else if (Array.isArray(response.data)) {
+          // Fallback to direct response.data if it's an array
+          setPurchaseOrders(response.data);
+        } else {
+          // Set empty array if neither condition is met
+          setPurchaseOrders([]);
+        }
         setError(null);
       } catch (error: any) {
         console.error('Error fetching purchase orders:', error);
@@ -41,6 +50,8 @@ const PurchaseOrderList: React.FC = () => {
           `Error ${error.response.status}: ${error.response.data}` : 
           error.message || 'Failed to load purchase orders';
         setError(errorMessage);
+        // Set empty array on error to prevent undefined
+        setPurchaseOrders([]);
       } finally {
         setLoading(false);
       }

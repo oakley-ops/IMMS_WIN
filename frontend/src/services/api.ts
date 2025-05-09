@@ -1,23 +1,26 @@
-import axios from 'axios';
+import axiosInstance from '../utils/axios';
+import { API_URL } from '../config';
 
-// Get base URL from environment or use default
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+// Create axios instance with base configuration
+const api = axiosInstance;
 
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
+// Add a request interceptor
+api.interceptors.request.use(
+  (config) => {
+    // Get token from localStorage
+    const token = localStorage.getItem('token');
+    
+    // If token exists, add to headers
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return config;
   },
-});
-
-// Add auth token interceptor
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  (error) => {
+    return Promise.reject(error);
   }
-  return config;
-});
+);
 
 // Define document-related functions explicitly
 const getDocumentsByPOId = (poId: number) => {
