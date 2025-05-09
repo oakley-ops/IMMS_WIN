@@ -27,7 +27,7 @@ const db = require('./src/database/db');
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: process.env.FRONTEND_URL || ['http://localhost:3000', 'http://localhost:3002'],
     methods: ['GET', 'POST'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -47,7 +47,7 @@ app.use(morgan('dev'));
 
 // Apply CORS middleware before other route handlers
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:4000"],
+  origin: ["http://localhost:3000", "http://localhost:3002", "http://localhost:4000"],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
