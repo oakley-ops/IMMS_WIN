@@ -49,7 +49,7 @@ for /l %%i in (1,1,10) do (
 echo.
 
 :: Start frontend with better error handling
-echo Starting Frontend Server (http://localhost:3000)...
+echo Starting Frontend Server (http://localhost:3002)...
 cd frontend
 if not exist node_modules (
     echo Installing frontend dependencies...
@@ -67,7 +67,7 @@ cd ..
 
 echo.
 echo All services started!
-echo Navigate to http://localhost:3000 in your browser
+echo Navigate to http://localhost:3002 in your browser
 echo.
 echo Press any key to close all services and exit...
 
