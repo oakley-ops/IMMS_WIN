@@ -120,6 +120,8 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
             fontSize: '1.3rem',
             mb: 0.5,
             paddingLeft: isCompact ? '48px' : '0',
+            display: 'flex',
+            alignItems: 'center',
             '&:hover': {
               opacity: 0.9,
               cursor: 'pointer'
@@ -128,7 +130,12 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
           component={Link}
           to="/"
         >
-          Tech Inventory
+          <img 
+            src="/assets/fiserv_logo_orange_rgb.png" 
+            alt="Fiserv" 
+            style={{ height: '28px', marginRight: '8px' }} 
+          />
+          Inventory
         </Typography>
         <Typography variant="body2" sx={{ color: 'white', fontSize: '0.9rem', paddingLeft: isCompact ? '48px' : '0' }}>
           {user?.name} ({user?.role?.toUpperCase()})
