@@ -26,7 +26,7 @@ documentApi.interceptors.request.use((config) => {
  */
 export const getDocumentsByPOId = (poId: number) => {
   console.log(`Fetching documents for PO ID: ${poId}`);
-  return documentApi.get(`/purchase-orders/${poId}/documents`);
+  return documentApi.get(`/api/v1/purchase-orders/${poId}/documents`);
 };
 
 /**
@@ -39,7 +39,7 @@ export const downloadPODocument = async (documentId: number): Promise<Blob> => {
   
   try {
     // Use axios with responseType blob to properly handle binary data
-    const response = await documentApi.get(`/purchase-orders/documents/${documentId}/download`, {
+    const response = await documentApi.get(`/api/v1/purchase-orders/documents/${documentId}/download`, {
       responseType: 'blob',
       // Add timeout to ensure we don't wait forever
       timeout: 30000
@@ -64,7 +64,7 @@ export const downloadPODocument = async (documentId: number): Promise<Blob> => {
  */
 export const uploadDocument = (poId: number, formData: FormData) => {
   console.log(`Uploading document for PO ID: ${poId}`);
-  return documentApi.post(`/purchase-orders/${poId}/documents`, formData, {
+  return documentApi.post(`/api/v1/purchase-orders/${poId}/documents`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 };
@@ -76,7 +76,7 @@ export const uploadDocument = (poId: number, formData: FormData) => {
  */
 export const deleteDocument = (documentId: number) => {
   console.log(`Deleting document ID: ${documentId}`);
-  return documentApi.delete(`/purchase-orders/documents/${documentId}`);
+  return documentApi.delete(`/api/v1/purchase-orders/documents/${documentId}`);
 };
 
 export default documentApi;

@@ -25,12 +25,12 @@ api.interceptors.request.use(
 // Define document-related functions explicitly
 const getDocumentsByPOId = (poId: number) => {
   console.log(`Fetching documents for PO ID: ${poId}`);
-  return api.get(`/purchase-orders/${poId}/documents`);
+  return api.get(`/api/v1/purchase-orders/${poId}/documents`);
 };
 
 const downloadPODocument = (documentId: number) => {
   console.log(`Downloading document ID: ${documentId}`);
-  return api.get(`/purchase-orders/documents/${documentId}/download`, {
+  return api.get(`/api/v1/purchase-orders/documents/${documentId}/download`, {
     responseType: 'blob'
   }).then(response => {
     const blob = new Blob([response.data]);
@@ -58,53 +58,53 @@ const downloadPODocument = (documentId: number) => {
 
 const uploadDocument = (poId: number, formData: FormData) => {
   console.log(`Uploading document for PO ID: ${poId}`);
-  return api.post(`/purchase-orders/${poId}/documents`, formData, {
+  return api.post(`/api/v1/purchase-orders/${poId}/documents`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 };
 
 // Vendors API (Legacy - kept for backward compatibility)
 export const vendorsApi = {
-  getAll: () => api.get('/vendors'),
-  getById: (id: number) => api.get(`/vendors/${id}`),
-  create: (vendorData: any) => api.post('/vendors', vendorData),
-  update: (id: number, vendorData: any) => api.put(`/vendors/${id}`, vendorData),
-  delete: (id: number) => api.delete(`/vendors/${id}`),
+  getAll: () => api.get('/api/v1/vendors'),
+  getById: (id: number) => api.get(`/api/v1/vendors/${id}`),
+  create: (vendorData: any) => api.post('/api/v1/vendors', vendorData),
+  update: (id: number, vendorData: any) => api.put(`/api/v1/vendors/${id}`, vendorData),
+  delete: (id: number) => api.delete(`/api/v1/vendors/${id}`),
 };
 
 // Suppliers API
 export const suppliersApi = {
-  getAll: () => api.get('/suppliers'),
-  getById: (id: number) => api.get(`/suppliers/${id}`),
-  create: (supplierData: any) => api.post('/suppliers', supplierData),
-  update: (id: number, supplierData: any) => api.put(`/suppliers/${id}`, supplierData),
-  delete: (id: number) => api.delete(`/suppliers/${id}`),
-  getPartsBySupplier: (id: number) => api.get(`/suppliers/${id}/parts`),
+  getAll: () => api.get('/api/v1/suppliers'),
+  getById: (id: number) => api.get(`/api/v1/suppliers/${id}`),
+  create: (supplierData: any) => api.post('/api/v1/suppliers', supplierData),
+  update: (id: number, supplierData: any) => api.put(`/api/v1/suppliers/${id}`, supplierData),
+  delete: (id: number) => api.delete(`/api/v1/suppliers/${id}`),
+  getPartsBySupplier: (id: number) => api.get(`/api/v1/suppliers/${id}/parts`),
 };
 
 // Purchase Orders API
 export const purchaseOrdersApi = {
   // Use public routes temporarily until auth is fixed
-  getAll: () => api.get('/public/purchase-orders'),
-  getById: (id: number) => api.get(`/public/purchase-orders/${id}`),
-  create: (poData: any) => api.post('/purchase-orders', poData),
-  createBlank: (poData: any) => api.post('/purchase-orders/blank', poData),
-  updateStatus: (id: number, status: string) => api.put(`/purchase-orders/${id}/status`, { status }),
-  update: (id: number, poData: any) => api.put(`/purchase-orders/${id}`, poData),
-  delete: (id: number) => api.delete(`/purchase-orders/${id}`),
-  generateForParts: (data: any) => api.post('/purchase-orders/generate-for-low-stock', data),
-  getPartsWithPendingOrders: () => api.get('/purchase-orders/parts-with-pending-orders'),
-  addPartToPO: (id: number, partData: any) => api.post(`/purchase-orders/${id}/items`, partData),
-  removePartFromPO: (id: number, itemId: number) => api.delete(`/purchase-orders/${id}/items/${itemId}`),
-  updatePartInPO: (id: number, itemId: number, partData: any) => api.put(`/purchase-orders/${id}/items/${itemId}`, partData),
-  createBlankPO: (data: any) => api.post('/purchase-orders/blank', data),
-  addItemToPO: (poId: number, itemData: any) => api.post(`/purchase-orders/${poId}/items`, itemData),
+  getAll: () => api.get('/api/v1/public/purchase-orders'),
+  getById: (id: number) => api.get(`/api/v1/public/purchase-orders/${id}`),
+  create: (poData: any) => api.post('/api/v1/purchase-orders', poData),
+  createBlank: (poData: any) => api.post('/api/v1/purchase-orders/blank', poData),
+  updateStatus: (id: number, status: string) => api.put(`/api/v1/purchase-orders/${id}/status`, { status }),
+  update: (id: number, poData: any) => api.put(`/api/v1/purchase-orders/${id}`, poData),
+  delete: (id: number) => api.delete(`/api/v1/purchase-orders/${id}`),
+  generateForParts: (data: any) => api.post('/api/v1/purchase-orders/generate-for-low-stock', data),
+  getPartsWithPendingOrders: () => api.get('/api/v1/purchase-orders/parts-with-pending-orders'),
+  addPartToPO: (id: number, partData: any) => api.post(`/api/v1/purchase-orders/${id}/items`, partData),
+  removePartFromPO: (id: number, itemId: number) => api.delete(`/api/v1/purchase-orders/${id}/items/${itemId}`),
+  updatePartInPO: (id: number, itemId: number, partData: any) => api.put(`/api/v1/purchase-orders/${id}/items/${itemId}`, partData),
+  createBlankPO: (data: any) => api.post('/api/v1/purchase-orders/blank', data),
+  addItemToPO: (poId: number, itemData: any) => api.post(`/api/v1/purchase-orders/${poId}/items`, itemData),
   sendPOEmail: (emailData: {
     recipient: string;
     poNumber: string;
     poId: number;
     pdfBase64: string;
-  }) => api.post('/public/email/purchase-order', emailData),
+  }) => api.post('/api/v1/public/email/purchase-order', emailData),
   // Document management methods
   getDocumentsByPOId,
   downloadPODocument,
@@ -119,81 +119,81 @@ export const partsApi = {
     params.append('limit', limit.toString());
     if (search) params.append('search', search);
     
-    const response = await api.get(`/parts?${params.toString()}`);
+    const response = await api.get(`/api/v1/parts?${params.toString()}`);
     return response.data;
   },
   
   getOne: async (id: string) => {
-    const response = await api.get(`/parts/${id}`);
+    const response = await api.get(`/api/v1/parts/${id}`);
     return response.data;
   },
   
   create: async (partData: any) => {
-    const response = await api.post('/parts', partData);
+    const response = await api.post('/api/v1/parts', partData);
     return response.data;
   },
   
   update: async (id: string, partData: any) => {
-    const response = await api.put(`/parts/${id}`, partData);
+    const response = await api.put(`/api/v1/parts/${id}`, partData);
     return response.data;
   },
   
   delete: async (id: string) => {
-    const response = await api.delete(`/parts/${id}`);
+    const response = await api.delete(`/api/v1/parts/${id}`);
     return response.data;
   },
   
   getLowStock: async () => {
-    const response = await api.get('/parts/low-stock');
+    const response = await api.get('/api/v1/parts/low-stock');
     console.log('Parts to reorder API response:', response);
     return response;
   },
 
   // Alias for getLowStock to use with more general naming
   getPartsToReorder: async () => {
-    const response = await api.get('/parts/low-stock');
+    const response = await api.get('/api/v1/parts/low-stock');
     console.log('Parts to reorder API response:', response);
     return response;
   },
 
   // New function to check inventory status
   checkInventoryStatus: async () => {
-    const response = await api.get('/parts/inventory-status');
+    const response = await api.get('/api/v1/parts/inventory-status');
     return response.data;
   },
   
   // Supplier-related part methods
   getSuppliersForPart: async (partId: string) => {
-    const response = await api.get(`/parts/${partId}/suppliers`);
+    const response = await api.get(`/api/v1/parts/${partId}/suppliers`);
     return response.data;
   },
   
   addSupplierToPart: async (partId: string, supplierData: any) => {
-    const response = await api.post(`/parts/${partId}/suppliers`, supplierData);
+    const response = await api.post(`/api/v1/parts/${partId}/suppliers`, supplierData);
     return response.data;
   },
   
   updatePartSupplier: async (partId: string, supplierId: number, data: any) => {
-    const response = await api.put(`/parts/${partId}/suppliers/${supplierId}`, data);
+    const response = await api.put(`/api/v1/parts/${partId}/suppliers/${supplierId}`, data);
     return response.data;
   },
   
   removeSupplierFromPart: async (partId: string, supplierId: number) => {
-    const response = await api.delete(`/parts/${partId}/suppliers/${supplierId}`);
+    const response = await api.delete(`/api/v1/parts/${partId}/suppliers/${supplierId}`);
     return response.data;
   },
   
   setPreferredSupplier: async (partId: string, supplierId: number) => {
-    const response = await api.put(`/parts/${partId}/suppliers/${supplierId}/preferred`);
+    const response = await api.put(`/api/v1/parts/${partId}/suppliers/${supplierId}/preferred`);
     return response.data;
   }
 };
 
 // Authentication API
 export const authApi = {
-  login: (credentials: any) => api.post('/users/login', credentials),
-  register: (userData: any) => api.post('/users/register', userData),
-  verifyToken: () => api.get('/users/verify'),
+  login: (credentials: any) => api.post('/api/v1/users/login', credentials),
+  register: (userData: any) => api.post('/api/v1/users/register', userData),
+  verifyToken: () => api.get('/api/v1/users/verify'),
 };
 
 export default api;
