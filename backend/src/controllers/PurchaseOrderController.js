@@ -74,10 +74,11 @@ class PurchaseOrderController {
 
   async getAllPurchaseOrders(req, res) {
     try {
-      const { startDate, endDate, search, page = 0, limit = 10, status } = req.query;
+      const { startDate, endDate, search, page = 0, limit = 10, status, includeHistoricalReceived = 'false' } = req.query;
       
       console.log('Query params:', req.query);
       console.log('Searching for:', search);
+      console.log('Include historical received:', includeHistoricalReceived);
       
       // Always include document search
       const includeDocSearch = true;
@@ -162,6 +163,11 @@ class PurchaseOrderController {
         conditions.push(`COALESCE(po.approval_status, po.status) = $${paramIndex}`);
         params.push(status);
         paramIndex++;
+      }
+
+      // Filter out received POs older than 30 days (unless includeHistoricalReceived is true)
+      if (includeHistoricalReceived !== 'true') {
+        conditions.push(`NOT (COALESCE(po.approval_status, po.status) = 'received' AND po.created_at < NOW() - INTERVAL '30 days')`);
       }
 
       // Enhanced search filter with multiple terms
@@ -329,17 +335,43 @@ class PurchaseOrderController {
       
       // Use custom PO number if provided, otherwise generate one
       if (customPoNumber && customPoNumber.trim()) {
-        // Check if the PO number already exists
-        const existingPoResult = await client.query(
-          "SELECT po_number FROM purchase_orders WHERE po_number = $1",
-          [customPoNumber.trim()]
-        );
+        const trimmedCustomPoNumber = customPoNumber.trim();
         
-        if (existingPoResult.rows.length > 0) {
-          throw new Error('Purchase order number already exists');
+        // Prevent "TBD" from being used as a PO number
+        if (trimmedCustomPoNumber.toUpperCase() === 'TBD') {
+          console.log('Custom PO number "TBD" not allowed, generating automatic number instead');
+          // Generate a unique PO number (Year-Month-SequentialNumber)
+          const currentDate = new Date();
+          const poPrefix = format(currentDate, 'yyyyMM');
+          
+          // Get the latest PO number with this prefix
+          const poNumResult = await client.query(
+            "SELECT po_number FROM purchase_orders WHERE po_number LIKE $1 ORDER BY po_number DESC LIMIT 1",
+            [`${poPrefix}%`]
+          );
+          
+          let nextNum = 1;
+          if (poNumResult.rows.length > 0) {
+            // Extract the last number and increment
+            const lastPO = poNumResult.rows[0].po_number;
+            const lastNum = parseInt(lastPO.split('-')[1]);
+            nextNum = lastNum + 1;
+          }
+          
+          poNumber = `${poPrefix}-${nextNum.toString().padStart(4, '0')}`;
+        } else {
+          // Check if the PO number already exists
+          const existingPoResult = await client.query(
+            "SELECT po_number FROM purchase_orders WHERE po_number = $1",
+            [trimmedCustomPoNumber]
+          );
+          
+          if (existingPoResult.rows.length > 0) {
+            throw new Error('Purchase order number already exists');
+          }
+          
+          poNumber = trimmedCustomPoNumber;
         }
-        
-        poNumber = customPoNumber.trim();
       } else {
         // Generate a unique PO number (Year-Month-SequentialNumber)
         const currentDate = new Date();
@@ -490,7 +522,7 @@ class PurchaseOrderController {
          SET status = $1::text, 
              approval_status = $1::text,
              updated_at = CURRENT_TIMESTAMP,
-             approval_date = CASE WHEN $1::text IN ('approved', 'rejected', 'on_hold') THEN CURRENT_TIMESTAMP ELSE approval_date END
+             approval_date = CASE WHEN $1::text IN ('approved', 'rejected', 'on_hold', 'on_order') THEN CURRENT_TIMESTAMP ELSE approval_date END
          WHERE po_id = $2 RETURNING *`,
         [status, poId]
       );
@@ -1070,16 +1102,24 @@ class PurchaseOrderController {
             if (customPoNumbers && customPoNumbers[supplierIdStr]) {
               // Check if the PO number already exists
               const customPoNum = customPoNumbers[supplierIdStr].trim();
-              const existingPoResult = await client.query(
-                "SELECT po_number FROM purchase_orders WHERE po_number = $1",
-                [customPoNum]
-              );
               
-              if (existingPoResult.rows.length > 0) {
-                throw new Error(`Purchase order number ${customPoNum} already exists`);
+              // Prevent "TBD" from being used as a PO number
+              if (customPoNum.toUpperCase() === 'TBD') {
+                console.log('Custom PO number "TBD" not allowed, generating automatic number instead');
+                poNumber = `${poPrefix}-${nextNum.toString().padStart(4, '0')}`;
+                nextNum++;
+              } else {
+                const existingPoResult = await client.query(
+                  "SELECT po_number FROM purchase_orders WHERE po_number = $1",
+                  [customPoNum]
+                );
+                
+                if (existingPoResult.rows.length > 0) {
+                  throw new Error(`Purchase order number ${customPoNum} already exists`);
+                }
+                
+                poNumber = customPoNum;
               }
-              
-              poNumber = customPoNum;
             } else {
               poNumber = `${poPrefix}-${nextNum.toString().padStart(4, '0')}`;
               nextNum++;
@@ -1337,16 +1377,24 @@ class PurchaseOrderController {
             if (customPoNumbers && customPoNumbers[supplierIndex]) {
               // Check if the PO number already exists
               const customPoNum = customPoNumbers[supplierIndex].trim();
-              const existingPoResult = await client.query(
-                "SELECT po_number FROM purchase_orders WHERE po_number = $1",
-                [customPoNum]
-              );
               
-              if (existingPoResult.rows.length > 0) {
-                throw new Error('Purchase order number already exists');
+              // Prevent "TBD" from being used as a PO number
+              if (customPoNum.toUpperCase() === 'TBD') {
+                console.log('Custom PO number "TBD" not allowed, generating automatic number instead');
+                poNumber = `${poPrefix}-${nextNum.toString().padStart(4, '0')}`;
+                nextNum++;
+              } else {
+                const existingPoResult = await client.query(
+                  "SELECT po_number FROM purchase_orders WHERE po_number = $1",
+                  [customPoNum]
+                );
+                
+                if (existingPoResult.rows.length > 0) {
+                  throw new Error('Purchase order number already exists');
+                }
+                
+                poNumber = customPoNum;
               }
-              
-              poNumber = customPoNum;
             } else {
               poNumber = `${poPrefix}-${nextNum.toString().padStart(4, '0')}`;
               nextNum++;
@@ -2102,6 +2150,153 @@ class PurchaseOrderController {
         return res.status(404).json({ error: 'Document not found' });
       }
       res.status(500).json({ error: `Failed to delete document: ${error.message}` });
+    }
+  }
+
+  // Update item receipt status for partial receipts
+  async updateItemReceiptStatus(req, res) {
+    const { id, itemId } = req.params;
+    const { quantity_received, received_by, receipt_notes } = req.body;
+    const client = await this.pool.connect();
+    
+    try {
+      await client.query('BEGIN');
+      
+      // Check if the purchase order exists
+      const poResult = await client.query(
+        'SELECT * FROM purchase_orders WHERE po_id = $1',
+        [id]
+      );
+      
+      if (poResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ message: 'Purchase order not found' });
+      }
+      
+      const po = poResult.rows[0];
+      
+      // Check if the purchase order allows receipt updates
+      if (po.status === 'canceled') {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ 
+          message: 'Cannot update receipt status for canceled purchase order' 
+        });
+      }
+      
+      // Check if item exists
+      const itemResult = await client.query(
+        'SELECT * FROM purchase_order_items WHERE item_id = $1 AND po_id = $2',
+        [itemId, id]
+      );
+      
+      if (itemResult.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ message: 'Item not found in this purchase order' });
+      }
+      
+      const item = itemResult.rows[0];
+      
+      // Validate quantity_received
+      if (quantity_received < 0) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ message: 'Quantity received cannot be negative' });
+      }
+      
+      if (quantity_received > item.quantity) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ 
+          message: `Quantity received (${quantity_received}) cannot exceed ordered quantity (${item.quantity})` 
+        });
+      }
+      
+      // Calculate incremental change in quantity received
+      const previousQuantityReceived = item.quantity_received || 0;
+      const quantityDifference = quantity_received - previousQuantityReceived;
+      
+      console.log(`Receipt update: PO ${id}, Item ${itemId}, Previous: ${previousQuantityReceived}, New: ${quantity_received}, Difference: ${quantityDifference}`);
+      
+      // Update the item receipt status
+      const updatedItemResult = await client.query(
+        `UPDATE purchase_order_items 
+         SET quantity_received = $1, 
+             received_date = CASE WHEN $1 > 0 THEN NOW() ELSE NULL END,
+             received_by = $2,
+             receipt_notes = $3
+         WHERE item_id = $4 AND po_id = $5
+         RETURNING *`,
+        [quantity_received, received_by, receipt_notes, itemId, id]
+      );
+      
+      // Update inventory if there's a change and the part exists
+      if (quantityDifference !== 0 && item.part_id) {
+        console.log(`Updating inventory for part ${item.part_id} by ${quantityDifference}`);
+        
+        // Update parts inventory
+        const inventoryUpdateResult = await client.query(
+          `UPDATE parts 
+           SET quantity = quantity + $1, 
+               updated_at = CURRENT_TIMESTAMP 
+           WHERE part_id = $2 
+           RETURNING quantity, name`,
+          [quantityDifference, item.part_id]
+        );
+        
+        if (inventoryUpdateResult.rows.length === 0) {
+          console.warn(`Part ${item.part_id} not found in parts table - skipping inventory update`);
+        } else {
+          console.log(`Updated inventory for part ${item.part_id} (${inventoryUpdateResult.rows[0].name}). New quantity: ${inventoryUpdateResult.rows[0].quantity}`);
+          
+          // Create transaction record for audit trail
+          const transactionNotes = `PO ${po.po_number} - ${quantityDifference > 0 ? 'Received' : 'Adjusted'} ${Math.abs(quantityDifference)} units${received_by ? ` by ${received_by}` : ''}${receipt_notes ? ` - ${receipt_notes}` : ''}`;
+          
+          await client.query(
+            `INSERT INTO transactions (
+              part_id, 
+              quantity, 
+              type, 
+              notes, 
+              reference_number,
+              created_at
+            ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)`,
+            [
+              item.part_id,
+              Math.abs(quantityDifference),
+              quantityDifference > 0 ? 'purchase_order_receipt' : 'purchase_order_adjustment',
+              transactionNotes,
+              po.po_number
+            ]
+          );
+          
+          console.log(`Created transaction record for part ${item.part_id}, quantity ${quantityDifference}, PO ${po.po_number}`);
+        }
+      } else if (quantityDifference !== 0 && !item.part_id) {
+        console.log(`Skipping inventory update for custom part (item_id: ${itemId})`);
+      }
+      
+      await client.query('COMMIT');
+      
+      // Get part details to include in response
+      const partResult = await this.pool.query(
+        'SELECT name, manufacturer_part_number, fiserv_part_number FROM parts WHERE part_id = $1',
+        [updatedItemResult.rows[0].part_id]
+      );
+      
+      const updatedItem = {
+        ...updatedItemResult.rows[0],
+        part_name: partResult.rows[0]?.name || item.part_name,
+        manufacturer_part_number: partResult.rows[0]?.manufacturer_part_number || item.manufacturer_part_number,
+        fiserv_part_number: partResult.rows[0]?.fiserv_part_number || item.fiserv_part_number,
+        quantity_pending: item.quantity - quantity_received
+      };
+      
+      res.status(200).json(updatedItem);
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error('Error updating item receipt status:', error);
+      res.status(500).json({ message: 'Failed to update item receipt status' });
+    } finally {
+      client.release();
     }
   }
 }

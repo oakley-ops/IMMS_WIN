@@ -27,6 +27,7 @@ class EmailTrackingService {
     // List of authorized approvers
     this.authorizedApprovers = [
       'isaac.rodriguez@fiserv.com',  // Isaac's email (to be changed later)
+      'christopher.sale@fiserv.com', // Christopher's email
     ].filter(Boolean); // Remove any undefined/null values
 
     // Use individual parameters for better control and debugging
@@ -95,10 +96,32 @@ class EmailTrackingService {
     console.log('Socket.IO instance directly set in EmailTrackingService');
   }
 
-  setEmailService(service) {
-    console.log('Setting email service via setEmailService method...');
-    this.emailService = service;
-    console.log('Email service set successfully');
+  // Initialize email tracking service
+  initializeEmailTracking() {
+    if (!emailTrackingService) {
+      try {
+        console.log('Initializing email tracking service...');
+        emailTrackingService.setEmailService(this);
+        console.log('Email tracking service initialized successfully');
+      } catch (error) {
+        console.error('Failed to initialize email tracking service:', error);
+      }
+    }
+    return emailTrackingService;
+  }
+
+  // Get email tracking service, initializing if needed
+  getEmailTrackingService() {
+    if (!emailTrackingService) {
+      this.initializeEmailTracking();
+    }
+    return emailTrackingService;
+  }
+
+  // Set email service for tracking service
+  setEmailService(emailService) {
+    this.emailService = emailService;
+    console.log('Email service set for email tracking service');
   }
 
   // Generate a unique tracking code
@@ -342,7 +365,8 @@ class EmailTrackingService {
       console.log('FINAL EMAIL STATUS:', emailStatus);
       
       // If this is a re-process of an already approved email, don't change status unless explicitly rejected
-      if (trackingRecord.status === 'approved' && emailStatus !== 'rejected') {
+      const isReprocessingApprovedEmail = trackingRecord.status === 'approved' && emailStatus !== 'rejected';
+      if (isReprocessingApprovedEmail) {
         console.log('Email was already approved, maintaining approved status');
         emailStatus = 'approved';
       }
@@ -373,6 +397,7 @@ class EmailTrackingService {
       }
       
       const currentStatus = poResult.rows[0].status;
+      const currentApprovalStatus = poResult.rows[0].approval_status;
       
       // Update the purchase order status accordingly
       console.log('Updating purchase order status...');
@@ -381,9 +406,9 @@ class EmailTrackingService {
       
       // Determine the new PO status based on approval status
       if (emailStatus === 'approved') {
-        poStatus = 'approved';
+        poStatus = 'waiting_for_po_number';
         poApprovalStatus = 'approved';
-        console.log('Setting PO status to approved - Current status:', currentStatus);
+        console.log('Setting PO status to waiting_for_po_number - Current status:', currentStatus);
       } else if (emailStatus === 'on_hold') {
         poStatus = 'pending';
         poApprovalStatus = 'on_hold';
@@ -394,44 +419,107 @@ class EmailTrackingService {
         console.log('Setting PO status to canceled - Current status:', currentStatus);
       }
       
-      // Update both status and approval_status
-      console.log(`Setting PO status to '${poStatus}' and approval_status to '${poApprovalStatus}'`);
-      const updateResult = await client.query(
-        `UPDATE purchase_orders 
-         SET status = $1, 
-             approval_status = $2,
-             approval_date = NOW(), 
-             approved_by = $3,
-             notes = COALESCE($4, notes)
-         WHERE po_id = $5
-         RETURNING status, approval_status`,
-        [poStatus, poApprovalStatus, approvalEmail, notes, poId]
-      );
+      // Check if PO status actually needs updating to prevent unnecessary database operations
+      const needsStatusUpdate = currentStatus !== poStatus || currentApprovalStatus !== poApprovalStatus;
       
-      console.log('PO update result:', updateResult.rows[0]);
+      if (needsStatusUpdate) {
+        // Update both status and approval_status
+        console.log(`Setting PO status to '${poStatus}' and approval_status to '${poApprovalStatus}'`);
+        const updateResult = await client.query(
+          `UPDATE purchase_orders 
+           SET status = $1, 
+               approval_status = $2,
+               approval_date = NOW(), 
+               approved_by = $3,
+               notes = COALESCE($4, notes)
+           WHERE po_id = $5
+           RETURNING status, approval_status`,
+          [poStatus, poApprovalStatus, approvalEmail, notes, poId]
+        );
+        
+        console.log('PO update result:', updateResult.rows[0]);
+      } else {
+        console.log(`PO ${poId} already has status='${currentStatus}' and approval_status='${currentApprovalStatus}' - skipping update`);
+      }
 
       // Commit transaction
       console.log('Committing transaction...');
       await client.query('COMMIT');
       
-      // Emit status update event
-      this.emitSocketEvent('po_status_update', {
-        poId: trackingRecord.po_id,
-        status: isApproved ? 'approved' : 'rejected',
-        approvalEmail,
-        notes
-      });
+      // Only emit socket events if there was an actual status change or if this is a new approval
+      if (needsStatusUpdate || !isReprocessingApprovedEmail) {
+        // Emit multiple events to ensure frontend gets the update
+        console.log(`Emitting socket events for PO ${poId}: status=${poStatus}, approval_status=${poApprovalStatus}`);
+        
+        // 1. Legacy status update event
+        this.emitSocketEvent('po_status_update', {
+          poId: trackingRecord.po_id,
+          status: poApprovalStatus, // Use approval status for consistency
+          approvalEmail,
+          notes
+        });
+        
+        // 2. Purchase order update event with complete data
+        this.emitSocketEvent('purchase_order_update', {
+          po_id: poId,
+          status: poStatus,
+          approval_status: poApprovalStatus,
+          updated_at: new Date().toISOString()
+        });
+        
+        // 3. Specific status change event for dashboard refresh
+        this.emitSocketEvent('po_status_changed', {
+          po_id: poId,
+          old_status: currentStatus,
+          new_status: poStatus,
+          approval_status: poApprovalStatus,
+          approved_by: approvalEmail,
+          timestamp: new Date().toISOString()
+        });
+        
+        // 4. Emit dashboard-update event to refresh the dashboard
+        this.emitSocketEvent('dashboard-update', {
+          type: 'purchase_order_status_change',
+          po_id: poId,
+          status: poStatus,
+          approval_status: poApprovalStatus
+        });
+        
+        // 5. Try using global.io as backup if socketIo isn't working
+        if (global.io) {
+          console.log('Also emitting via global.io...');
+          global.io.emit('purchase_order_update', {
+            po_id: poId,
+            status: poStatus,
+            approval_status: poApprovalStatus,
+            updated_at: new Date().toISOString()
+          });
+          global.io.emit('po_status_changed', {
+            po_id: poId,
+            old_status: currentStatus,
+            new_status: poStatus,
+            approval_status: poApprovalStatus,
+            approved_by: approvalEmail,
+            timestamp: new Date().toISOString()
+          });
+          // IMPORTANT: Emit dashboard-update to trigger dashboard refresh
+          global.io.emit('dashboard-update', {
+            type: 'purchase_order_status_change',
+            po_id: poId,
+            status: poStatus,
+            approval_status: poApprovalStatus
+          });
+        }
+      } else {
+        console.log('No status change needed and this is a reprocess - skipping socket emissions to prevent spam');
+      }
       
-      // Also emit a broader PO update event to refresh the UI
-      this.emitSocketEvent('purchase_order_update', {
-        po_id: poId,
-        status: poStatus,
-        approval_status: poApprovalStatus
-      });
-      
-      // Re-route the approved PO to the designated recipient
-      if (emailStatus === 'approved') {
+      // Re-route the approved PO to the designated recipient only if this is a new approval (not a reprocess)
+      if (emailStatus === 'approved' && !isReprocessingApprovedEmail) {
+        console.log('This is a new approval - proceeding with re-routing');
         await this.rerouteApprovedPO(poId, trackingCode, approvalEmail);
+      } else if (isReprocessingApprovedEmail) {
+        console.log('This is a reprocess of an already approved email - skipping re-routing to prevent duplicates');
       }
       
       return {
@@ -584,27 +672,34 @@ class EmailTrackingService {
       const client = await this.pool.connect();
       
       // First check if this PO has already been rerouted to prevent loops
+      // Check for ANY rerouting in the last 10 minutes (shorter window for better duplicate prevention)
       const rerouteCheckResult = await client.query(
         `SELECT * FROM email_rerouting_log 
-         WHERE po_id = $1 
-         ORDER BY sent_date DESC 
-         LIMIT 1`,
+         WHERE po_id = $1 AND sent_date > NOW() - INTERVAL '10 minutes'
+         ORDER BY sent_date DESC`,
         [poId]
       );
       
-      // If we find a recent rerouting record (within the last hour), skip to prevent loops
+      // If we find ANY recent rerouting record, skip to prevent loops and duplicates
       if (rerouteCheckResult.rows.length > 0) {
         const lastReroute = rerouteCheckResult.rows[0];
         const lastRerouteTime = new Date(lastReroute.sent_date).getTime();
         const currentTime = new Date().getTime();
         const timeSinceLastReroute = (currentTime - lastRerouteTime) / 1000 / 60; // minutes
         
-        if (timeSinceLastReroute < 60) { // If less than 60 minutes since last reroute
-          console.log(`Skipping re-route for PO #${poId} - already rerouted ${timeSinceLastReroute.toFixed(2)} minutes ago`);
-          client.release();
-          return;
-        }
+        console.log(`Skipping re-route for PO #${poId} - already rerouted ${timeSinceLastReroute.toFixed(2)} minutes ago. Found ${rerouteCheckResult.rows.length} recent rerouting record(s).`);
+        client.release();
+        return;
       }
+      
+      // Pre-log the rerouting attempt to prevent concurrent executions
+      const reroutingAttemptId = require('crypto').randomUUID();
+      await client.query(
+        `INSERT INTO email_rerouting_log 
+         (po_id, original_tracking_code, recipient_email, sent_date, status)
+         VALUES ($1, $2, $3, NOW(), 'attempting')`,
+        [poId, trackingCode, `rerouting-attempt-${reroutingAttemptId}`]
+      );
       
       const poResult = await client.query(
         'SELECT po_id, po_number, total_amount FROM purchase_orders WHERE po_id = $1',
@@ -630,99 +725,142 @@ class EmailTrackingService {
       }
 
       // Prepare email content
-      const subject = `${process.env.PO_APPROVAL_REROUTE_SUBJECT_PREFIX || '[APPROVED PO]'} ${po.po_number}`;
-      const recipient = process.env.REROUTE_EMAIL || process.env.PO_APPROVAL_REROUTE_EMAIL;
+      const subject = `[APPROVED PO] ${po.po_number} - Waiting for PO #`;
       
-      console.log(`Re-routing approved PO ${po.po_number} to ${recipient}`);
+      // Define multiple recipients for re-routing
+      const recipients = [
+        'isaac.rodriguez@fiserv.com',
+        'jeffrey.clark@fiserv.com',
+        //'tammie.goff@fiserv.com',
+      ];
       
-      // Check if recipient is ikeodz@gmail.com to add the special message
-      const isIkeodzEmail = recipient.toLowerCase() === 'ikeodz@gmail.com';
-      const specialMessage = isIkeodzEmail ? '<p><strong>Please create a Purchasing Order Number for the Following Items</strong></p>' : '';
+      console.log(`Re-routing approved PO ${po.po_number} to ${recipients.join(', ')}`);
       
-      // Instead of creating a new tracking record with sendPurchaseOrderPDF,
-      // use a simpler method that won't create tracking records
-      if (pdfData) {
-        // Create a simple email with PDF attachment
-        const html = `
-          ${specialMessage}
-          <p>Purchase Order ${po.po_number} has been approved by ${approvalEmail}.</p>
-          <p>Approval Date: ${new Date().toLocaleString()}</p>
-          <p>PO Amount: $${po.total_amount || 'Not specified'}</p>
-          <hr>
-          <p>This is an automated notification with the approved PO attached.</p>
-        `;
-        
-        // Use the simpler sendEmail method with attachment option
-        const mailOptions = {
-          to: recipient,
-          subject,
-          html,
-          attachments: [{
-            filename: `PO-${po.po_number}.pdf`,
-            content: pdfData,
-            encoding: 'base64'
-          }]
-        };
-        
-        await this.emailService.sendEmailDirect(mailOptions);
-        console.log(`Successfully re-routed PO ${po.po_number} with PDF to ${recipient}`);
-      } else {
-        // No PDF data, use simple email instead
-        const html = `
-          ${specialMessage}
-          <p>Purchase Order ${po.po_number} has been approved by ${approvalEmail}.</p>
-          <p>Approval Date: ${new Date().toLocaleString()}</p>
-          <p>PO Amount: $${po.total_amount || 'Not specified'}</p>
-          <hr>
-          <p>This is an automated notification.</p>
-        `;
-
-        console.log(`Re-routing approved PO ${po.po_number} to ${recipient} (without PDF)`);
-        await this.emailService.sendEmail(subject, html, recipient);
-        console.log(`Successfully re-routed PO ${po.po_number} to ${recipient}`);
-      }
+      // Special message for approved POs
+      const specialMessage = `
+        <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; margin-bottom: 20px; border-radius: 4px;">
+          <h3 style="color: #155724; margin-top: 0;">✅ Purchase Order Approved</h3>
+          <p style="color: #155724; margin-bottom: 0;">
+            This purchase order has been approved by ${approvalEmail} and is now waiting for a PO number assignment.
+          </p>
+        </div>
+      `;
       
-      // Log the re-routing
-      const client2 = await this.pool.connect();
-      try {
-        await client2.query(
-          `INSERT INTO email_rerouting_log 
-           (po_id, original_tracking_code, recipient_email, sent_date, status)
-           VALUES ($1, $2, $3, NOW(), 'sent')`,
-          [poId, trackingCode, recipient]
-        );
-      } catch (error) {
-        // Table might not exist, attempt to create it
-        if (error.message.includes('relation "email_rerouting_log" does not exist')) {
-          console.log('Creating email_rerouting_log table...');
-          await client2.query(`
-            CREATE TABLE IF NOT EXISTS email_rerouting_log (
-              id SERIAL PRIMARY KEY,
-              po_id INTEGER NOT NULL,
-              original_tracking_code VARCHAR(255) NOT NULL,
-              recipient_email VARCHAR(255) NOT NULL,
-              sent_date TIMESTAMP NOT NULL DEFAULT NOW(),
-              status VARCHAR(50) NOT NULL DEFAULT 'sent',
-              created_at TIMESTAMP NOT NULL DEFAULT NOW()
-            );
-          `);
+      // Send email to each recipient
+      for (const recipient of recipients) {
+        // Instead of creating a new tracking record with sendPurchaseOrderPDF,
+        // use a simpler method that won't create tracking records
+        if (pdfData) {
+          // Create a simple email with PDF attachment
+          const html = `
+            ${specialMessage}
+            <p>Purchase Order ${po.po_number} has been approved by ${approvalEmail}.</p>
+            <p>Approval Date: ${new Date().toLocaleString()}</p>
+            <p>PO Amount: $${po.total_amount || 'Not specified'}</p>
+            <hr>
+            <p>This is an automated notification with the approved PO attached.</p>
+          `;
           
-          // Try insert again
+          // Use the simpler sendEmail method with attachment option
+          const mailOptions = {
+            to: recipient,
+            subject,
+            html,
+            attachments: [{
+              filename: `PO-${po.po_number}.pdf`,
+              content: pdfData,
+              encoding: 'base64'
+            }]
+          };
+          
+          await this.emailService.sendEmailDirect(mailOptions);
+          console.log(`Successfully re-routed PO ${po.po_number} with PDF to ${recipient}`);
+        } else {
+          // No PDF data, use simple email instead
+          const html = `
+            ${specialMessage}
+            <p>Purchase Order ${po.po_number} has been approved by ${approvalEmail}.</p>
+            <p>Approval Date: ${new Date().toLocaleString()}</p>
+            <p>PO Amount: $${po.total_amount || 'Not specified'}</p>
+            <hr>
+            <p>This is an automated notification.</p>
+          `;
+
+          console.log(`Re-routing approved PO ${po.po_number} to ${recipient} (without PDF)`);
+          await this.emailService.sendEmail(subject, html, recipient);
+          console.log(`Successfully re-routed PO ${po.po_number} to ${recipient}`);
+        }
+        
+        // Update the attempting record to sent status for this specific recipient
+        const client2 = await this.pool.connect();
+        try {
           await client2.query(
             `INSERT INTO email_rerouting_log 
              (po_id, original_tracking_code, recipient_email, sent_date, status)
              VALUES ($1, $2, $3, NOW(), 'sent')`,
             [poId, trackingCode, recipient]
           );
-        } else {
-          throw error;
+        } catch (error) {
+          // Table might not exist, attempt to create it
+          if (error.message.includes('relation "email_rerouting_log" does not exist')) {
+            console.log('Creating email_rerouting_log table...');
+            await client2.query(`
+              CREATE TABLE IF NOT EXISTS email_rerouting_log (
+                id SERIAL PRIMARY KEY,
+                po_id INTEGER NOT NULL,
+                original_tracking_code VARCHAR(255) NOT NULL,
+                recipient_email VARCHAR(255) NOT NULL,
+                sent_date TIMESTAMP NOT NULL DEFAULT NOW(),
+                status VARCHAR(50) NOT NULL DEFAULT 'sent',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+              );
+            `);
+            
+            // Try insert again
+            await client2.query(
+              `INSERT INTO email_rerouting_log 
+               (po_id, original_tracking_code, recipient_email, sent_date, status)
+               VALUES ($1, $2, $3, NOW(), 'sent')`,
+              [poId, trackingCode, recipient]
+            );
+          } else {
+            throw error;
+          }
+        } finally {
+          client2.release();
         }
-      } finally {
-        client2.release();
+      }
+      
+      // Clean up the attempting record after all emails are sent
+      try {
+        const cleanupClient = await this.pool.connect();
+        await cleanupClient.query(
+          `DELETE FROM email_rerouting_log 
+           WHERE po_id = $1 AND status = 'attempting' AND recipient_email LIKE 'rerouting-attempt-%'`,
+          [poId]
+        );
+        cleanupClient.release();
+        console.log(`Cleaned up attempting record for PO #${poId}`);
+      } catch (cleanupError) {
+        console.error('Error cleaning up attempting record:', cleanupError);
       }
       
     } catch (error) {
       console.error('Error re-routing approved PO:', error);
+      
+      // Clean up the attempting record on error too
+      try {
+        const cleanupClient = await this.pool.connect();
+        await cleanupClient.query(
+          `DELETE FROM email_rerouting_log 
+           WHERE po_id = $1 AND status = 'attempting' AND recipient_email LIKE 'rerouting-attempt-%'`,
+          [poId]
+        );
+        cleanupClient.release();
+        console.log(`Cleaned up attempting record for PO #${poId} after error`);
+      } catch (cleanupError) {
+        console.error('Error cleaning up attempting record after error:', cleanupError);
+      }
     }
   }
 

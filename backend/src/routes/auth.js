@@ -64,7 +64,7 @@ router.post('/login', loginLimiter, async (req, res) => {
     // Generate JWT token
     const token = jwt.sign(
       { 
-        userId: user.user_id,
+        id: user.user_id,
         username: user.username,
         role: user.role 
       },
@@ -120,7 +120,7 @@ router.get('/verify', async (req, res) => {
     // Get user from database using executeWithRetry
     const userResult = await executeWithRetry(
       'SELECT user_id, username, role FROM users WHERE user_id = $1',
-      [decoded.userId]
+      [decoded.id]
     );
 
     if (!userResult.rows[0]) {
@@ -154,7 +154,7 @@ router.post('/change-password', async (req, res) => {
     // Get user from database
     const userResult = await executeWithRetry(
       'SELECT * FROM users WHERE user_id = $1',
-      [decoded.userId]
+      [decoded.id]
     );
 
     const user = userResult.rows[0];
@@ -175,7 +175,7 @@ router.post('/change-password', async (req, res) => {
     // Update password in database
     await executeWithRetry(
       'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE user_id = $2',
-      [hashedPassword, decoded.userId]
+      [hashedPassword, decoded.id]
     );
 
     res.json({ message: 'Password updated successfully' });

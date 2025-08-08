@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import { purchaseOrdersApi } from '../../services/api';
+import * as documentApi from '../../services/documentApi';
 
 interface UploadPODocumentProps {
   poId: number;
@@ -62,14 +62,7 @@ const UploadPODocument: React.FC<UploadPODocumentProps> = ({ poId, open, onClose
       formData.append('documentType', documentType);
       formData.append('notes', notes);
 
-      // Mock API call for now - will be replaced with real API
-      if (typeof purchaseOrdersApi.uploadDocument === 'function') {
-        await purchaseOrdersApi.uploadDocument(poId, formData);
-      } else {
-        // Mock success for testing
-        console.log('Mock document upload - API method not available');
-        await new Promise(resolve => setTimeout(resolve, 1000));
-      }
+      await documentApi.uploadDocument(poId, formData);
 
       // Clear form and notify parent
       setFile(null);

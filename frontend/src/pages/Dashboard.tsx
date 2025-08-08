@@ -10,6 +10,7 @@ import POStatusCard from '../components/purchaseOrders/POStatusCard';
 import axiosInstance from '../utils/axios';
 import { socket } from '../utils/socket';
 import { DashboardData } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 
 const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -18,6 +19,13 @@ const Dashboard: React.FC = () => {
   const [calendarDate, setCalendarDate] = useState(new Date());
   const calendarRef = useRef<PMCalendarRef>(null);
   const navigate = useNavigate();
+  const { hasPermission, userRole } = useAuth();
+
+  // Check if user can manage purchase orders
+  const canManagePurchaseOrders = hasPermission('CAN_MANAGE_PURCHASE_ORDERS');
+  
+  // Check if user is a tech user (PM should be more prominent)
+  const isTechUser = userRole === 'tech';
 
   const fetchDashboardData = async () => {
     try {
@@ -129,35 +137,11 @@ const Dashboard: React.FC = () => {
         maxWidth: '100%',
         position: 'relative'
       }}>
-        {/* Inventory Status Alerts - TOP LEFT */}
+        {/* PM Calendar - More prominent for tech users */}
         <div className="card shadow-sm border-0 rounded-3" style={{ 
           backgroundColor: '#f0f2f5', 
-          gridColumn: 'span 7',
-          gridRow: 'span 1',
-          overflow: 'auto',
-          height: 'calc(50vh - 10px)'
-        }}>
-          <div className="card-body p-2">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <h5 className="card-title mb-0" style={{ color: '#FF6200', fontSize: '1.1rem' }}>Inventory Status Alerts</h5>
-              <FiservButton onClick={() => navigate('/purchase-orders')} size="sm">
-                View Purchase Orders
-              </FiservButton>
-            </div>
-            <LowStockReport 
-              data={[
-                ...(dashboardData.lowStockParts || []),
-                ...(dashboardData.outOfStockParts || [])
-              ]} 
-            />
-          </div>
-        </div>
-        
-        {/* PM Calendar - TOP RIGHT */}
-        <div className="card shadow-sm border-0 rounded-3" style={{ 
-          backgroundColor: '#f0f2f5', 
-          gridColumn: 'span 5',
-          gridRow: 'span 2',
+          gridColumn: isTechUser ? 'span 7' : 'span 5', // Slightly smaller for tech users to give more space to Stock Status
+          gridRow: isTechUser ? 'span 2' : 'span 2', // Full height for tech users
           overflow: 'auto',
           height: 'calc(100vh - 20px)'
         }}>
@@ -172,24 +156,54 @@ const Dashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Purchase Order Status - BOTTOM LEFT */}
+        {/* Inventory Status Alerts - Wider for tech users */}
         <div className="card shadow-sm border-0 rounded-3" style={{ 
           backgroundColor: '#f0f2f5', 
-          gridColumn: 'span 7',
-          gridRow: 'span 1',
+          gridColumn: isTechUser ? 'span 5' : 'span 7', // Wider for tech users
+          gridRow: isTechUser ? 'span 2' : (canManagePurchaseOrders ? 'span 1' : 'span 2'), // Same height as PM for tech users
           overflow: 'auto',
-          height: 'calc(50vh - 10px)'
+          height: isTechUser ? 'calc(100vh - 20px)' : (canManagePurchaseOrders ? 'calc(50vh - 10px)' : 'calc(100vh - 20px)')
         }}>
           <div className="card-body p-2">
-            <POStatusCard
-              pendingCount={dashboardData.pendingPOCount || 0}
-              approvedCount={dashboardData.approvedPOCount || 0}
-              rejectedCount={dashboardData.rejectedPOCount || 0}
-              totalCount={dashboardData.totalPOCount || 0}
-              recentPOs={dashboardData.recentPurchaseOrders || []}
+            <div className="d-flex justify-content-between align-items-center mb-1">
+              <h5 className="card-title mb-0" style={{ color: '#FF6200', fontSize: '1.1rem' }}>
+                {isTechUser ? 'Stock Status' : 'Inventory Status Alerts'}
+              </h5>
+              {canManagePurchaseOrders && (
+                <FiservButton onClick={() => navigate('/purchase-orders')} size="sm">
+                  View Purchase Orders
+                </FiservButton>
+              )}
+            </div>
+            <LowStockReport 
+              data={[
+                ...(dashboardData.outOfStockParts || []),
+                ...(dashboardData.lowStockParts || [])
+              ]} 
             />
           </div>
         </div>
+
+        {/* Purchase Order Status - Only show for non-tech users when they have permission */}
+        {canManagePurchaseOrders && !isTechUser && (
+          <div className="card shadow-sm border-0 rounded-3" style={{ 
+            backgroundColor: '#f0f2f5', 
+            gridColumn: 'span 7', // Full width for non-tech users
+            gridRow: 'span 1',
+            overflow: 'auto',
+            height: 'calc(50vh - 10px)'
+          }}>
+            <div className="card-body p-2">
+              <POStatusCard
+                pendingCount={dashboardData.pendingPOCount || 0}
+                approvedCount={dashboardData.approvedPOCount || 0}
+                rejectedCount={dashboardData.rejectedPOCount || 0}
+                totalCount={dashboardData.totalPOCount || 0}
+                recentPOs={dashboardData.recentPurchaseOrders || []}
+              />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

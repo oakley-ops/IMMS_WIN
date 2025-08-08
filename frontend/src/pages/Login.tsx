@@ -54,7 +54,7 @@ const Login: React.FC = () => {
               align="center"
               sx={commonStyles.title}
             >
-              Tech Inventory
+              IMMS
             </Typography>
             <Typography 
               variant="h5" 

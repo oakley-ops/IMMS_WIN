@@ -16,13 +16,13 @@ const pool = new Pool({
 async function runMigration() {
   try {
     // Read the SQL file
-    const sqlPath = path.join(__dirname, 'migrations', '20240320_create_po_email_tracking.sql');
+    const sqlPath = path.join(__dirname, 'migrations', 'add_missing_machine_fields.sql');
     const sql = fs.readFileSync(sqlPath, 'utf8');
     
     // Connect to the database
     const client = await pool.connect();
     
-    console.log('Running migration: 20240320_create_po_email_tracking.sql');
+    console.log('Running migration: add_missing_machine_fields.sql');
     
     try {
       // Execute the SQL

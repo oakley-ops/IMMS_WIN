@@ -85,7 +85,12 @@ export const suppliersApi = {
 // Purchase Orders API
 export const purchaseOrdersApi = {
   // Use public routes temporarily until auth is fixed
-  getAll: () => api.get('/api/v1/public/purchase-orders'),
+  getAll: (includeHistoricalReceived?: boolean) => {
+    const params = { 
+      includeHistoricalReceived: includeHistoricalReceived ? 'true' : 'false' 
+    };
+    return api.get('/api/v1/public/purchase-orders', { params });
+  },
   getById: (id: number) => api.get(`/api/v1/public/purchase-orders/${id}`),
   create: (poData: any) => api.post('/api/v1/purchase-orders', poData),
   createBlank: (poData: any) => api.post('/api/v1/purchase-orders/blank', poData),
@@ -97,6 +102,12 @@ export const purchaseOrdersApi = {
   addPartToPO: (id: number, partData: any) => api.post(`/api/v1/purchase-orders/${id}/items`, partData),
   removePartFromPO: (id: number, itemId: number) => api.delete(`/api/v1/purchase-orders/${id}/items/${itemId}`),
   updatePartInPO: (id: number, itemId: number, partData: any) => api.put(`/api/v1/purchase-orders/${id}/items/${itemId}`, partData),
+  // Partial receipt functionality
+  updateItemReceiptStatus: (poId: number, itemId: number, receiptData: {
+    quantity_received: number;
+    received_by?: string;
+    receipt_notes?: string;
+  }) => api.put(`/api/v1/purchase-orders/${poId}/items/${itemId}/receipt`, receiptData),
   createBlankPO: (data: any) => api.post('/api/v1/purchase-orders/blank', data),
   addItemToPO: (poId: number, itemData: any) => api.post(`/api/v1/purchase-orders/${poId}/items`, itemData),
   sendPOEmail: (emailData: {

@@ -34,6 +34,9 @@ class EmailMonitor {
       secure: process.env.IMAP_SECURE === 'true'
     });
 
+    // Initialize monitoring status
+    this.isMonitoringDisabled = false;
+    
     // Initialize internet connection status
     this.isInternetConnected = false;
     this.lastInternetCheck = 0;
@@ -55,10 +58,21 @@ class EmailMonitor {
       host: process.env.IMAP_HOST,
       port: process.env.IMAP_PORT,
       tls: process.env.IMAP_SECURE === 'true',
-      tlsOptions: { rejectUnauthorized: false },
-      authTimeout: 30000,
-      connTimeout: 30000,
-      debug: (msg) => console.log('IMAP Debug:', msg)
+      tlsOptions: { 
+        rejectUnauthorized: false,
+        enableTrace: false,
+        requestCert: true,
+        minVersion: 'TLSv1.2'
+      },
+      authTimeout: 60000,  // Increased from 30s to 60s
+      connTimeout: 60000,  // Increased from 30s to 60s
+      keepalive: {
+        interval: 10000,   // Send keep-alive every 10 seconds
+        idleInterval: 300000, // Keep connection alive for 5 minutes when idle
+        forceNoop: true    // Send NOOP commands to keep connection alive
+      },
+      // Only enable debug in development
+      debug: process.env.NODE_ENV === 'development' ? (msg) => console.log('IMAP Debug:', msg) : null
     });
 
     // Keep track of the polling interval
@@ -188,8 +202,26 @@ class EmailMonitor {
           this.connect();
         }, delay);
       } else {
-        console.error('Max reconnection attempts reached. Please check the email configuration and restart the service.');
-        process.exit(1); // Exit so PM2 can restart the process
+        console.error('Max reconnection attempts reached. Email monitoring will be disabled until manual restart.');
+        console.error('Email approvals will need to be processed manually.');
+        
+        // Clear any existing intervals to stop trying
+        if (this.pollingInterval) {
+          clearInterval(this.pollingInterval);
+          this.pollingInterval = null;
+        }
+        
+        // DO NOT exit the process - this kills the entire backend!
+        // Instead, disable monitoring and log the issue
+        this.isMonitoringDisabled = true;
+        
+        // Try again in 5 minutes in case network issues resolve
+        setTimeout(() => {
+          console.log('Attempting to restart email monitoring after 5 minutes...');
+          this.reconnectAttempts = 0; // Reset attempts
+          this.isMonitoringDisabled = false;
+          this.connect();
+        }, 300000); // 5 minutes
       }
     });
   }
@@ -211,6 +243,11 @@ class EmailMonitor {
   }
 
   checkForApprovalEmails() {
+    // Check if monitoring is disabled
+    if (this.isMonitoringDisabled) {
+      return;
+    }
+    
     // First check if we have internet connectivity
     if (!this.isInternetConnected) {
       console.log('No internet connection. Skipping email check.');
@@ -323,18 +360,30 @@ class EmailMonitor {
               const bodyLower = parsed.text?.toLowerCase() || '';
               const bodyLines = parsed.text?.split('\n').map(line => line.trim().toLowerCase()) || [];
               
+              console.log('Email body lines for analysis:', bodyLines);
+              
               // Define approval and hold keywords
               const approvalKeywords = ['approved', 'approval', 'accept', 'accepted', 'yes', 'confirm', 'confirmed', 
                                      'looks good', 'i approve', 'approve', 'ok', 'good', 'fine', 'agreed', 'correct'];
               
-              // Simplified approval check - if any line starts with an approval keyword
-              const hasApproval = bodyLines.some(line => 
-                approvalKeywords.some(keyword => line.startsWith(keyword))
+              // Improved approval check - if any line contains an approval keyword (not just starts with)
+              const hasApprovalInLines = bodyLines.some(line => 
+                approvalKeywords.some(keyword => line.includes(keyword))
               );
-
-              // If we find an approval keyword, mark as approved
-              const isApproved = hasApproval;
+              
+              // Also check the full body text for approval keywords
+              const hasApprovalInBody = approvalKeywords.some(keyword => bodyLower.includes(keyword));
+              
+              // If we find an approval keyword anywhere, mark as approved
+              const isApproved = hasApprovalInLines || hasApprovalInBody;
+              console.log('Body lines contain approval:', hasApprovalInLines);
+              console.log('Full body contains approval:', hasApprovalInBody);
               console.log('Approval status:', isApproved ? 'APPROVED' : 'NOT APPROVED');
+              
+              if (isApproved) {
+                const foundKeywords = approvalKeywords.filter(keyword => bodyLower.includes(keyword));
+                console.log('Found approval keywords:', foundKeywords);
+              }
               
               try {
                 await emailTrackingService.processEmailApproval(trackingCode, approvalEmail, isApproved, parsed.text);
@@ -345,6 +394,16 @@ class EmailMonitor {
                 if (uid) {
                   processedUIDs.push(uid);
                 }
+                
+                // Mark this message as SEEN to prevent reprocessing
+                console.log(`Marking email with UID ${uid} as SEEN to prevent reprocessing`);
+                this.imap.addFlags(uid, ['\\Seen'], (flagErr) => {
+                  if (flagErr) {
+                    console.error(`Error marking email ${uid} as seen:`, flagErr);
+                  } else {
+                    console.log(`Successfully marked email ${uid} as SEEN`);
+                  }
+                });
               } catch (error) {
                 console.error('Error processing email approval:', error);
                 console.error('Error details:', error.message);
@@ -443,11 +502,20 @@ class EmailMonitor {
   }
 
   connect() {
+    // Check if monitoring is disabled
+    if (this.isMonitoringDisabled) {
+      return;
+    }
+    
     // Check internet connectivity first
     this.checkInternetConnection().then(isConnected => {
       if (!isConnected) {
         console.log('No internet connection available. Will try again when connectivity is restored.');
         return;
+      }
+      
+      if (this.isMonitoringDisabled) {
+        return; // Double-check after async operation
       }
       
       try {

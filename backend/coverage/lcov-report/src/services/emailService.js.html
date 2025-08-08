@@ -1418,7 +1418,7 @@ class EmailService {
     const trackingRecord = <span class="cstat-no" title="statement not covered" >await trackingService.createTrackingRecord(</span>
       poId,
       recipient,
-      `Purchase Order #${poNumber}`,
+      `Purchase Order Request #${poNumber}`,
       pdfBase64,
       notes // Pass notes to be stored with the tracking record
     );
@@ -1429,7 +1429,7 @@ class EmailService {
     
     // Create a completely new template without any REJECT option
     let html = <span class="cstat-no" title="statement not covered" >`</span>
-      &lt;h2&gt;Purchase Order #${poNumber}&lt;/h2&gt;
+      &lt;h2&gt;Purchase Order Request #${poNumber}&lt;/h2&gt;
       &lt;p&gt;Please find attached the purchase order document for your review and approval.&lt;/p&gt;
       
       ${notes ? `

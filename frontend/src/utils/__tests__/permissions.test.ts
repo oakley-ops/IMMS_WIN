@@ -31,6 +31,10 @@ describe('Permissions Utility', () => {
       expect(hasPermission('tech', 'CAN_CHECKOUT_PARTS')).toBe(true);
     });
     
+    it('should return true for tech role with CAN_VIEW_MACHINES permission', () => {
+      expect(hasPermission('tech', 'CAN_VIEW_MACHINES')).toBe(true);
+    });
+    
     it('should return false for unknown permission for non-admin roles', () => {
       expect(hasPermission('tech', 'NON_EXISTENT_PERMISSION')).toBe(false);
       expect(hasPermission('purchasing', 'NON_EXISTENT_PERMISSION')).toBe(false);

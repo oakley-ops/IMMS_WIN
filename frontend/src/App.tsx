@@ -21,6 +21,8 @@ import SupplierPartsList from './components/suppliers/SupplierPartsList';
 import UserManagement from './pages/UserManagement';
 import ProjectList from './components/projects/ProjectList';
 import ProjectTimeline from './components/projects/ProjectTimeline';
+import TechnicianManagement from './components/TechnicianManagement';
+import PMChecklistManagement from './components/PMChecklistManagement';
 // Comment out or remove this import since it's creating an error
 // import TestPOPage from './pages/TestPOPage';
 
@@ -75,11 +77,11 @@ const App: React.FC = () => {
             }
           />
           
-          {/* Machines - requires CAN_VIEW_ALL permission */}
+          {/* Machines - requires CAN_VIEW_MACHINES permission */}
           <Route
             path="/machines/*"
             element={
-              <ProtectedRoute requiredPermission="CAN_VIEW_ALL">
+              <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
                 <Navigation>
                   <Machines />
                 </Navigation>
@@ -171,6 +173,30 @@ const App: React.FC = () => {
               <ProtectedRoute requiredPermission="CAN_MANAGE_USERS">
                 <Navigation>
                   <UserManagement />
+                </Navigation>
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Technician Management - requires CAN_MANAGE_USERS permission */}
+          <Route
+            path="/technicians"
+            element={
+              <ProtectedRoute requiredPermission="CAN_MANAGE_USERS">
+                <Navigation>
+                  <TechnicianManagement />
+                </Navigation>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* PM Checklist Management - requires CAN_MANAGE_PM_CHECKLISTS permission */}
+          <Route
+            path="/pm-checklists"
+            element={
+              <ProtectedRoute requiredPermission="CAN_MANAGE_PM_CHECKLISTS">
+                <Navigation>
+                  <PMChecklistManagement />
                 </Navigation>
               </ProtectedRoute>
             }

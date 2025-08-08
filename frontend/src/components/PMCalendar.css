@@ -431,6 +431,30 @@ button.btn-outline-primary:hover,
   padding: 0.5rem 0.75rem;
 }
 
+/* Technician Column */
+.tech-column {
+  color: #2c3e50;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  min-width: 100px;
+}
+
+.technician-name {
+  color: #0066A1;
+  font-weight: 600;
+  background-color: #e8f4f8;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+/* Table headers */
+.pm-calendar-table th.tech-header {
+  text-align: center;
+  min-width: 100px;
+}
+
 /* Row Styling */
 .pm-calendar-table tr {
   transition: background-color 0.2s;

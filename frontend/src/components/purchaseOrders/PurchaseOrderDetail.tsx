@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { purchaseOrdersApi } from '../../services/api';
 import {
   Box,
   Paper,
@@ -41,7 +42,6 @@ import {
   Switch
 } from '@mui/material';
 import { format } from 'date-fns';
-import { purchaseOrdersApi } from '../../services/api';
 import { PurchaseOrder } from '../../types/purchaseOrder';
 import { 
   ArrowBack, 
@@ -137,7 +137,48 @@ const PurchaseOrderDetail: React.FC = () => {
   const [isCustomPart, setIsCustomPart] = useState<boolean>(false);
   const [customPartName, setCustomPartName] = useState<string>('');
   const [customPartNumber, setCustomPartNumber] = useState<string>('');
+  
+  // Partial order state
+  const [receiptDialogOpen, setReceiptDialogOpen] = useState<boolean>(false);
+  const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [quantityReceived, setQuantityReceived] = useState<number>(0);
+  const [receivedBy, setReceivedBy] = useState<string>('');
+  const [receiptNotes, setReceiptNotes] = useState<string>('');
+  
   const navigate = useNavigate();
+
+  // Utility function to get order status
+  const getReceiptStatusInfo = (item: any) => {
+    const quantityOrdered = item.quantity || 0;
+    const quantityReceived = item.quantity_received || 0;
+    const remaining = quantityOrdered - quantityReceived;
+    
+    if (quantityReceived === 0) {
+      return {
+        status: 'not_received',
+        label: 'Not Received',
+        color: 'default' as const,
+        progress: 0,
+        remaining
+      };
+    } else if (quantityReceived < quantityOrdered) {
+      return {
+        status: 'partially_received',
+        label: 'Partially Received',
+        color: 'warning' as const,
+        progress: (quantityReceived / quantityOrdered) * 100,
+        remaining
+      };
+    } else {
+      return {
+        status: 'fully_received',
+        label: 'Fully Received',
+        color: 'success' as const,
+        progress: 100,
+        remaining: 0
+      };
+    }
+  };
 
   // Define fetchPurchaseOrder function outside useEffect
   const fetchPurchaseOrder = async () => {
@@ -511,10 +552,57 @@ const PurchaseOrderDetail: React.FC = () => {
     
     try {
       setLoading(true);
-      console.log('Exporting purchase order to PDF - Full data:', JSON.stringify(purchaseOrder, null, 2));
       
-      // Generate PDF with purchase order data
-      await generatePurchaseOrderPDF(purchaseOrder);
+      // Make sure we have all the item data ready for PDF generation
+      const enhancedPurchaseOrder = {
+        ...purchaseOrder,
+        items: purchaseOrder.items ? purchaseOrder.items.map(item => {
+          // Determine part name using fallbacks
+          const partName = item.custom_part_name || 
+                         item.part_name || 
+                         (() => {
+                           // Try to extract from notes if available
+                           if (item.notes) {
+                             try {
+                               const notesData = JSON.parse(item.notes);
+                               return notesData.part_name || notesData.custom_part_name;
+                             } catch (e) {
+                               console.log('Failed to parse notes JSON:', e);
+                             }
+                           }
+                           return null;
+                         })();
+
+          // Determine part number using fallbacks
+          const partNumber = item.custom_part_number || 
+                           item.manufacturer_part_number || 
+                           item.fiserv_part_number || 
+                           (() => {
+                             // Try to extract from notes if available
+                             if (item.notes) {
+                               try {
+                                 const notesData = JSON.parse(item.notes);
+                                 return notesData.part_number || notesData.custom_part_number;
+                               } catch (e) {
+                                 console.log('Failed to parse notes JSON:', e);
+                               }
+                             }
+                             return null;
+                           })();
+
+          return {
+            ...item,
+            // Set consistent fields for the PDF generator
+            part_name: partName,
+            part_number: partNumber
+          };
+        }) : []
+      };
+      
+      console.log('Exporting purchase order to PDF - Full data:', JSON.stringify(enhancedPurchaseOrder, null, 2));
+      
+      // Generate PDF with enhanced purchase order data
+      await generatePurchaseOrderPDF(enhancedPurchaseOrder);
       
     } catch (error) {
       console.error('Error generating PDF file:', error);
@@ -545,12 +633,16 @@ const PurchaseOrderDetail: React.FC = () => {
         return 'info';
       case 'approved':
         return 'success';
+      case 'waiting_for_po_number':
+        return 'secondary';
       case 'on_hold':
-        return 'info';
+        return 'secondary';
       case 'rejected':
         return 'error';
       case 'received':
         return 'success';
+      case 'on_order':
+        return 'info';
       case 'canceled':
         return 'error';
       default:
@@ -688,8 +780,19 @@ const PurchaseOrderDetail: React.FC = () => {
     try {
       setLoading(true);
       
+      // Make sure we have all the item data ready for PDF generation
+      const enhancedPurchaseOrder = {
+        ...purchaseOrder,
+        items: purchaseOrder.items ? purchaseOrder.items.map(item => ({
+          ...item,
+          // Ensure we have consistent naming for the PDF generator
+          part_name: item.part_name || item.custom_part_name || '',
+          part_number: item.fiserv_part_number || item.manufacturer_part_number || item.custom_part_number || ''
+        })) : []
+      };
+      
       // Generate PDF blob
-      const pdfBlob = await generatePurchaseOrderPDF(purchaseOrder, true);
+      const pdfBlob = await generatePurchaseOrderPDF(enhancedPurchaseOrder, true);
       
       // Check if pdfBlob exists before proceeding
       if (!pdfBlob) {
@@ -989,6 +1092,65 @@ const PurchaseOrderDetail: React.FC = () => {
       setIsUpdating(false);
     }
   };
+
+  // Partial order functions
+  const openReceiptDialog = (item: any) => {
+    setSelectedItem(item);
+    setQuantityReceived(item.quantity_received || 0);
+    setReceivedBy(item.received_by || '');
+    setReceiptNotes(item.receipt_notes || '');
+    setReceiptDialogOpen(true);
+  };
+
+  const closeReceiptDialog = () => {
+    setReceiptDialogOpen(false);
+    setSelectedItem(null);
+    setQuantityReceived(0);
+    setReceivedBy('');
+    setReceiptNotes('');
+  };
+
+  const handleUpdateReceipt = async () => {
+    if (!selectedItem || !id) return;
+    
+    try {
+      setIsUpdating(true);
+      
+      await purchaseOrdersApi.updateItemReceiptStatus(
+        parseInt(id),
+        selectedItem.item_id,
+        {
+          quantity_received: quantityReceived,
+          received_by: receivedBy,
+          receipt_notes: receiptNotes
+        }
+      );
+      
+      closeReceiptDialog();
+      
+      // Refresh the purchase order data
+      await fetchPurchaseOrder();
+      
+      setSnackbarMessage('Order status updated successfully');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error: any) {
+      console.error('Error updating order status:', error);
+      
+      let errorMessage = 'Failed to update order status';
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      }
+      
+      setSnackbarMessage(errorMessage);
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
   
   // Modify the filter parts logic to handle undefined values
   const filteredParts = partSearchTerm && availableParts
@@ -1066,7 +1228,9 @@ const PurchaseOrderDetail: React.FC = () => {
                 <MenuItem value="pending">PENDING</MenuItem>
                 <MenuItem value="submitted">SUBMITTED</MenuItem>
                 <MenuItem value="approved">APPROVED</MenuItem>
+                <MenuItem value="waiting_for_po_number">WAITING FOR PO #</MenuItem>
                 <MenuItem value="on_hold">ON HOLD</MenuItem>
+                <MenuItem value="on_order">ON ORDER</MenuItem>
                 <MenuItem value="received">RECEIVED</MenuItem>
                 <MenuItem value="canceled">CANCELED</MenuItem>
               </Select>
@@ -1439,6 +1603,8 @@ const PurchaseOrderDetail: React.FC = () => {
                 <TableCell>Quantity</TableCell>
                 <TableCell>Unit Price</TableCell>
                 <TableCell>Total Price</TableCell>
+                <TableCell>Order Status</TableCell>
+                <TableCell align="center">Order Actions</TableCell>
                 {isPOEditable() && <TableCell align="right">Actions</TableCell>}
               </TableRow>
             </TableHead>
@@ -1484,6 +1650,86 @@ const PurchaseOrderDetail: React.FC = () => {
                   <TableCell>${typeof item.total_price === 'number' ? 
                     item.total_price.toFixed(2) : 
                     parseFloat(item.total_price || '0').toFixed(2)}</TableCell>
+                  <TableCell>
+                    {(() => {
+                      const quantityOrdered = item.quantity || 0;
+                      const quantityReceived = item.quantity_received || 0;
+                      const remaining = quantityOrdered - quantityReceived;
+                      
+                      if (quantityReceived === 0) {
+                        return (
+                          <Box>
+                            <Chip 
+                              label="Not Received" 
+                              color="default" 
+                              size="small" 
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                            <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'text.secondary' }}>
+                              0 of {quantityOrdered} received
+                            </Typography>
+                          </Box>
+                        );
+                      } else if (quantityReceived < quantityOrdered) {
+                        return (
+                          <Box>
+                            <Chip 
+                              label="Partially Received" 
+                              color="warning" 
+                              size="small" 
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                            <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'text.secondary' }}>
+                              {quantityReceived} of {quantityOrdered} received
+                            </Typography>
+                            <Typography variant="caption" display="block" sx={{ color: 'warning.main' }}>
+                              {remaining} pending
+                            </Typography>
+                          </Box>
+                        );
+                      } else {
+                        return (
+                          <Box>
+                            <Chip 
+                              label="Fully Received" 
+                              color="success" 
+                              size="small" 
+                              sx={{ fontWeight: 'bold' }}
+                            />
+                            <Typography variant="caption" display="block" sx={{ mt: 0.5, color: 'success.main' }}>
+                              All {quantityOrdered} received
+                            </Typography>
+                            {item.received_date && (
+                              <Typography variant="caption" display="block" sx={{ color: 'text.secondary' }}>
+                                {new Date(item.received_date).toLocaleDateString()}
+                              </Typography>
+                            )}
+                          </Box>
+                        );
+                      }
+                    })()}
+                  </TableCell>
+                  <TableCell align="center">
+                    <Button
+                      size="small"
+                      variant="contained"
+                      onClick={() => openReceiptDialog(item)}
+                      sx={{ 
+                        textTransform: 'none',
+                        bgcolor: 'primary.main',
+                        color: 'white',
+                        '&:hover': {
+                          bgcolor: 'primary.dark'
+                        },
+                        borderRadius: 2,
+                        fontWeight: 'bold',
+                        px: 2
+                      }}
+                      startIcon={<Check sx={{ fontSize: 16 }} />}
+                    >
+                      Update Order
+                    </Button>
+                  </TableCell>
                   {isPOEditable() && (
                     <TableCell align="right">
                       <IconButton
@@ -1862,6 +2108,196 @@ const PurchaseOrderDetail: React.FC = () => {
           <Button onClick={closeDeleteItemDialog}>Cancel</Button>
           <Button onClick={handleDeleteItem} color="error" variant="contained">
             Remove
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Partial Order Dialog */}
+      <Dialog open={receiptDialogOpen} onClose={closeReceiptDialog} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ 
+          bgcolor: 'primary.main', 
+          color: 'white',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}>
+          <Check sx={{ fontSize: 20 }} />
+          Update Order Status
+        </DialogTitle>
+        <DialogContent>
+          {selectedItem && (
+            <Box sx={{ pt: 3 }}>
+              {/* Part Information Card */}
+              <Card sx={{ mb: 3, bgcolor: 'grey.50', border: '1px solid', borderColor: 'grey.200' }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Box sx={{ 
+                      width: 40, 
+                      height: 40, 
+                      bgcolor: 'primary.main', 
+                      borderRadius: '50%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mr: 2
+                    }}>
+                      <Typography variant="h6" color="white">
+                        {(selectedItem.custom_part_name || selectedItem.part_name || 'P').charAt(0).toUpperCase()}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" gutterBottom>
+                        {selectedItem.custom_part_name || selectedItem.part_name || 'Unknown Part'}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Part #: {selectedItem.custom_part_number || selectedItem.manufacturer_part_number || selectedItem.fiserv_part_number || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  
+                  {/* Quantity Status */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                    <Box sx={{ 
+                      bgcolor: 'info.light', 
+                      color: 'info.contrastText',
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      minWidth: 70,
+                      textAlign: 'center'
+                    }}>
+                      <Typography variant="caption" fontWeight="bold">
+                        Ordered
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontSize: '1.1rem', lineHeight: 1.2 }}>
+                        {selectedItem.quantity}
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ 
+                      bgcolor: quantityReceived > 0 ? 'success.light' : 'grey.200',
+                      color: quantityReceived > 0 ? 'success.contrastText' : 'text.secondary',
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      minWidth: 70,
+                      textAlign: 'center'
+                    }}>
+                      <Typography variant="caption" fontWeight="bold">
+                        Received
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontSize: '1.1rem', lineHeight: 1.2 }}>
+                        {quantityReceived}
+                      </Typography>
+                    </Box>
+                    
+                    <Box sx={{ 
+                      bgcolor: (selectedItem.quantity - quantityReceived) > 0 ? 'warning.light' : 'grey.200',
+                      color: (selectedItem.quantity - quantityReceived) > 0 ? 'warning.contrastText' : 'text.secondary',
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      minWidth: 70,
+                      textAlign: 'center'
+                    }}>
+                      <Typography variant="caption" fontWeight="bold">
+                        Pending
+                      </Typography>
+                      <Typography variant="h6" sx={{ fontSize: '1.1rem', lineHeight: 1.2 }}>
+                        {selectedItem.quantity - quantityReceived}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+
+              {/* Receipt Form */}
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Quantity Received"
+                    type="number"
+                    value={quantityReceived}
+                    onChange={(e) => setQuantityReceived(Math.max(0, parseInt(e.target.value) || 0))}
+                    fullWidth
+                    inputProps={{
+                      min: 0,
+                      max: selectedItem.quantity
+                    }}
+                    helperText={`Enter quantity received (0 to ${selectedItem.quantity})`}
+                    error={quantityReceived > selectedItem.quantity}
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        '&.Mui-focused fieldset': {
+                          borderColor: quantityReceived > selectedItem.quantity ? 'error.main' : 'primary.main',
+                        }
+                      }
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    label="Received By"
+                    value={receivedBy}
+                    onChange={(e) => setReceivedBy(e.target.value)}
+                    fullWidth
+                    placeholder="Enter name of person who received the items"
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Person sx={{ color: 'text.secondary' }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                
+                <Grid item xs={12}>
+                  <TextField
+                    label="Order Notes"
+                    value={receiptNotes}
+                    onChange={(e) => setReceiptNotes(e.target.value)}
+                    fullWidth
+                    multiline
+                    rows={3}
+                    placeholder="Optional notes about the order (condition, partial shipment, etc.)"
+                    sx={{
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: 'grey.50'
+                      }
+                    }}
+                  />
+                </Grid>
+              </Grid>
+              
+              {selectedItem.received_date && (
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  <Typography variant="body2">
+                    Last updated: {new Date(selectedItem.received_date).toLocaleString()}
+                    {selectedItem.received_by && ` by ${selectedItem.received_by}`}
+                  </Typography>
+                </Alert>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, bgcolor: 'grey.50' }}>
+          <Button 
+            onClick={closeReceiptDialog}
+            variant="outlined"
+            sx={{ minWidth: 100 }}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleUpdateReceipt} 
+            variant="contained" 
+            disabled={isUpdating || (selectedItem && quantityReceived > selectedItem.quantity)}
+            sx={{ minWidth: 120 }}
+            startIcon={isUpdating ? <CircularProgress size={16} /> : <Check />}
+          >
+            {isUpdating ? 'Updating...' : 'Update Order'}
           </Button>
         </DialogActions>
       </Dialog>

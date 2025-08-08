@@ -36,8 +36,11 @@ import ViewColumnIcon from '@mui/icons-material/ViewColumn';
 import DownloadIcon from '@mui/icons-material/Download';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import CloseIcon from '@mui/icons-material/Close';
 import * as XLSX from 'xlsx';
 import axiosInstance from '../utils/axios';
+import PartImageUpload from './PartImageUpload';
 import RestockForm from './RestockForm';
 import PartsUsageDialog from './PartsUsageDialog';
 import ImportPartsDialog from './ImportPartsDialog';
@@ -55,6 +58,7 @@ import {
 import { styled } from '@mui/material/styles';
 import ModalPortal from './ModalPortal';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 // Add this at the top of the component to force no caching
 // axios.defaults.headers.common['Cache-Control'] = 'no-cache, no-store, must-revalidate';
@@ -223,6 +227,11 @@ const FiservStyles = `
 
 const PartsList: React.FC = () => {
   const navigate = useNavigate();
+  const { hasPermission } = useAuth();
+  
+  // Check if user can restock parts (admin and purchasing only)
+  const canRestockParts = hasPermission('CAN_MANAGE_PURCHASE_ORDERS');
+  
   const [parts, setParts] = useState<Part[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPart, setSelectedPart] = useState<Part | null>(null);
@@ -254,7 +263,7 @@ const PartsList: React.FC = () => {
   // Column visibility state
   const [columnVisibilityMenuAnchor, setColumnVisibilityMenuAnchor] = useState<null | HTMLElement>(null);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
-    'name', 'fiserv_part_number', 'manufacturer_part_number', 'location', 
+    'image_url', 'name', 'manufacturer_part_number', 'location', 
     'quantity'
   ]);
 
@@ -273,6 +282,10 @@ const PartsList: React.FC = () => {
   const [currentMinOrderQty, setCurrentMinOrderQty] = useState('');
   const [currentSupplierNotes, setCurrentSupplierNotes] = useState('');
   const [openEditConfirm, setOpenEditConfirm] = useState(false);
+  
+  // Image preview state
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const actionColumn: GridColDef = {
     field: 'actions',
@@ -313,6 +326,55 @@ const PartsList: React.FC = () => {
   // Define base columns without the cost column
   const baseColumns: GridColDef[] = [
     { field: 'part_id', headerName: 'ID', width: 70 },
+    
+    // Image column
+    { 
+      field: 'image_url', 
+      headerName: 'Image', 
+      width: 80,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          {params.value ? (
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent row click
+                setPreviewImage(params.value);
+                setPreviewOpen(true);
+              }}
+              sx={{ p: 0.5 }}
+            >
+              <img 
+                src={params.value} 
+                alt="Part" 
+                style={{ 
+                  width: 32, 
+                  height: 32, 
+                  objectFit: 'cover', 
+                  borderRadius: 4,
+                  border: '1px solid #ddd'
+                }}
+              />
+            </IconButton>
+          ) : (
+            <IconButton
+              size="small"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Open edit dialog to upload image
+                const part = params.row as Part;
+                handleOpenEdit(part);
+              }}
+              sx={{ p: 0.5, color: '#ccc' }}
+            >
+              <PhotoCameraIcon fontSize="small" />
+            </IconButton>
+          )}
+        </Box>
+      )
+    },
+    
     { field: 'name', headerName: 'Name', flex: 1 },
     { field: 'description', headerName: 'Description', flex: 1.5 },
     { field: 'manufacturer_part_number', headerName: 'Manufacturer Part #', flex: 1 },
@@ -351,6 +413,8 @@ const PartsList: React.FC = () => {
 
   const fetchParts = useCallback(async () => {
     setLoading(true);
+    setError(null); // Clear any previous errors
+    
     try {
       console.log('💰 COST DEBUG: Starting fetchParts');
       const { page, pageSize } = paginationModel;
@@ -476,11 +540,16 @@ const PartsList: React.FC = () => {
       
       console.log('💰 SETTING STATE with processed parts:', updatedParts.slice(0, 3));
       
-      setTotalItems(response.data.total);
+      setTotalItems(response.data.total || 0);
       setParts(updatedParts);
       setLoading(false);
+      
+      console.log(`✅ Successfully loaded ${updatedParts.length} parts in ${response.data.queryTime || 'unknown'}ms`);
     } catch (error: any) {
-      console.error(error);
+      console.error('Error fetching parts:', error);
+      setError(`Failed to fetch parts: ${error.message || 'Unknown error'}`);
+      setParts([]); // Clear parts on error to prevent stale data
+      setTotalItems(0);
       setLoading(false);
     }
   }, [paginationModel, searchTerm]);
@@ -489,6 +558,10 @@ const PartsList: React.FC = () => {
   useEffect(() => {
     // Debounce search to avoid too many requests
     const timer = setTimeout(() => {
+      // Clear current parts before fetching new ones to prevent row ID conflicts
+      if (searchTerm) {
+        setParts([]);
+      }
       fetchParts();
     }, 500);
     
@@ -1168,15 +1241,18 @@ const PartsList: React.FC = () => {
     setOpenEditConfirm(true);
   };
 
-  const handleFullEdit = () => {
-    if (selectedPart && selectedPart.part_id) {
-      navigate(`/parts/${selectedPart.part_id}/edit`);
+  const handleRestock = () => {
+    if (selectedPart) {
+      // Pre-populate the restock form with the selected part
+      setOpenRestockForm(true);
     }
+    setOpenEditConfirm(false);
   };
 
-  const handleQuickEdit = () => {
+  const handleCheckOut = () => {
     if (selectedPart) {
-      handleOpenEdit(selectedPart);
+      // Open the usage dialog to check out the part
+      setOpenUsageDialog(true);
     }
     setOpenEditConfirm(false);
   };
@@ -1232,7 +1308,7 @@ const PartsList: React.FC = () => {
                 onClick={handleOpenAdd}
                 style={{ 
                   backgroundColor: '#FF6600', 
-                  color: '#e0e0e0',
+                  color: 'white',
                   border: 'none',
                   display: 'flex',
                   alignItems: 'center',
@@ -1244,27 +1320,31 @@ const PartsList: React.FC = () => {
                   boxShadow: '0 2px 4px rgba(255, 102, 0, 0.3)'
                 }}
               >
-                <AddIcon sx={{ fontSize: 18, color: '#e0e0e0' }} /> Add Part
+                <AddIcon sx={{ fontSize: 18, color: 'white' }} /> Add Part
               </button>
               
               <div className="d-flex gap-2 mb-2">
                 <button
                   type="button"
                   className="btn flex-grow-1"
-                  onClick={() => setOpenRestockForm(true)}
+                  onClick={() => canRestockParts && setOpenRestockForm(true)}
+                  disabled={!canRestockParts}
                   style={{ 
-                    backgroundColor: '#FF6600',
-                    color: '#e0e0e0',
+                    backgroundColor: canRestockParts ? '#FF6600' : '#6c757d',
+                    color: 'white',
                     border: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     gap: '0.5rem',
                     padding: '0.375rem 0.75rem',
-                    fontSize: '0.85rem'
+                    fontSize: '0.85rem',
+                    cursor: canRestockParts ? 'pointer' : 'not-allowed',
+                    opacity: canRestockParts ? 1 : 0.6
                   }}
+                  title={canRestockParts ? 'Restock parts' : 'Only admin and purchasing users can restock parts'}
                 >
-                  <AddCircleIcon sx={{ fontSize: 16, color: '#e0e0e0' }} /> Restock
+                  <AddCircleIcon sx={{ fontSize: 16, color: 'white' }} /> Restock
                 </button>
                 <button
                   type="button"
@@ -1272,7 +1352,7 @@ const PartsList: React.FC = () => {
                   onClick={() => setOpenUsageDialog(true)}
                   style={{ 
                     backgroundColor: '#FF6600',
-                    color: '#e0e0e0',
+                    color: 'white',
                     border: 'none',
                     display: 'flex',
                     alignItems: 'center',
@@ -1282,7 +1362,7 @@ const PartsList: React.FC = () => {
                     fontSize: '0.85rem'
                   }}
                 >
-                  <RemoveCircleIcon sx={{ fontSize: 16, color: '#e0e0e0' }} /> Check Out
+                  <RemoveCircleIcon sx={{ fontSize: 16, color: 'white' }} /> Check Out
                 </button>
               </div>
               
@@ -1293,7 +1373,7 @@ const PartsList: React.FC = () => {
                   onClick={() => setImportDialogOpen(true)}
                   style={{ 
                     backgroundColor: '#FF6600',
-                    color: '#e0e0e0',
+                    color: 'white',
                     border: 'none',
                     display: 'flex',
                     alignItems: 'center',
@@ -1303,7 +1383,7 @@ const PartsList: React.FC = () => {
                     fontSize: '0.85rem'
                   }}
                 >
-                  <CloudUploadIcon sx={{ fontSize: 16, color: '#e0e0e0' }} /> Import
+                  <CloudUploadIcon sx={{ fontSize: 16, color: 'white' }} /> Import
                 </button>
                 <button
                   type="button"
@@ -1311,7 +1391,7 @@ const PartsList: React.FC = () => {
                   onClick={() => setExportDialogOpen(true)}
                   style={{ 
                     backgroundColor: '#FF6600',
-                    color: '#e0e0e0',
+                    color: 'white',
                     border: 'none',
                     display: 'flex',
                     alignItems: 'center',
@@ -1321,7 +1401,7 @@ const PartsList: React.FC = () => {
                     fontSize: '0.85rem'
                   }}
                 >
-                  <DownloadIcon sx={{ fontSize: 16, color: '#e0e0e0' }} /> Export
+                  <DownloadIcon sx={{ fontSize: 16, color: 'white' }} /> Export
                 </button>
                 <button
                   type="button"
@@ -1382,11 +1462,25 @@ const PartsList: React.FC = () => {
               <LinearProgress sx={{ height: '3px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
             )}
             <StyledDataGrid
+              key={`datagrid-${searchTerm}-${paginationModel.page}-${paginationModel.pageSize}`}
               columns={columnsWithActions.filter(col => visibleColumns.includes(col.field)) as readonly GridColDef<any>[]}
               rows={parts}
-              getRowId={(row) => row.part_id || row.id || Math.random().toString()}
+              getRowId={(row) => {
+                // Ensure we have a consistent, stable row ID
+                if (row.part_id !== undefined && row.part_id !== null) {
+                  return `part-${row.part_id}`;
+                }
+                if (row.id !== undefined && row.id !== null) {
+                  return `part-${row.id}`;
+                }
+                // Fallback: use a combination of name and other fields to create a stable ID
+                const fallbackId = `fallback-${row.name || 'unknown'}-${row.fiserv_part_number || 'no-part-num'}-${Date.now()}`;
+                console.warn('Using fallback row ID:', fallbackId, 'for row:', row);
+                return fallbackId;
+              }}
               paginationModel={paginationModel}
               onPaginationModelChange={(newModel: GridPaginationModel) => {
+                console.log('Pagination change:', newModel);
                 setPaginationModel(newModel);
                 setError(null);
               }}
@@ -1398,7 +1492,7 @@ const PartsList: React.FC = () => {
               onRowClick={handleRowClick}
               keepNonExistentRowsSelected={false}
               disableColumnMenu={true}
-              disableVirtualization={false}
+              disableVirtualization={true}
               getRowClassName={(params) => {
                 const row = params.row as any;
                 if (row.quantity <= row.minimum_quantity) {
@@ -1791,6 +1885,41 @@ const PartsList: React.FC = () => {
                   />
                 </div>
 
+                {/* Part Image Upload Section */}
+                <div className="form-group mt-4">
+                  <label className="form-label">Part Image</label>
+                  <div className="card border-primary">
+                    <div className="card-header bg-light">
+                      <strong>Upload Part Image</strong>
+                    </div>
+                    <div className="card-body">
+                      {isEditing && selectedPart?.part_id ? (
+                        <PartImageUpload
+                          partId={selectedPart.part_id}
+                          currentImageUrl={selectedPart.image_url}
+                          onImageUpdate={(imageUrl) => {
+                            if (selectedPart) {
+                              setSelectedPart({ ...selectedPart, image_url: imageUrl });
+                              // Update the parts list to reflect the change
+                              setParts(parts.map(p => 
+                                p.part_id === selectedPart.part_id 
+                                  ? { ...p, image_url: imageUrl }
+                                  : p
+                              ));
+                            }
+                          }}
+                        />
+                      ) : (
+                        <div className="alert alert-info mb-0">
+                          <small>
+                            <strong>Note:</strong> Save the part first, then you can upload an image.
+                          </small>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Suppliers Section */}
                 <div className="mt-4 mb-2">
                   <h5 className="text-primary mb-2">Part Suppliers</h5>
@@ -1986,6 +2115,7 @@ const PartsList: React.FC = () => {
           fetchParts();
           setSuccess('Parts restocked successfully');
         }}
+        preSelectedPart={selectedPart}
       />
 
       {/* Parts Usage Dialog */}
@@ -1996,6 +2126,7 @@ const PartsList: React.FC = () => {
           fetchParts();
           setSuccess('Parts checked out successfully');
         }}
+        preSelectedPart={selectedPart}
       />
 
       {/* Import Parts Dialog */}
@@ -2112,14 +2243,20 @@ const PartsList: React.FC = () => {
         <div className="modal-dialog modal-dialog-centered">
           <div className="modal-content custom-dialog">
             <div className="dialog-header">
-              <h5 className="dialog-title">Edit Part Options</h5>
+              <h5 className="dialog-title">Part Actions</h5>
             </div>
             <div className="dialog-content">
-              <p>How would you like to edit this part?</p>
+              <p>What would you like to do with this part?</p>
               <div className="card mb-3 border-primary">
                 <div className="card-body">
                   <h6 className="card-title">Selected Part: {selectedPart?.name}</h6>
                   <p className="card-text">Part #: {selectedPart?.fiserv_part_number}</p>
+                  <div className="d-flex justify-content-between align-items-center mt-2">
+                    <span className="text-muted">Current Stock: {selectedPart?.quantity}</span>
+                    <span className={`badge ${(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'bg-warning' : 'bg-success'}`}>
+                      {(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'Low Stock' : 'In Stock'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -2136,36 +2273,68 @@ const PartsList: React.FC = () => {
                 <button
                   type="button"
                   className="btn"
-                  onClick={handleQuickEdit}
+                  onClick={handleRestock}
                   style={{ 
-                    backgroundColor: '#0066A1', 
-                    color: '#e0e0e0',
+                    backgroundColor: '#28a745', 
+                    color: 'white',
                     border: 'none',
                     fontSize: '0.875rem',
                     padding: '0.375rem 0.75rem'
                   }}
                 >
-                  Quick Edit
+                  Restock
                 </button>
                 <button
                   type="button"
                   className="btn"
-                  onClick={handleFullEdit}
+                  onClick={handleCheckOut}
                   style={{ 
                     backgroundColor: '#FF6600', 
-                    color: '#e0e0e0',
+                    color: 'white',
                     border: 'none',
                     fontSize: '0.875rem',
                     padding: '0.375rem 0.75rem'
                   }}
                 >
-                  Full Edit
+                  Check Out
                 </button>
               </div>
             </div>
           </div>
         </div>
       </ModalPortal>
+
+      {/* Image Preview Dialog */}
+      <Dialog 
+        open={previewOpen} 
+        onClose={() => setPreviewOpen(false)} 
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Part Image Preview
+          <IconButton
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+            onClick={() => setPreviewOpen(false)}
+          >
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent>
+          {previewImage && (
+            <img 
+              src={previewImage} 
+              alt="Part" 
+              style={{ 
+                width: '100%', 
+                maxWidth: '600px',
+                height: 'auto',
+                borderRadius: 8
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Container>
   );
 };

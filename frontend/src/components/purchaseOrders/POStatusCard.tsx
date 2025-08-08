@@ -37,10 +37,16 @@ const POStatusCard: React.FC<POStatusCardProps> = ({
         return 'info';
       case 'approved':
         return 'success';
+      case 'waiting_for_po_number':
+        return 'secondary';
+      case 'on_hold':
+        return 'secondary';
       case 'rejected':
         return 'error';
       case 'received':
         return 'success';
+      case 'on_order':
+        return 'info';
       case 'canceled':
         return 'error';
       default:

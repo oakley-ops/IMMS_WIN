@@ -29,7 +29,7 @@ const authMiddleware = async (req, res, next) => {
     try {
       // Get user from database to ensure they still exist and get current role
       const result = await pool.query(
-        'SELECT id, username, role FROM users WHERE id = $1',
+        'SELECT user_id, username, role FROM users WHERE user_id = $1',
         [decoded.id]
       );
       
@@ -39,7 +39,7 @@ const authMiddleware = async (req, res, next) => {
       
       // Set user information in request object
       req.user = {
-        id: result.rows[0].id,
+        id: result.rows[0].user_id,
         username: result.rows[0].username,
         role: result.rows[0].role || 'admin' // Fallback to admin if role isn't set
       };

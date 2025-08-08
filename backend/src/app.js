@@ -20,6 +20,8 @@ const vendorRoutes = require('./routes/vendorRoutes');
 const purchaseOrderRoutes = require('./routes/purchaseOrderRoutes');
 const supplierRoutes = require('./routes/supplierRoutes');
 const emailRoutes = require('./routes/emailRoutes');
+const pmRouter = require('./routes/pm');
+const techniciansRouter = require('./routes/technicians');
 
 // Routes
 app.use('/api/v1/parts', partsRouter);
@@ -29,12 +31,17 @@ app.use('/api/v1/vendors', vendorRoutes);
 app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
 app.use('/api/v1/suppliers', supplierRoutes);
 app.use('/api/v1/email', emailRoutes);  // Mount email routes with v1 prefix
+app.use('/api/v1/pm', pmRouter);  // Mount PM routes with v1 prefix
+app.use('/api/v1/technicians', techniciansRouter);  // Mount technicians routes with v1 prefix
 
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ error: 'Something broke!' });
 });
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Handle production
 if (process.env.NODE_ENV === 'production') {

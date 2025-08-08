@@ -16,6 +16,7 @@ import {
   Divider,
   Paper,
   Grid,
+  Badge,
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -25,11 +26,13 @@ import {
   CalendarToday as CalendarIcon,
   Add as AddIcon,
   BarChart as BarChartIcon,
+  Description as DocumentIcon,
 } from '@mui/icons-material';
 import axios from '../utils/axios';
 import MachineDialogs from './MachineDialogs';
 import { Link } from 'react-router-dom';
 import { Machine } from '../types';
+import { getMachineDocuments } from '../services/machineDocumentsApi';
 
 interface MachineListProps {
   machinesData?: Machine[];
@@ -44,6 +47,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
   const addButtonRef = useRef<HTMLButtonElement>(null);
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const [documentCounts, setDocumentCounts] = useState<Record<number, number>>({});
   const [newMachine, setNewMachine] = useState({
     name: '',
     model: '',
@@ -70,6 +74,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
     try {
       const response = await axios.get('/api/v1/machines');
       setMachines(response.data);
+      // Fetch document counts for all machines
+      fetchDocumentCounts(response.data);
     } catch (error) {
       console.error('Error fetching machines:', error);
       setSnackbar({
@@ -78,6 +84,25 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
         severity: 'error',
       });
     }
+  };
+
+  const fetchDocumentCounts = async (machineList: Machine[]) => {
+    const counts: Record<number, number> = {};
+    
+    for (const machine of machineList) {
+      try {
+        const machineId = machine.id || machine.machine_id;
+        if (machineId) {
+          const response = await getMachineDocuments(machineId);
+          counts[machineId] = response.data.length;
+        }
+      } catch (error) {
+        console.log(`No documents found for machine ${machine.name}`);
+        counts[machine.id || machine.machine_id || 0] = 0;
+      }
+    }
+    
+    setDocumentCounts(counts);
   };
 
   const handleOpen = () => {
@@ -108,13 +133,13 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
   const handleEditOpen = (machine: Machine) => {
     previousFocusRef.current = document.activeElement as HTMLElement;
     // Ensure we have a valid number for the ID
-    if (!machine.id && !machine.machine_id) {
+    if (!machine.machine_id && !machine.id) {
       console.error('No valid machine ID found');
       return;
     }
     setSelectedMachine({
       ...machine,
-      id: Number(machine.id || machine.machine_id),  // Convert to number explicitly
+      id: Number(machine.machine_id || machine.id),  // Convert to number explicitly
       installation_date: machine.installation_date?.split('T')[0] || '',
       last_maintenance_date: machine.last_maintenance_date?.split('T')[0] || '',
       next_maintenance_date: machine.next_maintenance_date?.split('T')[0] || '',
@@ -143,14 +168,12 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
     }));
   };
 
-  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    if (selectedMachine) {
-      setSelectedMachine({
-        ...selectedMachine,
-        [name]: value,
-      });
-    }
+    setSelectedMachine(prev => prev ? {
+      ...prev,
+      [name]: value,
+    } : null);
   };
 
   const handleAddMachine = async () => {
@@ -210,7 +233,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
       
       await axios.put(`/api/v1/machines/${machineId}`, formattedMachine);
       handleEditClose();
-      fetchMachines();
+      fetchMachines(); // This will also refresh document counts
       setSnackbar({
         open: true,
         message: 'Machine updated successfully',
@@ -335,7 +358,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
         ) : (
           <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
             {machines.map((machine, index) => (
-              <React.Fragment key={machine.id}>
+              <React.Fragment key={machine.machine_id || machine.id || `machine-${index}`}>
                 {index > 0 && <Divider component="li" />}
                 <ListItem
                   sx={{
@@ -360,7 +383,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                           />
                         </Box>
                         
-                        <Typography color="text.secondary" variant="body2" sx={{ mb: 1 }}>
+                        <Typography color="text.secondary" variant="body2" sx={{ mb: 1 }} component="div">
                           {machine.model}
                           {machine.manufacturer && (
                             <>
@@ -401,6 +424,21 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                       </Box>
                     </Grid>
                     <Grid item xs={12} md={3} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                      <Badge 
+                        badgeContent={documentCounts[machine.machine_id || machine.id || 0] || 0} 
+                        color="primary"
+                        sx={{ mr: 1 }}
+                      >
+                        <Tooltip title={`${documentCounts[machine.machine_id || machine.id || 0] || 0} documents`}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEditOpen(machine)}
+                            aria-label={`View documents for ${machine.name}`}
+                          >
+                            <DocumentIcon />
+                          </IconButton>
+                        </Tooltip>
+                      </Badge>
                       <Button
                         variant="outlined"
                         size="small"
@@ -416,7 +454,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                         size="small"
                         color="error"
                         startIcon={<DeleteIcon />}
-                        onClick={() => handleDeleteMachine(machine.id)}
+                        onClick={() => handleDeleteMachine(machine.machine_id || machine.id)}
                         aria-label={`Delete ${machine.name}`}
                         sx={{ minWidth: '100px' }}
                       >

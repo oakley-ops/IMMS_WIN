@@ -3,6 +3,7 @@ import './PMCalendar.css';
 import { format as formatDate, addMonths, subMonths } from 'date-fns';
 import axiosInstance from '../utils/axios';
 import { Modal, Button } from 'react-bootstrap';
+import PMChecklistDialog from './PMChecklistDialog';
 
 // Interface for PM events
 interface PMEvent {
@@ -11,10 +12,14 @@ interface PMEvent {
   start: Date;
   end: Date;
   allDay: boolean;
+  technician_name?: string; // Added for technician name from API
+  session_started_at?: string; // Added for session start time
   resource: {
     location: string;
+    machineType: string;
     status: 'overdue' | 'due' | 'scheduled' | 'in_progress';
     lastMaintenance: string | null;
+    technicianName?: string; // Added for technician name
   };
 }
 
@@ -41,6 +46,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
   const [currentDate, setCurrentDate] = useState(defaultDate || new Date());
   const [selectedMachine, setSelectedMachine] = useState<PMEvent | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showChecklistDialog, setShowChecklistDialog] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
   const [statusUpdateMessage, setStatusUpdateMessage] = useState('');
 
@@ -89,14 +95,16 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
       
       console.log('PM schedule API response:', response.data);
       
-      const formattedEvents = response.data.map(event => ({
+      const formattedEvents = response.data.map((event: any) => ({
         ...event,
         start: new Date(event.start),
         end: new Date(event.end),
         resource: {
           location: event.resource?.location || 'Unknown',
+          machineType: event.machine_type || 'Default',
           status: event.resource?.status || 'scheduled',
-          lastMaintenance: event.resource?.lastMaintenance || null
+          lastMaintenance: event.resource?.lastMaintenance || null,
+          technicianName: event.technician_name || null // Map technician_name from API
         }
       }));
       
@@ -121,7 +129,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
   const handleMachineClick = (event: PMEvent) => {
     console.log('Selected machine:', event);
     setSelectedMachine(event);
-    setShowModal(true);
+    setShowChecklistDialog(true);
     setStatusUpdateMessage('');
   };
 
@@ -262,6 +270,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
               <th className="date-header">Date</th>
               <th className="time-header">Time</th>
               <th className="event-header">Event</th>
+              <th className="tech-header">Technician</th>
             </tr>
           </thead>
           <tbody>
@@ -289,12 +298,21 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
                         <span className={`ms-2 badge ${event.resource.status}`}>{event.resource.status}</span>
                       </div>
                     </td>
+                    <td className="tech-column">
+                      {event.resource.technicianName ? (
+                        <span className="technician-name">
+                          {event.resource.technicianName}
+                        </span>
+                      ) : (
+                        <span className="text-muted">-</span>
+                      )}
+                    </td>
                   </tr>
                 );
               })
             ) : (
               <tr>
-                <td colSpan={3} className="text-center py-4 text-muted">
+                <td colSpan={4} className="text-center py-4 text-muted">
                   No maintenance schedules found. Make sure machines have next maintenance dates set.
                 </td>
               </tr>
@@ -347,6 +365,23 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
           </Button>
         </Modal.Footer>
       </Modal>
+
+      {/* New PM Checklist Dialog */}
+      {selectedMachine && (
+        <PMChecklistDialog
+          open={showChecklistDialog}
+          onClose={() => setShowChecklistDialog(false)}
+          machineId={selectedMachine.id}
+          machineName={selectedMachine.title.split(' (')[0]}
+          machineModel={selectedMachine.title.includes('(') ? selectedMachine.title.split('(')[1].replace(')', '') : ''}
+          machineLocation={selectedMachine.resource.location}
+          machineType={selectedMachine.resource.machineType}
+          onCompleted={() => {
+            setShowChecklistDialog(false);
+            fetchPMSchedule(); // Refresh the calendar
+          }}
+        />
+      )}
     </div>
   );
 });

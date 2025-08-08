@@ -137,6 +137,13 @@ model PurchaseOrderItem {
   notes                  String?
   created_at             DateTime      @default(now())
   
+  // Partial receipt fields
+  quantity_received      Int?          @default(0)
+  quantity_pending       Int?          // Calculated field: quantity - quantity_received
+  received_date          DateTime?
+  received_by            String?
+  receipt_notes          String?
+  
   // Relations
   purchase_order         PurchaseOrder @relation(fields: [po_id], references: [po_id], onDelete: Cascade)
   part                   Part?         @relation(fields: [part_id], references: [part_id])

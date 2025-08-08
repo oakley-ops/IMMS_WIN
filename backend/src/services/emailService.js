@@ -76,24 +76,28 @@ class EmailService {
 
   // Initialize email tracking service
   initializeEmailTracking() {
-    if (!emailTrackingService) {
-      try {
-        console.log('Initializing email tracking service...');
-        emailTrackingService.setEmailService(this);
-        console.log('Email tracking service initialized successfully');
-      } catch (error) {
-        console.error('Failed to initialize email tracking service:', error);
-      }
+    try {
+      console.log('Initializing email tracking service...');
+      emailTrackingService.setEmailService(this);
+      console.log('Email tracking service initialized successfully');
+    } catch (error) {
+      console.error('Failed to initialize email tracking service:', error);
     }
     return emailTrackingService;
   }
 
   // Get email tracking service, initializing if needed
   getEmailTrackingService() {
-    if (!emailTrackingService) {
+    if (!emailTrackingService.emailService) {
       this.initializeEmailTracking();
     }
     return emailTrackingService;
+  }
+
+  // Set email service for tracking service
+  setEmailService(emailService) {
+    this.emailService = emailService;
+    console.log('Email service set for email tracking service');
   }
 
   // Add a connection verification method
@@ -199,7 +203,7 @@ class EmailService {
     const trackingRecord = await trackingService.createTrackingRecord(
       poId,
       recipient,
-      `Purchase Order #${poNumber}`,
+      `Purchase Order Request #${poNumber}`,
       pdfBase64,
       notes // Pass notes to be stored with the tracking record
     );
@@ -210,7 +214,7 @@ class EmailService {
     
     // Create a completely new template without any REJECT option
     let html = `
-      <h2>Purchase Order #${poNumber}</h2>
+      <h2>Purchase Order Request #${poNumber}</h2>
       <p>Please find attached the purchase order document for your review and approval.</p>
       
       ${notes ? `
@@ -227,15 +231,12 @@ class EmailService {
           <li><strong>APPROVE:</strong> Include words like "approve", "accepted", "confirmed", etc. in your reply</li>
           <li><strong>PUT ON HOLD:</strong> Include words like "on hold", "need changes", "revise", etc. in your reply if changes are needed</li>
         </ul>
-        <p>You can include any additional comments or questions in your reply. The system will automatically process your response.</p>
-        <p><strong>Note:</strong> Only the original recipient (${recipient}) can respond to this purchase order request.</p>
       </div>
-      
-      <p>This is an automated message from the Fiserv Inventory Management System.</p>
+       
     `;
 
     try {
-      console.log(`Attempting to send purchase order #${poNumber} to ${recipient}`);
+      console.log(`Attempting to send purchase order request #${poNumber} to ${recipient}`);
       
       // Check for required data
       if (!pdfBase64) {

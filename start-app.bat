@@ -1,82 +1,52 @@
 @echo off
-setlocal enabledelayedexpansion
-
-title Fiserv Inventory Application Startup
-
 echo Starting Fiserv Inventory Application...
 echo.
 
-:: PostgreSQL check - more generic approach that doesn't rely on service name
-echo Checking PostgreSQL connection...
-set PGPASSWORD=postgres
-psql -h localhost -U postgres -d fiservinventory -c "SELECT 1" >nul 2>&1
-if %ERRORLEVEL% NEQ 0 (
-    echo WARNING: Cannot connect to PostgreSQL database.
-    echo Please ensure PostgreSQL is running and database "fiservinventory" exists.
-    choice /c YN /m "Continue anyway? (Y/N)"
-    if !ERRORLEVEL! NEQ 1 exit /b
-)
-
-:: Kill any existing Node.js processes - more targeted
-echo Terminating any existing Node.js processes for this application...
-taskkill /F /FI "WINDOWTITLE eq Backend Server*" >nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Frontend Server*" >nul 2>&1
-timeout /t 1 >nul
-
-:: Start backend with better error handling
-echo Starting Backend Server (http://localhost:4000)...
-cd backend
-if not exist node_modules (
-    echo Installing backend dependencies...
-    call npm install
-    if !ERRORLEVEL! NEQ 0 (
-        echo ERROR: Failed to install backend dependencies
-        cd ..
-        pause
-        exit /b 1
-    )
-)
-
-start /min "Backend Server" cmd /k "title Backend Server && set PORT=4000 && set PGHOST=localhost && set PGUSER=postgres && set PGPASSWORD=postgres && set PGDATABASE=fiservinventory && npm run start:all"
-cd ..
-
-:: Wait with progress indicator
-echo Waiting for backend to initialize...
-for /l %%i in (1,1,10) do (
-    timeout /t 1 /nobreak >nul
-    echo | set /p="."
-)
+:: Display network information
+echo Network Configuration:
+ipconfig | findstr IPv4
 echo.
 
-:: Start frontend with better error handling
-echo Starting Frontend Server (http://localhost:3002)...
-cd frontend
-if not exist node_modules (
-    echo Installing frontend dependencies...
-    call npm install
-    if !ERRORLEVEL! NEQ 0 (
-        echo ERROR: Failed to install frontend dependencies
-        cd ..
-        pause
-        exit /b 1
-    )
-)
+:: Kill any existing Node.js processes
+taskkill /F /IM node.exe >nul 2>&1
 
-start /min "Frontend Server" cmd /k "title Frontend Server && npm start"
-cd ..
+:: Start the backend server with email monitoring in a minimized window
+echo Starting Backend Server with Email Monitoring (http://0.0.0.0:4000)...
+start /min cmd /k "cd backend && set PORT=4000 && set PGHOST=localhost && set PGUSER=postgres && set PGDATABASE=fiservinventory && set HOST=0.0.0.0 && npm run start:all"
+
+:: Wait for a moment to let backend initialize
+timeout /t 8
+
+:: Start the frontend server for localhost (camera enabled)
+echo Starting Frontend Server - Localhost (http://localhost:3000)...
+start /min cmd /k "cd frontend && npm run start:localhost"
+
+:: Wait for localhost server to start
+timeout /t 3
+
+:: Start the frontend server for network access  
+echo Starting Frontend Server - Network (http://192.168.50.1:3001)...
+start /min cmd /k "cd frontend && npm run start:network-pi"
 
 echo.
-echo All services started!
-echo Navigate to http://localhost:3002 in your browser
+echo PC ACCESS: http://localhost:3000 (Camera enabled - Main interface)
 echo.
-echo Press any key to close all services and exit...
+echo NETWORK ACCESS OPTIONS:
+echo   - http://192.168.50.1:3001 (Ethernet - For Raspberry Pi)
+echo   - http://10.1.10.171:3001 (WiFi - For other devices)
+echo.
+echo Raspberry Pi can access via: http://192.168.50.1:3001
+echo.
 
+:: Wait for servers to fully initialize
+echo Waiting for localhost server to be ready...
+echo (React development server can take 15-20 seconds to start)
+timeout /t 15
+
+:: Open localhost for PC use (camera enabled)
+echo Opening localhost for PC use (camera enabled)...
+echo If you get a 404 error, wait a few more seconds and refresh the browser
+start http://localhost:3000
+
+:: Keep this window open
 pause
-
-:: Clean up when user exits
-echo Shutting down services...
-taskkill /F /FI "WINDOWTITLE eq Backend Server*" >nul 2>&1
-taskkill /F /FI "WINDOWTITLE eq Frontend Server*" >nul 2>&1
-echo Done.
-
-endlocal

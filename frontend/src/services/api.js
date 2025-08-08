@@ -3,7 +3,7 @@ import axiosRetry from 'axios-retry';
 
 // Create axios instance with base URL
 const axiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1',
+  baseURL: process.env.REACT_APP_API_URL || 'http://192.168.50.1:4000',
   timeout: 60000, // Increase default timeout to 60 seconds
   headers: {
     'Content-Type': 'application/json'
@@ -69,13 +69,13 @@ const api = {
   // Parts API
   partsApi: { 
     getAllParts: async () => {
-      const response = await axiosInstance.get('/parts');
+      const response = await axiosInstance.get('/api/v1/parts');
       return response.data;
     },
 
     getAll: async () => {
       try {
-        const response = await axiosInstance.get('/parts');
+        const response = await axiosInstance.get('/api/v1/parts');
         console.log('Raw API response from parts endpoint:', response);
         return response;
       } catch (error) {
@@ -85,12 +85,12 @@ const api = {
     },
 
     getPartById: async (id) => {
-      const response = await axiosInstance.get(`/parts/${id}`);
+      const response = await axiosInstance.get(`/api/v1/parts/${id}`);
       return response.data;
     },
     
     getLowStockParts: async () => {
-      const response = await axiosInstance.get('/parts/low-stock');
+      const response = await axiosInstance.get('/api/v1/parts/low-stock');
       return response.data;
     },
     
@@ -98,7 +98,7 @@ const api = {
       try {
         // The to-reorder endpoint doesn't exist, use low-stock instead
         // We're getting a 500 error because the backend is trying to parse "to-reorder" as an integer
-        const response = await axiosInstance.get('/parts/low-stock');
+        const response = await axiosInstance.get('/api/v1/parts/low-stock');
         return response;
       } catch (error) {
         console.error('Error in partsApi.getPartsToReorder:', error);
@@ -107,17 +107,17 @@ const api = {
     },
     
     createPart: async (partData) => {
-      const response = await axiosInstance.post('/parts', partData);
+      const response = await axiosInstance.post('/api/v1/parts', partData);
       return response.data;
     },
     
     updatePart: async (id, partData) => {
-      const response = await axiosInstance.put(`/parts/${id}`, partData);
+      const response = await axiosInstance.put(`/api/v1/parts/${id}`, partData);
       return response.data;
     },
     
     deletePart: async (id) => {
-      const response = await axiosInstance.delete(`/parts/${id}`);
+      const response = await axiosInstance.delete(`/api/v1/parts/${id}`);
       return response.data;
     }
   },
@@ -125,47 +125,50 @@ const api = {
   // Vendors API
   vendorsApi: {
     getAllVendors: async () => {
-      const response = await axiosInstance.get('/vendors');
+      const response = await axiosInstance.get('/api/v1/vendors');
       return response.data;
     },
     
     getVendorById: async (id) => {
-      const response = await axiosInstance.get(`/vendors/${id}`);
+      const response = await axiosInstance.get(`/api/v1/vendors/${id}`);
       return response.data;
     },
     
     createVendor: async (vendorData) => {
-      const response = await axiosInstance.post('/vendors', vendorData);
+      const response = await axiosInstance.post('/api/v1/vendors', vendorData);
       return response.data;
     },
     
     updateVendor: async (id, vendorData) => {
-      const response = await axiosInstance.put(`/vendors/${id}`, vendorData);
+      const response = await axiosInstance.put(`/api/v1/vendors/${id}`, vendorData);
       return response.data;
     },
     
     deleteVendor: async (id) => {
-      const response = await axiosInstance.delete(`/vendors/${id}`);
+      const response = await axiosInstance.delete(`/api/v1/vendors/${id}`);
       return response.data;
     }
   },
   
   // Purchase Orders API
   purchaseOrdersApi: {
-    getAll: async () => {
-      const response = await axiosInstance.get('/purchase-orders');
+    getAll: async (includeHistoricalReceived = false) => {
+      const params = { 
+        includeHistoricalReceived: includeHistoricalReceived ? 'true' : 'false' 
+      };
+      const response = await axiosInstance.get('/api/v1/purchase-orders', { params });
       return response;
     },
     
     getById: async (id) => {
-      const response = await axiosInstance.get(`/purchase-orders/${id}`);
+      const response = await axiosInstance.get(`/api/v1/purchase-orders/${id}`);
       return response;
     },
     
     getPartsWithPendingOrders: async () => {
       try {
         // This endpoint should fetch parts that already have pending, submitted, or approved orders
-        const response = await axiosInstance.get('/purchase-orders/parts-with-pending-orders');
+        const response = await axiosInstance.get('/api/v1/purchase-orders/parts-with-pending-orders');
         return response;
       } catch (error) {
         console.error('Error in purchaseOrdersApi.getPartsWithPendingOrders:', error);
@@ -177,7 +180,7 @@ const api = {
     generateForParts: async (partsData) => {
       try {
         // Use the generate-for-low-stock endpoint instead of generate-for-parts
-        const response = await axiosInstance.post('/purchase-orders/generate-for-low-stock', partsData);
+        const response = await axiosInstance.post('/api/v1/purchase-orders/generate-for-low-stock', partsData);
         return response;
       } catch (error) {
         console.error('Error in purchaseOrdersApi.generateForParts:', error);
@@ -186,14 +189,14 @@ const api = {
     },
     
     create: async (poData) => {
-      const response = await axiosInstance.post('/purchase-orders', poData);
+      const response = await axiosInstance.post('/api/v1/purchase-orders', poData);
       return response;
     },
     
     createBlank: async (poData) => {
       try {
         console.log('Creating blank PO with data:', JSON.stringify(poData, null, 2));
-        const response = await axiosInstance.post('/purchase-orders/blank', poData);
+        const response = await axiosInstance.post('/api/v1/purchase-orders/blank', poData);
         console.log('Blank PO created successfully:', response.data);
         return response;
       } catch (error) {
@@ -219,7 +222,7 @@ const api = {
     createBlankPO: async (poData) => {
       try {
         console.log('Creating blank PO with data (createBlankPO):', JSON.stringify(poData, null, 2));
-        const response = await axiosInstance.post('/purchase-orders/blank', poData);
+        const response = await axiosInstance.post('/api/v1/purchase-orders/blank', poData);
         console.log('Blank PO created successfully (createBlankPO):', response.data);
         return response;
       } catch (error) {
@@ -243,12 +246,12 @@ const api = {
     },
     
     update: async (id, poData) => {
-      const response = await axiosInstance.put(`/purchase-orders/${id}`, poData);
+      const response = await axiosInstance.put(`/api/v1/purchase-orders/${id}`, poData);
       return response;
     },
     
     delete: async (id) => {
-      const response = await axiosInstance.delete(`/purchase-orders/${id}`);
+      const response = await axiosInstance.delete(`/api/v1/purchase-orders/${id}`);
       return response;
     },
     
@@ -256,7 +259,7 @@ const api = {
       try {
         // Create a new axios instance with longer timeout for this specific request
         const statusAxios = axios.create({
-          baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1',
+                      baseURL: process.env.REACT_APP_API_URL || 'http://192.168.50.1:4000',
           timeout: 180000, // 3 minutes for status updates
           headers: {
             'Content-Type': 'application/json'
@@ -269,7 +272,7 @@ const api = {
           statusAxios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
 
-        const response = await statusAxios.put(`/purchase-orders/${id}/status`, { status });
+        const response = await statusAxios.put(`/api/v1/purchase-orders/${id}/status`, { status });
         return response;
       } catch (error) {
         console.error('Error updating PO status:', error);
@@ -279,7 +282,7 @@ const api = {
     
     addPartToPO: async (poId, partData) => {
       try {
-        const response = await axiosInstance.post(`/purchase-orders/${poId}/items`, partData);
+        const response = await axiosInstance.post(`/api/v1/purchase-orders/${poId}/items`, partData);
         return response;
       } catch (error) {
         console.error('Error in purchaseOrdersApi.addPartToPO:', error);
@@ -289,7 +292,7 @@ const api = {
     
     addItemToPO: async (poId, itemData) => {
       try {
-        const response = await axiosInstance.post(`/purchase-orders/${poId}/items`, itemData);
+        const response = await axiosInstance.post(`/api/v1/purchase-orders/${poId}/items`, itemData);
         return response;
       } catch (error) {
         console.error('Error in purchaseOrdersApi.addItemToPO:', error);
@@ -299,7 +302,7 @@ const api = {
     
     sendPOEmail: async (emailData) => {
       try {
-        const response = await axiosInstance.post('/email/purchase-order', emailData);
+        const response = await axiosInstance.post('/api/v1/email/purchase-order', emailData);
         return response;
       } catch (error) {
         console.error('Error in purchaseOrdersApi.sendPOEmail:', error);
@@ -308,21 +311,32 @@ const api = {
     },
     
     removePartFromPO: async (id, itemId) => {
-      const response = await axiosInstance.delete(`/purchase-orders/${id}/items/${itemId}`);
+      const response = await axiosInstance.delete(`/api/v1/purchase-orders/${id}/items/${itemId}`);
       return response;
+    },
+    
+    // Partial receipt functionality
+    updateItemReceiptStatus: async (poId, itemId, receiptData) => {
+      try {
+        const response = await axiosInstance.put(`/api/v1/purchase-orders/${poId}/items/${itemId}/receipt`, receiptData);
+        return response;
+      } catch (error) {
+        console.error('Error in purchaseOrdersApi.updateItemReceiptStatus:', error);
+        throw error;
+      }
     }
   },
   
   // Suppliers API
   suppliersApi: {
     getAllSuppliers: async () => {
-      const response = await axiosInstance.get('/suppliers');
+      const response = await axiosInstance.get('/api/v1/suppliers');
       return response.data;
     },
     
     getAll: async () => {
       try {
-        const response = await axiosInstance.get('/suppliers');
+        const response = await axiosInstance.get('/api/v1/suppliers');
         return response;
       } catch (error) {
         console.error('Error in suppliersApi.getAll:', error);
@@ -331,22 +345,22 @@ const api = {
     },
     
     getSupplierById: async (id) => {
-      const response = await axiosInstance.get(`/suppliers/${id}`);
+      const response = await axiosInstance.get(`/api/v1/suppliers/${id}`);
       return response.data;
     },
     
     createSupplier: async (supplierData) => {
-      const response = await axiosInstance.post('/suppliers', supplierData);
+      const response = await axiosInstance.post('/api/v1/suppliers', supplierData);
       return response.data;
     },
     
     updateSupplier: async (id, supplierData) => {
-      const response = await axiosInstance.put(`/suppliers/${id}`, supplierData);
+      const response = await axiosInstance.put(`/api/v1/suppliers/${id}`, supplierData);
       return response.data;
     },
     
     deleteSupplier: async (id) => {
-      const response = await axiosInstance.delete(`/suppliers/${id}`);
+      const response = await axiosInstance.delete(`/api/v1/suppliers/${id}`);
       return response.data;
     }
   }

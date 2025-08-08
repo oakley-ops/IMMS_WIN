@@ -217,6 +217,72 @@ router.delete('/:id/items/:itemId', async (req, res) => {
   }
 });
 
+// Update item receipt status for partial receipts
+router.put('/:id/items/:itemId/receipt', async (req, res) => {
+  try {
+    const poId = parseInt(req.params.id);
+    const itemId = parseInt(req.params.itemId);
+    const { quantity_received, received_by, receipt_notes } = req.body;
+    
+    // Validate inputs
+    if (isNaN(poId) || isNaN(itemId) || typeof quantity_received !== 'number' || quantity_received < 0) {
+      return res.status(400).json({ error: 'Invalid input parameters' });
+    }
+    
+    // Check if purchase order exists
+    const po = await db.purchaseOrder.findUnique({
+      where: { po_id: poId }
+    });
+    
+    if (!po) {
+      return res.status(404).json({ error: 'Purchase order not found' });
+    }
+    
+    // Check if item exists
+    const item = await db.purchaseOrderItem.findFirst({
+      where: { 
+        item_id: itemId,
+        po_id: poId 
+      }
+    });
+    
+    if (!item) {
+      return res.status(404).json({ error: 'Item not found in this purchase order' });
+    }
+    
+    // Validate quantity_received doesn't exceed ordered quantity
+    if (quantity_received > item.quantity) {
+      return res.status(400).json({ 
+        error: `Quantity received (${quantity_received}) cannot exceed ordered quantity (${item.quantity})` 
+      });
+    }
+    
+    // Update item receipt status
+    const updatedItem = await db.purchaseOrderItem.update({
+      where: { item_id: itemId },
+      data: {
+        quantity_received,
+        received_date: quantity_received > 0 ? new Date() : null,
+        received_by,
+        receipt_notes
+      }
+    });
+    
+    // Include calculated fields in response
+    const responseItem = {
+      ...updatedItem,
+      quantity_pending: item.quantity - quantity_received,
+      receipt_status: quantity_received === 0 ? 'not_received' : 
+                     quantity_received < item.quantity ? 'partially_received' : 'fully_received'
+    };
+    
+    res.json(responseItem);
+  } catch (error) {
+    console.error('Error updating item receipt status:', error);
+    res.status(500).json({ error: 'Failed to update item receipt status' });
+  }
+});
+
 // Helper function to generate a unique PO number
 async function generatePONumber() {
   const date = new Date();

@@ -5,22 +5,23 @@ import '../styles/Dialog.css';
 import ModalPortal from './ModalPortal';
 
 interface Part {
-  id: number;
+  part_id: number;
   name: string;
   fiserv_part_number: string;
   manufacturer_part_number: string;
   quantity: number;
   minimum_quantity: number;
-  part_id?: number;
+  id?: number;
 }
 
 interface RestockFormProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  preSelectedPart?: Part | null;
 }
 
-const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess }) => {
+const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, preSelectedPart }) => {
   const [parts, setParts] = useState<Part[]>([]);
   const [selectedPart, setSelectedPart] = useState<Part | null>(null);
   const [quantity, setQuantity] = useState<number>(0);
@@ -28,6 +29,32 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess }) =
   const [loading, setLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Effect to handle preSelectedPart
+  useEffect(() => {
+    if (preSelectedPart && open) {
+      // Convert the preSelectedPart to match the expected format
+      const formattedPart: Part = {
+        part_id: preSelectedPart.part_id || preSelectedPart.id || 0,
+        id: preSelectedPart.id || preSelectedPart.part_id || 0,
+        name: preSelectedPart.name,
+        fiserv_part_number: preSelectedPart.fiserv_part_number,
+        manufacturer_part_number: preSelectedPart.manufacturer_part_number,
+        quantity: preSelectedPart.quantity,
+        minimum_quantity: preSelectedPart.minimum_quantity
+      };
+      setSelectedPart(formattedPart);
+      setSearchTerm(preSelectedPart.name);
+      setParts([]); // Clear search results since we have a pre-selected part
+    } else if (open) {
+      // Reset form when opened without preSelectedPart
+      setSelectedPart(null);
+      setSearchTerm('');
+      setParts([]);
+      setQuantity(0);
+      setError(null);
+    }
+  }, [preSelectedPart, open]);
 
   const searchParts = async (term: string) => {
     if (!term) {
@@ -114,6 +141,7 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess }) =
                       setSearchTerm(e.target.value);
                       searchParts(e.target.value);
                     }}
+                    disabled={!!preSelectedPart}
                   />
                   {searchLoading && (
                     <span className="input-group-text">
@@ -122,12 +150,25 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess }) =
                       </div>
                     </span>
                   )}
+                  {preSelectedPart && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary"
+                      onClick={() => {
+                        setSelectedPart(null);
+                        setSearchTerm('');
+                        setParts([]);
+                      }}
+                    >
+                      Clear Selection
+                    </button>
+                  )}
                 </div>
                 {parts.length > 0 && (
                   <div className="search-results">
                     {parts.map((part) => (
                       <div
-                        key={part.id}
+                        key={part.part_id}
                         className="search-item"
                         onClick={() => {
                           setSelectedPart(part);

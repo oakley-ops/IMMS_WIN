@@ -6,6 +6,7 @@ import axiosInstance from '../utils/axios';
 import { useDebounce } from 'use-debounce';
 import { AxiosError } from 'axios';
 import { ApiErrorResponse } from '../types/api';
+import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 
 interface PartLocation {
   location: string;
@@ -24,6 +25,7 @@ interface Part {
   supplier: string;
   unit_cost: string | number;
   locations: PartLocation[];
+  image_url?: string;
 }
 
 const PartSearch: React.FC = () => {
@@ -114,20 +116,52 @@ const PartSearch: React.FC = () => {
           {parts.map(part => (
             <ListGroup.Item key={part.part_id}>
               <div className="d-flex justify-content-between align-items-start">
-                <div>
-                  <h5>{part.name}</h5>
-                  <p className="mb-1">{part.description}</p>
-                  <small>
-                    Part Numbers: {part.manufacturer_part_number} / {part.fiserv_part_number}
-                  </small>
+                <div className="d-flex align-items-start" style={{ gap: '15px' }}>
+                  {/* Image Preview */}
+                  {part.image_url ? (
+                    <img
+                      src={part.image_url}
+                      alt={part.name}
+                      style={{
+                        width: 60,
+                        height: 60,
+                        objectFit: 'cover',
+                        borderRadius: 8,
+                        border: '1px solid #ddd'
+                      }}
+                    />
+                  ) : (
+                    <div
+                      style={{
+                        width: 60,
+                        height: 60,
+                        backgroundColor: '#f8f9fa',
+                        border: '1px solid #ddd',
+                        borderRadius: 8,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <PhotoCameraIcon style={{ color: '#ccc' }} />
+                    </div>
+                  )}
+                  
                   <div>
-                    <strong>Locations: </strong>
-                    {part.locations.map((loc, idx) => (
-                      <span key={idx} className="me-2">
-                        {loc.location} ({loc.quantity} units)
-                        {idx < part.locations.length - 1 ? ', ' : ''}
-                      </span>
-                    ))}
+                    <h5>{part.name}</h5>
+                    <p className="mb-1">{part.description}</p>
+                    <small>
+                      Part Numbers: {part.manufacturer_part_number} / {part.fiserv_part_number}
+                    </small>
+                    <div>
+                      <strong>Locations: </strong>
+                      {part.locations.map((loc, idx) => (
+                        <span key={idx} className="me-2">
+                          {loc.location} ({loc.quantity} units)
+                          {idx < part.locations.length - 1 ? ', ' : ''}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <div className="text-end">

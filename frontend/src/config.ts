@@ -3,7 +3,7 @@ const getApiUrl = () => {
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
   }
-  return 'http://localhost:4000';
+  return 'http://192.168.50.1:4000';
 };
 
 export const API_URL = getApiUrl();

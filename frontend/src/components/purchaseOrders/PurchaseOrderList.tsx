@@ -18,6 +18,8 @@ const PurchaseOrderList: React.FC = () => {
   const [documentDialogOpen, setDocumentDialogOpen] = useState<boolean>(false);
   const [selectedPoId, setSelectedPoId] = useState<number | null>(null);
   const [selectedPoNumber, setSelectedPoNumber] = useState<string>('');
+  // Add state for showing historical received orders
+  const [showHistoricalReceived, setShowHistoricalReceived] = useState<boolean>(false);
   const navigate = useNavigate();
 
   // Add a derived state to check for pending POs
@@ -30,7 +32,8 @@ const PurchaseOrderList: React.FC = () => {
       try {
         setLoading(true);
         console.log('Fetching purchase orders...');
-        const response = await purchaseOrdersApi.getAll();
+        console.log('Show historical received:', showHistoricalReceived);
+        const response = await purchaseOrdersApi.getAll(showHistoricalReceived);
         console.log('Purchase orders response:', response);
         // Check if response.data.items exists and is an array
         if (response.data && response.data.items && Array.isArray(response.data.items)) {
@@ -58,7 +61,7 @@ const PurchaseOrderList: React.FC = () => {
     };
 
     fetchPurchaseOrders();
-  }, []);
+  }, [showHistoricalReceived]);
 
   // Add function to open document dialog
   const openDocumentDialog = (poId: number | undefined, poNumber: string | undefined) => {
@@ -83,12 +86,16 @@ const PurchaseOrderList: React.FC = () => {
         return 'status-badge status-info';
       case 'approved':
         return 'status-badge status-success';
+      case 'waiting_for_po_number':
+        return 'status-badge status-secondary';
       case 'on_hold':
-        return 'status-badge status-info';
+        return 'status-badge status-secondary';
       case 'rejected':
         return 'status-badge status-danger';
       case 'received':
         return 'status-badge status-success';
+      case 'on_order':
+        return 'status-badge status-info';
       case 'canceled':
         return 'status-badge status-danger';
       default:
@@ -253,8 +260,25 @@ const PurchaseOrderList: React.FC = () => {
             top: '50%',
             transform: 'translateY(-50%)',
             display: 'flex',
-            gap: '8px'
+            gap: '8px',
+            alignItems: 'center'
           }}>
+            <label style={{ 
+              color: 'white', 
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer'
+            }}>
+              <input 
+                type="checkbox" 
+                checked={showHistoricalReceived}
+                onChange={(e) => setShowHistoricalReceived(e.target.checked)}
+                style={{ marginRight: '4px' }}
+              />
+              Show historical received orders
+            </label>
             <button 
               className="btn btn-sm btn-outline-light"
               onClick={() => navigate('/purchase-orders/suppliers')}
@@ -276,6 +300,21 @@ const PurchaseOrderList: React.FC = () => {
             </button>
           </div>
         </div>
+
+        {/* Visual indicator for historical received orders */}
+        {!showHistoricalReceived && (
+          <div style={{ 
+            backgroundColor: '#f8f9fa', 
+            padding: '10px 20px', 
+            borderTop: '1px solid #e9ecef',
+            borderBottom: '1px solid #e9ecef',
+            fontSize: '14px',
+            color: '#6c757d'
+          }}>
+            <span style={{ fontWeight: 'bold' }}>ℹ️ Info:</span> Received purchase orders older than 30 days are hidden. 
+            Use the "Show historical received orders" checkbox above to view them.
+          </div>
+        )}
 
         <div style={{ padding: '15px 20px' }}>
           {loading ? (

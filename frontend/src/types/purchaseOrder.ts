@@ -51,6 +51,14 @@ export interface PurchaseOrderItem {
   total_price?: number;
   notes?: string;
   created_at?: string;
+  
+  // Partial receipt fields
+  quantity_received?: number;
+  quantity_pending?: number;
+  received_date?: string;
+  received_by?: string;
+  receipt_notes?: string;
+  receipt_status?: 'not_received' | 'partially_received' | 'fully_received' | 'unknown';
 }
 
 export interface PurchaseOrder {
@@ -67,7 +75,7 @@ export interface PurchaseOrder {
   supplier_email?: string;
   supplier_phone?: string;
   contact_name?: string;
-  status?: 'pending' | 'submitted' | 'approved' | 'rejected' | 'received' | 'canceled' | 'on_hold';
+  status?: 'pending' | 'submitted' | 'approved' | 'rejected' | 'received' | 'canceled' | 'on_hold' | 'waiting_for_po_number';
   approval_status?: 'pending' | 'approved' | 'rejected';
   approval_date?: string;
   approval_email?: string;

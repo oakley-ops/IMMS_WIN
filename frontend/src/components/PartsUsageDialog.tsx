@@ -23,12 +23,14 @@ interface PartsUsageDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess?: () => void;
+  preSelectedPart?: Part | null;
 }
 
 const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
   open,
   onClose,
   onSuccess,
+  preSelectedPart,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchResults, setSearchResults] = useState<Part[]>([]);
@@ -49,6 +51,36 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
       fetchMachines();
     }
   }, [open]);
+
+  // Effect to handle preSelectedPart
+  useEffect(() => {
+    if (preSelectedPart && open) {
+      // Convert the preSelectedPart to match the expected format
+      const formattedPart: Part = {
+        id: preSelectedPart.part_id || preSelectedPart.id,
+        part_id: preSelectedPart.part_id || preSelectedPart.id || 0,
+        name: preSelectedPart.name,
+        fiserv_part_number: preSelectedPart.fiserv_part_number,
+        manufacturer_part_number: preSelectedPart.manufacturer_part_number,
+        quantity: preSelectedPart.quantity,
+        minimum_quantity: preSelectedPart.minimum_quantity
+      };
+      setSelectedPart(formattedPart);
+      setSearchTerm(preSelectedPart.name);
+      setSearchResults([]); // Clear search results since we have a pre-selected part
+    } else if (open) {
+      // Reset form when opened without preSelectedPart
+      setSelectedPart(null);
+      setSearchTerm('');
+      setSearchResults([]);
+      setSelectedMachine(null);
+      setMachineSearchTerm('');
+      setMachineResults([]);
+      setQuantity(0);
+      setReason('');
+      setError(null);
+    }
+  }, [preSelectedPart, open]);
 
   const fetchMachines = async () => {
     setSearchingMachines(true);

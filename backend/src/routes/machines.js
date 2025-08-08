@@ -1,11 +1,75 @@
 const express = require('express');
 const router = express.Router();
-const { Pool } = require('pg');
-const dbConfig = require('../../config/database')[process.env.NODE_ENV || 'development'];
-const pool = new Pool(dbConfig);
+const { pool } = require('../database/db');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
+const MachineDocumentService = require('../services/MachineDocumentService');
+const authMiddleware = require('../middleware/authMiddleware');
+const roleAuthorization = require('../middleware/roleMiddleware');
+
+// Initialize document service
+const documentService = new MachineDocumentService(pool);
+
+// Define role permissions for machine routes
+const ROLES = {
+  ALL: ['admin', 'tech', 'purchasing'],
+  ADMIN_TECH: ['admin', 'tech'],
+  ADMIN_ONLY: ['admin']
+};
+
+// Configure multer for document uploads
+const documentStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'temp');
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (error) {
+      cb(error);
+    }
+  },
+  filename: (req, file, cb) => {
+    // Create unique filename with timestamp
+    const timestamp = Date.now();
+    const fileExt = path.extname(file.originalname);
+    const filename = `machine-doc-${timestamp}${fileExt}`;
+    cb(null, filename);
+  }
+});
+
+// File filter for allowed document types
+const documentFileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'text/plain',
+    'text/csv'
+  ];
+  
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Invalid file type. Only PDF, DOC, DOCX, XLS, XLSX, JPG, PNG, GIF, TXT, and CSV files are allowed.'), false);
+  }
+};
+
+const uploadDocument = multer({
+  storage: documentStorage,
+  fileFilter: documentFileFilter,
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB max file size
+  }
+});
 
 // Get all machines
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM machines ORDER BY name ASC');
     res.json(result.rows);
@@ -15,8 +79,33 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Get unique machine types from database
+router.get('/types', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT machine_type 
+      FROM machines 
+      WHERE machine_type IS NOT NULL AND machine_type != ''
+      ORDER BY machine_type ASC
+    `);
+    
+    // Extract just the machine_type values and add a default option
+    const machineTypes = result.rows.map(row => row.machine_type);
+    
+    // Add default option if not already present
+    if (!machineTypes.includes('Default')) {
+      machineTypes.push('Default');
+    }
+    
+    res.json(machineTypes);
+  } catch (err) {
+    console.error('Error fetching machine types:', err);
+    res.status(500).json({ error: 'Failed to fetch machine types' });
+  }
+});
+
 // Get machine cost summary
-router.get('/costs', async (req, res) => {
+router.get('/costs', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM machine_parts_cost_view');
     res.json(result.rows);
@@ -27,7 +116,7 @@ router.get('/costs', async (req, res) => {
 });
 
 // Get detailed parts usage for a specific machine
-router.get('/:id/parts-usage', async (req, res) => {
+router.get('/:id/parts-usage', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   const machineId = parseInt(req.params.id);
   
   try {
@@ -43,7 +132,7 @@ router.get('/:id/parts-usage', async (req, res) => {
 });
 
 // Get parts associated with a specific machine
-router.get('/:id/parts', async (req, res) => {
+router.get('/:id/parts', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   const machineId = parseInt(req.params.id);
   
   try {
@@ -74,7 +163,7 @@ router.get('/:id/parts', async (req, res) => {
 });
 
 // Get machine parts usage over time (for charts)
-router.get('/:id/usage-timeline', async (req, res) => {
+router.get('/:id/usage-timeline', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   const machineId = parseInt(req.params.id);
   const { startDate, endDate } = req.query;
   
@@ -116,7 +205,7 @@ router.get('/:id/usage-timeline', async (req, res) => {
 });
 
 // Get PM schedule data for calendar
-router.get('/pm-schedule', async (req, res) => {
+router.get('/pm-schedule', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   try {
     console.log('Fetching PM schedule data...');
     
@@ -134,41 +223,49 @@ router.get('/pm-schedule', async (req, res) => {
     if (columnCheck.rows[0].exists) {
       query = `
         SELECT 
-          machine_id as id,
-          name,
-          model,
-          location,
-          last_maintenance_date,
-          next_maintenance_date,
-          maintenance_status,
+          m.machine_id as id,
+          m.name,
+          m.model,
+          m.location,
+          m.machine_type,
+          m.last_maintenance_date,
+          m.next_maintenance_date,
+          m.maintenance_status,
+          ps.technician_name,
+          ps.started_at as session_started_at,
           CASE
-            WHEN maintenance_status = 'in_progress' THEN 'in_progress'
-            WHEN next_maintenance_date < CURRENT_DATE THEN 'overdue'
-            WHEN next_maintenance_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'due'
+            WHEN m.maintenance_status = 'in_progress' THEN 'in_progress'
+            WHEN m.next_maintenance_date < CURRENT_DATE THEN 'overdue'
+            WHEN m.next_maintenance_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'due'
             ELSE 'scheduled'
           END as status
-        FROM machines
-        WHERE next_maintenance_date IS NOT NULL
-        AND (maintenance_status IS NULL OR maintenance_status != 'completed')
-        ORDER BY next_maintenance_date ASC
+        FROM machines m
+        LEFT JOIN pm_sessions ps ON m.machine_id = ps.machine_id AND ps.status = 'in_progress'
+        WHERE m.next_maintenance_date IS NOT NULL
+        AND (m.maintenance_status IS NULL OR m.maintenance_status != 'completed')
+        ORDER BY m.next_maintenance_date ASC
       `;
     } else {
       query = `
         SELECT 
-          machine_id as id,
-          name,
-          model,
-          location,
-          last_maintenance_date,
-          next_maintenance_date,
+          m.machine_id as id,
+          m.name,
+          m.model,
+          m.location,
+          m.machine_type,
+          m.last_maintenance_date,
+          m.next_maintenance_date,
+          ps.technician_name,
+          ps.started_at as session_started_at,
           CASE
-            WHEN next_maintenance_date < CURRENT_DATE THEN 'overdue'
-            WHEN next_maintenance_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'due'
+            WHEN m.next_maintenance_date < CURRENT_DATE THEN 'overdue'
+            WHEN m.next_maintenance_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'due'
             ELSE 'scheduled'
           END as status
-        FROM machines
-        WHERE next_maintenance_date IS NOT NULL
-        ORDER BY next_maintenance_date ASC
+        FROM machines m
+        LEFT JOIN pm_sessions ps ON m.machine_id = ps.machine_id AND ps.status = 'in_progress'
+        WHERE m.next_maintenance_date IS NOT NULL
+        ORDER BY m.next_maintenance_date ASC
       `;
     }
     
@@ -201,10 +298,14 @@ router.get('/pm-schedule', async (req, res) => {
         start: machine.next_maintenance_date,
         end: machine.next_maintenance_date,
         allDay: true,
+        machine_type: machine.machine_type || 'Default',
+        technician_name: machine.technician_name || null,
+        session_started_at: machine.session_started_at || null,
         resource: {
           location: machine.location || 'Unknown',
           status: machine.status || 'scheduled',
-          lastMaintenance: machine.last_maintenance_date
+          lastMaintenance: machine.last_maintenance_date,
+          technicianName: machine.technician_name || null
         }
       };
       
@@ -217,17 +318,15 @@ router.get('/pm-schedule', async (req, res) => {
     }).filter(event => event !== null); // Remove any null entries
     
     console.log(`Sending ${events.length} events to frontend`);
-    console.log(`Event status counts - Overdue: ${events.filter(e => e.resource.status === 'overdue').length}, Due: ${events.filter(e => e.resource.status === 'due').length}, Scheduled: ${events.filter(e => e.resource.status === 'scheduled').length}`);
-    
     res.json(events);
-  } catch (err) {
-    console.error('Error fetching PM schedule data:', err);
-    res.status(500).json({ error: 'Failed to fetch PM schedule data' });
+  } catch (error) {
+    console.error('Error fetching PM schedule:', error);
+    res.status(500).json({ error: 'Failed to fetch PM schedule' });
   }
 });
 
 // Create a new machine
-router.post('/', async (req, res) => {
+router.post('/', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (req, res) => {
   const {
     name,
     model,
@@ -235,10 +334,31 @@ router.post('/', async (req, res) => {
     location,
     manufacturer,
     installation_date,
-    notes
+    last_maintenance_date,
+    next_maintenance_date,
+    notes,
+    status
   } = req.body;
 
   try {
+    console.log('Attempting to create machine with data:', {
+      name,
+      model,
+      serial_number,
+      location,
+      manufacturer,
+      installation_date,
+      last_maintenance_date,
+      next_maintenance_date,
+      notes,
+      status
+    });
+    
+    // Convert empty date strings to NULL
+    const processedInstallationDate = installation_date === '' ? null : installation_date;
+    const processedLastMaintenanceDate = last_maintenance_date === '' ? null : last_maintenance_date;
+    const processedNextMaintenanceDate = next_maintenance_date === '' ? null : next_maintenance_date;
+    
     const result = await pool.query(
       `INSERT INTO machines (
         name,
@@ -247,19 +367,25 @@ router.post('/', async (req, res) => {
         location,
         manufacturer,
         installation_date,
-        notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [name, model, serial_number, location, manufacturer, installation_date, notes]
+        last_maintenance_date,
+        next_maintenance_date,
+        notes,
+        status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      [name, model, serial_number, location, manufacturer, processedInstallationDate, 
+       processedLastMaintenanceDate, processedNextMaintenanceDate, notes, status]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('Error creating machine:', err);
-    res.status(500).json({ error: 'Failed to create machine' });
+    console.error('Error creating machine:', err.message);
+    console.error('Error details:', err);
+    console.error('Query parameters:', [name, model, serial_number, location, manufacturer, installation_date, last_maintenance_date, next_maintenance_date, notes, status]);
+    res.status(500).json({ error: 'Failed to create machine: ' + err.message });
   }
 });
 
 // Get a specific machine
-router.get('/:id', async (req, res) => {
+router.get('/:id', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   // Validate the ID parameter
   const machineIdParam = req.params.id;
   const machineId = parseInt(machineIdParam, 10);
@@ -299,7 +425,7 @@ router.get('/:id', async (req, res) => {
 });
 
 // Update a machine
-router.put('/:id', async (req, res) => {
+router.put('/:id', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (req, res) => {
   // Validate the ID parameter
   const machineIdParam = req.params.id;
   const machineId = parseInt(machineIdParam, 10);
@@ -323,6 +449,11 @@ router.put('/:id', async (req, res) => {
   } = req.body;
 
   try {
+    // Convert empty date strings to NULL
+    const processedInstallationDate = installation_date === '' ? null : installation_date;
+    const processedLastMaintenanceDate = last_maintenance_date === '' ? null : last_maintenance_date;
+    const processedNextMaintenanceDate = next_maintenance_date === '' ? null : next_maintenance_date;
+    
     const result = await pool.query(
       `UPDATE machines SET
         name = COALESCE($1, name),
@@ -343,9 +474,9 @@ router.put('/:id', async (req, res) => {
         serial_number,
         location,
         manufacturer,
-        installation_date,
-        last_maintenance_date,
-        next_maintenance_date,
+        processedInstallationDate,
+        processedLastMaintenanceDate,
+        processedNextMaintenanceDate,
         notes,
         status,
         machineId
@@ -358,13 +489,14 @@ router.put('/:id', async (req, res) => {
       res.json(result.rows[0]);
     }
   } catch (err) {
-    console.error('Error updating machine:', err);
-    res.status(500).json({ error: 'Failed to update machine' });
+    console.error('Error updating machine:', err.message);
+    console.error('Error details:', err);
+    res.status(500).json({ error: 'Failed to update machine: ' + err.message });
   }
 });
 
 // Delete a machine
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (req, res) => {
   // Validate the ID parameter
   const machineIdParam = req.params.id;
   const machineId = parseInt(machineIdParam, 10);
@@ -405,7 +537,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // Update machine maintenance status
-router.post('/:id/maintenance-status', async (req, res) => {
+router.post('/:id/maintenance-status', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   const machineId = parseInt(req.params.id);
   const { status, maintenanceDate } = req.body;
   
@@ -480,7 +612,7 @@ router.post('/:id/maintenance-status', async (req, res) => {
                next_maintenance_date = $2,
                maintenance_status = $3
            WHERE machine_id = $4`,
-          [lastMaintenanceDate, nextMaintenanceDate, 'completed', machineId]
+          [lastMaintenanceDate, nextMaintenanceDate, null, machineId]
         );
         
         console.log(`Maintenance completed for machine ${machineId}. Next maintenance scheduled for ${nextMaintenanceDate.toISOString()}`);
@@ -568,10 +700,8 @@ router.post('/:id/maintenance-status', async (req, res) => {
         }
       }
       
-      await client.query('COMMIT');
-      
-      // In both cases, let's fetch the latest machine data
-      const updatedMachineData = await pool.query(
+      // Fetch the updated machine data within the transaction to ensure consistency
+      const updatedMachineData = await client.query(
         `SELECT 
           machine_id as id,
           name,
@@ -592,6 +722,8 @@ router.post('/:id/maintenance-status', async (req, res) => {
         [machineId]
       );
       
+      await client.query('COMMIT');
+      
       res.json({ 
         success: true, 
         message: `Maintenance status updated to ${status}`,
@@ -609,6 +741,207 @@ router.post('/:id/maintenance-status', async (req, res) => {
     res.status(500).json({ 
       error: `Failed to update maintenance status: ${err.message}` 
     });
+  }
+});
+
+// =============================================================================
+// MACHINE DOCUMENT ROUTES
+// =============================================================================
+
+// Get all documents for a machine
+router.get('/:id/documents', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
+  const machineId = parseInt(req.params.id);
+  
+  if (isNaN(machineId)) {
+    return res.status(400).json({ error: 'Invalid machine ID' });
+  }
+
+  try {
+    const documents = await documentService.getDocumentsByMachineId(machineId);
+    res.json(documents);
+  } catch (error) {
+    console.error('Error fetching machine documents:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Upload a document for a machine
+router.post('/:id/documents', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), uploadDocument.single('document'), async (req, res) => {
+  const machineId = parseInt(req.params.id);
+  const username = req.user?.username || 'system';
+  
+  if (isNaN(machineId)) {
+    return res.status(400).json({ error: 'Invalid machine ID' });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'No file uploaded' });
+  }
+
+  try {
+    const { category = 'other', title = '', description = '' } = req.body;
+    
+    // Validate category
+    const allowedCategories = ['schematic', 'parts_diagram', 'pm_instructions', 'pos', 'manual', 'other'];
+    if (!allowedCategories.includes(category)) {
+      return res.status(400).json({ error: 'Invalid document category' });
+    }
+
+    const document = await documentService.uploadDocument(
+      machineId,
+      req.file,
+      username,
+      category,
+      title,
+      description
+    );
+
+    res.status(201).json(document);
+  } catch (error) {
+    console.error('Error uploading machine document:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// View a document inline
+router.get('/:id/documents/:documentId/view', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
+  const machineId = parseInt(req.params.id);
+  const documentId = parseInt(req.params.documentId);
+  
+  if (isNaN(machineId) || isNaN(documentId)) {
+    return res.status(400).json({ error: 'Invalid machine ID or document ID' });
+  }
+
+  try {
+    const document = await documentService.getDocumentById(documentId);
+    
+    // Verify document belongs to the machine
+    if (document.machine_id !== machineId) {
+      return res.status(403).json({ error: 'Document does not belong to this machine' });
+    }
+
+    const fileContent = await documentService.getDocumentContent(documentId);
+    
+    res.setHeader('Content-Type', document.mime_type || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `inline; filename="${document.file_name}"`);
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.send(fileContent);
+  } catch (error) {
+    console.error('Error viewing document:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Download a document
+router.get('/:id/documents/:documentId', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
+  const machineId = parseInt(req.params.id);
+  const documentId = parseInt(req.params.documentId);
+  
+  if (isNaN(machineId) || isNaN(documentId)) {
+    return res.status(400).json({ error: 'Invalid machine ID or document ID' });
+  }
+
+  try {
+    const document = await documentService.getDocumentById(documentId);
+    
+    // Verify document belongs to the machine
+    if (document.machine_id !== machineId) {
+      return res.status(403).json({ error: 'Document does not belong to this machine' });
+    }
+
+    const fileContent = await documentService.getDocumentContent(documentId);
+    
+    res.setHeader('Content-Type', document.mime_type || 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${document.file_name}"`);
+    res.send(fileContent);
+  } catch (error) {
+    console.error('Error downloading document:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Update document metadata
+router.put('/:id/documents/:documentId', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (req, res) => {
+  const machineId = parseInt(req.params.id);
+  const documentId = parseInt(req.params.documentId);
+  
+  if (isNaN(machineId) || isNaN(documentId)) {
+    return res.status(400).json({ error: 'Invalid machine ID or document ID' });
+  }
+
+  try {
+    // Verify document belongs to the machine
+    const document = await documentService.getDocumentById(documentId);
+    if (document.machine_id !== machineId) {
+      return res.status(403).json({ error: 'Document does not belong to this machine' });
+    }
+
+    const { title, description, document_category } = req.body;
+    
+    // Validate category if provided
+    if (document_category) {
+      const allowedCategories = ['schematic', 'parts_diagram', 'pm_instructions', 'pos', 'manual', 'other'];
+      if (!allowedCategories.includes(document_category)) {
+        return res.status(400).json({ error: 'Invalid document category' });
+      }
+    }
+
+    const updatedDocument = await documentService.updateDocument(documentId, {
+      title,
+      description,
+      document_category
+    });
+
+    res.json(updatedDocument);
+  } catch (error) {
+    console.error('Error updating document:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a document
+router.delete('/:id/documents/:documentId', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (req, res) => {
+  const machineId = parseInt(req.params.id);
+  const documentId = parseInt(req.params.documentId);
+  
+  if (isNaN(machineId) || isNaN(documentId)) {
+    return res.status(400).json({ error: 'Invalid machine ID or document ID' });
+  }
+
+  try {
+    // Verify document belongs to the machine
+    const document = await documentService.getDocumentById(documentId);
+    if (document.machine_id !== machineId) {
+      return res.status(403).json({ error: 'Document does not belong to this machine' });
+    }
+
+    await documentService.deleteDocument(documentId);
+    res.json({ message: 'Document deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting document:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Search documents for a machine
+router.get('/:id/documents/search', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
+  const machineId = parseInt(req.params.id);
+  const { q: searchTerm } = req.query;
+  
+  if (isNaN(machineId)) {
+    return res.status(400).json({ error: 'Invalid machine ID' });
+  }
+
+  if (!searchTerm || searchTerm.trim() === '') {
+    return res.status(400).json({ error: 'Search term is required' });
+  }
+
+  try {
+    const documents = await documentService.searchDocuments(machineId, searchTerm.trim());
+    res.json(documents);
+  } catch (error) {
+    console.error('Error searching documents:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 

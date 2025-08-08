@@ -13,6 +13,8 @@ type PermissionSet = {
   CAN_MANAGE_PURCHASE_ORDERS: boolean;
   CAN_VIEW_TRANSACTIONS: boolean;
   CAN_MANAGE_USERS: boolean;
+  CAN_MANAGE_PM_CHECKLISTS: boolean;
+  CAN_VIEW_MACHINES: boolean;
   [key: string]: boolean;
 };
 
@@ -28,7 +30,9 @@ export const PERMISSIONS: Record<string, PermissionSet> = {
     CAN_CHECKOUT_PARTS: true,
     CAN_MANAGE_PURCHASE_ORDERS: true,
     CAN_VIEW_TRANSACTIONS: true,
-    CAN_MANAGE_USERS: true
+    CAN_MANAGE_USERS: true,
+    CAN_MANAGE_PM_CHECKLISTS: true,
+    CAN_VIEW_MACHINES: true
   },
   TECH: {
     CAN_VIEW_ALL: false,
@@ -37,7 +41,9 @@ export const PERMISSIONS: Record<string, PermissionSet> = {
     CAN_CHECKOUT_PARTS: true,
     CAN_MANAGE_PURCHASE_ORDERS: false,
     CAN_VIEW_TRANSACTIONS: false,
-    CAN_MANAGE_USERS: false
+    CAN_MANAGE_USERS: false,
+    CAN_MANAGE_PM_CHECKLISTS: false,
+    CAN_VIEW_MACHINES: true
   },
   PURCHASING: {
     CAN_VIEW_ALL: false,
@@ -46,7 +52,9 @@ export const PERMISSIONS: Record<string, PermissionSet> = {
     CAN_CHECKOUT_PARTS: false,
     CAN_MANAGE_PURCHASE_ORDERS: true,
     CAN_VIEW_TRANSACTIONS: true,
-    CAN_MANAGE_USERS: false
+    CAN_MANAGE_USERS: false,
+    CAN_MANAGE_PM_CHECKLISTS: false,
+    CAN_VIEW_MACHINES: false
   }
 };
 
@@ -117,7 +125,9 @@ export const getPermissionsForRole = (role: string): PermissionSet => {
       CAN_CHECKOUT_PARTS: true,
       CAN_MANAGE_PURCHASE_ORDERS: true, // Allow purchase order access to all users temporarily
       CAN_VIEW_TRANSACTIONS: true, // Allow transaction access to all users temporarily
-      CAN_MANAGE_USERS: false
+      CAN_MANAGE_USERS: false,
+      CAN_MANAGE_PM_CHECKLISTS: false,
+      CAN_VIEW_MACHINES: false
     };
   }
   

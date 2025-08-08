@@ -237,14 +237,6 @@ const ManualPOForm: React.FC = () => {
       return;
     }
     
-    if (!currentItem.price || currentItem.price <= 0) {
-      setMessage({
-        text: 'Please enter a valid price.',
-        type: 'warning'
-      });
-      return;
-    }
-    
     // Add the item to the PO
     setPurchaseOrder({
       ...purchaseOrder,
@@ -705,7 +697,7 @@ const ManualPOForm: React.FC = () => {
                   type="button"
                   className="btn btn-primary"
                   onClick={addItem}
-                  disabled={!currentItem.name || !currentItem.partNumber || currentItem.quantity <= 0 || currentItem.price <= 0}
+                  disabled={!currentItem.name || !currentItem.partNumber || currentItem.quantity <= 0}
                 >
                   <AddIcon fontSize="small" style={{ marginRight: '4px' }} />
                   Add Item

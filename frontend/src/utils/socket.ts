@@ -1,7 +1,7 @@
  import { io } from 'socket.io-client';
 
 // Extract API URL and port from the environment or use default
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://192.168.50.1:4000';
 const SOCKET_URL = API_BASE_URL.split('/api/v1')[0]; // Remove API path to get base URL
 
 export const socket = io(SOCKET_URL, {

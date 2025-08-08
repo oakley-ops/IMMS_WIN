@@ -2,37 +2,23 @@ const express = require('express');
 const router = express.Router();
 const { Pool } = require('pg');
 const config = require('../config/database');
-const jwt = require('jsonwebtoken');
+const authMiddleware = require('../middleware/authMiddleware');
 
 const pool = new Pool(process.env.NODE_ENV === 'production' ? config.production : config.development);
 
-// Authentication middleware
-const authenticate = (req, res, next) => {
-  try {
-    // Get token from header
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'No authentication token found' });
-    }
-
-    const token = authHeader.split(' ')[1];
-    if (!token) {
-      return res.status(401).json({ message: 'No authentication token found' });
-    }
-
-    // Verify token
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
-    req.user = decoded;
-    next();
-  } catch (error) {
-    console.error('Auth error:', error);
-    res.status(401).json({ message: 'Invalid authentication token' });
-  }
+// Helper function to check if user has permission to manage purchase orders
+const canManagePurchaseOrders = (userRole) => {
+  return userRole === 'admin' || userRole === 'purchasing';
 };
 
 // Get dashboard data
-router.get('/', async (req, res) => {
+router.get('/', authMiddleware, async (req, res) => {
   try {
+    const userRole = req.user?.role;
+    const hasPOPermission = canManagePurchaseOrders(userRole);
+    
+    console.log(`Dashboard request from user ${req.user?.username} with role ${userRole}, PO permission: ${hasPOPermission}`);
+
     // Get all active parts with their status
     const allPartsQuery = `
       SELECT 
@@ -90,30 +76,6 @@ router.get('/', async (req, res) => {
         (SELECT COUNT(*) FROM parts WHERE quantity = 0 AND status = 'active') as out_of_stock_count
     `;
 
-    // Get purchase order stats
-    const poStatsQuery = `
-      SELECT
-        (SELECT COUNT(*) FROM purchase_orders) as total_po_count,
-        (SELECT COUNT(*) FROM purchase_orders WHERE approval_status = 'pending') as pending_po_count,
-        (SELECT COUNT(*) FROM purchase_orders WHERE approval_status = 'approved') as approved_po_count,
-        (SELECT COUNT(*) FROM purchase_orders WHERE approval_status = 'rejected') as rejected_po_count
-    `;
-
-    // Get recent purchase orders
-    const recentPOsQuery = `
-      SELECT 
-        po.po_id,
-        po.po_number,
-        COALESCE(po.approval_status, po.status) as status,
-        COALESCE(s.name, 'Unknown Supplier') as supplier_name,
-        po.total_amount,
-        po.created_at
-      FROM purchase_orders po
-      LEFT JOIN suppliers s ON po.supplier_id = s.supplier_id
-      ORDER BY po.created_at DESC
-      LIMIT 5
-    `;
-
     // Get usage trends for the last 30 days
     const usageTrendQuery = `
       WITH RECURSIVE dates AS (
@@ -164,50 +126,81 @@ router.get('/', async (req, res) => {
       LIMIT 5;
     `;
 
+    // Purchase Order queries - only define if user has permission
+    let poStatsQuery = null;
+    let recentPOsQuery = null;
+    
+    if (hasPOPermission) {
+      poStatsQuery = `
+        SELECT
+          (SELECT COUNT(*) FROM purchase_orders) as total_po_count,
+          (SELECT COUNT(*) FROM purchase_orders WHERE approval_status = 'pending') as pending_po_count,
+          (SELECT COUNT(*) FROM purchase_orders WHERE approval_status = 'approved') as approved_po_count,
+          (SELECT COUNT(*) FROM purchase_orders WHERE approval_status = 'rejected') as rejected_po_count
+      `;
+
+      recentPOsQuery = `
+        SELECT 
+          po.po_id,
+          po.po_number,
+          COALESCE(po.approval_status, po.status) as status,
+          COALESCE(s.name, 'Unknown Supplier') as supplier_name,
+          po.total_amount,
+          po.created_at
+        FROM purchase_orders po
+        LEFT JOIN suppliers s ON po.supplier_id = s.supplier_id
+        ORDER BY po.created_at DESC
+        LIMIT 5
+      `;
+    }
+
     console.log('Executing queries...');
     
     try {
-      console.log('Running usage trends query:', usageTrendQuery);
-      console.log('Running top parts query:', topPartsQuery);
-
-      const [
-        allPartsResult, 
-        lowStockResult, 
-        outOfStockResult, 
-        usageHistoryResult, 
-        statsResult, 
-        usageTrendResult,
-        topPartsResult,
-        poStatsResult,
-        recentPOsResult
-      ] = await Promise.all([
+      // Build queries array based on permissions
+      const queries = [
         pool.query(allPartsQuery),
         pool.query(lowStockQuery),
         pool.query(outOfStockQuery),
         pool.query(usageHistoryQuery),
         pool.query(statsQuery),
         pool.query(usageTrendQuery),
-        pool.query(topPartsQuery),
-        pool.query(poStatsQuery),
-        pool.query(recentPOsQuery)
-      ]);
+        pool.query(topPartsQuery)
+      ];
 
-      // Debug logging for query results
-      console.log('Usage trends query result:', {
-        rowCount: usageTrendResult?.rowCount,
-        rows: usageTrendResult?.rows,
-        error: usageTrendResult?.error
-      });
-      console.log('Top parts query result:', {
-        rowCount: topPartsResult?.rowCount,
-        rows: topPartsResult?.rows,
-        error: topPartsResult?.error
-      });
-      console.log('PO stats query result:', {
-        rowCount: poStatsResult?.rowCount,
-        rows: poStatsResult?.rows,
-        error: poStatsResult?.error
-      });
+      // Add PO queries only if user has permission
+      if (hasPOPermission) {
+        queries.push(pool.query(poStatsQuery));
+        queries.push(pool.query(recentPOsQuery));
+      }
+
+      const results = await Promise.all(queries);
+      
+      let allPartsResult, lowStockResult, outOfStockResult, usageHistoryResult, statsResult, usageTrendResult, topPartsResult, poStatsResult, recentPOsResult;
+      
+      if (hasPOPermission) {
+        [
+          allPartsResult, 
+          lowStockResult, 
+          outOfStockResult, 
+          usageHistoryResult, 
+          statsResult, 
+          usageTrendResult,
+          topPartsResult,
+          poStatsResult,
+          recentPOsResult
+        ] = results;
+      } else {
+        [
+          allPartsResult, 
+          lowStockResult, 
+          outOfStockResult, 
+          usageHistoryResult, 
+          statsResult, 
+          usageTrendResult,
+          topPartsResult
+        ] = results;
+      }
 
       const response = {
         allParts: allPartsResult.rows,
@@ -220,22 +213,19 @@ router.get('/', async (req, res) => {
         totalMachines: parseInt(statsResult.rows[0].total_machines),
         usageTrends: usageTrendResult?.rows || [],
         topUsedParts: topPartsResult?.rows || [],
-        // Purchase order stats
-        totalPOCount: parseInt(poStatsResult.rows[0].total_po_count),
-        pendingPOCount: parseInt(poStatsResult.rows[0].pending_po_count),
-        approvedPOCount: parseInt(poStatsResult.rows[0].approved_po_count),
-        rejectedPOCount: parseInt(poStatsResult.rows[0].rejected_po_count),
-        recentPurchaseOrders: recentPOsResult.rows || []
+        // Purchase order stats - only include if user has permission
+        totalPOCount: hasPOPermission ? parseInt(poStatsResult.rows[0].total_po_count) : 0,
+        pendingPOCount: hasPOPermission ? parseInt(poStatsResult.rows[0].pending_po_count) : 0,
+        approvedPOCount: hasPOPermission ? parseInt(poStatsResult.rows[0].approved_po_count) : 0,
+        rejectedPOCount: hasPOPermission ? parseInt(poStatsResult.rows[0].rejected_po_count) : 0,
+        recentPurchaseOrders: hasPOPermission ? (recentPOsResult.rows || []) : []
       };
 
-      // Log the final response structure with actual data
-      console.log('Final response data:', {
-        hasUsageTrends: Array.isArray(response.usageTrends),
-        usageTrendsLength: response.usageTrends.length,
-        usageTrendsSample: response.usageTrends.slice(0, 2),
-        hasTopUsedParts: Array.isArray(response.topUsedParts),
-        topUsedPartsLength: response.topUsedParts.length,
-        topUsedPartsSample: response.topUsedParts.slice(0, 2)
+      // Log response for debugging
+      console.log('Dashboard response for user', req.user?.username, {
+        hasPOPermission,
+        totalPOCount: response.totalPOCount,
+        recentPOsCount: response.recentPurchaseOrders.length
       });
 
       res.json(response);
@@ -250,7 +240,7 @@ router.get('/', async (req, res) => {
 });
 
 // Server-sent events endpoint for real-time updates
-router.get('/events', authenticate, (req, res) => {
+router.get('/events', authMiddleware, (req, res) => {
   // Set headers for SSE
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');

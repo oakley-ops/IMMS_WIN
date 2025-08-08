@@ -32,6 +32,8 @@ import {
   MonetizationOn,
   ReceiptLong,
   PrecisionManufacturing,
+  Engineering,
+  PlaylistAddCheck,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { theme, FISERV_ORANGE } from '../theme';
@@ -62,21 +64,12 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
   const navigationItems: NavigationItem[] = [
     { path: '/', label: 'DASHBOARD', icon: <Dashboard /> },
     { path: '/parts', label: 'PARTS', icon: <Inventory /> },
-    { path: '/machines', label: 'MACHINES', icon: <Build />, requiredPermission: 'CAN_VIEW_ALL' },
-    { path: '/machine-costs', label: 'MACHINE COSTS', icon: <MonetizationOn />, requiredPermission: 'CAN_VIEW_ALL' },
+    { path: '/machines', label: 'MACHINES', icon: <Build />, requiredPermission: 'CAN_VIEW_MACHINES' },
+    { path: '/pm-checklists', label: 'PM CHECKLISTS', icon: <PlaylistAddCheck />, requiredPermission: 'CAN_MANAGE_PM_CHECKLISTS' },
     { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
     { path: '/purchase-orders', label: 'PURCHASE ORDERS', icon: <ShoppingCart />, requiredPermission: 'CAN_MANAGE_PURCHASE_ORDERS' },
     { path: '/projects', label: 'PROJECTS', icon: <Assignment />, requiredPermission: 'CAN_MANAGE_PROJECTS' },
   ];
-
-  if (hasPermission('CAN_MANAGE_USERS')) {
-    navigationItems.push({ 
-      path: '/users', 
-      label: 'USER MANAGEMENT', 
-      icon: <People />, 
-      requiredPermission: 'CAN_MANAGE_USERS' 
-    });
-  }
 
   if (hasPermission('CAN_VIEW_ALL')) {
     navigationItems.push({ 
@@ -121,7 +114,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
             mb: 0.5,
             paddingLeft: isCompact ? '48px' : '0',
             display: 'flex',
-            alignItems: 'center',
+            alignItems: 'flex-bottom',
             '&:hover': {
               opacity: 0.9,
               cursor: 'pointer'
@@ -133,9 +126,9 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
           <img 
             src="/assets/fiserv_logo_orange_rgb.png" 
             alt="Fiserv" 
-            style={{ height: '28px', marginRight: '8px' }} 
+            style={{ height: '40px', marginRight: '18px' }} 
           />
-          Inventory
+  
         </Typography>
         <Typography variant="body2" sx={{ color: 'white', fontSize: '0.9rem', paddingLeft: isCompact ? '48px' : '0' }}>
           {user?.name} ({user?.role?.toUpperCase()})

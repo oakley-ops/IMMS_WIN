@@ -39,7 +39,7 @@ router.post('/send-email', async (req, res) => {
     await emailService.sendPurchaseOrderPDF(recipient, poNumber, pdfBase64, poId, notes);
 
     // Log the activity
-    console.log(`Purchase order #${poNumber} sent via email to ${recipient}`);
+    console.log(`Purchase order request #${poNumber} sent via email to ${recipient}`);
 
     // Return success
     return res.status(200).json({ 
@@ -226,6 +226,81 @@ router.get('/test-email', async (req, res) => {
   }
 });
 
+// Debug endpoint to manually test approval processing
+router.post('/debug-approval', async (req, res) => {
+  try {
+    const { trackingCode, approvalEmail, emailBody } = req.body;
+    
+    if (!trackingCode || !approvalEmail || !emailBody) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'trackingCode, approvalEmail, and emailBody are required' 
+      });
+    }
+    
+    console.log('=== DEBUG APPROVAL PROCESSING ===');
+    console.log('Tracking Code:', trackingCode);
+    console.log('Approval Email:', approvalEmail);
+    console.log('Email Body:', emailBody);
+    
+    // Test the approval keyword detection logic
+    const bodyLower = emailBody.toLowerCase();
+    const bodyLines = emailBody.split('\n').map(line => line.trim().toLowerCase());
+    
+    console.log('Body lines for analysis:', bodyLines);
+    
+    // Define approval keywords (same as in monitorEmails.js)
+    const approvalKeywords = ['approved', 'approval', 'accept', 'accepted', 'yes', 'confirm', 'confirmed', 
+                             'looks good', 'i approve', 'approve', 'ok', 'good', 'fine', 'agreed', 'correct'];
+    
+    // Test approval detection
+    const hasApprovalInLines = bodyLines.some(line => 
+      approvalKeywords.some(keyword => line.includes(keyword))
+    );
+    
+    const hasApprovalInBody = approvalKeywords.some(keyword => bodyLower.includes(keyword));
+    const isApproved = hasApprovalInLines || hasApprovalInBody;
+    
+    console.log('Body lines contain approval:', hasApprovalInLines);
+    console.log('Full body contains approval:', hasApprovalInBody);
+    console.log('Final approval status:', isApproved ? 'APPROVED' : 'NOT APPROVED');
+    
+    if (isApproved) {
+      const foundKeywords = approvalKeywords.filter(keyword => bodyLower.includes(keyword));
+      console.log('Found approval keywords:', foundKeywords);
+    }
+    
+    // Actually process the approval
+    const result = await emailTrackingService.processEmailApproval(
+      trackingCode,
+      approvalEmail,
+      isApproved,
+      emailBody
+    );
+    
+    res.json({
+      success: true,
+      message: 'Debug approval processing completed',
+      analysis: {
+        bodyLines,
+        hasApprovalInLines,
+        hasApprovalInBody,
+        isApproved,
+        foundKeywords: isApproved ? approvalKeywords.filter(keyword => bodyLower.includes(keyword)) : []
+      },
+      result
+    });
+    
+  } catch (error) {
+    console.error('Debug approval processing failed:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      details: error.stack
+    });
+  }
+});
+
 /**
  * Route to send a purchase order email with PDF attachment
  */
@@ -310,5 +385,232 @@ router.post('/send-email',
     }
   }
 );
+
+// Status endpoint to check email monitor status
+router.get('/monitor-status', async (req, res) => {
+  try {
+    // Check if email monitor process is running
+    const isProcessRunning = global.emailMonitorProcess && !global.emailMonitorProcess.killed;
+    
+    // Check if we can access the tracking service
+    let trackingServiceStatus = 'unknown';
+    try {
+      if (emailTrackingService && emailTrackingService.pool) {
+        // Test database connection
+        const result = await emailTrackingService.pool.query('SELECT NOW()');
+        trackingServiceStatus = result.rows.length > 0 ? 'connected' : 'disconnected';
+      }
+    } catch (error) {
+      trackingServiceStatus = `error: ${error.message}`;
+    }
+    
+    // Check IMAP configuration
+    const imapConfigured = !!(process.env.IMAP_USER && process.env.IMAP_PASSWORD && process.env.IMAP_HOST);
+    
+    res.json({
+      success: true,
+      status: {
+        emailMonitorProcess: {
+          running: isProcessRunning,
+          pid: global.emailMonitorProcess?.pid || null,
+          killed: global.emailMonitorProcess?.killed || false
+        },
+        trackingService: {
+          status: trackingServiceStatus
+        },
+        imapConfiguration: {
+          configured: imapConfigured,
+          user: process.env.IMAP_USER ? 'SET' : 'NOT SET',
+          password: process.env.IMAP_PASSWORD ? 'SET' : 'NOT SET',
+          host: process.env.IMAP_HOST || 'NOT SET',
+          port: process.env.IMAP_PORT || 'NOT SET',
+          secure: process.env.IMAP_SECURE || 'NOT SET'
+        },
+        timestamp: new Date().toISOString()
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error checking email monitor status:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Force restart email monitor endpoint
+router.post('/restart-monitor', async (req, res) => {
+  try {
+    console.log('Manual restart of email monitor requested...');
+    
+    // Kill existing process if running
+    if (global.emailMonitorProcess && !global.emailMonitorProcess.killed) {
+      console.log('Killing existing email monitor process...');
+      global.emailMonitorProcess.kill('SIGTERM');
+      
+      // Wait a moment for cleanup
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+    
+    // Start email monitor using the same logic as in index.js
+    if (process.env.IMAP_USER && process.env.IMAP_PASSWORD && process.env.IMAP_HOST) {
+      try {
+        const path = require('path');
+        const monitorPath = path.resolve(__dirname, '..', 'scripts', 'monitorEmails.js');
+        
+        console.log(`Starting email monitor from path: ${monitorPath}`);
+        
+        // Delete from cache to ensure fresh load
+        delete require.cache[require.resolve(monitorPath)];
+        
+        // Start the email monitor
+        require(monitorPath);
+        console.log('Email monitoring service restarted successfully');
+        
+        res.json({
+          success: true,
+          message: 'Email monitor restarted successfully',
+          timestamp: new Date().toISOString()
+        });
+        
+      } catch (error) {
+        console.error('Failed to restart email monitor:', error);
+        res.status(500).json({
+          success: false,
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    } else {
+      res.status(400).json({
+        success: false,
+        error: 'IMAP configuration not found',
+        timestamp: new Date().toISOString()
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error restarting email monitor:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+});
+
+// Force refresh purchase order status endpoint
+router.post('/refresh-po/:poId', async (req, res) => {
+  try {
+    const poId = parseInt(req.params.poId);
+    
+    if (!poId || isNaN(poId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid PO ID'
+      });
+    }
+    
+    // Get current PO status from database
+    const result = await emailTrackingService.pool.query(
+      'SELECT po_id, po_number, status, approval_status, approved_by, approval_date, updated_at FROM purchase_orders WHERE po_id = $1',
+      [poId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Purchase order not found'
+      });
+    }
+    
+    const po = result.rows[0];
+    
+    console.log(`Forcing refresh for PO ${poId}:`, po);
+    
+    // Emit socket events to force frontend update
+    const updateData = {
+      po_id: po.po_id,
+      status: po.status,
+      approval_status: po.approval_status,
+      approved_by: po.approved_by,
+      approval_date: po.approval_date,
+      updated_at: po.updated_at
+    };
+    
+    // Emit via both methods to ensure delivery
+    if (global.io) {
+      global.io.emit('purchase_order_update', updateData);
+      global.io.emit('po_status_changed', updateData);
+      global.io.emit('dashboard-update', {
+        type: 'purchase_order_refresh',
+        po_id: po.po_id
+      });
+      console.log('Emitted force refresh events via global.io');
+    }
+    
+    // Also try via emailTrackingService
+    emailTrackingService.emitSocketEvent('purchase_order_update', updateData);
+    emailTrackingService.emitSocketEvent('po_status_changed', updateData);
+    emailTrackingService.emitSocketEvent('dashboard-update', {
+      type: 'purchase_order_refresh',
+      po_id: po.po_id
+    });
+    
+    res.json({
+      success: true,
+      message: 'Purchase order status refreshed',
+      data: po
+    });
+    
+  } catch (error) {
+    console.error('Error refreshing PO status:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Get current PO status endpoint
+router.get('/po-status/:poId', async (req, res) => {
+  try {
+    const poId = parseInt(req.params.poId);
+    
+    if (!poId || isNaN(poId)) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid PO ID'
+      });
+    }
+    
+    // Get current PO status from database
+    const result = await emailTrackingService.pool.query(
+      'SELECT po_id, po_number, status, approval_status, approved_by, approval_date, updated_at FROM purchase_orders WHERE po_id = $1',
+      [poId]
+    );
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'Purchase order not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: result.rows[0]
+    });
+    
+  } catch (error) {
+    console.error('Error getting PO status:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 module.exports = router; 

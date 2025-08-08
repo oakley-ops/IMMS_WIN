@@ -9,7 +9,7 @@ class AuthController {
     try {
       // Check if user exists
       const userExists = await pool.query(
-        'SELECT id FROM users WHERE username = $1 OR email = $2',
+        'SELECT user_id FROM users WHERE username = $1 OR email = $2',
         [username, email]
       );
 
@@ -122,7 +122,7 @@ class AuthController {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const result = await pool.query(
-        'SELECT id, username, email, role FROM users WHERE id = $1',
+        'SELECT user_id, username, email, role FROM users WHERE user_id = $1',
         [decoded.id]
       );
 

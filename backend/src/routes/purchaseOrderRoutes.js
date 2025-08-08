@@ -130,6 +130,14 @@ router.put(
   purchaseOrderController.updateItemInPurchaseOrder.bind(purchaseOrderController)
 );
 
+// PUT update item receipt status for partial receipts - admin and purchasing
+router.put(
+  '/:id/items/:itemId/receipt',
+  authenticate,
+  roleAuthorization(ROLES.ADMIN_PURCHASING),
+  purchaseOrderController.updateItemReceiptStatus.bind(purchaseOrderController)
+);
+
 // POST create blank purchase order - admin and purchasing
 router.post('/blank', 
   authenticate,

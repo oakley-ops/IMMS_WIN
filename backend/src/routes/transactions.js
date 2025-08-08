@@ -1,8 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { Pool } = require('pg');
-const dbConfig = require('../../config/database')[process.env.NODE_ENV || 'development'];
-const pool = new Pool(dbConfig);
+const { pool } = require('../database/db');
 
 // Get all transactions
 router.get('/', async (req, res) => {

@@ -1,17 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const path = require('path');
 const { authenticateToken } = require('../../middleware/auth');
 const roleAuthorization = require('../middleware/roleMiddleware');
 const { executeWithRetry, pool } = require('../../db');
 const EventEmitter = require('events');
 const PartController = require('../controllers/PartController');
+const PartImageService = require('../services/PartImageService');
 
 // Define role permissions
 const ROLES = {
   ALL: ['admin', 'tech', 'purchasing'],
   MODIFY_PARTS: ['admin'],
-  INVENTORY_MANAGEMENT: ['admin', 'tech']
+  INVENTORY_MANAGEMENT: ['admin', 'tech'],
+  RESTOCK_PARTS: ['admin', 'purchasing'], // For actual restocking actions
+  VIEW_LOW_STOCK: ['admin', 'tech', 'purchasing'] // For viewing low stock information
 };
 
 const inventoryEvents = new EventEmitter();
@@ -34,6 +38,41 @@ const upload = multer({
       return cb(new Error('Only CSV files are allowed!'), false);
     }
     cb(null, true);
+  }
+});
+
+// Configure multer for part image uploads
+const partImageStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/temp/'); // Temporary storage
+  },
+  filename: function (req, file, cb) {
+    cb(null, `temp-${Date.now()}${path.extname(file.originalname)}`);
+  }
+});
+
+const partImageUpload = multer({
+  storage: partImageStorage,
+  fileFilter: function (req, file, cb) {
+    const allowedTypes = [
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+      'image/heic',
+      'image/heif',
+      'image/webp',
+      'image/bmp',
+      'image/tiff'
+    ];
+    
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files (JPEG, PNG, HEIC, WebP, BMP, TIFF) are allowed'), false);
+    }
+  },
+  limits: {
+    fileSize: 15 * 1024 * 1024 // 15MB for high-res screenshots
   }
 });
 
@@ -62,7 +101,11 @@ const notifyInventoryChange = () => {
 
 // Get all parts with pagination and filtering - accessible to all authenticated users
 router.get('/', authenticateToken, roleAuthorization(ROLES.ALL), async (req, res) => {
+  const startTime = Date.now();
+  
   try {
+    console.log('Parts GET request received with params:', req.query);
+    
     const page = parseInt(req.query.page) || 0;
     const limit = parseInt(req.query.limit) || 25;
     const offset = page * limit;
@@ -154,6 +197,7 @@ router.get('/', authenticateToken, roleAuthorization(ROLES.ALL), async (req, res
         CAST(p.unit_cost AS NUMERIC) as unit_cost, 
         CAST(p.unit_cost AS NUMERIC) as cost, 
         p.supplier as manufacturer, 
+        p.image_url,
         p.created_at as last_ordered_date, 
         p.updated_at,
         COALESCE(p.status, 'active') as status,
@@ -171,21 +215,35 @@ router.get('/', authenticateToken, roleAuthorization(ROLES.ALL), async (req, res
       queryParams
     );
 
+    const endTime = Date.now();
+    console.log(`Parts query completed in ${endTime - startTime}ms: found ${result.rows.length} parts out of ${total} total`);
+
+    // Ensure all parts have valid part_id
+    const validatedParts = result.rows.map(part => ({
+      ...part,
+      part_id: part.part_id || part.id || Math.floor(Math.random() * 1000000), // Fallback ID if missing
+    }));
+
     res.json({
-      items: result.rows,
+      items: validatedParts,
       total,
       page,
       limit,
-      totalPages: Math.ceil(total / limit)
+      totalPages: Math.ceil(total / limit),
+      queryTime: endTime - startTime
     });
   } catch (error) {
     console.error('Error fetching parts:', error);
-    res.status(500).json({ error: 'Failed to fetch parts' });
+    console.error('Stack trace:', error.stack);
+    res.status(500).json({ 
+      error: 'Failed to fetch parts',
+      message: error.message 
+    });
   }
 });
 
-// Get low stock parts - accessible by admin and purchasing
-router.get('/low-stock', authenticateToken, roleAuthorization(ROLES.ADMIN_PURCHASING), async (req, res) => {
+// Get low stock parts - accessible by admin, tech, and purchasing
+router.get('/low-stock', authenticateToken, roleAuthorization(ROLES.VIEW_LOW_STOCK), async (req, res) => {
   try {
     console.log('Fetching low stock parts...');
     
@@ -218,8 +276,8 @@ router.get('/low-stock', authenticateToken, roleAuthorization(ROLES.ADMIN_PURCHA
   }
 });
 
-// Get order status for parts - accessible by admin and purchasing
-router.get('/order-status', authenticateToken, roleAuthorization(ROLES.ADMIN_PURCHASING), async (req, res) => {
+// Get order status for parts - accessible by admin, tech, and purchasing
+router.get('/order-status', authenticateToken, roleAuthorization(ROLES.VIEW_LOW_STOCK), async (req, res) => {
   try {
     const { partIds } = req.query;
     
@@ -1107,7 +1165,7 @@ router.post('/usage', async (req, res) => {
 });
 
 // Restock parts
-router.post('/restock', async (req, res) => {
+router.post('/restock', authenticateToken, roleAuthorization(ROLES.RESTOCK_PARTS), async (req, res) => {
   const { part_id, quantity } = req.body;
 
   console.log('Restocking parts:', { part_id, quantity });
@@ -1389,5 +1447,49 @@ router.get('/usage/table-info', async (req, res) => {
     });
   }
 });
+
+// Upload part image endpoint
+router.post('/:id/image', 
+  authenticateToken, 
+  roleAuthorization(ROLES.MODIFY_PARTS),
+  partImageUpload.single('image'),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      const username = req.user?.username || 'system';
+      
+      if (!req.file) {
+        return res.status(400).json({ error: 'No image uploaded' });
+      }
+
+      const partImageService = new PartImageService(pool);
+      const result = await partImageService.uploadPartImage(id, req.file, username);
+      
+      res.json(result);
+    } catch (error) {
+      console.error('Error uploading part image:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
+
+// Delete part image endpoint
+router.delete('/:id/image',
+  authenticateToken,
+  roleAuthorization(ROLES.MODIFY_PARTS),
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const partImageService = new PartImageService(pool);
+      await partImageService.deletePartImage(id);
+      
+      res.json({ message: 'Image deleted successfully' });
+    } catch (error) {
+      console.error('Error deleting part image:', error);
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
 
 module.exports = router;

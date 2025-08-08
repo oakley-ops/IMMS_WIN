@@ -9,7 +9,7 @@ class UserController {
     try {
       // Check if user already exists
       const userExists = await pool.query(
-        'SELECT id FROM users WHERE username = $1 OR email = $2',
+        'SELECT user_id FROM users WHERE username = $1 OR email = $2',
         [username, email]
       );
       
@@ -91,7 +91,7 @@ class UserController {
   static async getProfile(req, res) {
     try {
       const result = await pool.query(
-        'SELECT id, username, email, role FROM users WHERE id = $1',
+        'SELECT user_id, username, email, role FROM users WHERE user_id = $1',
         [req.user.id]
       );
       
@@ -112,7 +112,7 @@ class UserController {
     try {
       // Check if username/email is already taken by another user
       const existingUser = await pool.query(
-        'SELECT id FROM users WHERE (username = $1 OR email = $2) AND id != $3',
+        'SELECT user_id FROM users WHERE (username = $1 OR email = $2) AND user_id != $3',
         [username, email, req.user.id]
       );
       

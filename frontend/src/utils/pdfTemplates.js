@@ -35,6 +35,53 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
     // Get line items
     const lineItems = purchaseOrder.items || [];
     
+    // Log detailed information about each line item for debugging
+    console.log('Processing line items for PDF export:');
+    lineItems.forEach((item, index) => {
+      // Extract part name using multiple fallbacks
+      const partName = item.custom_part_name || 
+                      item.part_name || 
+                      item.name || 
+                      item.partName || 
+                      item.PartName || 
+                      item.part_description;
+                      
+      // Extract part number using multiple fallbacks (prioritizing manufacturer part number)
+      const partNumber = item.manufacturer_part_number || 
+                         item.custom_part_number || 
+                         item.fiserv_part_number || 
+                         item.part_number || 
+                         item.partNumber || 
+                         item.PartNumber || 
+                         item.part_num || 
+                         item.part_id;
+                         
+      // Try to extract data from notes if available
+      let notesData = {};
+      if (item.notes) {
+        try {
+          notesData = JSON.parse(item.notes);
+        } catch (e) {
+          console.log('Failed to parse notes JSON:', e);
+        }
+      }
+      
+      // Log the extracted data
+      console.log(`Item ${index + 1} details:`, {
+        itemId: item.item_id,
+        partId: item.part_id,
+        partName: partName || (notesData.part_name || notesData.custom_part_name || 'No Name'),
+        partNumber: partNumber || (notesData.part_number || notesData.custom_part_number || '-'),
+        quantity: item.quantity,
+        unitPrice: item.price || item.unit_price || item.unitPrice,
+        totalPrice: (item.price || item.unit_price || item.unitPrice || 0) * (item.quantity || 0)
+      });
+      
+      // Update the item with properly extracted fields to ensure PDF display
+      item.display_part_name = partName || (notesData.part_name || notesData.custom_part_name || 'No Name');
+      item.display_part_number = partNumber || (notesData.manufacturer_part_number || notesData.part_number || notesData.custom_part_number || '-');
+    });
+    
     // Calculate totals
     const subtotal = lineItems.reduce((sum, item) => {
       const price = parseFloat(item.price || item.unit_price || 0);
@@ -48,6 +95,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
 
     // Log the purchase order data for debugging
     console.log('Purchase Order Data:', JSON.stringify(purchaseOrder, null, 2));
+    console.log('Line Items:', JSON.stringify(lineItems, null, 2));
     console.log('Calculated Totals:', { subtotal, shippingCost, taxAmount, totalAmount });
 
     // Fiserv orange color
@@ -78,7 +126,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             position: relative;
           }
           .logo {
@@ -96,7 +144,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
           }
           .header-border {
             border-bottom: 2px solid ${fiservOrange};
-            margin-top: 30px;
+            margin-top: 0px;
             width: 100%;
           }
           .info-grid {
@@ -201,8 +249,8 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
       <body>
         <div class="container">
           <div class="header">
-            <img src="/assets/fiserv_logo_orange_rgb.png" alt="Fiserv Logo" class="logo">
-            <div class="header-title">PURCHASE ORDER</div>
+            <img src="/assets/fiserv_logo_orange_rgb.png" alt="Fiserv Logo" class="logo" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSIzMCI+PHRleHQgeD0iMCIgeT0iMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiNGRjYyMDAiPmZpc2VydjwvdGV4dD48L3N2Zz4=';">
+            <div class="header-title">PURCHASE ORDER REQUEST</div>
           </div>
           <div class="header-border"></div>
           
@@ -235,13 +283,13 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
               <div class="value">${purchaseOrder.approvedBy || purchaseOrder.approved_by || ''}</div>
               
               <div class="label">Date Created:</div>
-              <div class="value">${formatDate(purchaseOrder.createdAt || purchaseOrder.created_at)}</div>
+              <div class="value">${purchaseOrder.created_at ? formatDate(purchaseOrder.created_at) : 'N/A'}</div>
               
               <div class="label">Priority:</div>
-              <div class="value">${purchaseOrder.urgent || purchaseOrder.is_urgent ? 'Urgent' : 'Not Urgent'}</div>
+              <div class="value">${purchaseOrder.is_urgent ? 'Urgent' : 'Not Urgent'}</div>
               
               <div class="label">Shipping Method:</div>
-              <div class="value">${purchaseOrder.nextDayShipping || purchaseOrder.next_day_air ? 'Next Day Air' : 'Regular Shipping'}</div>
+              <div class="value">${purchaseOrder.next_day_air ? 'Next Day Air' : 'Regular Shipping'}</div>
             </div>
           </div>
           
@@ -259,18 +307,13 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
             <tbody>
               ${lineItems.map(item => `
                 <tr>
-                  <td>${item.name || item.part_name || ''}</td>
-                  <td>${item.partNumber || item.manufacturer_part_number || item.fiserv_part_number || ''}</td>
+                  <td>${item.display_part_name || 'No Name'}</td>
+                  <td>${item.display_part_number || '-'}</td>
                   <td>${item.quantity || 0}</td>
                   <td>${formatCurrency(item.price || item.unit_price || 0)}</td>
                   <td>${formatCurrency((item.price || item.unit_price || 0) * (item.quantity || 0))}</td>
                 </tr>
               `).join('')}
-              ${lineItems.length === 0 ? `
-                <tr>
-                  <td colspan="5" style="text-align: center;">No items found</td>
-                </tr>
-              ` : ''}
             </tbody>
           </table>
           
@@ -293,60 +336,47 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
             </tr>
           </table>
           
-          <div class="footer">
-            This is an official purchase order document. Please reference PO #${purchaseOrder.poNumber || purchaseOrder.po_number || ''} in all correspondence.
-          </div>
+
           
-          ${!returnBlob ? '<button class="print-button" onclick="window.print()">Print / Save as PDF</button>' : ''}
+          ${!returnBlob ? `<button class="print-button" onclick="window.print()">Print / Save as PDF</button>` : ''}
         </div>
       </body>
       </html>
     `;
-
-    // Create a temporary element to hold the HTML content
-    const element = document.createElement('div');
-    element.innerHTML = html;
-
-    // If we need to return a blob for email attachment
+    
+    // Options for PDF generation
+    const options = {
+      margin: 10,
+      filename: `PO_${purchaseOrder.poNumber || purchaseOrder.po_number || 'Document'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { 
+        scale: 2,
+        allowTaint: true,
+        useCORS: true
+      },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    
+    // Generate PDF
     if (returnBlob) {
-      // Configure html2pdf options
-      const pdfOptions = {
-        margin: 10,
-        filename: `PO-${purchaseOrder.po_number || 'export'}.pdf`,
-        image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
-        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-      };
+      const pdfBlob = await html2pdf().set(options).from(html).outputPdf('blob');
+      return pdfBlob;
+    } else {
+      const element = document.createElement('div');
+      element.innerHTML = html;
+      document.body.appendChild(element);
       
-      try {
-        // Generate PDF using html2pdf
-        const pdfBlob = await html2pdf().from(element).set(pdfOptions).outputPdf('blob');
-        return pdfBlob;
-      } catch (error) {
-        console.error('Error generating PDF with html2pdf:', error);
-        // Fallback to simple blob
-        return new Blob([html], { type: 'application/pdf' });
-      }
+      await html2pdf()
+        .set(options)
+        .from(element)
+        .save()
+        .then(() => {
+          document.body.removeChild(element);
+        });
     }
-
-    // Otherwise proceed with opening in a new window for display/print
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert('Please allow popups for this website to generate the purchase order PDF.');
-      return Promise.resolve();
-    }
-
-    // Write the HTML content to the new window
-    printWindow.document.open();
-    printWindow.document.write(html);
-    printWindow.document.close();
-
-    // Focus the new window
-    printWindow.focus();
-
-    return Promise.resolve();
+    
   } catch (error) {
     console.error('Error generating PDF:', error);
-    return Promise.reject(error);
+    alert('Please allow popups for this website to generate the purchase order PDF.');
   }
 };

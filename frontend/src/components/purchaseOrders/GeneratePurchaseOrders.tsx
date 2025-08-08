@@ -31,6 +31,7 @@ import FileDownloadIcon from '@mui/icons-material/FileDownload';
 import EditIcon from '@mui/icons-material/Edit';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
+import RefreshIcon from '@mui/icons-material/Refresh';
 import { generatePurchaseOrderExcel } from '../../utils/excelTemplates';
 
 const GeneratePurchaseOrders: React.FC = () => {
@@ -45,14 +46,17 @@ const GeneratePurchaseOrders: React.FC = () => {
   const [editingSupplierId, setEditingSupplierId] = useState<string | null>(null);
   const [editingQuantity, setEditingQuantity] = useState<{ partId: number, supplierId: string } | null>(null);
   const [pendingPOsExist, setPendingPOsExist] = useState<boolean>(false);
-  // Add state for selected parts (default is all parts selected)
+  // Add state for selected parts (default is all parts unselected)
   const [selectedPartIds, setSelectedPartIds] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
 
-  const fetchData = async () => {
+  const fetchData = async (preserveSelections: boolean = false) => {
     try {
       setLoading(true);
       setError(null);
+      
+      // Store current selections if we want to preserve them
+      const currentSelections = preserveSelections ? new Set(selectedPartIds) : new Set<number>();
       
       // First, check if there are any pending POs
       try {
@@ -183,17 +187,27 @@ const GeneratePurchaseOrders: React.FC = () => {
             groupedBySupplier[supplierId].push(part);
           });
           
-          // Flatten back to array but keep grouped by supplier
+          // Flatten back to array but keep grouped by supplier, and sort alphabetically by name
           const result: Part[] = [];
           Object.values(groupedBySupplier).forEach(group => {
-            result.push(...group);
+            // Sort each supplier group alphabetically by name
+            const sortedGroup = group.sort((a, b) => a.name.localeCompare(b.name));
+            result.push(...sortedGroup);
           });
           
           setParts(result);
           
-          // Initialize all parts as selected by default
-          const allPartIds = new Set(result.map(part => part.part_id));
-          setSelectedPartIds(allPartIds);
+          // Initialize all parts as unselected by default, or preserve existing selections
+          if (preserveSelections && currentSelections.size > 0) {
+            // Only keep selections for parts that still exist in the new result
+            const existingPartIds = new Set(result.map(part => part.part_id));
+            const preservedSelections = new Set(
+              Array.from(currentSelections).filter(id => existingPartIds.has(id))
+            );
+            setSelectedPartIds(preservedSelections);
+          } else {
+            setSelectedPartIds(new Set());
+          }
           
           console.log('Final processed parts:', result);
           
@@ -226,9 +240,17 @@ const GeneratePurchaseOrders: React.FC = () => {
   // Add an effect to refresh data when the user returns to this page
   useEffect(() => {
     // This will handle cases where the user navigates away and then returns
+    let lastFocusTime = Date.now();
+    
     const handleFocus = () => {
-      console.log('Window focused, refreshing data...');
-      fetchData();
+      // Only refresh if it's been more than 30 seconds since last focus
+      // This prevents constant refreshing when clicking on items
+      const now = Date.now();
+      if (now - lastFocusTime > 30000) {
+        console.log('Window focused after being away, refreshing data and preserving selections...');
+        fetchData(true); // Preserve selections when refreshing
+      }
+      lastFocusTime = now;
     };
 
     window.addEventListener('focus', handleFocus);
@@ -236,7 +258,7 @@ const GeneratePurchaseOrders: React.FC = () => {
     return () => {
       window.removeEventListener('focus', handleFocus);
     };
-  }, []);
+  }, [selectedPartIds]);
 
   const handleEditPoNumber = (supplierId: string) => {
     setEditingSupplierId(supplierId);
@@ -251,6 +273,17 @@ const GeneratePurchaseOrders: React.FC = () => {
   };
 
   const handleCustomPoNumberChange = (supplierId: string, value: string) => {
+    // Prevent "TBD" from being used as a PO number
+    if (value.trim().toUpperCase() === 'TBD') {
+      setError('Custom PO number cannot be "TBD". Please use a different number or leave blank for automatic generation.');
+      return;
+    }
+    
+    // Clear error if it was previously set for TBD
+    if (error && error.includes('TBD')) {
+      setError(null);
+    }
+    
     setCustomPoNumbers({
       ...customPoNumbers,
       [supplierId]: value
@@ -602,8 +635,8 @@ const GeneratePurchaseOrders: React.FC = () => {
             <TableHead>
               <TableRow>
                 <TableCell padding="checkbox" width="48px"></TableCell>
-                <TableCell>Part #</TableCell>
                 <TableCell>Name</TableCell>
+                <TableCell>Part #</TableCell>
                 <TableCell>Current Qty</TableCell>
                 <TableCell>Min Qty</TableCell>
                 <TableCell>Order Qty</TableCell>
@@ -635,8 +668,8 @@ const GeneratePurchaseOrders: React.FC = () => {
                       onClick={(e) => e.stopPropagation()}
                     />
                   </TableCell>
-                  <TableCell>{part.fiserv_part_number}</TableCell>
-                  <TableCell>{part.name}</TableCell>
+                                      <TableCell>{part.name}</TableCell>
+                    <TableCell>{part.manufacturer_part_number}</TableCell>
                   <TableCell>{part.quantity}</TableCell>
                   <TableCell>{part.minimum_quantity}</TableCell>
                   <TableCell>
@@ -722,13 +755,35 @@ const GeneratePurchaseOrders: React.FC = () => {
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5">Generate Purchase Orders</Typography>
         <Box display="flex" gap={2}>
+          {/* Generate POs button at the top - only show when there are parts and not loading */}
+          {!loading && parts.length > 0 && generatedPOs.length === 0 && (
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={generating ? <CircularProgress size={20} color="inherit" /> : <LocalShippingIcon />}
+              onClick={handleGeneratePurchaseOrders}
+              disabled={
+                generating || 
+                loading || 
+                getSelectedPartsCount() === 0 ||
+                parts.some(part => selectedPartIds.has(part.part_id) && (part.editable_quantity || 0) <= 0)
+              }
+            >
+              {generating 
+                ? 'Generating...' 
+                : getSelectedPartsCount() === 0 
+                  ? 'Select Parts to Generate POs'
+                  : `Generate POs for ${getSelectedPartsCount()} Parts`
+              }
+            </Button>
+          )}
           {generatedPOs.length > 0 && (
             <Button 
               startIcon={<LocalShippingIcon />}
               onClick={() => {
                 setGeneratedPOs([]);
                 setSuccess(null);
-                fetchData();
+                fetchData(false); // Don't preserve selections when generating new POs
               }}
               variant="contained"
               color="primary"
@@ -736,6 +791,17 @@ const GeneratePurchaseOrders: React.FC = () => {
               Generate New POs
             </Button>
           )}
+          {/* Manual refresh button */}
+          <Tooltip title="Refresh data while preserving your selected parts">
+            <Button 
+              startIcon={<RefreshIcon />}
+              onClick={() => fetchData(true)} // Preserve selections when manually refreshing
+              variant="outlined"
+              disabled={loading}
+            >
+              Refresh Data
+            </Button>
+          </Tooltip>
           <Button 
             startIcon={<ArrowBackIcon />}
             onClick={() => navigate('/purchase-orders')}
@@ -842,7 +908,7 @@ const GeneratePurchaseOrders: React.FC = () => {
                   onClick={() => {
                     setGeneratedPOs([]);
                     setSuccess(null);
-                    fetchData();
+                    fetchData(false); // Don't preserve selections when generating more POs
                   }}
                 >
                   Generate More POs
@@ -876,7 +942,12 @@ const GeneratePurchaseOrders: React.FC = () => {
                               po.status === 'pending' ? 'warning' :
                               po.status === 'submitted' ? 'info' :
                               po.status === 'approved' ? 'success' :
-                              po.status === 'received' ? 'primary' :
+                              po.status === 'waiting_for_po_number' ? 'secondary' :
+                              po.status === 'on_hold' ? 'secondary' :
+                              po.status === 'rejected' ? 'error' :
+                              po.status === 'received' ? 'success' :
+                              po.status === 'on_order' ? 'info' :
+                              po.status === 'canceled' ? 'error' :
                               'default'
                             }
                             size="small"

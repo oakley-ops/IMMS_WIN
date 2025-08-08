@@ -21,7 +21,7 @@ router.put('/profile', authMiddleware, UserController.updateProfile);
 router.get('/', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (req, res) => {
   try {
     const result = await pool.query(
-      'SELECT id, username, email, role, last_login, created_at, updated_at FROM users ORDER BY username'
+      'SELECT user_id, username, email, role, last_login, created_at, updated_at FROM users ORDER BY username'
     );
     
     res.json(result.rows);
@@ -37,7 +37,7 @@ router.get('/:id', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (r
     const { id } = req.params;
     
     const result = await pool.query(
-      'SELECT id, username, email, role, last_login, created_at, updated_at FROM users WHERE id = $1',
+      'SELECT user_id, username, email, role, last_login, created_at, updated_at FROM users WHERE user_id = $1',
       [id]
     );
     
@@ -73,7 +73,7 @@ router.post('/', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (req
     
     // Check if user already exists
     const existingUser = await pool.query(
-      'SELECT id FROM users WHERE username = $1 OR email = $2',
+      'SELECT user_id FROM users WHERE username = $1 OR email = $2',
       [username, email]
     );
     
@@ -164,6 +164,21 @@ router.delete('/:id', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async
   } catch (error) {
     console.error('Error deleting user:', error);
     res.status(500).json({ error: 'Failed to delete user' });
+  }
+});
+
+// Get technicians (for PM assignment dropdown) - accessible to all authenticated users
+router.get('/technicians', authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      'SELECT user_id, username, email FROM users WHERE role = $1 AND is_active = true ORDER BY username',
+      ['tech']
+    );
+    
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Error fetching technicians:', error);
+    res.status(500).json({ error: 'Failed to fetch technicians' });
   }
 });
 

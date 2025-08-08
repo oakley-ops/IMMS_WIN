@@ -1,0 +1,65 @@
+=======================================
+RASPBERRY PI CAMERA SETUP INSTRUCTIONS
+=======================================
+
+🎯 Goal: Enable HTTPS for camera access
+
+📦 Files in this folder:
+- fiservinventory-local.conf  (nginx configuration)
+- generate-local-ssl.sh       (SSL certificate generator)
+- setup-https-camera.sh       (automated setup script)
+- RASPBERRY_PI_CAMERA_SETUP.md (detailed documentation)
+
+🚀 QUICK SETUP (Run these commands on the Pi):
+
+1. Copy files to a temporary directory:
+   cp -r /media/isaacrodriguez/New\ Volume/camera-setup/* /tmp/
+
+2. Navigate to the directory:
+   cd /tmp
+
+3. Make scripts executable:
+   chmod +x generate-local-ssl.sh setup-https-proxy.sh
+
+4. Run the PROXY setup script:
+   bash setup-https-proxy.sh
+
+5. Enter your Windows PC's IP address when prompted
+
+6. Access your app via HTTPS:
+   https://192.168.50.1
+
+🔧 MANUAL SETUP (if automated script fails):
+
+1. Generate SSL certificate:
+   bash generate-local-ssl.sh
+
+2. Copy nginx config:
+   sudo cp fiservinventory-local.conf /etc/nginx/sites-available/
+
+3. Enable nginx site:
+   sudo ln -s /etc/nginx/sites-available/fiservinventory-local.conf /etc/nginx/sites-enabled/
+
+4. Test nginx config:
+   sudo nginx -t
+
+5. Restart nginx:
+   sudo systemctl restart nginx
+
+✅ SUCCESS INDICATORS:
+- No errors during script execution
+- nginx starts successfully
+- https://192.168.50.1 shows your app
+- Camera button works in the app
+
+❌ TROUBLESHOOTING:
+- If nginx fails to start: sudo journalctl -u nginx -f
+- If certificate issues: Re-run generate-local-ssl.sh
+- If still having issues: Check RASPBERRY_PI_CAMERA_SETUP.md
+
+🎉 AFTER SETUP:
+1. Access app via https://192.168.50.1
+2. Accept security certificate warning
+3. Camera functionality will work!
+
+Note: Replace /path/to/your/fiservinventory_win with your actual project path 

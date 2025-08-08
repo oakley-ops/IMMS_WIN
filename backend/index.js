@@ -17,6 +17,7 @@ const purchaseOrderRoutes = require('./src/routes/purchaseOrderRoutes');
 const emailRoutes = require('./src/routes/emailRoutes');
 const projectsRouter = require('./src/routes/projects');
 const equipmentRouter = require('./src/routes/equipment');
+const techniciansRouter = require('./src/routes/technicians');
 const http = require('http');
 const { Server } = require('socket.io');
 const app = require('./src/app');
@@ -27,7 +28,14 @@ const db = require('./src/database/db');
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || ['http://localhost:3000', 'http://localhost:3002'],
+    origin: [
+      'http://localhost:3000', 
+      'http://localhost:3002',
+      'http://10.1.10.171:3000',
+      'http://10.1.10.171:3002',
+      'http://192.168.50.1:3000',
+      'http://192.168.50.1:3002'
+    ],
     methods: ['GET', 'POST'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -47,10 +55,20 @@ app.use(morgan('dev'));
 
 // Apply CORS middleware before other route handlers
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3002", "http://localhost:4000"],
+  origin: [
+    "http://localhost:3000", 
+    "http://localhost:3001",
+    "http://localhost:3002",
+    "http://10.1.10.171:3000",
+    "http://10.1.10.171:3002",
+    "http://192.168.50.1:3000",
+    "http://192.168.50.1:3002"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token']
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 
 // Body parser middleware
@@ -177,6 +195,7 @@ app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
 app.use('/api/v1/email', emailRoutes);
 app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/equipment', equipmentRouter);
+app.use('/api/v1/technicians', techniciansRouter);
 
 // Comment out the original parts usage controller since we're using our custom route
 // app.post('/api/v1/parts/usage', (req, res) => partsUsageController.recordUsage(req, res));
@@ -214,7 +233,12 @@ app.post('/api/test-email', (req, res) => {
 app.get('/api/v1/public/purchase-orders', async (req, res) => {
   try {
     console.log('Using temporary public route for purchase orders');
-    const result = await db.query(`
+    const { includeHistoricalReceived = 'false' } = req.query;
+    console.log('Include historical received:', includeHistoricalReceived);
+    console.log('Query parameters:', req.query);
+    
+    // Build the query with filtering for historical received orders
+    let query = `
       SELECT po.*, 
               COALESCE(po.approval_status, po.status) as status,
               s.name as supplier_name, 
@@ -223,9 +247,36 @@ app.get('/api/v1/public/purchase-orders', async (req, res) => {
               s.phone as supplier_phone
       FROM purchase_orders po
       LEFT JOIN suppliers s ON po.supplier_id = s.supplier_id
-      ORDER BY po.created_at DESC
-    `);
-    console.log(`Found ${result.rows.length} purchase orders`);
+    `;
+    
+    // Add filtering condition if includeHistoricalReceived is false
+    if (includeHistoricalReceived !== 'true') {
+      query += `
+        WHERE NOT (COALESCE(po.approval_status, po.status) = 'received' AND po.created_at < NOW() - INTERVAL '30 days')
+      `;
+      console.log('Added filtering condition for historical received orders');
+    } else {
+      console.log('Showing all orders including historical received');
+    }
+    
+    query += ' ORDER BY po.created_at DESC';
+    
+    console.log('Final query:', query);
+    
+    const result = await db.query(query);
+    console.log(`Found ${result.rows.length} purchase orders (includeHistoricalReceived: ${includeHistoricalReceived})`);
+    
+    // Log some sample data for debugging
+    const receivedOrders = result.rows.filter(po => po.status === 'received');
+    console.log(`Received orders count: ${receivedOrders.length}`);
+    if (receivedOrders.length > 0) {
+      console.log('Sample received order dates:', receivedOrders.slice(0, 3).map(po => ({
+        po_number: po.po_number,
+        status: po.status,
+        created_at: po.created_at
+      })));
+    }
+    
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching purchase orders:', error);
@@ -449,4 +500,145 @@ server.listen(port, '0.0.0.0', () => {
   console.log(`Test URL: http://localhost:${port}/api/v1/test/email`);
   console.log(`Socket.io URL: http://localhost:${port}/socket.io`);
   console.log('Environment:', process.env.NODE_ENV);
+  
+  // Start email monitoring automatically if IMAP credentials are configured
+  if (process.env.IMAP_USER && process.env.IMAP_PASSWORD && process.env.IMAP_HOST) {
+    console.log('Starting email monitoring service...');
+    
+    // Try integrated approach first (running in same process)
+    try {
+      console.log('[EmailMonitor] Starting email monitor in integrated mode...');
+      
+      // Import and start the email monitor directly (not as child process)
+      const path = require('path');
+      const monitorPath = path.join(__dirname, 'src', 'scripts', 'monitorEmails.js');
+      
+      // Use setImmediate to start email monitor after server is fully initialized
+      setImmediate(async () => {
+        try {
+          console.log('[EmailMonitor] Loading email monitor module...');
+          
+          // Delete from cache to ensure fresh load
+          delete require.cache[require.resolve(monitorPath)];
+          
+          // Start the email monitor
+          require(monitorPath);
+          console.log('[EmailMonitor] Email monitoring service started successfully (integrated mode)');
+          
+        } catch (error) {
+          console.error('[EmailMonitor] Failed to start integrated email monitor:', error);
+          console.log('[EmailMonitor] Falling back to child process mode...');
+          
+          // Fallback to child process approach
+          startEmailMonitorAsChildProcess();
+        }
+      });
+      
+    } catch (error) {
+      console.error('Failed to start email monitoring service:', error);
+      console.log('Email approvals will need to be processed manually or start the monitor separately with: npm run start:email-monitor');
+    }
+  } else {
+    console.log('IMAP configuration not found. Email monitoring disabled.');
+    console.log('To enable automatic email approval detection, configure IMAP_USER, IMAP_PASSWORD, and IMAP_HOST environment variables.');
+  }
+  
+  // Function to start email monitor as child process (fallback)
+  function startEmailMonitorAsChildProcess() {
+    try {
+      const { spawn } = require('child_process');
+      const path = require('path');
+      
+      // Start the email monitor as a child process
+      const monitorPath = path.join(__dirname, 'src', 'scripts', 'monitorEmails.js');
+      console.log(`[EmailMonitor] Starting child process with path: ${monitorPath}`);
+      
+      const emailMonitor = spawn('node', [monitorPath], {
+        stdio: ['ignore', 'pipe', 'pipe'], // Don't inherit stdin, but pipe stdout and stderr
+        detached: false, // Keep as child process
+        env: { ...process.env }, // Pass all environment variables
+        cwd: __dirname // Set working directory
+      });
+      
+      console.log(`[EmailMonitor] Child process spawned with PID: ${emailMonitor.pid}`);
+      
+      // Log output from the email monitor
+      emailMonitor.stdout.on('data', (data) => {
+        const output = data.toString().trim();
+        if (output) {
+          console.log(`[EmailMonitor] ${output}`);
+        }
+      });
+      
+      emailMonitor.stderr.on('data', (data) => {
+        const output = data.toString().trim();
+        if (output) {
+          console.error(`[EmailMonitor Error] ${output}`);
+        }
+      });
+      
+      emailMonitor.on('spawn', () => {
+        console.log('[EmailMonitor] Child process spawned successfully');
+      });
+      
+      emailMonitor.on('close', (code, signal) => {
+        console.log(`[EmailMonitor] Process closed with code ${code} and signal ${signal}`);
+        if (code !== 0 && code !== null) {
+          console.error(`[EmailMonitor] Process exited with code ${code}`);
+          // Restart after 10 seconds if it crashes
+          setTimeout(() => {
+            console.log('[EmailMonitor] Attempting to restart email monitor...');
+            startEmailMonitorAsChildProcess();
+          }, 10000);
+        }
+      });
+      
+      emailMonitor.on('error', (error) => {
+        console.error('[EmailMonitor] Child process error:', error);
+      });
+      
+      emailMonitor.on('exit', (code, signal) => {
+        console.log(`[EmailMonitor] Process exited with code ${code} and signal ${signal}`);
+      });
+      
+      // Store reference for potential cleanup
+      global.emailMonitorProcess = emailMonitor;
+      
+    } catch (error) {
+      console.error('[EmailMonitor] Failed to start email monitor as child process:', error);
+    }
+  }
+});
+
+// Graceful shutdown handling
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received. Shutting down gracefully...');
+  
+  // Close email monitor if running
+  if (global.emailMonitorProcess) {
+    console.log('Stopping email monitor...');
+    global.emailMonitorProcess.kill('SIGTERM');
+  }
+  
+  // Close the server
+  server.close(() => {
+    console.log('Server closed.');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received. Shutting down gracefully...');
+  
+  // Close email monitor if running
+  if (global.emailMonitorProcess) {
+    console.log('Stopping email monitor...');
+    global.emailMonitorProcess.kill('SIGINT');
+  }
+  
+  // Close the server
+  server.close(() => {
+    console.log('Server closed.');
+    process.exit(0);
+  });
 });
