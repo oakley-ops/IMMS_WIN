@@ -165,9 +165,9 @@ class PurchaseOrderController {
         paramIndex++;
       }
 
-      // Filter out received POs older than 30 days (unless includeHistoricalReceived is true)
+      // Filter out received POs older than 7 days (unless includeHistoricalReceived is true)
       if (includeHistoricalReceived !== 'true') {
-        conditions.push(`NOT (COALESCE(po.approval_status, po.status) = 'received' AND po.created_at < NOW() - INTERVAL '30 days')`);
+        conditions.push(`NOT (COALESCE(po.approval_status, po.status) = 'received' AND po.created_at < NOW() - INTERVAL '7 days')`);
       }
 
       // Enhanced search filter with multiple terms

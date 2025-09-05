@@ -279,7 +279,7 @@ const PartsList: React.FC = () => {
   const [currentSupplierId, setCurrentSupplierId] = useState('');
   const [currentUnitCost, setCurrentUnitCost] = useState('');
   const [currentLeadTimeDays, setCurrentLeadTimeDays] = useState('');
-  const [currentMinOrderQty, setCurrentMinOrderQty] = useState('');
+
   const [currentSupplierNotes, setCurrentSupplierNotes] = useState('');
   const [openEditConfirm, setOpenEditConfirm] = useState(false);
   
@@ -913,6 +913,18 @@ const PartsList: React.FC = () => {
 
       if (response && response.status >= 200 && response.status < 300) {
         fetchParts();
+        
+        // If we were editing a part, refresh the selectedPart data to show updated info in details dialog
+        if (isEditing && selectedPart) {
+          try {
+            const updatedPartResponse = await axiosInstance.get(`/api/v1/parts/${selectedPart.part_id}`);
+            setSelectedPart(updatedPartResponse.data);
+          } catch (refreshError) {
+            console.error('Error refreshing part details:', refreshError);
+            // Continue execution even if refresh fails
+          }
+        }
+        
         setOpenDialog(false);
         setFormData(initialFormData);
         setSelectedSuppliers([]);
@@ -1183,9 +1195,9 @@ const PartsList: React.FC = () => {
       return;
     }
 
-    // Validate unit cost
-    if (!currentUnitCost || isNaN(Number(currentUnitCost)) || Number(currentUnitCost) <= 0) {
-      setError('Please enter a valid unit cost');
+    // Validate unit cost - allow blank values (will default to 0)
+    if (currentUnitCost && (isNaN(Number(currentUnitCost)) || Number(currentUnitCost) < 0)) {
+      setError('Please enter a valid unit cost (must be 0 or greater)');
       return;
     }
 
@@ -1196,7 +1208,7 @@ const PartsList: React.FC = () => {
       unit_cost: Number(currentUnitCost) || 0,
       is_preferred: selectedSuppliers.length === 0 ? true : false, // First supplier is preferred by default
       lead_time_days: currentLeadTimeDays ? Number(currentLeadTimeDays) : null,
-      minimum_order_quantity: currentMinOrderQty ? Number(currentMinOrderQty) : 1,
+
       notes: currentSupplierNotes || ''
     };
 
@@ -1206,7 +1218,7 @@ const PartsList: React.FC = () => {
     setCurrentSupplierId('');
     setCurrentUnitCost('');
     setCurrentLeadTimeDays('');
-    setCurrentMinOrderQty('');
+
     setCurrentSupplierNotes('');
     setError(null);
   };
@@ -1709,35 +1721,6 @@ const PartsList: React.FC = () => {
             </div>
             <div className="dialog-footer">
               <div className="d-flex gap-2 justify-content-end">
-                {isEditing ? (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => handleOpenEdit(selectedPart as Part)}
-                    style={{ 
-                      backgroundColor: '#FF6600', 
-                      borderColor: '#FF6600', 
-                      fontSize: '0.875rem',
-                      padding: '0.375rem 0.75rem'
-                    }}
-                  >
-                    Edit Part
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    onClick={() => setOpenDialog(true)}
-                    style={{ 
-                      backgroundColor: '#FF6600', 
-                      borderColor: '#FF6600', 
-                      fontSize: '0.875rem',
-                      padding: '0.375rem 0.75rem'
-                    }}
-                  >
-                    Edit Part
-                  </button>
-                )}
                 <button
                   type="button"
                   className="btn btn-outline-secondary"
@@ -1959,6 +1942,7 @@ const PartsList: React.FC = () => {
                             className="form-control"
                             value={currentUnitCost}
                             onChange={(e) => setCurrentUnitCost(e.target.value)}
+                            placeholder="Leave blank for $0.00"
                           />
                         </div>
 
@@ -1973,16 +1957,7 @@ const PartsList: React.FC = () => {
                           />
                         </div>
 
-                        <div className="form-group">
-                          <label className="form-label">Minimum Order Quantity</label>
-                          <input
-                            type="number"
-                            min="1"
-                            className="form-control"
-                            value={currentMinOrderQty}
-                            onChange={(e) => setCurrentMinOrderQty(e.target.value)}
-                          />
-                        </div>
+
 
                         <div className="form-group">
                           <label className="form-label">Notes</label>
@@ -2269,6 +2244,25 @@ const PartsList: React.FC = () => {
                   style={{ fontSize: '0.875rem', padding: '0.375rem 0.75rem' }}
                 >
                   Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    if (selectedPart) {
+                      handleOpenEdit(selectedPart);
+                    }
+                    setOpenEditConfirm(false);
+                  }}
+                  style={{ 
+                    backgroundColor: '#007bff', 
+                    color: 'white',
+                    border: 'none',
+                    fontSize: '0.875rem',
+                    padding: '0.375rem 0.75rem'
+                  }}
+                >
+                  Edit Part
                 </button>
                 <button
                   type="button"

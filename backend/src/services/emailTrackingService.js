@@ -399,6 +399,35 @@ class EmailTrackingService {
       const currentStatus = poResult.rows[0].status;
       const currentApprovalStatus = poResult.rows[0].approval_status;
       
+      // Define final statuses that should not be overridden by email processing
+      const finalStatuses = ['received', 'canceled', 'on_order'];
+      
+      // Check if the current status is a final status that shouldn't be overridden
+      if (finalStatuses.includes(currentStatus)) {
+        console.log(`PO ${poId} has final status '${currentStatus}' - skipping email-based status update`);
+        console.log('Only updating email tracking record, not purchase order status');
+        
+        // Commit transaction (only the email tracking record was updated)
+        await client.query('COMMIT');
+        
+        // Emit socket event to update email history in frontend, but don't change PO status
+        this.emitSocketEvent('email_status_update', {
+          po_id: poId,
+          status: emailStatus,
+          trackingCode: trackingCode,
+          notes: notes
+        });
+        
+        return {
+          success: true,
+          message: `Email tracking updated, but PO status '${currentStatus}' was preserved as it's a final status`,
+          trackingCode: trackingCode,
+          emailStatus: emailStatus,
+          poStatus: currentStatus,
+          poApprovalStatus: currentApprovalStatus
+        };
+      }
+      
       // Update the purchase order status accordingly
       console.log('Updating purchase order status...');
       let poStatus = currentStatus;

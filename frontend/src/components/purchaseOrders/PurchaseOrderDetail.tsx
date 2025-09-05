@@ -1224,6 +1224,14 @@ const PurchaseOrderDetail: React.FC = () => {
                 onChange={handleStatusChange as any}
                 label="Status"
                 disabled={statusUpdating}
+                MenuProps={{
+                  disableScrollLock: true,
+                  PaperProps: {
+                    style: {
+                      maxHeight: 300
+                    }
+                  }
+                }}
               >
                 <MenuItem value="pending">PENDING</MenuItem>
                 <MenuItem value="submitted">SUBMITTED</MenuItem>

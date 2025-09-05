@@ -23,7 +23,6 @@ interface PartSupplier {
   supplier_id: number;
   unit_cost: number;
   lead_time_days?: number;
-  minimum_order_quantity?: number;
   is_preferred: boolean;
 }
 
@@ -40,9 +39,8 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
   // New multi-supplier state
   const [selectedSuppliers, setSelectedSuppliers] = useState<PartSupplier[]>([]);
   const [currentSupplierId, setCurrentSupplierId] = useState<number | ''>('');
-  const [currentUnitCost, setCurrentUnitCost] = useState(0);
+  const [currentUnitCost, setCurrentUnitCost] = useState('');
   const [currentLeadTimeDays, setCurrentLeadTimeDays] = useState(0);
-  const [currentMinOrderQty, setCurrentMinOrderQty] = useState(0);
   
   const [unitCost, setUnitCost] = useState(0);
   const [minimumQuantity, setMinimumQuantity] = useState(0);
@@ -80,9 +78,8 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
     setLocation('');
     setSelectedSuppliers([]);
     setCurrentSupplierId('');
-    setCurrentUnitCost(0);
+    setCurrentUnitCost('');
     setCurrentLeadTimeDays(0);
-    setCurrentMinOrderQty(0);
     setUnitCost(0);
     setMinimumQuantity(0);
     setNotes('');
@@ -102,17 +99,15 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
     
     const newSupplier: PartSupplier = {
       supplier_id: Number(currentSupplierId),
-      unit_cost: currentUnitCost,
+      unit_cost: currentUnitCost === '' ? 0 : Number(currentUnitCost),
       lead_time_days: currentLeadTimeDays || undefined,
-      minimum_order_quantity: currentMinOrderQty || undefined,
       is_preferred: selectedSuppliers.length === 0 // First supplier is automatically preferred
     };
     
     setSelectedSuppliers([...selectedSuppliers, newSupplier]);
     setCurrentSupplierId('');
-    setCurrentUnitCost(0);
+    setCurrentUnitCost('');
     setCurrentLeadTimeDays(0);
-    setCurrentMinOrderQty(0);
     setError(null);
   };
 
@@ -300,14 +295,15 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
                       </div>
 
                       <div className="form-group">
-                        <label className="form-label">Unit Cost ($)*</label>
+                        <label className="form-label">Unit Cost ($)</label>
                         <input
                           type="number"
                           className="form-control"
                           min="0"
                           step="0.01"
                           value={currentUnitCost}
-                          onChange={(e) => setCurrentUnitCost(Number(e.target.value))}
+                          onChange={(e) => setCurrentUnitCost(e.target.value)}
+                          placeholder="Leave blank for $0.00"
                         />
                       </div>
 
@@ -322,16 +318,7 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
                         />
                       </div>
 
-                      <div className="form-group">
-                        <label className="form-label">Minimum Order Qty</label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          min="0"
-                          value={currentMinOrderQty}
-                          onChange={(e) => setCurrentMinOrderQty(Number(e.target.value))}
-                        />
-                      </div>
+
 
                       <div className="form-group d-flex align-items-end">
                         <button
@@ -355,7 +342,6 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
                           <th>Supplier</th>
                           <th>Unit Cost</th>
                           <th>Lead Time</th>
-                          <th>Min Order</th>
                           <th>Preferred</th>
                           <th>Actions</th>
                         </tr>
@@ -366,7 +352,6 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
                             <td>{getSupplierName(supplier.supplier_id)}</td>
                             <td>${supplier.unit_cost.toFixed(2)}</td>
                             <td>{supplier.lead_time_days || '-'}</td>
-                            <td>{supplier.minimum_order_quantity || '-'}</td>
                             <td>
                               <div className="form-check">
                                 <input

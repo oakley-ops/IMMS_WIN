@@ -112,7 +112,7 @@ const EditPartForm: React.FC = () => {
     if (type === 'number') {
       setFormData({
         ...formData,
-        [name]: value === '' ? '' : Number(value),
+        [name]: value === '' ? 0 : Number(value),
       });
     } else {
       setFormData({
@@ -232,6 +232,7 @@ const EditPartForm: React.FC = () => {
                     step="0.01"
                     value={formData.unit_cost}
                     onChange={handleChange}
+                    placeholder="Leave blank for $0.00"
                   />
                 </div>
                 

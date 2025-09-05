@@ -305,7 +305,6 @@ class PartController {
       is_preferred = false, 
       unit_cost,
       lead_time_days,
-      minimum_order_quantity,
       notes 
     } = req.body;
 
@@ -355,10 +354,11 @@ class PartController {
       }
 
       // Create the relationship
+      const finalUnitCost = unit_cost || 0; // Default to 0 if not provided
       const result = await client.query(
-        `INSERT INTO part_suppliers (part_id, supplier_id, is_preferred, unit_cost, lead_time_days, minimum_order_quantity, notes) 
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-        [id, supplier_id, is_preferred, unit_cost, lead_time_days, minimum_order_quantity || 1, notes]
+        `INSERT INTO part_suppliers (part_id, supplier_id, is_preferred, unit_cost, lead_time_days, notes) 
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [id, supplier_id, is_preferred, finalUnitCost, lead_time_days, notes]
       );
 
       // If no unit_cost is specified but the part has a unit_cost, update the part_suppliers record
@@ -373,7 +373,7 @@ class PartController {
 
       // Get the full supplier details
       const finalResult = await client.query(`
-        SELECT s.*, ps.is_preferred, ps.unit_cost, ps.lead_time_days, ps.minimum_order_quantity, ps.notes as supplier_notes
+        SELECT s.*, ps.is_preferred, ps.unit_cost, ps.lead_time_days, ps.notes as supplier_notes
         FROM suppliers s
         JOIN part_suppliers ps ON s.supplier_id = ps.supplier_id
         WHERE ps.part_id = $1 AND s.supplier_id = $2
@@ -585,10 +585,10 @@ class PartController {
   // Add a supplier to a part
   async addSupplierToPart(req, res) {
     const partId = req.params.id;
-    const { supplier_id, unit_cost, is_preferred, lead_time_days, minimum_order_quantity, notes } = req.body;
+    const { supplier_id, unit_cost, is_preferred, lead_time_days, notes } = req.body;
     
-    if (!supplier_id || unit_cost === undefined) {
-      return res.status(400).json({ error: 'Supplier ID and unit cost are required' });
+    if (!supplier_id) {
+      return res.status(400).json({ error: 'Supplier ID is required' });
     }
     
     const client = await this.pool.connect();
@@ -632,18 +632,18 @@ class PartController {
       }
       
       // Add the new part-supplier relationship
+      const finalUnitCost = unit_cost || 0; // Default to 0 if not provided
       const result = await client.query(`
         INSERT INTO part_suppliers 
-        (part_id, supplier_id, unit_cost, is_preferred, lead_time_days, minimum_order_quantity, notes)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        (part_id, supplier_id, unit_cost, is_preferred, lead_time_days, notes)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *, (SELECT name FROM suppliers WHERE supplier_id = $2) as supplier_name
       `, [
         partId, 
         supplier_id, 
-        unit_cost, 
+        finalUnitCost, 
         is_preferred || false, 
         lead_time_days || null, 
-        minimum_order_quantity || 1, 
         notes || null
       ]);
       
@@ -671,7 +671,7 @@ class PartController {
   async updatePartSupplier(req, res) {
     const partId = req.params.partId;
     const supplierId = req.params.supplierId;
-    const { unit_cost, is_preferred, lead_time_days, minimum_order_quantity, notes } = req.body;
+    const { unit_cost, is_preferred, lead_time_days, notes } = req.body;
     
     const client = await this.pool.connect();
     
@@ -698,18 +698,18 @@ class PartController {
       }
       
       // Update the relationship
+      const finalUnitCost = unit_cost || 0; // Default to 0 if not provided
       const result = await client.query(`
         UPDATE part_suppliers
-        SET unit_cost = $3, is_preferred = $4, lead_time_days = $5, minimum_order_quantity = $6, notes = $7
+        SET unit_cost = $3, is_preferred = $4, lead_time_days = $5, notes = $6
         WHERE part_id = $1 AND supplier_id = $2
         RETURNING *, (SELECT name FROM suppliers WHERE supplier_id = $2) as supplier_name
       `, [
         partId,
         supplierId,
-        unit_cost,
+        finalUnitCost,
         is_preferred || false,
         lead_time_days || null,
-        minimum_order_quantity || 1,
         notes || null
       ]);
       

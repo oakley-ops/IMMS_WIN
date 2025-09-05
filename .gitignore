@@ -40,8 +40,15 @@ logs
 backend/node_modules/
 backend/dist/
 backend/build/
+backend/uploads/
+backend/logs/
 
 # Frontend specific
 frontend/node_modules/
 frontend/build/
-frontend/dist/ 
+frontend/dist/
+
+# Temporary files
+tmp/
+temp/
+1 

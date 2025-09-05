@@ -8,12 +8,14 @@ import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import DescriptionIcon from '@mui/icons-material/Description';
 import SimplePODocuments from './SimplePODocuments';
+import socket from '../../services/socket'; // Import socket for real-time updates
 
 const PurchaseOrderList: React.FC = () => {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false); // For real-time refresh indicator
   // Add state for document dialog
   const [documentDialogOpen, setDocumentDialogOpen] = useState<boolean>(false);
   const [selectedPoId, setSelectedPoId] = useState<number | null>(null);
@@ -62,6 +64,67 @@ const PurchaseOrderList: React.FC = () => {
 
     fetchPurchaseOrders();
   }, [showHistoricalReceived]);
+
+  // Add socket event listeners for real-time updates
+  useEffect(() => {
+    console.log('Setting up socket listeners for PurchaseOrderList');
+    
+    // Function to refresh purchase orders list
+    const refreshPurchaseOrdersList = async () => {
+      try {
+        setIsRefreshing(true);
+        console.log('Refreshing purchase orders list due to socket event');
+        const response = await purchaseOrdersApi.getAll(showHistoricalReceived);
+        
+        if (response.data && response.data.items && Array.isArray(response.data.items)) {
+          setPurchaseOrders(response.data.items);
+        } else if (Array.isArray(response.data)) {
+          setPurchaseOrders(response.data);
+        } else {
+          setPurchaseOrders([]);
+        }
+      } catch (error) {
+        console.error('Error refreshing purchase orders list:', error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    };
+
+    // Listen for purchase order updates (includes email approvals)
+    socket.on('purchase_order_update', (data: any) => {
+      console.log('PurchaseOrderList received purchase_order_update:', data);
+      refreshPurchaseOrdersList();
+    });
+
+    // Listen for status changes
+    socket.on('po_status_changed', (data: any) => {
+      console.log('PurchaseOrderList received po_status_changed:', data);
+      refreshPurchaseOrdersList();
+    });
+
+    // Listen for email status updates
+    socket.on('email_status_update', (data: any) => {
+      console.log('PurchaseOrderList received email_status_update:', data);
+      refreshPurchaseOrdersList();
+    });
+
+    // Listen for dashboard updates
+    socket.on('dashboard-update', (data: any) => {
+      console.log('PurchaseOrderList received dashboard-update:', data);
+      if (data.type === 'purchase_order_status_change' || data.type === 'purchase_order_refresh') {
+        refreshPurchaseOrdersList();
+      }
+    });
+
+    // Cleanup listeners on component unmount
+    return () => {
+      console.log('Cleaning up PurchaseOrderList socket listeners');
+      socket.off('purchase_order_update');
+      socket.off('po_status_changed');
+      socket.off('email_status_update');
+      socket.off('dashboard-update');
+    };
+  }, [showHistoricalReceived]); // Include showHistoricalReceived in dependency array
 
   // Add function to open document dialog
   const openDocumentDialog = (poId: number | undefined, poNumber: string | undefined) => {
@@ -228,31 +291,57 @@ const PurchaseOrderList: React.FC = () => {
   };
 
   return (
-    <div className="container-fluid p-0">
-      <div style={{ 
-        borderRadius: '4px',
-        overflow: 'hidden',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        background: 'white' 
-      }}>
+    <>
+      <style>
+        {`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}
+      </style>
+      <div className="container-fluid p-0">
+        <div style={{ 
+          borderRadius: '4px',
+          overflow: 'hidden',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+          background: 'white' 
+        }}>
         <div style={{ 
           backgroundColor: '#0066A1',
           padding: '12px 20px',
           position: 'relative',
           minHeight: '60px'
         }}>
-          <h5 style={{ 
-            fontSize: '20px',
-            margin: '0',
-            color: '#ff6200',
-            fontWeight: 'bold',
+          <div style={{
             position: 'absolute',
             left: '20px',
             top: '50%',
-            transform: 'translateY(-50%)'
+            transform: 'translateY(-50%)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
           }}>
-            Purchase Orders
-          </h5>
+            <h5 style={{ 
+              fontSize: '20px',
+              margin: '0',
+              color: '#ff6200',
+              fontWeight: 'bold'
+            }}>
+              Purchase Orders
+            </h5>
+            {isRefreshing && (
+              <div style={{
+                width: '16px',
+                height: '16px',
+                border: '2px solid #ff6200',
+                borderTop: '2px solid transparent',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite'
+              }} title="Refreshing purchase orders...">
+              </div>
+            )}
+          </div>
           
           <div style={{ 
             position: 'absolute',
@@ -311,7 +400,7 @@ const PurchaseOrderList: React.FC = () => {
             fontSize: '14px',
             color: '#6c757d'
           }}>
-            <span style={{ fontWeight: 'bold' }}>ℹ️ Info:</span> Received purchase orders older than 30 days are hidden. 
+            <span style={{ fontWeight: 'bold' }}>ℹ️ Info:</span> Received purchase orders older than 7 days are hidden. 
             Use the "Show historical received orders" checkbox above to view them.
           </div>
         )}
@@ -462,7 +551,8 @@ const PurchaseOrderList: React.FC = () => {
           {selectedPoId && <SimplePODocuments poId={selectedPoId} />}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </>
   );
 };
 

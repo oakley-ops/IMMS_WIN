@@ -34,6 +34,7 @@ const io = new Server(server, {
       'http://10.1.10.171:3000',
       'http://10.1.10.171:3002',
       'http://192.168.50.1:3000',
+      'http://192.168.50.1:3001',
       'http://192.168.50.1:3002'
     ],
     methods: ['GET', 'POST'],
@@ -252,7 +253,7 @@ app.get('/api/v1/public/purchase-orders', async (req, res) => {
     // Add filtering condition if includeHistoricalReceived is false
     if (includeHistoricalReceived !== 'true') {
       query += `
-        WHERE NOT (COALESCE(po.approval_status, po.status) = 'received' AND po.created_at < NOW() - INTERVAL '30 days')
+        WHERE NOT (COALESCE(po.approval_status, po.status) = 'received' AND po.created_at < NOW() - INTERVAL '7 days')
       `;
       console.log('Added filtering condition for historical received orders');
     } else {
