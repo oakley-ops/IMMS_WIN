@@ -536,6 +536,52 @@ router.delete('/:id', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async
   }
 });
 
+// Delete/Cancel scheduled maintenance
+router.delete('/:id/scheduled-maintenance', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
+  try {
+    console.log('DELETE /scheduled-maintenance route hit for machine ID:', req.params.id);
+    const machineId = parseInt(req.params.id);
+    
+    if (isNaN(machineId)) {
+      console.log('Invalid machine ID:', req.params.id);
+      return res.status(400).json({ error: 'Invalid machine ID' });
+    }
+
+    console.log('Attempting to cancel scheduled maintenance for machine ID:', machineId);
+
+    // First check if machine exists
+    const checkResult = await pool.query(
+      'SELECT machine_id, next_maintenance_date FROM machines WHERE machine_id = $1',
+      [machineId]
+    );
+
+    if (checkResult.rows.length === 0) {
+      console.log('Machine not found with ID:', machineId);
+      return res.status(404).json({ error: 'Machine not found' });
+    }
+
+    console.log('Machine found:', checkResult.rows[0]);
+
+    // Clear the next_maintenance_date to cancel scheduled maintenance
+    const result = await pool.query(
+      'UPDATE machines SET next_maintenance_date = NULL WHERE machine_id = $1 RETURNING *',
+      [machineId]
+    );
+
+    console.log('Update result:', result.rows[0]);
+
+    const machine = result.rows[0];
+    
+    res.json({
+      message: 'Scheduled maintenance cancelled successfully',
+      machine: machine
+    });
+  } catch (error) {
+    console.error('Error cancelling scheduled maintenance:', error);
+    res.status(500).json({ error: 'Failed to cancel scheduled maintenance' });
+  }
+});
+
 // Update machine maintenance status
 router.post('/:id/maintenance-status', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   const machineId = parseInt(req.params.id);

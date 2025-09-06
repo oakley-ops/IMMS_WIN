@@ -129,7 +129,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
   const handleMachineClick = (event: PMEvent) => {
     console.log('Selected machine:', event);
     setSelectedMachine(event);
-    setShowChecklistDialog(true);
+    setShowModal(true);
     setStatusUpdateMessage('');
   };
 
@@ -217,6 +217,69 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
       }
       
       setStatusUpdateMessage(`Error updating status: ${errorMessage}`);
+    } finally {
+      setUpdatingStatus(false);
+    }
+  };
+
+  const deleteScheduledMaintenance = async () => {
+    if (!selectedMachine) {
+      console.error('No machine selected');
+      setStatusUpdateMessage('Error: No machine selected');
+      return;
+    }
+
+    if (!window.confirm(`Are you sure you want to cancel the scheduled maintenance for ${selectedMachine.title}?`)) {
+      return;
+    }
+    
+    try {
+      setUpdatingStatus(true);
+      setStatusUpdateMessage('');
+      
+      console.log('Deleting scheduled maintenance for machine:', selectedMachine.id);
+      
+      // Make sure id is a valid number
+      const machineId = typeof selectedMachine.id === 'number' 
+        ? selectedMachine.id 
+        : parseInt(String(selectedMachine.id), 10);
+      
+      if (isNaN(machineId)) {
+        throw new Error(`Invalid machine ID: ${selectedMachine.id}`);
+      }
+      
+      // Call API to delete the scheduled maintenance
+      const response = await axiosInstance.delete(`/api/v1/machines/${machineId}/scheduled-maintenance`);
+      
+      console.log('Delete scheduled maintenance response:', response.data);
+      
+      setStatusUpdateMessage('Scheduled maintenance cancelled successfully');
+      
+      // Remove it from the UI immediately
+      setEvents(prev => prev.filter(event => event.id !== machineId));
+      
+      // Also refresh from the server after a short delay
+      setTimeout(async () => {
+        await fetchPMSchedule();
+      }, 1000);
+      
+      // Close the modal after a delay
+      setTimeout(() => {
+        closeModal();
+      }, 1500);
+      
+    } catch (err: any) {
+      console.error('Error deleting scheduled maintenance:', err);
+      
+      // Extract the most useful error message
+      let errorMessage = 'Unknown error';
+      if (err.response?.data?.error) {
+        errorMessage = err.response.data.error;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setStatusUpdateMessage(`Error cancelling maintenance: ${errorMessage}`);
     } finally {
       setUpdatingStatus(false);
     }
@@ -348,6 +411,13 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
         <Modal.Footer>
           <Button variant="secondary" onClick={closeModal}>
             Cancel
+          </Button>
+          <Button 
+            variant="danger" 
+            onClick={deleteScheduledMaintenance}
+            disabled={updatingStatus}
+          >
+            {updatingStatus ? 'Cancelling...' : 'Cancel Maintenance'}
           </Button>
           <Button 
             variant="warning" 

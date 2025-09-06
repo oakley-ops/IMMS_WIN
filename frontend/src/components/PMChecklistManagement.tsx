@@ -1,12 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CardActions,
-  Typography,
-  Grid,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -16,38 +9,27 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  IconButton,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
+  Button,
   Checkbox,
   FormControlLabel,
-  Alert,
-  Chip,
-  Divider,
   Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Tooltip,
-  CircularProgress
+  CircularProgress,
+  Box,
+  Typography,
+  IconButton,
+  Alert
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Build as BuildIcon,
-  DragIndicator,
   Warning as WarningIcon,
   Save as SaveIcon,
-  Cancel as CancelIcon,
-  List as ListIcon
+  Schedule as ScheduleIcon
 } from '@mui/icons-material';
 import axiosInstance from '../utils/axios';
+import PMCalendar from './PMCalendar';
+import ModalPortal from './ModalPortal';
 
 interface PMChecklist {
   checklist_id: number;
@@ -61,12 +43,18 @@ interface PMChecklist {
 }
 
 interface Machine {
-  machine_id: number;
+  id?: number;
+  machine_id?: number;
   name: string;
   model: string;
   machine_type: string;
   location: string;
   manufacturer: string;
+  installation_date?: string;
+  last_maintenance_date?: string | null;
+  next_maintenance_date?: string;
+  notes?: string;
+  status?: string;
 }
 
 interface PMTask {
@@ -87,6 +75,11 @@ const PMChecklistManagement: React.FC = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [checklistToDelete, setChecklistToDelete] = useState<PMChecklist | null>(null);
   const [showTasks, setShowTasks] = useState<{ [key: number]: boolean }>({});
+  const [activeTab, setActiveTab] = useState(0);
+  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
+  const [selectedMachineForSchedule, setSelectedMachineForSchedule] = useState<Machine | null>(null);
+  const [overdueCount, setOverdueCount] = useState(0);
+  const [dueCount, setDueCount] = useState(0);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -98,6 +91,13 @@ const PMChecklistManagement: React.FC = () => {
   });
 
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [scheduleData, setScheduleData] = useState({
+    machineId: '',
+    checklistId: '',
+    nextMaintenanceDate: '',
+    technicianName: '',
+    notes: ''
+  });
 
   const fetchChecklists = async () => {
     try {
@@ -126,7 +126,19 @@ const PMChecklistManagement: React.FC = () => {
   useEffect(() => {
     fetchChecklists();
     fetchMachines();
+    fetchScheduleStats();
   }, []);
+
+  const fetchScheduleStats = async () => {
+    try {
+      const response = await axiosInstance.get('/api/v1/machines/pm-schedule');
+      const events = response.data;
+      setOverdueCount(events.filter((e: any) => e.resource?.status === 'overdue').length);
+      setDueCount(events.filter((e: any) => e.resource?.status === 'due').length);
+    } catch (err) {
+      console.error('Error fetching schedule stats:', err);
+    }
+  };
 
   const fetchChecklistWithTasks = async (checklistId: number) => {
     try {
@@ -267,141 +279,337 @@ const PMChecklistManagement: React.FC = () => {
     }
   };
 
+  const handleScheduleOpen = (machine?: Machine) => {
+    if (machine) {
+      setSelectedMachineForSchedule(machine);
+      setScheduleData(prev => ({
+        ...prev,
+        machineId: (machine.machine_id || machine.id)?.toString() || '',
+        nextMaintenanceDate: machine.next_maintenance_date?.split('T')[0] || ''
+      }));
+    } else {
+      setSelectedMachineForSchedule(null);
+      setScheduleData({
+        machineId: '',
+        checklistId: '',
+        nextMaintenanceDate: '',
+        technicianName: '',
+        notes: ''
+      });
+    }
+    setScheduleDialogOpen(true);
+  };
+
+  const handleScheduleClose = () => {
+    setScheduleDialogOpen(false);
+    setSelectedMachineForSchedule(null);
+    setScheduleData({
+      machineId: '',
+      checklistId: '',
+      nextMaintenanceDate: '',
+      technicianName: '',
+      notes: ''
+    });
+  };
+
+  const handleScheduleSubmit = async () => {
+    if (!scheduleData.machineId || !scheduleData.nextMaintenanceDate) {
+      setError('Machine and next maintenance date are required');
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      setError(null);
+
+      // Update machine's next maintenance date
+      await axiosInstance.put(`/api/v1/machines/${scheduleData.machineId}`, {
+        next_maintenance_date: new Date(scheduleData.nextMaintenanceDate).toISOString()
+      });
+
+      // If checklist is selected and we want to start a session immediately
+      if (scheduleData.checklistId && scheduleData.technicianName) {
+        await axiosInstance.post('/api/v1/pm/sessions', {
+          machineId: parseInt(scheduleData.machineId),
+          checklistId: parseInt(scheduleData.checklistId),
+          technicianName: scheduleData.technicianName
+        });
+      }
+
+      setScheduleDialogOpen(false);
+      fetchScheduleStats(); // Refresh stats
+      setScheduleData({
+        machineId: '',
+        checklistId: '',
+        nextMaintenanceDate: '',
+        technicianName: '',
+        notes: ''
+      });
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to schedule maintenance');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
+
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" p={4}>
-        <CircularProgress />
-      </Box>
+      <div className="d-flex justify-content-center p-4">
+        <div className="spinner-border text-primary" role="status">
+          <span className="visually-hidden">Loading...</span>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Box p={3}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1">
-          PM Checklist Management
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleCreateNew}
-        >
-          Create New Checklist
-        </Button>
-      </Box>
+    <div className="container-fluid p-4">
+      {/* Header */}
+      <div className="row mb-4">
+        <div className="col-12">
+          <div className="d-flex justify-content-between align-items-center">
+            <h1 className="h3 mb-0">PM Management System</h1>
+            <div className="d-flex gap-2">
+              <button
+                className="btn btn-outline-primary"
+                onClick={() => handleScheduleOpen()}
+              >
+                <i className="bi bi-calendar-plus me-2"></i>
+                Schedule Maintenance
+              </button>
+              <button
+                className="btn btn-primary"
+                onClick={handleCreateNew}
+                style={{ backgroundColor: '#FF6600', borderColor: '#FF6600' }}
+              >
+                <i className="bi bi-plus-lg me-2"></i>
+                Create New Checklist
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="row mb-4">
+        <div className="col-lg-3 col-md-6 mb-3">
+          <div className="card border-danger">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <p className="text-muted mb-1">Overdue</p>
+                  <h2 className="text-danger mb-0">{overdueCount}</h2>
+                </div>
+                <div className="text-danger">
+                  <i className="bi bi-exclamation-triangle" style={{ fontSize: '2.5rem' }}></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-3 col-md-6 mb-3">
+          <div className="card border-warning">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <p className="text-muted mb-1">Due Soon</p>
+                  <h2 className="text-warning mb-0">{dueCount}</h2>
+                </div>
+                <div className="text-warning">
+                  <i className="bi bi-calendar-check" style={{ fontSize: '2.5rem' }}></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-3 col-md-6 mb-3">
+          <div className="card border-primary">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <p className="text-muted mb-1">Checklists</p>
+                  <h2 className="text-primary mb-0">{checklists.length}</h2>
+                </div>
+                <div className="text-primary">
+                  <i className="bi bi-list-check" style={{ fontSize: '2.5rem' }}></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="col-lg-3 col-md-6 mb-3">
+          <div className="card border-info">
+            <div className="card-body">
+              <div className="d-flex justify-content-between align-items-center">
+                <div>
+                  <p className="text-muted mb-1">Machines</p>
+                  <h2 className="text-info mb-0">{machines.length}</h2>
+                </div>
+                <div className="text-info">
+                  <i className="bi bi-gear" style={{ fontSize: '2.5rem' }}></i>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="card mb-4">
+        <div className="card-header p-0">
+          <ul className="nav nav-tabs card-header-tabs" role="tablist">
+            <li className="nav-item">
+              <button
+                className={`nav-link ${activeTab === 0 ? 'active' : ''}`}
+                onClick={() => setActiveTab(0)}
+                type="button"
+                role="tab"
+              >
+                <i className="bi bi-list-check me-2"></i>
+                Checklists
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                className={`nav-link ${activeTab === 1 ? 'active' : ''}`}
+                onClick={() => setActiveTab(1)}
+                type="button"
+                role="tab"
+              >
+                <i className="bi bi-calendar me-2"></i>
+                Schedule
+                {(overdueCount + dueCount) > 0 && (
+                  <span className="badge bg-danger ms-2">{overdueCount + dueCount}</span>
+                )}
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <div className="alert alert-danger" role="alert">
+          <i className="bi bi-exclamation-triangle me-2"></i>
           {error}
-        </Alert>
+        </div>
       )}
 
-      <Grid container spacing={3}>
-        {checklists.map((checklist) => (
-          <Grid item xs={12} md={6} lg={4} key={checklist.checklist_id}>
-            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-              <CardContent sx={{ flexGrow: 1 }}>
-                <Box display="flex" alignItems="center" gap={1} mb={2}>
-                  <BuildIcon color="primary" />
-                  <Typography variant="h6" component="h2">
-                    {checklist.name}
-                  </Typography>
-                </Box>
-                
-                <Typography variant="body2" color="textSecondary" mb={2}>
-                  {checklist.description || 'No description'}
-                </Typography>
+      {/* Tab Content */}
+      {activeTab === 0 && (
+        <div>
+          <div className="row">
+            {checklists.map((checklist) => (
+              <div className="col-lg-4 col-md-6 mb-4" key={checklist.checklist_id}>
+                <div className="card h-100">
+                  <div className="card-body d-flex flex-column">
+                    <div className="d-flex align-items-center mb-2">
+                      <i className="bi bi-gear-fill text-primary me-2"></i>
+                      <h5 className="card-title mb-0">{checklist.name}</h5>
+                    </div>
+                    
+                    <p className="card-text text-muted mb-2">
+                      {checklist.description || 'No description'}
+                    </p>
 
-                <Box display="flex" gap={1} mb={2}>
-                  <Chip 
-                    label={checklist.machine_type} 
-                    color="primary" 
-                    variant="outlined" 
-                    size="small"
-                  />
-                  <Chip 
-                    label={checklist.is_active ? 'Active' : 'Inactive'} 
-                    color={checklist.is_active ? 'success' : 'error'}
-                    variant="outlined" 
-                    size="small"
-                  />
-                </Box>
+                    <div className="d-flex gap-2 mb-2">
+                      <span className="badge bg-primary">{checklist.machine_type}</span>
+                      <span className={`badge ${checklist.is_active ? 'bg-success' : 'bg-danger'}`}>
+                        {checklist.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
 
-                <Typography variant="caption" color="textSecondary">
-                  Updated: {new Date(checklist.updated_at).toLocaleDateString()}
-                </Typography>
+                    <small className="text-muted">
+                      Updated: {new Date(checklist.updated_at).toLocaleDateString()}
+                    </small>
 
-                <Box mt={2}>
-                  <Button
-                    size="small"
-                    startIcon={<ListIcon />}
-                    onClick={() => toggleShowTasks(checklist.checklist_id)}
-                  >
-                    {showTasks[checklist.checklist_id] ? 'Hide Tasks' : 'Show Tasks'}
-                  </Button>
-                </Box>
+                    <div className="mt-2">
+                      <button
+                        className="btn btn-sm btn-outline-secondary"
+                        onClick={() => toggleShowTasks(checklist.checklist_id)}
+                      >
+                        <i className="bi bi-list me-1"></i>
+                        {showTasks[checklist.checklist_id] ? 'Hide Tasks' : 'Show Tasks'}
+                      </button>
+                    </div>
 
-                {showTasks[checklist.checklist_id] && checklist.tasks && (
-                  <Box mt={2}>
-                    <Divider sx={{ mb: 1 }} />
-                    <Typography variant="subtitle2" gutterBottom>
-                      Tasks ({checklist.tasks.length})
-                    </Typography>
-                    <List dense>
-                      {checklist.tasks.map((task, index) => (
-                        <ListItem key={index} sx={{ py: 0.5 }}>
-                          <ListItemText
-                            primary={task.task_name}
-                            secondary={task.task_description}
-                            primaryTypographyProps={{ variant: 'body2' }}
-                            secondaryTypographyProps={{ variant: 'caption' }}
-                          />
-                          {task.is_required && (
-                            <Chip 
-                              label="Required" 
-                              color="error" 
-                              size="small" 
-                              variant="outlined"
-                            />
-                          )}
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                )}
-              </CardContent>
+                    {showTasks[checklist.checklist_id] && checklist.tasks && (
+                      <div className="mt-2">
+                        <hr />
+                        <h6 className="mb-2">Tasks ({checklist.tasks.length})</h6>
+                        <div className="list-group list-group-flush">
+                          {checklist.tasks.map((task, index) => (
+                            <div key={index} className="list-group-item px-0 py-1">
+                              <div className="d-flex justify-content-between align-items-start">
+                                <div>
+                                  <div className="fw-bold">{task.task_name}</div>
+                                  <small className="text-muted">{task.task_description}</small>
+                                </div>
+                                {task.is_required && (
+                                  <span className="badge bg-danger ms-2">Required</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
-              <CardActions>
-                <Button
-                  size="small"
-                  startIcon={<EditIcon />}
-                  onClick={() => handleEdit(checklist)}
-                >
-                  Edit
-                </Button>
-                <Button
-                  size="small"
-                  startIcon={<DeleteIcon />}
-                  color="error"
-                  onClick={() => handleDelete(checklist)}
-                >
-                  Delete
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+                  <div className="card-footer">
+                    <div className="d-flex gap-2">
+                      <button
+                        className="btn btn-sm btn-outline-primary"
+                        onClick={() => handleEdit(checklist)}
+                      >
+                        <i className="bi bi-pencil me-1"></i>
+                        Edit
+                      </button>
+                      <button
+                        className="btn btn-sm btn-outline-danger"
+                        onClick={() => handleDelete(checklist)}
+                      >
+                        <i className="bi bi-trash me-1"></i>
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
 
-      {checklists.length === 0 && (
-        <Box textAlign="center" py={8}>
-          <Typography variant="h6" color="textSecondary">
-            No checklists found
-          </Typography>
-          <Typography variant="body2" color="textSecondary">
-            Create your first PM checklist to get started
-          </Typography>
-        </Box>
+          {checklists.length === 0 && (
+            <div className="text-center py-5">
+              <h5 className="text-muted">No checklists found</h5>
+              <p className="text-muted">Create your first PM checklist to get started</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Schedule Tab */}
+      {activeTab === 1 && (
+        <div>
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h4>Maintenance Schedule</h4>
+            <button
+              className="btn btn-outline-primary"
+              onClick={() => handleScheduleOpen()}
+            >
+              <i className="bi bi-calendar-plus me-2"></i>
+              Schedule New Maintenance
+            </button>
+          </div>
+          
+          <PMCalendar 
+            onDateChange={() => {}}
+            defaultDate={new Date()}
+          />
+        </div>
       )}
 
       {/* Create/Edit Dialog */}
@@ -440,7 +648,7 @@ const PMChecklistManagement: React.FC = () => {
               <Select
                 value={formData.machine_id}
                 onChange={(e) => {
-                  const selectedMachine = machines.find(m => m.machine_id.toString() === e.target.value);
+                  const selectedMachine = machines.find(m => (m.machine_id || m.id)?.toString() === e.target.value);
                   setFormData(prev => ({ 
                     ...prev, 
                     machine_id: e.target.value,
@@ -450,7 +658,7 @@ const PMChecklistManagement: React.FC = () => {
                 label="Select Machine"
               >
                 {machines.map((machine) => (
-                  <MenuItem key={machine.machine_id} value={machine.machine_id.toString()}>
+                  <MenuItem key={machine.machine_id || machine.id} value={(machine.machine_id || machine.id)?.toString()}>
                     {machine.name} ({machine.machine_type})
                   </MenuItem>
                 ))}
@@ -572,7 +780,135 @@ const PMChecklistManagement: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+
+      {/* Schedule Maintenance Dialog */}
+      <ModalPortal open={scheduleDialogOpen}>
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content custom-dialog">
+            <div className="dialog-header">
+              <h5 className="dialog-title">
+                Schedule Maintenance
+                {selectedMachineForSchedule && (
+                  <small className="text-muted d-block">
+                    {selectedMachineForSchedule.name} - {selectedMachineForSchedule.model}
+                  </small>
+                )}
+              </h5>
+            </div>
+            <div className="dialog-content">
+              <div className="row">
+                {!selectedMachineForSchedule && (
+                  <div className="col-12 mb-3">
+                    <label className="form-label">Select Machine *</label>
+                    <select
+                      className="form-control"
+                      value={scheduleData.machineId}
+                      onChange={(e) => setScheduleData(prev => ({ ...prev, machineId: e.target.value }))}
+                      required
+                    >
+                      <option value="">Select a machine...</option>
+                      {machines.map((machine) => (
+                        <option key={machine.machine_id || machine.id} value={(machine.machine_id || machine.id)?.toString()}>
+                          {machine.name} ({machine.model}) - {machine.location}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                <div className="col-md-6 mb-3">
+                  <label className="form-label">Next Maintenance Date *</label>
+                  <input
+                    type="date"
+                    className="form-control"
+                    value={scheduleData.nextMaintenanceDate}
+                    onChange={(e) => setScheduleData(prev => ({ ...prev, nextMaintenanceDate: e.target.value }))}
+                    required
+                  />
+                </div>
+
+                <div className="col-md-6 mb-3">
+                  <label className="form-label">Checklist (Optional)</label>
+                  <select
+                    className="form-control"
+                    value={scheduleData.checklistId}
+                    onChange={(e) => setScheduleData(prev => ({ ...prev, checklistId: e.target.value }))}
+                  >
+                    <option value="">No checklist - schedule only</option>
+                    {checklists.map((checklist) => (
+                      <option key={checklist.checklist_id} value={checklist.checklist_id.toString()}>
+                        {checklist.name} ({checklist.machine_type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {scheduleData.checklistId && (
+                  <div className="col-12 mb-3">
+                    <label className="form-label">Technician Name</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={scheduleData.technicianName}
+                      onChange={(e) => setScheduleData(prev => ({ ...prev, technicianName: e.target.value }))}
+                      placeholder="Enter technician name"
+                    />
+                    <small className="form-text text-muted">
+                      Required if starting a PM session immediately
+                    </small>
+                  </div>
+                )}
+
+                <div className="col-12 mb-3">
+                  <label className="form-label">Notes</label>
+                  <textarea
+                    className="form-control"
+                    value={scheduleData.notes}
+                    onChange={(e) => setScheduleData(prev => ({ ...prev, notes: e.target.value }))}
+                    rows={3}
+                    placeholder="Add any maintenance notes or special instructions..."
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="dialog-footer">
+              <div className="d-flex gap-2 justify-content-end">
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={handleScheduleClose}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleScheduleSubmit}
+                  disabled={isSubmitting}
+                  style={{ 
+                    backgroundColor: '#FF6600', 
+                    borderColor: '#FF6600' 
+                  }}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Scheduling...
+                    </>
+                  ) : (
+                    <>
+                      <ScheduleIcon style={{ marginRight: '8px', fontSize: '16px' }} />
+                      Schedule Maintenance
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </ModalPortal>
+    </div>
   );
 };
 

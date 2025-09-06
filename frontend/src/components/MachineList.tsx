@@ -55,8 +55,6 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
     location: '',
     manufacturer: '',
     installation_date: '',
-    last_maintenance_date: null as string | null,
-    next_maintenance_date: '',
     notes: '',
     status: 'active'
   });
@@ -119,8 +117,6 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
       location: '',
       manufacturer: '',
       installation_date: '',
-      last_maintenance_date: null,
-      next_maintenance_date: '',
       notes: '',
       status: 'active'
     });
@@ -141,8 +137,6 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
       ...machine,
       id: Number(machine.machine_id || machine.id),  // Convert to number explicitly
       installation_date: machine.installation_date?.split('T')[0] || '',
-      last_maintenance_date: machine.last_maintenance_date?.split('T')[0] || '',
-      next_maintenance_date: machine.next_maintenance_date?.split('T')[0] || '',
       location: machine.location || '',
       manufacturer: machine.manufacturer || '',
       notes: machine.notes || '',
@@ -216,8 +210,6 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
       const formattedMachine = {
         ...selectedMachine,
         installation_date: selectedMachine.installation_date ? new Date(selectedMachine.installation_date).toISOString() : null,
-        last_maintenance_date: selectedMachine.last_maintenance_date ? new Date(selectedMachine.last_maintenance_date).toISOString() : null,
-        next_maintenance_date: selectedMachine.next_maintenance_date ? new Date(selectedMachine.next_maintenance_date).toISOString() : null,
         // Ensure other fields are properly formatted
         name: selectedMachine.name || '',
         model: selectedMachine.model || '',
@@ -283,16 +275,6 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const getMaintenanceStatus = (nextMaintenanceDate: string) => {
-    if (!nextMaintenanceDate) return { label: 'No Schedule', color: 'default' as const };
-    const today = new Date();
-    const maintenance = new Date(nextMaintenanceDate);
-    const diffDays = Math.ceil((maintenance.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) return { label: 'Overdue', color: 'error' as const };
-    if (diffDays <= 7) return { label: 'Due Soon', color: 'warning' as const };
-    return { label: 'Scheduled', color: 'success' as const };
-  };
 
   return (
     <Container maxWidth="lg">
@@ -375,12 +357,6 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                           <Typography variant="h6" component="div">
                             {machine.name}
                           </Typography>
-                          <Chip 
-                            label={getMaintenanceStatus(machine.next_maintenance_date).label}
-                            color={getMaintenanceStatus(machine.next_maintenance_date).color}
-                            size="small"
-                            sx={{ ml: 2 }}
-                          />
                         </Box>
                         
                         <Typography color="text.secondary" variant="body2" sx={{ mb: 1 }} component="div">
@@ -411,16 +387,6 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                           </Box>
                         </Box>
                         
-                        <Box sx={{ display: 'flex', gap: 3, color: 'text.secondary', fontSize: '0.875rem', mt: 1 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <BuildIcon sx={{ mr: 1, fontSize: '1rem', color: 'warning.main' }} />
-                            Last Maintenance: {formatDate(machine.last_maintenance_date) || 'Not Available'}
-                          </Box>
-                          <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                            <CalendarIcon sx={{ mr: 1, fontSize: '1rem', color: 'info.main' }} />
-                            Next Maintenance: {formatDate(machine.next_maintenance_date) || 'Not Scheduled'}
-                          </Box>
-                        </Box>
                       </Box>
                     </Grid>
                     <Grid item xs={12} md={3} sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>

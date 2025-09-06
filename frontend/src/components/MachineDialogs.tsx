@@ -296,26 +296,6 @@ const MachineDialogs: React.FC<MachineDialogsProps> = ({
                           />
                         </div>
                         <div className="col-md-6 mb-3">
-                          <label className="form-label">Last Maintenance Date</label>
-                          <input
-                            type="date"
-                            className="form-control"
-                            name="last_maintenance_date"
-                            value={selectedMachine.last_maintenance_date || ''}
-                            onChange={onEditInputChange}
-                          />
-                        </div>
-                        <div className="col-md-6 mb-3">
-                          <label className="form-label">Next Maintenance Date</label>
-                          <input
-                            type="date"
-                            className="form-control"
-                            name="next_maintenance_date"
-                            value={selectedMachine.next_maintenance_date || ''}
-                            onChange={onEditInputChange}
-                          />
-                        </div>
-                        <div className="col-md-6 mb-3">
                           <label className="form-label">Status</label>
                           <input
                             type="text"

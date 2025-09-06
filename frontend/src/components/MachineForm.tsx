@@ -16,8 +16,6 @@ interface MachineFormData {
   manufacturer: string;
   status: string;
   installation_date: string;
-  last_maintenance_date: string | null;
-  next_maintenance_date: string;
 }
 
 interface ValidationErrors {
@@ -44,9 +42,7 @@ const MachineForm: React.FC = () => {
     notes: '',
     manufacturer: '',
     status: 'active',
-    installation_date: '',
-    last_maintenance_date: null,
-    next_maintenance_date: ''
+    installation_date: ''
   });
 
   useEffect(() => {
@@ -122,8 +118,6 @@ const MachineForm: React.FC = () => {
     const submissionData: MachineFormData = {
       ...formData,
       installation_date: formData.installation_date || '',
-      last_maintenance_date: formData.last_maintenance_date || null,
-      next_maintenance_date: formData.next_maintenance_date || '',
       location: formData.location || '',
       notes: formData.notes || '',
       manufacturer: formData.manufacturer || '',
@@ -293,32 +287,6 @@ const MachineForm: React.FC = () => {
                   type="date"
                   name="installation_date"
                   value={formData.installation_date}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
-
-            <div className="col-md-6">
-              <Form.Group className="mb-4">
-                <Form.Label>Last Maintenance Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="last_maintenance_date"
-                  value={formData.last_maintenance_date || ''}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
-          </div>
-
-          <div className="row">
-            <div className="col-md-6">
-              <Form.Group className="mb-4">
-                <Form.Label>Next Maintenance Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="next_maintenance_date"
-                  value={formData.next_maintenance_date}
                   onChange={handleChange}
                 />
               </Form.Group>

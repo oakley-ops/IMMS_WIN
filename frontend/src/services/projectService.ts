@@ -27,7 +27,7 @@ export const getAllProjects = async (): Promise<Project[]> => {
 
 export const getProjectById = async (id: number): Promise<Project> => {
   // Use mock data instead of API call
-  const project = mockProjects.find(p => p.project_id === id);
+  const project = mockProjects.find((p: Project) => p.project_id === id);
   if (!project) {
     throw new Error(`Project with ID ${id} not found`);
   }
@@ -61,7 +61,7 @@ export const createProject = async (project: Omit<Project, 'project_id' | 'creat
 
 export const updateProject = async (id: number, project: Partial<Project>): Promise<Project> => {
   // Mock updating a project
-  const index = mockProjects.findIndex(p => p.project_id === id);
+  const index = mockProjects.findIndex((p: Project) => p.project_id === id);
   if (index === -1) {
     throw new Error(`Project with ID ${id} not found`);
   }
@@ -82,7 +82,7 @@ export const updateProject = async (id: number, project: Partial<Project>): Prom
 
 export const deleteProject = async (id: number): Promise<void> => {
   // Mock deleting a project
-  const index = mockProjects.findIndex(p => p.project_id === id);
+  const index = mockProjects.findIndex((p: Project) => p.project_id === id);
   if (index === -1) {
     throw new Error(`Project with ID ${id} not found`);
   }
