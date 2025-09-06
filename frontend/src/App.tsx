@@ -23,6 +23,7 @@ import ProjectList from './components/projects/ProjectList';
 import ProjectTimeline from './components/projects/ProjectTimeline';
 import TechnicianManagement from './components/TechnicianManagement';
 import PMChecklistManagement from './components/PMChecklistManagement';
+import Contacts from './components/Contacts';
 // Comment out or remove this import since it's creating an error
 // import TestPOPage from './pages/TestPOPage';
 
@@ -197,6 +198,18 @@ const App: React.FC = () => {
               <ProtectedRoute requiredPermission="CAN_MANAGE_PM_CHECKLISTS">
                 <Navigation>
                   <PMChecklistManagement />
+                </Navigation>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Contacts Management - requires CAN_VIEW_CONTACTS permission */}
+          <Route
+            path="/contacts"
+            element={
+              <ProtectedRoute requiredPermission="CAN_VIEW_CONTACTS">
+                <Navigation>
+                  <Contacts />
                 </Navigation>
               </ProtectedRoute>
             }

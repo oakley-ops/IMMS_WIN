@@ -18,6 +18,7 @@ const emailRoutes = require('./src/routes/emailRoutes');
 const projectsRouter = require('./src/routes/projects');
 const equipmentRouter = require('./src/routes/equipment');
 const techniciansRouter = require('./src/routes/technicians');
+const contactsRouter = require('./src/routes/contacts');
 const http = require('http');
 const { Server } = require('socket.io');
 const app = require('./src/app');
@@ -197,6 +198,7 @@ app.use('/api/v1/email', emailRoutes);
 app.use('/api/v1/projects', projectsRouter);
 app.use('/api/v1/equipment', equipmentRouter);
 app.use('/api/v1/technicians', techniciansRouter);
+app.use('/api/v1/contacts', contactsRouter);
 
 // Comment out the original parts usage controller since we're using our custom route
 // app.post('/api/v1/parts/usage', (req, res) => partsUsageController.recordUsage(req, res));

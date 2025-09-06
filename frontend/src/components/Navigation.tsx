@@ -34,6 +34,7 @@ import {
   PrecisionManufacturing,
   Engineering,
   PlaylistAddCheck,
+  Contacts as ContactsIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { theme, FISERV_ORANGE } from '../theme';
@@ -66,6 +67,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
     { path: '/parts', label: 'PARTS', icon: <Inventory /> },
     { path: '/machines', label: 'MACHINES', icon: <Build />, requiredPermission: 'CAN_VIEW_MACHINES' },
     { path: '/pm-checklists', label: 'PM MANAGEMENT', icon: <PlaylistAddCheck />, requiredPermission: 'CAN_MANAGE_PM_CHECKLISTS' },
+    { path: '/contacts', label: 'CONTACTS', icon: <ContactsIcon />, requiredPermission: 'CAN_VIEW_CONTACTS' },
     { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
     { path: '/purchase-orders', label: 'PURCHASE ORDERS', icon: <ShoppingCart />, requiredPermission: 'CAN_MANAGE_PURCHASE_ORDERS' },
     { path: '/projects', label: 'PROJECTS', icon: <Assignment />, requiredPermission: 'CAN_MANAGE_PROJECTS' },
