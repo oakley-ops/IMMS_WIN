@@ -97,6 +97,24 @@ try {
             Write-Log "WARNING: Backup integrity check failed: $verifyOutput"
         }
         
+        # USB Backup Integration
+        Write-Log "Starting USB backup sync..."
+        try {
+            $usbSyncScript = Join-Path $PSScriptRoot "usb-backup-sync.ps1"
+            if (Test-Path $usbSyncScript) {
+                & PowerShell.exe -ExecutionPolicy Bypass -File $usbSyncScript
+                if ($LASTEXITCODE -eq 0) {
+                    Write-Log "USB backup sync completed successfully"
+                } else {
+                    Write-Log "WARNING: USB backup sync failed or no USB drive detected"
+                }
+            } else {
+                Write-Log "WARNING: USB sync script not found at $usbSyncScript"
+            }
+        } catch {
+            Write-Log "WARNING: USB backup sync error: $($_.Exception.Message)"
+        }
+        
     } else {
         Write-Log "ERROR: Backup failed with exit code $LASTEXITCODE"
         exit 1

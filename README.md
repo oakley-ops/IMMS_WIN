@@ -13,6 +13,7 @@ A comprehensive inventory management system for tracking parts, machines, and th
 - Real-time search functionality
 - Low stock alerts
 - Export functionality for reports
+- **Enterprise-grade database backup system** with automated USB synchronization
 
 ## Tech Stack
 
@@ -250,6 +251,70 @@ To manually backup:
    ```bash
    sudo -u postgres pg_dump fiservinventory > backup.sql
    ```
+
+## 🛡️ Database Backup System
+
+This project includes a **comprehensive enterprise-grade database backup system** that provides automated, reliable data protection following industry best practices.
+
+### Features
+- ✅ **Automated daily backups** with PostgreSQL
+- ✅ **USB synchronization** for offsite storage
+- ✅ **Health monitoring** and alerting system  
+- ✅ **Disaster recovery** procedures
+- ✅ **Multiple backup formats** (custom & SQL)
+- ✅ **Integrity verification** after each backup
+- ✅ **Smart retention management** (30-day policy)
+- ✅ **3-2-1 backup rule** implementation
+
+### Quick Start
+
+#### Windows Setup (Enhanced System)
+```powershell
+# Run as Administrator
+cd backend\scripts
+.\setup-enhanced-backup-system.ps1
+```
+
+#### Manual Backup (Windows)
+```powershell
+cd backend\scripts
+.\backup-database.ps1  # Automatically syncs to USB if connected
+```
+
+#### Manual Backup with USB
+```powershell
+.\manual-usb-backup.ps1  # User-friendly USB backup tool
+```
+
+### Backup Locations
+- **Local**: `C:\DatabaseBackups\` (automated retention)
+- **USB**: Auto-detected USB drives in `DatabaseBackups\` folder
+- **Cloud**: Optional sync to Google Drive, OneDrive, or AWS S3
+
+### Documentation
+- 📖 **Setup Guide**: `BACKUP_SETUP_CHECKLIST.md`
+- 📚 **Best Practices**: `DATABASE_BACKUP_BEST_PRACTICES.md`
+- 🎯 **Implementation**: `USB_BACKUP_SUCCESS_REPORT.md`
+
+### Emergency Recovery
+```powershell
+# Database corruption recovery
+.\disaster-recovery.ps1 -RecoveryScenario DatabaseCorruption
+
+# System failure recovery  
+.\disaster-recovery.ps1 -RecoveryScenario SystemFailure
+
+# Point-in-time recovery
+.\disaster-recovery.ps1 -RecoveryScenario PointInTimeRecovery -TargetDate "2024-01-15 14:30:00"
+```
+
+### Monitoring
+- **Logs**: `C:\DatabaseBackups\backup.log`
+- **Health Checks**: Daily at 8:00 AM
+- **Alerts**: Every 4 hours monitoring
+- **USB Reports**: Generated automatically on sync
+
+**Your data is now enterprise-grade protected!** 🚀
 
 ### Monitoring
 
