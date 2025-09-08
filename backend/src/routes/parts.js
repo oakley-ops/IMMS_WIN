@@ -1103,17 +1103,19 @@ router.post('/usage', async (req, res) => {
     const transactionInsertQuery = `
       INSERT INTO transactions (
         part_id,
+        machine_id,
         quantity,
         type,
         notes,
         reference_number
-      ) VALUES ($1, $2, $3, $4, $5)
+      ) VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
 
     const reason = req.body.reason || 'Part used'; // Use reason from request if available, otherwise default
     const transactionParams = [
       part_id,
+      machine_id, // Include machine_id from request
       quantity,
       'usage',  // Type of transaction
       reason,   // Notes field
@@ -1225,14 +1227,12 @@ router.get('/usage/recent', async (req, res) => {
   try {
     const result = await executeWithRetry(`
       SELECT 
-        pu.usage_id,
         pu.part_id,
         p.name as part_name,
         pu.machine_id,
         m.name as machine_name,
         pu.quantity,
-        pu.usage_date,
-        pu.reason
+        pu.usage_date
       FROM parts_usage pu
       LEFT JOIN parts p ON pu.part_id = p.part_id
       LEFT JOIN machines m ON pu.machine_id = m.machine_id
@@ -1263,9 +1263,11 @@ router.get('/usage/history', async (req, res) => {
         t.quantity,
         t.created_at as usage_date,
         t.notes as reason,
-        COALESCE(p.unit_cost, 0) as unit_cost
+        COALESCE(p.unit_cost, 0) as unit_cost,
+        m.name as machine_name
       FROM transactions t
       LEFT JOIN parts p ON t.part_id = p.part_id
+      LEFT JOIN machines m ON t.machine_id = m.machine_id
       WHERE t.type = 'usage'
     `;
 

@@ -8,17 +8,22 @@ router.get('/', async (req, res) => {
     const { startDate, endDate } = req.query;
     let query = `
       SELECT 
-        t.transaction_id as id,
+        t.transaction_id,
+        t.part_id,
         p.name as part_name,
+        p.manufacturer_part_number,
         p.fiserv_part_number,
-        p.unit_cost,
         m.name as machine_name,
-        t.quantity,
         t.type,
-        DATE(t.created_at) as date
+        t.quantity,
+        t.created_at as date,
+        t.user_id,
+        t.notes,
+        t.reference_number,
+        p.unit_cost
       FROM transactions t
       LEFT JOIN parts p ON t.part_id = p.part_id
-      LEFT JOIN machines m ON p.machine_id = m.machine_id
+      LEFT JOIN machines m ON t.machine_id = m.machine_id
       WHERE t.type = 'usage'
     `;
 
@@ -90,16 +95,22 @@ router.get('/part/:id', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-        t.transaction_id as id,
+        t.transaction_id,
+        t.part_id,
         p.name as part_name,
+        p.manufacturer_part_number,
         p.fiserv_part_number,
         m.name as machine_name,
-        t.quantity,
         t.type,
-        t.created_at as date
+        t.quantity,
+        t.created_at as date,
+        t.user_id,
+        t.notes,
+        t.reference_number,
+        p.unit_cost
       FROM transactions t
       LEFT JOIN parts p ON t.part_id = p.part_id
-      LEFT JOIN machines m ON p.machine_id = m.machine_id
+      LEFT JOIN machines m ON t.machine_id = m.machine_id
       WHERE t.part_id = $1
       ORDER BY t.created_at DESC`,
       [partId]
@@ -117,16 +128,22 @@ router.get('/machine/:id', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-        t.transaction_id as id,
+        t.transaction_id,
+        t.part_id,
         p.name as part_name,
+        p.manufacturer_part_number,
         p.fiserv_part_number,
         m.name as machine_name,
-        t.quantity,
         t.type,
-        t.created_at as date
+        t.quantity,
+        t.created_at as date,
+        t.user_id,
+        t.notes,
+        t.reference_number,
+        p.unit_cost
       FROM transactions t
       LEFT JOIN parts p ON t.part_id = p.part_id
-      LEFT JOIN machines m ON p.machine_id = m.machine_id
+      LEFT JOIN machines m ON t.machine_id = m.machine_id
       WHERE m.machine_id = $1
       ORDER BY t.created_at DESC`,
       [machineId]

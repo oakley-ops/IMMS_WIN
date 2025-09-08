@@ -14,7 +14,8 @@ interface Part {
 }
 
 interface Machine {
-  id: number;
+  machine_id: number;
+  id?: number; // Keep for backward compatibility
   name: string;
   description?: string;
 }
@@ -191,9 +192,11 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
         throw new Error('Invalid part ID');
       }
 
+      const machineId = selectedMachine.machine_id || selectedMachine.id;
+      
       console.log('Sending request with data:', {
         part_id: partId,
-        machine_id: selectedMachine.id,
+        machine_id: machineId,
         quantity: quantity,
         reason: reason,
         work_order_number: null
@@ -202,7 +205,7 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
       // Now we can send the reason since we're storing it in the transactions table
       const response = await axios.post('/api/v1/parts/usage', {
         part_id: partId,
-        machine_id: selectedMachine.id,
+        machine_id: machineId,
         quantity: quantity,
         reason: reason,
         work_order_number: null // Optional field
@@ -223,9 +226,10 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
     } catch (error: any) {
       console.error('Error recording part usage:', error);
       console.error('Error details:', error.response?.data);
+      const failedMachineId = selectedMachine?.machine_id || selectedMachine?.id;
       console.error('Request that failed:', {
         part_id: selectedPart?.part_id,
-        machine_id: selectedMachine?.id,
+        machine_id: failedMachineId,
         quantity: quantity,
         reason: reason
       });
@@ -364,7 +368,7 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
                       <div className="search-results">
                         {machineResults.map((machine) => (
                           <div
-                            key={`machine-${machine.id || Math.random().toString(36).substr(2, 9)}`}
+                            key={`machine-${machine.machine_id || machine.id || Math.random().toString(36).substr(2, 9)}`}
                             className="search-item"
                             onClick={() => selectMachine(machine)}
                           >
@@ -372,7 +376,7 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
                               <div>
                                 <div className="fw-bold">{machine.name}</div>
                                 {machine.description && (
-                                  <div key={`machine-desc-${machine.id || Math.random().toString(36).substr(2, 9)}`} className="info-text">
+                                  <div key={`machine-desc-${machine.machine_id || machine.id || Math.random().toString(36).substr(2, 9)}`} className="info-text">
                                     {machine.description}
                                   </div>
                                 )}
