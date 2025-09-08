@@ -20,7 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/nodemailer": "^6.4.17",
-    "axios": "^1.8.1",
+    "axios": "^1.11.0",
     "bcrypt": "^5.1.1",
     "connect-pg-simple": "^9.0.1",
     "cors": "^2.8.5",
