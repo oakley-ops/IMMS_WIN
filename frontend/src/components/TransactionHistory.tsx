@@ -26,6 +26,7 @@ import ExcelJS from 'exceljs';
 interface Transaction {
   transaction_id: number;
   part_name: string;
+  manufacturer_part_number: string;
   fiserv_part_number: string;
   machine_name: string | null;
   quantity: number;
@@ -89,9 +90,9 @@ const TransactionHistory: React.FC = () => {
       const worksheet = workbook.addWorksheet('Parts Usage History');
 
       // Add and style title row with new merging
-      const titleRow = worksheet.addRow(['Parts Usage History Report', '', '', '', '', '']);
+      const titleRow = worksheet.addRow(['Parts Usage History Report', '', '', '', '', '', '']);
       worksheet.mergeCells(1, 1, 1, 2); // Merge A-B for title
-      worksheet.mergeCells(1, 3, 1, 6); // Merge C-F for date
+      worksheet.mergeCells(1, 3, 1, 7); // Merge C-G for date
       
       // Style title row
       titleRow.height = 30;
@@ -107,7 +108,7 @@ const TransactionHistory: React.FC = () => {
         return sum + (isNaN(cost) ? 0 : cost * Math.abs(record.quantity));
       }, 0);
 
-      const summaryRow = worksheet.addRow(['Summary', '', '', '', `Total Items: ${Math.abs(totalQuantity)}`, `Total Cost: $${totalCost.toFixed(2)}`]);
+      const summaryRow = worksheet.addRow(['Summary', '', '', '', '', `Total Items: ${Math.abs(totalQuantity)}`, `Total Cost: $${totalCost.toFixed(2)}`]);
       
       // Style summary row
       summaryRow.font = { bold: true };
@@ -125,11 +126,11 @@ const TransactionHistory: React.FC = () => {
           right: { style: 'thin' }
         };
       });
-      summaryRow.getCell(5).alignment = { vertical: 'middle', horizontal: 'center' };
-      summaryRow.getCell(6).alignment = { vertical: 'middle', horizontal: 'right' };
+      summaryRow.getCell(6).alignment = { vertical: 'middle', horizontal: 'center' };
+      summaryRow.getCell(7).alignment = { vertical: 'middle', horizontal: 'right' };
 
       // Define headers
-      const headers = ['Date', 'Part Name', 'Fiserv Part #', 'Machine', 'Quantity', 'Unit Cost'];
+      const headers = ['Date', 'Part Name', 'Mfg Part #', 'Fiserv Part #', 'Machine', 'Quantity', 'Unit Cost'];
       const headerRow = worksheet.addRow(headers);
 
       // Style headers
@@ -152,6 +153,7 @@ const TransactionHistory: React.FC = () => {
         const row = worksheet.addRow([
           dayjs(record.usage_date).format('MM/DD/YYYY'),
           record.part_name,
+          record.manufacturer_part_number || 'N/A',
           record.fiserv_part_number,
           record.machine_name || 'N/A',
           record.quantity,
@@ -181,9 +183,9 @@ const TransactionHistory: React.FC = () => {
         });
 
         // Center specific columns
-        row.getCell(4).alignment = { vertical: 'middle', horizontal: 'center' }; // Machine
-        row.getCell(5).alignment = { vertical: 'middle', horizontal: 'center' }; // Quantity
-        row.getCell(6).alignment = { vertical: 'middle', horizontal: 'right' };  // Unit Cost
+        row.getCell(5).alignment = { vertical: 'middle', horizontal: 'center' }; // Machine
+        row.getCell(6).alignment = { vertical: 'middle', horizontal: 'center' }; // Quantity
+        row.getCell(7).alignment = { vertical: 'middle', horizontal: 'right' };  // Unit Cost
       });
 
       // Set print settings
@@ -332,6 +334,7 @@ const TransactionHistory: React.FC = () => {
                 <TableRow>
                   <TableCell>Date</TableCell>
                   <TableCell>Part Name</TableCell>
+                  <TableCell>Mfg Part #</TableCell>
                   <TableCell>Fiserv Part #</TableCell>
                   <TableCell>Machine</TableCell>
                   <TableCell align="center">Quantity</TableCell>
@@ -343,6 +346,7 @@ const TransactionHistory: React.FC = () => {
                   <TableRow key={transaction.transaction_id}>
                     <TableCell>{dayjs(transaction.usage_date).format('MMM D, YYYY h:mm A')}</TableCell>
                     <TableCell>{transaction.part_name}</TableCell>
+                    <TableCell>{transaction.manufacturer_part_number || '-'}</TableCell>
                     <TableCell>{transaction.fiserv_part_number}</TableCell>
                     <TableCell>{transaction.machine_name || '-'}</TableCell>
                     <TableCell align="center">
@@ -355,7 +359,7 @@ const TransactionHistory: React.FC = () => {
                 ))}
                 {transactions.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={6} align="center">
+                    <TableCell colSpan={7} align="center">
                       {startDate && endDate ? 'No transactions found' : 'Select a date range to view transactions'}
                     </TableCell>
                   </TableRow>

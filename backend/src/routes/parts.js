@@ -1259,6 +1259,7 @@ router.get('/usage/history', async (req, res) => {
         t.transaction_id,
         t.part_id,
         p.name as part_name,
+        p.manufacturer_part_number,
         p.fiserv_part_number,
         t.quantity,
         t.created_at as usage_date,
