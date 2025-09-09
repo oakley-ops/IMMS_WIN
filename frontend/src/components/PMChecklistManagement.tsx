@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -17,7 +17,16 @@ import {
   Box,
   Typography,
   IconButton,
-  Alert
+  Alert,
+  Container,
+  Grid,
+  Card,
+  CardContent,
+  Chip,
+  InputAdornment,
+  LinearProgress,
+  Fab,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -25,11 +34,63 @@ import {
   Delete as DeleteIcon,
   Warning as WarningIcon,
   Save as SaveIcon,
-  Schedule as ScheduleIcon
+  Schedule as ScheduleIcon,
+  Search as SearchIcon,
+  Download as DownloadIcon,
+  Refresh as RefreshIcon,
+  CalendarToday as CalendarIcon,
+  Assignment as AssignmentIcon,
+  CheckCircle as CheckCircleIcon,
+  Error as ErrorIcon,
+  Build as BuildIcon,
 } from '@mui/icons-material';
+import { 
+  DataGrid, 
+  GridColDef, 
+  GridRenderCellParams,
+  GridPaginationModel,
+} from '@mui/x-data-grid';
+import { styled } from '@mui/material/styles';
+import * as XLSX from 'xlsx';
 import axiosInstance from '../utils/axios';
 import PMCalendar from './PMCalendar';
-import ModalPortal from './ModalPortal';
+
+// Custom CSS styles for Fiserv branding
+const FiservStyles = `
+  .text-primary {
+    color: #FF6600 !important;
+  }
+  
+  .bg-primary {
+    background-color: #0066A1 !important;
+  }
+  
+  .form-check-input:checked {
+    background-color: #FF6600;
+    border-color: #FF6600;
+  }
+  
+  .border-primary {
+    border-color: #FF6600 !important;
+  }
+  
+  a {
+    color: #FF6600;
+  }
+  
+  a:hover {
+    color: #e65c00;
+  }
+`;
+
+const StyledDataGrid = styled(DataGrid, {
+  shouldForwardProp: (prop) => ![
+    'rowId',
+    'offsetLeft',
+    'columnsTotalWidth',
+    'paginationMeta'
+  ].includes(prop.toString()),
+})({});
 
 interface PMChecklist {
   checklist_id: number;
@@ -67,8 +128,10 @@ interface PMTask {
 
 const PMChecklistManagement: React.FC = () => {
   const [checklists, setChecklists] = useState<PMChecklist[]>([]);
+  const [filteredChecklists, setFilteredChecklists] = useState<PMChecklist[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingChecklist, setEditingChecklist] = useState<PMChecklist | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -80,6 +143,12 @@ const PMChecklistManagement: React.FC = () => {
   const [selectedMachineForSchedule, setSelectedMachineForSchedule] = useState<Machine | null>(null);
   const [overdueCount, setOverdueCount] = useState(0);
   const [dueCount, setDueCount] = useState(0);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 25,
+  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -99,11 +168,37 @@ const PMChecklistManagement: React.FC = () => {
     notes: ''
   });
 
+  // Effect for filtering checklists based on search term
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredChecklists(checklists);
+    } else {
+      const filtered = checklists.filter(checklist =>
+        checklist.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        checklist.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        checklist.machine_type.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredChecklists(filtered);
+    }
+  }, [checklists, searchTerm]);
+
+  // Auto-clear success/error messages
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+        setError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
+
   const fetchChecklists = async () => {
     try {
       setLoading(true);
       const response = await axiosInstance.get('/api/v1/pm/checklists');
       setChecklists(response.data);
+      setFilteredChecklists(response.data);
       setError(null);
     } catch (err: any) {
       console.error('Error fetching checklists:', err);
@@ -119,35 +214,28 @@ const PMChecklistManagement: React.FC = () => {
       setMachines(response.data);
     } catch (err: any) {
       console.error('Error fetching machines:', err);
-      setError('Failed to fetch machines');
+    }
+  };
+
+  const fetchMaintenanceStats = async () => {
+    try {
+      const response = await axiosInstance.get('/api/v1/pm/stats');
+      setOverdueCount(response.data.overdue || 0);
+      setDueCount(response.data.due_soon || 0);
+    } catch (err: any) {
+      console.error('Error fetching maintenance stats:', err);
     }
   };
 
   useEffect(() => {
     fetchChecklists();
     fetchMachines();
-    fetchScheduleStats();
+    fetchMaintenanceStats();
   }, []);
 
-  const fetchScheduleStats = async () => {
-    try {
-      const response = await axiosInstance.get('/api/v1/machines/pm-schedule');
-      const events = response.data;
-      setOverdueCount(events.filter((e: any) => e.resource?.status === 'overdue').length);
-      setDueCount(events.filter((e: any) => e.resource?.status === 'due').length);
-    } catch (err) {
-      console.error('Error fetching schedule stats:', err);
-    }
-  };
-
   const fetchChecklistWithTasks = async (checklistId: number) => {
-    try {
-      const response = await axiosInstance.get(`/api/v1/pm/checklists/${checklistId}`);
-      return response.data;
-    } catch (err: any) {
-      console.error('Error fetching checklist with tasks:', err);
-      throw err;
-    }
+    const response = await axiosInstance.get(`/api/v1/pm/checklists/${checklistId}/tasks`);
+    return response.data;
   };
 
   const handleCreateNew = () => {
@@ -162,21 +250,16 @@ const PMChecklistManagement: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleEdit = async (checklist: PMChecklist) => {
-    try {
-      const checklistWithTasks = await fetchChecklistWithTasks(checklist.checklist_id);
-      setEditingChecklist(checklist);
-      setFormData({
-        name: checklistWithTasks.name,
-        description: checklistWithTasks.description || '',
-        machine_id: '', // Will be filled by user selection
-        machine_type: checklistWithTasks.machine_type,
-        tasks: checklistWithTasks.tasks || []
-      });
-      setOpenDialog(true);
-    } catch (err: any) {
-      setError('Failed to load checklist for editing');
-    }
+  const handleEdit = (checklist: PMChecklist) => {
+    setEditingChecklist(checklist);
+    setFormData({
+      name: checklist.name,
+      description: checklist.description,
+      machine_id: '',
+      machine_type: checklist.machine_type,
+      tasks: checklist.tasks || []
+    });
+    setOpenDialog(true);
   };
 
   const handleDelete = (checklist: PMChecklist) => {
@@ -184,52 +267,56 @@ const PMChecklistManagement: React.FC = () => {
     setDeleteConfirmOpen(true);
   };
 
-  const confirmDelete = async () => {
-    if (!checklistToDelete) return;
-
-    try {
-      await axiosInstance.delete(`/api/v1/pm/checklists/${checklistToDelete.checklist_id}`);
-      setChecklists(prev => prev.filter(c => c.checklist_id !== checklistToDelete.checklist_id));
-      setDeleteConfirmOpen(false);
-      setChecklistToDelete(null);
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to delete checklist');
-    }
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setEditingChecklist(null);
+    setError(null);
   };
 
   const handleSubmit = async () => {
-    if (!formData.name || !formData.machine_id) {
-      setError('Name and machine selection are required');
-      return;
-    }
-
     try {
       setIsSubmitting(true);
       setError(null);
 
-      const requestData = {
+      const payload = {
         name: formData.name,
         description: formData.description,
-        machineType: formData.machine_type,
-        tasks: formData.tasks.map(task => ({
-          name: task.task_name,
-          description: task.task_description,
-          isRequired: task.is_required
-        }))
+        machine_type: formData.machine_type,
+        is_active: true,
+        tasks: formData.tasks
       };
 
       if (editingChecklist) {
-        // Update existing checklist
-        await axiosInstance.put(`/api/v1/pm/checklists/${editingChecklist.checklist_id}`, requestData);
+        await axiosInstance.put(`/api/v1/pm/checklists/${editingChecklist.checklist_id}`, payload);
+        setSuccess('Checklist updated successfully!');
       } else {
-        // Create new checklist
-        await axiosInstance.post('/api/v1/pm/checklists', requestData);
+        await axiosInstance.post('/api/v1/pm/checklists', payload);
+        setSuccess('Checklist created successfully!');
       }
 
-      setOpenDialog(false);
-      fetchChecklists();
+      await fetchChecklists();
+      handleCloseDialog();
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to save checklist');
+      console.error('Error saving checklist:', err);
+      setError(err.response?.data?.message || 'Failed to save checklist');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!checklistToDelete) return;
+
+    try {
+      setIsSubmitting(true);
+      await axiosInstance.delete(`/api/v1/pm/checklists/${checklistToDelete.checklist_id}`);
+      await fetchChecklists();
+      setDeleteConfirmOpen(false);
+      setChecklistToDelete(null);
+      setSuccess('Checklist deleted successfully!');
+    } catch (err: any) {
+      console.error('Error deleting checklist:', err);
+      setError('Failed to delete checklist');
     } finally {
       setIsSubmitting(false);
     }
@@ -241,7 +328,7 @@ const PMChecklistManagement: React.FC = () => {
       tasks: [...prev.tasks, {
         task_name: '',
         task_description: '',
-        is_required: true,
+        is_required: false,
         order_position: prev.tasks.length + 1
       }]
     }));
@@ -282,20 +369,7 @@ const PMChecklistManagement: React.FC = () => {
   const handleScheduleOpen = (machine?: Machine) => {
     if (machine) {
       setSelectedMachineForSchedule(machine);
-      setScheduleData(prev => ({
-        ...prev,
-        machineId: (machine.machine_id || machine.id)?.toString() || '',
-        nextMaintenanceDate: machine.next_maintenance_date?.split('T')[0] || ''
-      }));
-    } else {
-      setSelectedMachineForSchedule(null);
-      setScheduleData({
-        machineId: '',
-        checklistId: '',
-        nextMaintenanceDate: '',
-        technicianName: '',
-        notes: ''
-      });
+      setScheduleData(prev => ({ ...prev, machineId: String(machine.machine_id || machine.id) }));
     }
     setScheduleDialogOpen(true);
   };
@@ -313,40 +387,15 @@ const PMChecklistManagement: React.FC = () => {
   };
 
   const handleScheduleSubmit = async () => {
-    if (!scheduleData.machineId || !scheduleData.nextMaintenanceDate) {
-      setError('Machine and next maintenance date are required');
-      return;
-    }
-
     try {
       setIsSubmitting(true);
-      setError(null);
-
-      // Update machine's next maintenance date
-      await axiosInstance.put(`/api/v1/machines/${scheduleData.machineId}`, {
-        next_maintenance_date: new Date(scheduleData.nextMaintenanceDate).toISOString()
-      });
-
-      // If checklist is selected and we want to start a session immediately
-      if (scheduleData.checklistId && scheduleData.technicianName) {
-        await axiosInstance.post('/api/v1/pm/sessions', {
-          machineId: parseInt(scheduleData.machineId),
-          checklistId: parseInt(scheduleData.checklistId),
-          technicianName: scheduleData.technicianName
-        });
-      }
-
-      setScheduleDialogOpen(false);
-      fetchScheduleStats(); // Refresh stats
-      setScheduleData({
-        machineId: '',
-        checklistId: '',
-        nextMaintenanceDate: '',
-        technicianName: '',
-        notes: ''
-      });
+      await axiosInstance.post('/api/v1/pm/schedule', scheduleData);
+      await fetchMaintenanceStats();
+      handleScheduleClose();
+      setSuccess('Maintenance scheduled successfully!');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to schedule maintenance');
+      console.error('Error scheduling maintenance:', err);
+      setError('Failed to schedule maintenance');
     } finally {
       setIsSubmitting(false);
     }
@@ -354,6 +403,66 @@ const PMChecklistManagement: React.FC = () => {
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setActiveTab(newValue);
+  };
+
+  // Handle search input changes
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  // Add export function
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+      
+      const checklistsToExport = filteredChecklists;
+      if (checklistsToExport.length === 0) {
+        setError('No checklists to export');
+        return;
+      }
+
+      // Transform data for export
+      const exportData = checklistsToExport.map((checklist: PMChecklist) => ({
+        'Checklist Name': checklist.name,
+        'Description': checklist.description,
+        'Machine Type': checklist.machine_type,
+        'Status': checklist.is_active ? 'Active' : 'Inactive',
+        'Created Date': new Date(checklist.created_at).toLocaleDateString(),
+        'Updated Date': new Date(checklist.updated_at).toLocaleDateString(),
+        'Number of Tasks': checklist.tasks?.length || 0
+      }));
+
+      // Create worksheet
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+      // Set column widths
+      const columnWidths = [
+        { wch: 25 }, // Checklist Name
+        { wch: 40 }, // Description
+        { wch: 20 }, // Machine Type
+        { wch: 15 }, // Status
+        { wch: 15 }, // Created Date
+        { wch: 15 }, // Updated Date
+        { wch: 15 }, // Number of Tasks
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Create workbook and append sheet
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'PM Checklists');
+      
+      // Generate filename
+      const filename = `pm_checklists_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+      // Export file
+      XLSX.writeFile(workbook, filename);
+      setSuccess('PM checklists exported successfully!');
+    } catch (error: any) {
+      console.error('Error exporting checklists:', error);
+      setError('Failed to export checklists');
+    } finally {
+      setExportLoading(false);
+    }
   };
 
   if (loading) {
@@ -366,352 +475,584 @@ const PMChecklistManagement: React.FC = () => {
     );
   }
 
+  // Define DataGrid columns
+  const columns: GridColDef[] = [
+    { field: 'name', headerName: 'Checklist Name', flex: 1.5 },
+    { field: 'description', headerName: 'Description', flex: 2 },
+    { field: 'machine_type', headerName: 'Machine Type', width: 150 },
+    { 
+      field: 'is_active', 
+      headerName: 'Status', 
+      width: 120,
+      renderCell: (params: GridRenderCellParams) => (
+        <Chip 
+          label={params.value ? 'Active' : 'Inactive'} 
+          size="small"
+          color={params.value ? 'success' : 'default'}
+          variant="outlined"
+        />
+      )
+    },
+    { 
+      field: 'tasks_count', 
+      headerName: 'Tasks', 
+      width: 100,
+      renderCell: (params: GridRenderCellParams) => (
+        <Chip 
+          label={params.row.tasks?.length || 0} 
+          size="small"
+          color="info"
+          variant="outlined"
+        />
+      )
+    },
+    { 
+      field: 'created_at', 
+      headerName: 'Created', 
+      width: 120,
+      renderCell: (params: GridRenderCellParams) => 
+        new Date(params.value).toLocaleDateString()
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 200,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton
+            size="small"
+            onClick={() => handleEdit(params.row)}
+            sx={{ 
+              backgroundColor: '#FF6600',
+              color: 'white',
+              '&:hover': { backgroundColor: '#e65c00' }
+            }}
+            title="Edit Checklist"
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => toggleShowTasks(params.row.checklist_id)}
+            sx={{ 
+              backgroundColor: '#0066A1',
+              color: 'white',
+              '&:hover': { backgroundColor: '#004d7a' }
+            }}
+            title="View Tasks"
+          >
+            <AssignmentIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => {
+              setChecklistToDelete(params.row);
+              setDeleteConfirmOpen(true);
+            }}
+            sx={{ 
+              backgroundColor: '#f44336',
+              color: 'white',
+              '&:hover': { backgroundColor: '#d32f2f' }
+            }}
+            title="Delete Checklist"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )
+    }
+  ];
+
   return (
-    <div className="container-fluid p-4">
-      {/* Header */}
-      <div className="row mb-4">
-        <div className="col-12">
-          <div className="d-flex justify-content-between align-items-center">
-            <h1 className="h3 mb-0">PM Management System</h1>
-            <div className="d-flex gap-2">
-              <button
-                className="btn btn-outline-primary"
-                onClick={() => handleScheduleOpen()}
-              >
-                <i className="bi bi-calendar-plus me-2"></i>
-                Schedule Maintenance
-              </button>
-              <button
-                className="btn btn-primary"
-                onClick={handleCreateNew}
-                style={{ backgroundColor: '#FF6600', borderColor: '#FF6600' }}
-              >
-                <i className="bi bi-plus-lg me-2"></i>
-                Create New Checklist
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+    <Container 
+      maxWidth="xl" 
+      sx={{ 
+        backgroundColor: '#0066A1',
+        padding: '2rem',
+        borderRadius: '1rem',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+        backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent)',
+        backgroundSize: '20px 20px'
+      }}
+    >
+      {/* Apply Fiserv brand styling */}
+      <style>{FiservStyles}</style>
+      
+      <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
+        PM Management System
+      </Typography>
 
       {/* Stats Cards */}
-      <div className="row mb-4">
-        <div className="col-lg-3 col-md-6 mb-3">
-          <div className="card border-danger">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted mb-1">Overdue</p>
-                  <h2 className="text-danger mb-0">{overdueCount}</h2>
-                </div>
-                <div className="text-danger">
-                  <i className="bi bi-exclamation-triangle" style={{ fontSize: '2.5rem' }}></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-3 col-md-6 mb-3">
-          <div className="card border-warning">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted mb-1">Due Soon</p>
-                  <h2 className="text-warning mb-0">{dueCount}</h2>
-                </div>
-                <div className="text-warning">
-                  <i className="bi bi-calendar-check" style={{ fontSize: '2.5rem' }}></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-3 col-md-6 mb-3">
-          <div className="card border-primary">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted mb-1">Checklists</p>
-                  <h2 className="text-primary mb-0">{checklists.length}</h2>
-                </div>
-                <div className="text-primary">
-                  <i className="bi bi-list-check" style={{ fontSize: '2.5rem' }}></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-lg-3 col-md-6 mb-3">
-          <div className="card border-info">
-            <div className="card-body">
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <p className="text-muted mb-1">Machines</p>
-                  <h2 className="text-info mb-0">{machines.length}</h2>
-                </div>
-                <div className="text-info">
-                  <i className="bi bi-gear" style={{ fontSize: '2.5rem' }}></i>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            elevation={3}
+            sx={{ 
+              borderRadius: '0.75rem',
+              borderLeft: '4px solid #f44336',
+              transition: 'transform 0.2s',
+              '&:hover': { transform: 'translateY(-2px)' }
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography color="text.secondary" gutterBottom>
+                    Overdue
+                  </Typography>
+                  <Typography variant="h4" sx={{ color: '#f44336', fontWeight: 'bold' }}>
+                    {overdueCount}
+                  </Typography>
+                </Box>
+                <ErrorIcon sx={{ fontSize: '2.5rem', color: '#f44336' }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            elevation={3}
+            sx={{ 
+              borderRadius: '0.75rem',
+              borderLeft: '4px solid #ff9800',
+              transition: 'transform 0.2s',
+              '&:hover': { transform: 'translateY(-2px)' }
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography color="text.secondary" gutterBottom>
+                    Due Soon
+                  </Typography>
+                  <Typography variant="h4" sx={{ color: '#ff9800', fontWeight: 'bold' }}>
+                    {dueCount}
+                  </Typography>
+                </Box>
+                <CalendarIcon sx={{ fontSize: '2.5rem', color: '#ff9800' }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            elevation={3}
+            sx={{ 
+              borderRadius: '0.75rem',
+              borderLeft: '4px solid #FF6600',
+              transition: 'transform 0.2s',
+              '&:hover': { transform: 'translateY(-2px)' }
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography color="text.secondary" gutterBottom>
+                    Checklists
+                  </Typography>
+                  <Typography variant="h4" sx={{ color: '#FF6600', fontWeight: 'bold' }}>
+                    {checklists.length}
+                  </Typography>
+                </Box>
+                <AssignmentIcon sx={{ fontSize: '2.5rem', color: '#FF6600' }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        
+        <Grid item xs={12} sm={6} md={3}>
+          <Card 
+            elevation={3}
+            sx={{ 
+              borderRadius: '0.75rem',
+              borderLeft: '4px solid #0066A1',
+              transition: 'transform 0.2s',
+              '&:hover': { transform: 'translateY(-2px)' }
+            }}
+          >
+            <CardContent>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box>
+                  <Typography color="text.secondary" gutterBottom>
+                    Machines
+                  </Typography>
+                  <Typography variant="h4" sx={{ color: '#0066A1', fontWeight: 'bold' }}>
+                    {machines.length}
+                  </Typography>
+                </Box>
+                <BuildIcon sx={{ fontSize: '2.5rem', color: '#0066A1' }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
-      {/* Tabs */}
-      <div className="card mb-4">
-        <div className="card-header p-0">
-          <ul className="nav nav-tabs card-header-tabs" role="tablist">
-            <li className="nav-item">
-              <button
-                className={`nav-link ${activeTab === 0 ? 'active' : ''}`}
-                onClick={() => setActiveTab(0)}
-                type="button"
-                role="tab"
+      {/* Search and Actions */}
+      <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: '0.75rem', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
+        <Grid container spacing={3} alignItems="center">
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              placeholder="Search checklists by name, description, or machine type..."
+              value={searchTerm}
+              onChange={handleSearch}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon />
+                  </InputAdornment>
+                ),
+                sx: { borderRadius: '0.5rem' }
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#e0e0e0',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#FF6600',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#FF6600',
+                  },
+                },
+              }}
+            />
+            {loading && searchTerm && (
+              <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
+            )}
+          </Grid>
+          
+          <Grid item xs={12} md={6}>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+              <Button
+                variant="outlined"
+                onClick={() => handleScheduleOpen()}
+                startIcon={<ScheduleIcon />}
+                sx={{ 
+                  borderColor: '#0066A1',
+                  color: '#0066A1',
+                  '&:hover': { 
+                    borderColor: '#004d7a',
+                    backgroundColor: 'rgba(0, 102, 161, 0.04)'
+                  },
+                  minWidth: '160px'
+                }}
               >
-                <i className="bi bi-list-check me-2"></i>
-                Checklists
-              </button>
-            </li>
-            <li className="nav-item">
-              <button
-                className={`nav-link ${activeTab === 1 ? 'active' : ''}`}
-                onClick={() => setActiveTab(1)}
-                type="button"
-                role="tab"
+                Schedule Maintenance
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleCreateNew}
+                startIcon={<AddIcon />}
+                sx={{ 
+                  backgroundColor: '#FF6600', 
+                  borderColor: '#FF6600',
+                  '&:hover': { backgroundColor: '#e65c00' },
+                  minWidth: '160px'
+                }}
               >
-                <i className="bi bi-calendar me-2"></i>
-                Schedule
-                {(overdueCount + dueCount) > 0 && (
-                  <span className="badge bg-danger ms-2">{overdueCount + dueCount}</span>
-                )}
-              </button>
-            </li>
-          </ul>
-        </div>
-      </div>
+                Create Checklist
+              </Button>
+              <Button
+                variant="outlined"
+                onClick={handleExport}
+                disabled={exportLoading}
+                startIcon={exportLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
+                sx={{ 
+                  borderColor: '#FF6600',
+                  color: '#FF6600',
+                  '&:hover': { 
+                    borderColor: '#e65c00',
+                    backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                  },
+                  minWidth: '120px'
+                }}
+              >
+                {exportLoading ? 'Exporting...' : 'Export'}
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
 
-      {error && (
-        <div className="alert alert-danger" role="alert">
-          <i className="bi bi-exclamation-triangle me-2"></i>
-          {error}
-        </div>
-      )}
+        {/* Statistics and Tab Chips */}
+        <Box sx={{ mt: 3, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+          <Chip
+            icon={<AssignmentIcon />}
+            label={`Checklists (${activeTab === 0 ? 'Viewing' : 'Available'})`}
+            onClick={() => setActiveTab(0)}
+            color={activeTab === 0 ? "primary" : "default"}
+            variant={activeTab === 0 ? "filled" : "outlined"}
+            sx={{ 
+              backgroundColor: activeTab === 0 ? '#FF6600' : 'transparent',
+              color: activeTab === 0 ? 'white' : '#FF6600',
+              borderColor: '#FF6600',
+              '&:hover': { backgroundColor: activeTab === 0 ? '#e65c00' : 'rgba(255, 102, 0, 0.04)' }
+            }}
+          />
+          <Chip
+            icon={<CalendarIcon />}
+            label={`Schedule ${(overdueCount + dueCount) > 0 ? `(${overdueCount + dueCount} due)` : ''}`}
+            onClick={() => setActiveTab(1)}
+            color={activeTab === 1 ? "primary" : "default"}
+            variant={activeTab === 1 ? "filled" : "outlined"}
+            sx={{ 
+              backgroundColor: activeTab === 1 ? '#0066A1' : 'transparent',
+              color: activeTab === 1 ? 'white' : '#0066A1',
+              borderColor: '#0066A1',
+              '&:hover': { backgroundColor: activeTab === 1 ? '#004d7a' : 'rgba(0, 102, 161, 0.04)' }
+            }}
+          />
+          
+          <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
+            <Chip 
+              label={`${filteredChecklists.length} checklists showing`} 
+              color="primary" 
+              variant="outlined"
+              sx={{ 
+                borderColor: '#FF6600',
+                color: '#FF6600',
+                backgroundColor: 'rgba(255, 102, 0, 0.04)'
+              }}
+            />
+            {searchTerm && (
+              <Chip 
+                label={`Search: "${searchTerm}"`} 
+                color="primary" 
+                onDelete={() => setSearchTerm('')}
+                sx={{ 
+                  backgroundColor: '#0066A1',
+                  color: 'white'
+                }}
+              />
+            )}
+          </Box>
+        </Box>
+      </Paper>
 
       {/* Tab Content */}
       {activeTab === 0 && (
-        <div>
-          <div className="row">
-            {checklists.map((checklist) => (
-              <div className="col-lg-4 col-md-6 mb-4" key={checklist.checklist_id}>
-                <div className="card h-100">
-                  <div className="card-body d-flex flex-column">
-                    <div className="d-flex align-items-center mb-2">
-                      <i className="bi bi-gear-fill text-primary me-2"></i>
-                      <h5 className="card-title mb-0">{checklist.name}</h5>
-                    </div>
-                    
-                    <p className="card-text text-muted mb-2">
-                      {checklist.description || 'No description'}
-                    </p>
-
-                    <div className="d-flex gap-2 mb-2">
-                      <span className="badge bg-primary">{checklist.machine_type}</span>
-                      <span className={`badge ${checklist.is_active ? 'bg-success' : 'bg-danger'}`}>
-                        {checklist.is_active ? 'Active' : 'Inactive'}
-                      </span>
-                    </div>
-
-                    <small className="text-muted">
-                      Updated: {new Date(checklist.updated_at).toLocaleDateString()}
-                    </small>
-
-                    <div className="mt-2">
-                      <button
-                        className="btn btn-sm btn-outline-secondary"
-                        onClick={() => toggleShowTasks(checklist.checklist_id)}
-                      >
-                        <i className="bi bi-list me-1"></i>
-                        {showTasks[checklist.checklist_id] ? 'Hide Tasks' : 'Show Tasks'}
-                      </button>
-                    </div>
-
-                    {showTasks[checklist.checklist_id] && checklist.tasks && (
-                      <div className="mt-2">
-                        <hr />
-                        <h6 className="mb-2">Tasks ({checklist.tasks.length})</h6>
-                        <div className="list-group list-group-flush">
-                          {checklist.tasks.map((task, index) => (
-                            <div key={index} className="list-group-item px-0 py-1">
-                              <div className="d-flex justify-content-between align-items-start">
-                                <div>
-                                  <div className="fw-bold">{task.task_name}</div>
-                                  <small className="text-muted">{task.task_description}</small>
-                                </div>
-                                {task.is_required && (
-                                  <span className="badge bg-danger ms-2">Required</span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="card-footer">
-                    <div className="d-flex gap-2">
-                      <button
-                        className="btn btn-sm btn-outline-primary"
-                        onClick={() => handleEdit(checklist)}
-                      >
-                        <i className="bi bi-pencil me-1"></i>
-                        Edit
-                      </button>
-                      <button
-                        className="btn btn-sm btn-outline-danger"
-                        onClick={() => handleDelete(checklist)}
-                      >
-                        <i className="bi bi-trash me-1"></i>
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {checklists.length === 0 && (
-            <div className="text-center py-5">
-              <h5 className="text-muted">No checklists found</h5>
-              <p className="text-muted">Create your first PM checklist to get started</p>
-            </div>
-          )}
-        </div>
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            width: '100%', 
+            mb: 3, 
+            borderRadius: '0.75rem',
+            overflow: 'hidden',
+            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+            backgroundColor: 'white'
+          }}
+        >
+          <Box sx={{ width: '100%', height: 650 }}>
+            {filteredChecklists.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {searchTerm ? 'No checklists match your search' : 'No checklists found'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  {searchTerm ? 
+                    'Try adjusting your search terms or clear the search to see all checklists.' :
+                    'Create your first checklist to get started with preventive maintenance.'}
+                </Typography>
+                {!searchTerm && (
+                  <Button
+                    variant="contained"
+                    onClick={handleCreateNew}
+                    startIcon={<AddIcon />}
+                    sx={{ 
+                      backgroundColor: '#FF6600',
+                      '&:hover': { backgroundColor: '#e65c00' }
+                    }}
+                  >
+                    Create Checklist
+                  </Button>
+                )}
+              </Box>
+            ) : (
+              <StyledDataGrid
+                columns={columns}
+                rows={filteredChecklists}
+                getRowId={(row) => row.checklist_id}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
+                pageSizeOptions={[25, 50, 100]}
+                disableRowSelectionOnClick
+                disableColumnMenu
+                sx={{
+                  '& .MuiDataGrid-cell': {
+                    py: 1.5,
+                    px: 2
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    bgcolor: '#f8f9fa',
+                    borderBottom: '2px solid #e9ecef',
+                    py: 1.5
+                  },
+                  '& .MuiDataGrid-row': {
+                    borderBottom: '1px solid #e9ecef',
+                  },
+                  '& .MuiDataGrid-row:hover': {
+                    bgcolor: 'rgba(0, 102, 161, 0.04)',
+                  },
+                  '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
+                    outline: 'none',
+                  },
+                  border: 'none',
+                  borderRadius: '0.75rem',
+                  '& .MuiDataGrid-columnSeparator': {
+                    display: 'none',
+                  },
+                  '& .MuiDataGrid-iconButtonContainer': {
+                    color: '#0066A1',
+                  }
+                }}
+              />
+            )}
+          </Box>
+        </Paper>
       )}
 
-      {/* Schedule Tab */}
       {activeTab === 1 && (
-        <div>
-          <div className="d-flex justify-content-between align-items-center mb-3">
-            <h4>Maintenance Schedule</h4>
-            <button
-              className="btn btn-outline-primary"
-              onClick={() => handleScheduleOpen()}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            p: 3, 
+            borderRadius: '0.75rem',
+            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+            backgroundColor: 'white'
+          }}
+        >
+          <PMCalendar />
+        </Paper>
+      )}
+
+      {/* Success/Error Feedback */}
+      {(success || error) && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 20,
+            right: 20,
+            zIndex: 9999,
+            maxWidth: '400px',
+          }}
+        >
+          {success && (
+            <Paper
+              elevation={6}
+              sx={{
+                p: 2,
+                backgroundColor: '#4caf50',
+                color: 'white',
+                borderRadius: '0.75rem',
+                mb: 1,
+              }}
             >
-              <i className="bi bi-calendar-plus me-2"></i>
-              Schedule New Maintenance
-            </button>
-          </div>
-          
-          <PMCalendar 
-            onDateChange={() => {}}
-            defaultDate={new Date()}
-          />
-        </div>
+              <Typography variant="body2">✅ {success}</Typography>
+            </Paper>
+          )}
+          {error && (
+            <Paper
+              elevation={6}
+              sx={{
+                p: 2,
+                backgroundColor: '#f44336',
+                color: 'white',
+                borderRadius: '0.75rem',
+              }}
+            >
+              <Typography variant="body2">❌ {error}</Typography>
+            </Paper>
+          )}
+        </Box>
       )}
 
       {/* Create/Edit Dialog */}
-      <Dialog 
-        open={openDialog} 
-        onClose={() => setOpenDialog(false)}
-        maxWidth="md"
-        fullWidth
-      >
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           {editingChecklist ? 'Edit Checklist' : 'Create New Checklist'}
         </DialogTitle>
         <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <TextField
-              fullWidth
-              label="Name"
-              value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-              margin="normal"
-              required
-            />
-            
-            <TextField
-              fullWidth
-              label="Description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              margin="normal"
-              multiline
-              rows={2}
-            />
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
+          
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Checklist Name"
+            fullWidth
+            variant="outlined"
+            value={formData.name}
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
+            sx={{ mb: 2 }}
+          />
+          
+          <TextField
+            margin="dense"
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            variant="outlined"
+            value={formData.description}
+            onChange={(e) => setFormData({...formData, description: e.target.value})}
+            sx={{ mb: 2 }}
+          />
+          
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Machine Type</InputLabel>
+            <Select
+              value={formData.machine_type}
+              label="Machine Type"
+              onChange={(e) => setFormData({...formData, machine_type: e.target.value})}
+            >
+              <MenuItem value="ATM">ATM</MenuItem>
+              <MenuItem value="ITM">ITM</MenuItem>
+              <MenuItem value="Printer">Printer</MenuItem>
+              <MenuItem value="Scanner">Scanner</MenuItem>
+              <MenuItem value="Other">Other</MenuItem>
+            </Select>
+          </FormControl>
 
-            <FormControl fullWidth margin="normal" required>
-              <InputLabel>Select Machine</InputLabel>
-              <Select
-                value={formData.machine_id}
-                onChange={(e) => {
-                  const selectedMachine = machines.find(m => (m.machine_id || m.id)?.toString() === e.target.value);
-                  setFormData(prev => ({ 
-                    ...prev, 
-                    machine_id: e.target.value,
-                    machine_type: selectedMachine?.machine_type || ''
-                  }));
-                }}
-                label="Select Machine"
-              >
-                {machines.map((machine) => (
-                  <MenuItem key={machine.machine_id || machine.id} value={(machine.machine_id || machine.id)?.toString()}>
-                    {machine.name} ({machine.machine_type})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+          <Typography variant="h6" sx={{ mt: 3, mb: 2 }}>
+            Tasks
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={handleAddTask}
+              sx={{ ml: 2 }}
+            >
+              Add Task
+            </Button>
+          </Typography>
 
-            <Box mt={3}>
-              <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h6">Tasks</Typography>
-                <Button
-                  variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddTask}
-                  size="small"
-                >
-                  Add Task
-                </Button>
-              </Box>
-
-              {formData.tasks.map((task, index) => (
-                <Paper key={index} sx={{ p: 2, mb: 2 }}>
-                  <Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                    <Typography variant="subtitle2">Task {index + 1}</Typography>
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleRemoveTask(index)}
-                    >
-                      <DeleteIcon />
-                    </IconButton>
-                  </Box>
-                  
+          {formData.tasks.map((task, index) => (
+            <Paper key={index} sx={{ p: 2, mb: 2, bgcolor: '#f5f5f5' }}>
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} sm={4}>
                   <TextField
-                    fullWidth
+                    size="small"
                     label="Task Name"
+                    fullWidth
                     value={task.task_name}
                     onChange={(e) => handleTaskChange(index, 'task_name', e.target.value)}
-                    margin="normal"
-                    size="small"
-                    required
                   />
-                  
+                </Grid>
+                <Grid item xs={12} sm={6}>
                   <TextField
+                    size="small"
+                    label="Description"
                     fullWidth
-                    label="Task Description"
                     value={task.task_description}
                     onChange={(e) => handleTaskChange(index, 'task_description', e.target.value)}
-                    margin="normal"
-                    size="small"
-                    multiline
-                    rows={2}
                   />
-                  
+                </Grid>
+                <Grid item xs={6} sm={1}>
                   <FormControlLabel
                     control={
                       <Checkbox
@@ -719,197 +1060,147 @@ const PMChecklistManagement: React.FC = () => {
                         onChange={(e) => handleTaskChange(index, 'is_required', e.target.checked)}
                       />
                     }
-                    label="Required Task"
+                    label="Required"
                   />
-                </Paper>
-              ))}
-
-              {formData.tasks.length === 0 && (
-                <Typography variant="body2" color="textSecondary" textAlign="center" py={2}>
-                  No tasks added yet. Click "Add Task" to get started.
-                </Typography>
-              )}
-            </Box>
-          </Box>
+                </Grid>
+                <Grid item xs={6} sm={1}>
+                  <IconButton
+                    color="error"
+                    onClick={() => handleRemoveTask(index)}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </Grid>
+              </Grid>
+            </Paper>
+          ))}
         </DialogContent>
+        
         <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmit}
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button 
+            onClick={handleSubmit} 
             variant="contained"
-            disabled={isSubmitting}
-            startIcon={isSubmitting ? <CircularProgress size={20} /> : <SaveIcon />}
+            disabled={isSubmitting || !formData.name.trim()}
           >
-            {isSubmitting ? 'Saving...' : 'Save'}
+            {isSubmitting ? <CircularProgress size={20} /> : (editingChecklist ? 'Update' : 'Create')}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
-      <Dialog
-        open={deleteConfirmOpen}
-        onClose={() => setDeleteConfirmOpen(false)}
-      >
+      <Dialog open={deleteConfirmOpen} onClose={() => setDeleteConfirmOpen(false)}>
         <DialogTitle>
-          <Box display="flex" alignItems="center" gap={1}>
-            <WarningIcon color="error" />
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <WarningIcon sx={{ color: 'warning.main', mr: 1 }} />
             Confirm Delete
           </Box>
         </DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete the checklist "{checklistToDelete?.name}"? 
+            Are you sure you want to delete the checklist "{checklistToDelete?.name}"?
             This action cannot be undone.
           </Typography>
-          <Alert severity="warning" sx={{ mt: 2 }}>
-            This will only deactivate the checklist. It will not affect existing PM sessions.
-          </Alert>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteConfirmOpen(false)}>
-            Cancel
-          </Button>
-          <Button
+          <Button onClick={() => setDeleteConfirmOpen(false)}>Cancel</Button>
+          <Button 
             onClick={confirmDelete}
             color="error"
             variant="contained"
+            disabled={isSubmitting}
           >
-            Delete
+            {isSubmitting ? <CircularProgress size={20} /> : 'Delete'}
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Schedule Maintenance Dialog */}
-      <ModalPortal open={scheduleDialogOpen}>
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content custom-dialog">
-            <div className="dialog-header">
-              <h5 className="dialog-title">
-                Schedule Maintenance
-                {selectedMachineForSchedule && (
-                  <small className="text-muted d-block">
-                    {selectedMachineForSchedule.name} - {selectedMachineForSchedule.model}
-                  </small>
-                )}
-              </h5>
-            </div>
-            <div className="dialog-content">
-              <div className="row">
-                {!selectedMachineForSchedule && (
-                  <div className="col-12 mb-3">
-                    <label className="form-label">Select Machine *</label>
-                    <select
-                      className="form-control"
-                      value={scheduleData.machineId}
-                      onChange={(e) => setScheduleData(prev => ({ ...prev, machineId: e.target.value }))}
-                      required
-                    >
-                      <option value="">Select a machine...</option>
-                      {machines.map((machine) => (
-                        <option key={machine.machine_id || machine.id} value={(machine.machine_id || machine.id)?.toString()}>
-                          {machine.name} ({machine.model}) - {machine.location}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+      <Dialog open={scheduleDialogOpen} onClose={handleScheduleClose} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ 
+          backgroundColor: '#0066A1', 
+          color: 'white',
+          borderRadius: '0.75rem 0.75rem 0 0'
+        }}>
+          <Typography variant="h6" sx={{ color: 'white' }}>
+            Schedule Maintenance
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 2 }}>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Machine</InputLabel>
+            <Select
+              value={scheduleData.machineId}
+              label="Machine"
+              onChange={(e) => setScheduleData({...scheduleData, machineId: e.target.value})}
+            >
+              {machines.map((machine) => (
+                <MenuItem key={machine.machine_id || machine.id} value={machine.machine_id || machine.id}>
+                  {machine.name} ({machine.location})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-                <div className="col-md-6 mb-3">
-                  <label className="form-label">Next Maintenance Date *</label>
-                  <input
-                    type="date"
-                    className="form-control"
-                    value={scheduleData.nextMaintenanceDate}
-                    onChange={(e) => setScheduleData(prev => ({ ...prev, nextMaintenanceDate: e.target.value }))}
-                    required
-                  />
-                </div>
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Checklist</InputLabel>
+            <Select
+              value={scheduleData.checklistId}
+              label="Checklist"
+              onChange={(e) => setScheduleData({...scheduleData, checklistId: e.target.value})}
+            >
+              {checklists.map((checklist) => (
+                <MenuItem key={checklist.checklist_id} value={checklist.checklist_id}>
+                  {checklist.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-                <div className="col-md-6 mb-3">
-                  <label className="form-label">Checklist (Optional)</label>
-                  <select
-                    className="form-control"
-                    value={scheduleData.checklistId}
-                    onChange={(e) => setScheduleData(prev => ({ ...prev, checklistId: e.target.value }))}
-                  >
-                    <option value="">No checklist - schedule only</option>
-                    {checklists.map((checklist) => (
-                      <option key={checklist.checklist_id} value={checklist.checklist_id.toString()}>
-                        {checklist.name} ({checklist.machine_type})
-                      </option>
-                    ))}
-                  </select>
-                </div>
+          <TextField
+            type="datetime-local"
+            label="Next Maintenance Date"
+            fullWidth
+            sx={{ mb: 2 }}
+            value={scheduleData.nextMaintenanceDate}
+            onChange={(e) => setScheduleData({...scheduleData, nextMaintenanceDate: e.target.value})}
+            InputLabelProps={{ shrink: true }}
+          />
 
-                {scheduleData.checklistId && (
-                  <div className="col-12 mb-3">
-                    <label className="form-label">Technician Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={scheduleData.technicianName}
-                      onChange={(e) => setScheduleData(prev => ({ ...prev, technicianName: e.target.value }))}
-                      placeholder="Enter technician name"
-                    />
-                    <small className="form-text text-muted">
-                      Required if starting a PM session immediately
-                    </small>
-                  </div>
-                )}
+          <TextField
+            label="Technician Name"
+            fullWidth
+            sx={{ mb: 2 }}
+            value={scheduleData.technicianName}
+            onChange={(e) => setScheduleData({...scheduleData, technicianName: e.target.value})}
+          />
 
-                <div className="col-12 mb-3">
-                  <label className="form-label">Notes</label>
-                  <textarea
-                    className="form-control"
-                    value={scheduleData.notes}
-                    onChange={(e) => setScheduleData(prev => ({ ...prev, notes: e.target.value }))}
-                    rows={3}
-                    placeholder="Add any maintenance notes or special instructions..."
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="dialog-footer">
-              <div className="d-flex gap-2 justify-content-end">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={handleScheduleClose}
-                  disabled={isSubmitting}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleScheduleSubmit}
-                  disabled={isSubmitting}
-                  style={{ 
-                    backgroundColor: '#FF6600', 
-                    borderColor: '#FF6600' 
-                  }}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Scheduling...
-                    </>
-                  ) : (
-                    <>
-                      <ScheduleIcon style={{ marginRight: '8px', fontSize: '16px' }} />
-                      Schedule Maintenance
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ModalPortal>
-    </div>
+          <TextField
+            label="Notes"
+            fullWidth
+            multiline
+            rows={3}
+            value={scheduleData.notes}
+            onChange={(e) => setScheduleData({...scheduleData, notes: e.target.value})}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleScheduleClose}>Cancel</Button>
+          <Button 
+            onClick={handleScheduleSubmit}
+            variant="contained"
+            disabled={isSubmitting || !scheduleData.machineId || !scheduleData.checklistId}
+            sx={{ 
+              backgroundColor: '#FF6600', 
+              '&:hover': { backgroundColor: '#e65c00' }
+            }}
+          >
+            {isSubmitting ? <CircularProgress size={20} /> : 'Schedule'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Container>
   );
 };
 
-export default PMChecklistManagement; 
+export default PMChecklistManagement;

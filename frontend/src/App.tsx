@@ -8,7 +8,7 @@ import Dashboard from './pages/Dashboard';
 import KPIDashboard from './pages/KPIDashboard';
 import Parts from './pages/Parts';
 import Machines from './pages/Machines';
-import TransactionHistory from './components/TransactionHistory';
+import Transactions from './pages/Transactions';
 import Navigation from './components/Navigation';
 import PurchaseOrders from './pages/PurchaseOrders';
 import MachineCostReport from './components/MachineCostReport';
@@ -108,7 +108,7 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute requiredPermission="CAN_VIEW_TRANSACTIONS">
                 <Navigation>
-                  <TransactionHistory />
+                  <Transactions />
                 </Navigation>
               </ProtectedRoute>
             }

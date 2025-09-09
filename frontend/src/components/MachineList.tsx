@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   List,
   ListItem,
@@ -17,6 +17,9 @@ import {
   Paper,
   Grid,
   Badge,
+  InputAdornment,
+  LinearProgress,
+  CircularProgress,
 } from '@mui/material';
 import { 
   Edit as EditIcon, 
@@ -27,7 +30,12 @@ import {
   Add as AddIcon,
   BarChart as BarChartIcon,
   Description as DocumentIcon,
+  Search as SearchIcon,
+  CloudUpload as CloudUploadIcon,
+  Download as DownloadIcon,
+  FilterList as FilterListIcon,
 } from '@mui/icons-material';
+import * as XLSX from 'xlsx';
 import axios from '../utils/axios';
 import MachineDialogs from './MachineDialogs';
 import { Link } from 'react-router-dom';
@@ -38,8 +46,37 @@ interface MachineListProps {
   machinesData?: Machine[];
 }
 
+// Custom CSS styles for Fiserv branding
+const FiservStyles = `
+  .text-primary {
+    color: #FF6600 !important;
+  }
+  
+  .bg-primary {
+    background-color: #0066A1 !important;
+  }
+  
+  .form-check-input:checked {
+    background-color: #FF6600;
+    border-color: #FF6600;
+  }
+  
+  .border-primary {
+    border-color: #FF6600 !important;
+  }
+  
+  a {
+    color: #FF6600;
+  }
+  
+  a:hover {
+    color: #e65c00;
+  }
+`;
+
 const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [filteredMachines, setFilteredMachines] = useState<Machine[]>([]);
   const [open, setOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedMachine, setSelectedMachine] = useState<Machine | null>(null);
@@ -48,6 +85,14 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
   const editButtonRef = useRef<HTMLButtonElement>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
   const [documentCounts, setDocumentCounts] = useState<Record<number, number>>({});
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
+  const [locations, setLocations] = useState<string[]>([]);
+  const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [newMachine, setNewMachine] = useState({
     name: '',
     model: '',
@@ -63,25 +108,57 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
   useEffect(() => {
     if (machinesData) {
       setMachines(machinesData);
+      setFilteredMachines(machinesData);
+      setLoading(false);
     } else {
       fetchMachines();
     }
   }, [machinesData]);
 
+  // Effect for filtering machines based on search term
+  useEffect(() => {
+    if (!searchTerm) {
+      setFilteredMachines(machines);
+    } else {
+      const filtered = machines.filter(machine =>
+        machine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        machine.model?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        machine.serial_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        machine.location?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        machine.manufacturer?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredMachines(filtered);
+    }
+  }, [machines, searchTerm]);
+
   const fetchMachines = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await axios.get('/api/v1/machines');
       setMachines(response.data);
+      setFilteredMachines(response.data);
       // Fetch document counts for all machines
       fetchDocumentCounts(response.data);
+      fetchLocations(response.data);
     } catch (error) {
       console.error('Error fetching machines:', error);
+      setError('Failed to fetch machines');
       setSnackbar({
         open: true,
         message: 'Failed to fetch machines',
         severity: 'error',
       });
+    } finally {
+      setLoading(false);
     }
+  };
+
+  const fetchLocations = (machineList: Machine[]) => {
+    const uniqueLocations = Array.from(
+      new Set(machineList.map(machine => machine.location).filter(Boolean))
+    ).filter((loc): loc is string => typeof loc === 'string');
+    setLocations(uniqueLocations);
   };
 
   const fetchDocumentCounts = async (machineList: Machine[]) => {
@@ -275,71 +352,262 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
     return new Date(dateString).toLocaleDateString();
   };
 
+  // Handle search input changes
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
+  };
+
+  // Add export function
+  const handleExport = async () => {
+    try {
+      setExportLoading(true);
+      let machinesToExport = machines;
+
+      // Filter machines by location if selected
+      if (selectedLocation) {
+        machinesToExport = machines.filter(machine => machine.location === selectedLocation);
+      }
+
+      // Transform data for export
+      const exportData = machinesToExport.map((machine: Machine) => ({
+        'Machine Name': machine.name,
+        'Model': machine.model || '',
+        'Serial Number': machine.serial_number || '',
+        'Manufacturer': machine.manufacturer || '',
+        'Location': machine.location || '',
+        'Status': machine.status || 'active',
+        'Installation Date': machine.installation_date ? new Date(machine.installation_date).toLocaleDateString() : 'N/A',
+        'Notes': machine.notes || ''
+      }));
+
+      // Create worksheet
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+      // Set column widths
+      const columnWidths = [
+        { wch: 30 }, // Machine Name
+        { wch: 20 }, // Model
+        { wch: 20 }, // Serial Number
+        { wch: 20 }, // Manufacturer
+        { wch: 15 }, // Location
+        { wch: 10 }, // Status
+        { wch: 15 }, // Installation Date
+        { wch: 40 }, // Notes
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Create workbook and append sheet
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Machines');
+      
+      // Generate filename with location if selected
+      const filename = selectedLocation 
+        ? `machines_${selectedLocation.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`
+        : `machines_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+      // Export file
+      XLSX.writeFile(workbook, filename);
+      setSuccess('Machines exported successfully!');
+    } catch (error: any) {
+      console.error('Error exporting machines:', error);
+      setError('Failed to export machines');
+    } finally {
+      setExportLoading(false);
+      setExportDialogOpen(false);
+      setSelectedLocation('');
+    }
+  };
+
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mb: 4, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 500 }}>
-            Machines
-          </Typography>
-          {machines.length > 0 && (
-            <Chip 
-              label={`${machines.length} total`} 
-              color="primary" 
-              size="small"
-              sx={{ ml: 2 }}
-            />
-          )}
-        </Box>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            variant="outlined"
-            color="primary"
-            component={Link}
-            to="costs"
-            startIcon={<BarChartIcon />}
-            aria-label="View Machine Costs"
-          >
-            Machine Costs
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleOpen}
-            ref={addButtonRef}
-            startIcon={<AddIcon />}
-            aria-label="Add New Machine"
-          >
-            Add New Machine
-          </Button>
-        </Box>
-      </Box>
+    <Container 
+      maxWidth="xl" 
+      sx={{ 
+        backgroundColor: '#0066A1',
+        padding: '2rem',
+        borderRadius: '1rem',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+        backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent)',
+        backgroundSize: '20px 20px'
+      }}
+    >
+      {/* Apply Fiserv brand styling */}
+      <style>{FiservStyles}</style>
+      
+      <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
+        Machine Management
+      </Typography>
+      
+      <Box sx={{ my: 2 }}>
+        {/* Search and Actions */}
+        <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: '0.75rem', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
+          <Grid container spacing={3} alignItems="center">
+            <Grid item xs={12} md={8}>
+              <TextField
+                fullWidth
+                placeholder="Search by name, model, serial number, location, or manufacturer..."
+                value={searchTerm}
+                onChange={handleSearch}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  sx: { borderRadius: '0.5rem' }
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#e0e0e0',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#FF6600',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#FF6600',
+                    },
+                  },
+                }}
+              />
+              {loading && searchTerm && (
+                <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
+              )}
+            </Grid>
+            
+            <Grid item xs={12} md={4}>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                <Button
+                  variant="contained"
+                  onClick={handleOpen}
+                  ref={addButtonRef}
+                  startIcon={<AddIcon />}
+                  sx={{ 
+                    backgroundColor: '#FF6600', 
+                    borderColor: '#FF6600',
+                    '&:hover': { backgroundColor: '#e65c00' },
+                    minWidth: '140px'
+                  }}
+                >
+                  Add Machine
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => setExportDialogOpen(true)}
+                  startIcon={<DownloadIcon />}
+                  sx={{ 
+                    borderColor: '#FF6600',
+                    color: '#FF6600',
+                    '&:hover': { 
+                      borderColor: '#e65c00',
+                      backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                    },
+                    minWidth: '120px'
+                  }}
+                >
+                  Export
+                </Button>
+                <Button
+                  variant="outlined"
+                  component={Link}
+                  to="costs"
+                  startIcon={<BarChartIcon />}
+                  sx={{ 
+                    borderColor: '#FF6600',
+                    color: '#FF6600',
+                    '&:hover': { 
+                      borderColor: '#e65c00',
+                      backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                    },
+                    minWidth: '120px'
+                  }}
+                >
+                  Costs
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
 
-      <Paper elevation={2}>
-        {/* Zero state for no machines */}
-        {machines.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="h6" color="text.secondary" gutterBottom>
-              No machines found
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              {selectedManufacturer !== 'all' ? 
-                `No machines found for manufacturer "${selectedManufacturer}".` : 
-                "Add your first machine to get started."}
-            </Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleOpen}
-              startIcon={<AddIcon />}
-            >
-              Add New Machine
-            </Button>
+          {/* Statistics row */}
+          <Box sx={{ mt: 3, display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Chip 
+              label={`${filteredMachines.length} machines showing`} 
+              color="primary" 
+              variant="outlined"
+              sx={{ 
+                borderColor: '#FF6600',
+                color: '#FF6600',
+                backgroundColor: 'rgba(255, 102, 0, 0.04)'
+              }}
+            />
+            <Chip 
+              label={`${machines.length} total machines`} 
+              color="primary" 
+              sx={{ 
+                backgroundColor: '#FF6600',
+                color: 'white'
+              }}
+            />
+            {searchTerm && (
+              <Chip 
+                label={`Search: "${searchTerm}"`} 
+                color="primary" 
+                onDelete={() => setSearchTerm('')}
+                sx={{ 
+                  backgroundColor: '#0066A1',
+                  color: 'white'
+                }}
+              />
+            )}
           </Box>
-        ) : (
-          <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-            {machines.map((machine, index) => (
+        </Paper>
+
+        {/* Machines List */}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            width: '100%', 
+            mb: 3, 
+            borderRadius: '0.75rem',
+            overflow: 'hidden',
+            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+            backgroundColor: 'white'
+          }}
+        >
+          {loading ? (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <CircularProgress sx={{ color: '#FF6600' }} />
+              <Typography variant="body1" sx={{ mt: 2 }}>Loading machines...</Typography>
+            </Box>
+          ) : filteredMachines.length === 0 ? (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                {searchTerm ? 'No machines match your search' : 'No machines found'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                {searchTerm ? 
+                  `Try adjusting your search terms or clear the search to see all machines.` :
+                  selectedManufacturer !== 'all' ? 
+                    `No machines found for manufacturer "${selectedManufacturer}".` : 
+                    "Add your first machine to get started."}
+              </Typography>
+              {!searchTerm && (
+                <Button
+                  variant="contained"
+                  onClick={handleOpen}
+                  startIcon={<AddIcon />}
+                  sx={{ 
+                    backgroundColor: '#FF6600',
+                    '&:hover': { backgroundColor: '#e65c00' }
+                  }}
+                >
+                  Add New Machine
+                </Button>
+              )}
+            </Box>
+          ) : (
+            <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+              {filteredMachines.map((machine, index) => (
               <React.Fragment key={machine.machine_id || machine.id || `machine-${index}`}>
                 {index > 0 && <Divider component="li" />}
                 <ListItem
@@ -411,7 +679,15 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                         startIcon={<EditIcon />}
                         onClick={() => handleEditOpen(machine)}
                         aria-label={`Edit ${machine.name}`}
-                        sx={{ minWidth: '100px' }}
+                        sx={{ 
+                          minWidth: '100px',
+                          borderColor: '#FF6600',
+                          color: '#FF6600',
+                          '&:hover': { 
+                            borderColor: '#e65c00',
+                            backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                          }
+                        }}
                       >
                         Edit
                       </Button>
@@ -453,16 +729,161 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
         open={snackbar.open}
         autoHideDuration={6000}
         onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert 
           onClose={() => setSnackbar({ ...snackbar, open: false })} 
           severity={snackbar.severity}
           variant="filled"
-          sx={{ width: '100%' }}
+          sx={{ 
+            width: '100%',
+            borderRadius: '0.75rem',
+            boxShadow: '0 5px 15px rgba(0,0,0,0.1)'
+          }}
         >
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Export Dialog */}
+      {exportDialogOpen && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1300,
+          }}
+          onClick={() => setExportDialogOpen(false)}
+        >
+          <Paper
+            sx={{
+              p: 4,
+              borderRadius: '0.75rem',
+              maxWidth: '500px',
+              width: '90%',
+              maxHeight: '80vh',
+              overflow: 'auto',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <Typography variant="h6" sx={{ mb: 3, color: '#0066A1', fontWeight: 'bold' }}>
+              Export Machines
+            </Typography>
+            
+            <Typography variant="body2" sx={{ mb: 3 }}>
+              Select a location to filter the export, or leave empty to export all machines.
+            </Typography>
+            
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle2" sx={{ mb: 1 }}>Location</Typography>
+              <TextField
+                select
+                fullWidth
+                value={selectedLocation}
+                onChange={(e) => setSelectedLocation(e.target.value)}
+                SelectProps={{
+                  native: true,
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#e0e0e0',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#FF6600',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#FF6600',
+                    },
+                  },
+                }}
+              >
+                <option value="">All Locations</option>
+                {locations.map((location) => (
+                  <option key={location} value={location}>
+                    {location}
+                  </option>
+                ))}
+              </TextField>
+            </Box>
+            
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+              <Button
+                variant="outlined"
+                onClick={() => setExportDialogOpen(false)}
+                sx={{ 
+                  borderColor: '#ccc',
+                  color: '#666',
+                  '&:hover': { 
+                    borderColor: '#999',
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                  }
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="contained"
+                onClick={handleExport}
+                disabled={exportLoading}
+                startIcon={exportLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
+                sx={{ 
+                  backgroundColor: '#FF6600',
+                  '&:hover': { backgroundColor: '#e65c00' }
+                }}
+              >
+                {exportLoading ? 'Exporting...' : 'Export'}
+              </Button>
+            </Box>
+          </Paper>
+        </Box>
+      )}
+
+      {/* Success/Error Notifications */}
+      {(!!error || !!success) && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            zIndex: 1400,
+          }}
+        >
+          <Paper
+            elevation={6}
+            sx={{
+              p: 2,
+              borderRadius: '0.75rem',
+              backgroundColor: error ? '#f44336' : '#4caf50',
+              color: 'white',
+              minWidth: '300px',
+              maxWidth: '500px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+            }}
+          >
+            <Typography variant="body2">
+              {error || success}
+            </Typography>
+            <IconButton
+              size="small"
+              onClick={() => { setError(null); setSuccess(null); }}
+              sx={{ color: 'white', ml: 1 }}
+            >
+              ✕
+            </IconButton>
+          </Paper>
+        </Box>
+      )}
+      </Box>
     </Container>
   );
 };

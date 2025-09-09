@@ -200,6 +200,20 @@ export const partsApi = {
   }
 };
 
+// Contacts API
+export const contactsApi = {
+  getAll: (type?: string, status?: string) => {
+    const params = new URLSearchParams();
+    if (type && type !== 'all') params.append('type', type);
+    if (status && status !== 'all') params.append('status', status);
+    return api.get(`/api/v1/contacts?${params.toString()}`);
+  },
+  getById: (id: number) => api.get(`/api/v1/contacts/${id}`),
+  create: (contactData: any) => api.post('/api/v1/contacts', contactData),
+  update: (id: number, contactData: any) => api.put(`/api/v1/contacts/${id}`, contactData),
+  delete: (id: number) => api.delete(`/api/v1/contacts/${id}`),
+};
+
 // Authentication API
 export const authApi = {
   login: (credentials: any) => api.post('/api/v1/users/login', credentials),

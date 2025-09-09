@@ -1,21 +1,102 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  Container,
+  Typography,
+  Paper,
+  Box,
+  Button,
+  TextField,
+  Grid,
+  Chip,
+  InputAdornment,
+  LinearProgress,
+  CircularProgress,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  FormControlLabel,
+  Checkbox,
+} from '@mui/material';
+import {
+  Search as SearchIcon,
+  Download as DownloadIcon,
+  Add as AddIcon,
+  Visibility as VisibilityIcon,
+  Description as DescriptionIcon,
+  Delete as DeleteIcon,
+  Business as BusinessIcon,
+  Refresh as RefreshIcon,
+  FilterList as FilterListIcon,
+} from '@mui/icons-material';
+import { 
+  DataGrid, 
+  GridColDef, 
+  GridRenderCellParams,
+  GridPaginationModel,
+} from '@mui/x-data-grid';
+import { styled } from '@mui/material/styles';
+import * as XLSX from 'xlsx';
+import CloseIcon from '@mui/icons-material/Close';
 import { purchaseOrdersApi } from '../../services/api';
 import { PurchaseOrder } from '../../types/purchaseOrder';
 import { format } from 'date-fns';
 import '../../styles/Dialog.css'; // Using the same styles as PartsUsageDialog
-import { Dialog, DialogTitle, DialogContent, IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import DescriptionIcon from '@mui/icons-material/Description';
 import SimplePODocuments from './SimplePODocuments';
 import socket from '../../services/socket'; // Import socket for real-time updates
 
+// Custom CSS styles for Fiserv branding
+const FiservStyles = `
+  .text-primary {
+    color: #FF6600 !important;
+  }
+  
+  .bg-primary {
+    background-color: #0066A1 !important;
+  }
+  
+  .form-check-input:checked {
+    background-color: #FF6600;
+    border-color: #FF6600;
+  }
+  
+  .border-primary {
+    border-color: #FF6600 !important;
+  }
+  
+  a {
+    color: #FF6600;
+  }
+  
+  a:hover {
+    color: #e65c00;
+  }
+`;
+
+const StyledDataGrid = styled(DataGrid, {
+  shouldForwardProp: (prop) => ![
+    'rowId',
+    'offsetLeft',
+    'columnsTotalWidth',
+    'paginationMeta'
+  ].includes(prop.toString()),
+})({});
+
 const PurchaseOrderList: React.FC = () => {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [filteredOrders, setFilteredOrders] = useState<PurchaseOrder[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isRefreshing, setIsRefreshing] = useState<boolean>(false); // For real-time refresh indicator
+  const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [exportLoading, setExportLoading] = useState(false);
+  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+    page: 0,
+    pageSize: 25,
+  });
   // Add state for document dialog
   const [documentDialogOpen, setDocumentDialogOpen] = useState<boolean>(false);
   const [selectedPoId, setSelectedPoId] = useState<number | null>(null);
@@ -29,41 +110,70 @@ const PurchaseOrderList: React.FC = () => {
     po.status === 'pending' || po.status === 'submitted'
   );
 
+  // Effect for filtering purchase orders based on search term
   useEffect(() => {
-    const fetchPurchaseOrders = async () => {
-      try {
-        setLoading(true);
-        console.log('Fetching purchase orders...');
-        console.log('Show historical received:', showHistoricalReceived);
-        const response = await purchaseOrdersApi.getAll(showHistoricalReceived);
-        console.log('Purchase orders response:', response);
-        // Check if response.data.items exists and is an array
-        if (response.data && response.data.items && Array.isArray(response.data.items)) {
-          setPurchaseOrders(response.data.items);
-        } else if (Array.isArray(response.data)) {
-          // Fallback to direct response.data if it's an array
-          setPurchaseOrders(response.data);
-        } else {
-          // Set empty array if neither condition is met
-          setPurchaseOrders([]);
-        }
-        setError(null);
-      } catch (error: any) {
-        console.error('Error fetching purchase orders:', error);
-        // More detailed error information
-        const errorMessage = error.response ? 
-          `Error ${error.response.status}: ${error.response.data}` : 
-          error.message || 'Failed to load purchase orders';
-        setError(errorMessage);
-        // Set empty array on error to prevent undefined
-        setPurchaseOrders([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (!searchTerm) {
+      setFilteredOrders(purchaseOrders);
+    } else {
+      const filtered = purchaseOrders.filter(po =>
+        po.po_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        po.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        po.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        po.status?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredOrders(filtered);
+    }
+  }, [purchaseOrders, searchTerm]);
 
-    fetchPurchaseOrders();
+  const fetchPurchaseOrders = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('Fetching purchase orders...');
+      console.log('Show historical received:', showHistoricalReceived);
+      const response = await purchaseOrdersApi.getAll(showHistoricalReceived);
+      console.log('Purchase orders response:', response);
+      
+      let orders: PurchaseOrder[] = [];
+      // Check if response.data.items exists and is an array
+      if (response.data && response.data.items && Array.isArray(response.data.items)) {
+        orders = response.data.items;
+      } else if (Array.isArray(response.data)) {
+        // Fallback to direct response.data if it's an array
+        orders = response.data;
+      }
+      
+      setPurchaseOrders(orders);
+      setFilteredOrders(orders);
+    } catch (error: any) {
+      console.error('Error fetching purchase orders:', error);
+      // More detailed error information
+      const errorMessage = error.response ? 
+        `Error ${error.response.status}: ${error.response.data}` : 
+        error.message || 'Failed to load purchase orders';
+      setError(errorMessage);
+      // Set empty array on error to prevent undefined
+      setPurchaseOrders([]);
+      setFilteredOrders([]);
+    } finally {
+      setLoading(false);
+    }
   }, [showHistoricalReceived]);
+
+  useEffect(() => {
+    fetchPurchaseOrders();
+  }, [fetchPurchaseOrders]);
+
+  // Auto-clear success/error messages
+  useEffect(() => {
+    if (success || error) {
+      const timer = setTimeout(() => {
+        setSuccess(null);
+        setError(null);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [success, error]);
 
   // Add socket event listeners for real-time updates
   useEffect(() => {
@@ -76,13 +186,15 @@ const PurchaseOrderList: React.FC = () => {
         console.log('Refreshing purchase orders list due to socket event');
         const response = await purchaseOrdersApi.getAll(showHistoricalReceived);
         
+        let orders: PurchaseOrder[] = [];
         if (response.data && response.data.items && Array.isArray(response.data.items)) {
-          setPurchaseOrders(response.data.items);
+          orders = response.data.items;
         } else if (Array.isArray(response.data)) {
-          setPurchaseOrders(response.data);
-        } else {
-          setPurchaseOrders([]);
+          orders = response.data;
         }
+        
+        setPurchaseOrders(orders);
+        setFilteredOrders(orders);
       } catch (error) {
         console.error('Error refreshing purchase orders list:', error);
       } finally {
@@ -242,292 +354,494 @@ const PurchaseOrderList: React.FC = () => {
     }
   };
 
-  const handleExportAllToExcel = () => {
-    if (purchaseOrders.length === 0) return;
-
-    // Format header row
-    const headers = [
-      'PO Number', 
-      'Supplier', 
-      'Status',
-      'Created Date', 
-      'Total Amount',
-      'Updated Date'
-    ];
-    
-    // Format purchase orders data
-    const poData = purchaseOrders.map(po => [
-      po.po_number,
-      po.supplier_name || po.vendor_name || 'N/A',
-      po.status?.toUpperCase() || 'PENDING',
-      po.created_at ? format(new Date(po.created_at), 'MM/dd/yyyy') : 'N/A',
-      typeof po.total_amount === 'number' ? 
-        po.total_amount.toFixed(2) : 
-        Number(po.total_amount || 0).toFixed(2),
-      po.updated_at ? format(new Date(po.updated_at), 'MM/dd/yyyy') : 'N/A'
-    ]);
-    
-    // Combine all rows
-    const csvRows = [
-      headers,
-      ...poData
-    ];
-    
-    // Create CSV content
-    const csvContent = csvRows.map(row => 
-      row.map(cell => `"${cell}"`).join(',')
-    ).join('\n');
-    
-    // Create and trigger download
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `All_Purchase_Orders_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // Handle search input changes
+  const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(event.target.value);
   };
 
-  return (
-    <>
-      <style>
-        {`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+  const handleExportAllToExcel = async () => {
+    try {
+      setExportLoading(true);
+      
+      // Use filtered orders for export
+      const ordersToExport = filteredOrders;
+      if (ordersToExport.length === 0) {
+        setError('No purchase orders to export');
+        return;
+      }
+
+      // Transform data for export
+      const exportData = ordersToExport.map((po: PurchaseOrder) => ({
+        'PO Number': po.po_number || '',
+        'Supplier': po.supplier_name || po.vendor_name || 'N/A',
+        'Status': po.status?.toUpperCase() || 'PENDING',
+        'Created Date': po.created_at ? format(new Date(po.created_at), 'MM/dd/yyyy') : 'N/A',
+        'Total Amount': typeof po.total_amount === 'number' ? 
+          `$${po.total_amount.toFixed(2)}` : 
+          `$${Number(po.total_amount || 0).toFixed(2)}`,
+        'Updated Date': po.updated_at ? format(new Date(po.updated_at), 'MM/dd/yyyy') : 'N/A'
+      }));
+
+      // Create worksheet
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+      // Set column widths
+      const columnWidths = [
+        { wch: 20 }, // PO Number
+        { wch: 30 }, // Supplier
+        { wch: 15 }, // Status
+        { wch: 15 }, // Created Date
+        { wch: 15 }, // Total Amount
+        { wch: 15 }, // Updated Date
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Create workbook and append sheet
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Purchase Orders');
+      
+      // Generate filename
+      const filename = `purchase_orders_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+      // Export file
+      XLSX.writeFile(workbook, filename);
+      setSuccess('Purchase orders exported successfully!');
+    } catch (error: any) {
+      console.error('Error exporting purchase orders:', error);
+      setError('Failed to export purchase orders');
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  // Define DataGrid columns
+  const columns: GridColDef[] = [
+    { field: 'po_number', headerName: 'PO Number', width: 150 },
+    { 
+      field: 'supplier_name', 
+      headerName: 'Supplier', 
+      flex: 1,
+      renderCell: (params: GridRenderCellParams) => 
+        params.row.supplier_name || params.row.vendor_name || 'N/A'
+    },
+    { 
+      field: 'status', 
+      headerName: 'Status', 
+      width: 120,
+      renderCell: (params: GridRenderCellParams) => {
+        const getStatusColor = (status: string) => {
+          switch (status?.toLowerCase()) {
+            case 'pending': return 'warning';
+            case 'submitted': return 'info';
+            case 'approved': return 'success';
+            case 'rejected': return 'error';
+            case 'received': return 'success';
+            case 'on_order': return 'info';
+            case 'canceled': return 'error';
+            default: return 'default';
           }
-        `}
-      </style>
-      <div className="container-fluid p-0">
-        <div style={{ 
-          borderRadius: '4px',
-          overflow: 'hidden',
-          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-          background: 'white' 
-        }}>
-        <div style={{ 
-          backgroundColor: '#0066A1',
-          padding: '12px 20px',
-          position: 'relative',
-          minHeight: '60px'
-        }}>
-          <div style={{
-            position: 'absolute',
-            left: '20px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px'
-          }}>
-            <h5 style={{ 
-              fontSize: '20px',
-              margin: '0',
-              color: '#ff6200',
-              fontWeight: 'bold'
-            }}>
-              Purchase Orders
-            </h5>
-            {isRefreshing && (
-              <div style={{
-                width: '16px',
-                height: '16px',
-                border: '2px solid #ff6200',
-                borderTop: '2px solid transparent',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite'
-              }} title="Refreshing purchase orders...">
-              </div>
-            )}
-          </div>
-          
-          <div style={{ 
-            position: 'absolute',
-            right: '20px',
-            top: '50%',
-            transform: 'translateY(-50%)',
-            display: 'flex',
-            gap: '8px',
-            alignItems: 'center'
-          }}>
-            <label style={{ 
-              color: 'white', 
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              cursor: 'pointer'
-            }}>
-              <input 
-                type="checkbox" 
-                checked={showHistoricalReceived}
-                onChange={(e) => setShowHistoricalReceived(e.target.checked)}
-                style={{ marginRight: '4px' }}
-              />
-              Show historical received orders
-            </label>
-            <button 
-              className="btn btn-sm btn-outline-light"
-              onClick={() => navigate('/purchase-orders/suppliers')}
-            >
-              Manage Suppliers
-            </button>
-            <button 
-              className="btn btn-sm"
-              onClick={() => navigate('/purchase-orders/create-manual')}
-              style={{ backgroundColor: '#ff6200', borderColor: '#ff6200', color: 'white' }}
-            >
-              Create Manual PO
-            </button>
-            <button
-              className="btn btn-sm btn-primary"
-              onClick={() => navigate('/purchase-orders/create')}
-            >
-              Generate PO
-            </button>
-          </div>
-        </div>
+        };
+        
+        return (
+          <Chip 
+            label={params.value || 'pending'} 
+            size="small"
+            color={getStatusColor(params.value) as any}
+            variant="outlined"
+          />
+        );
+      }
+    },
+    { 
+      field: 'total_amount', 
+      headerName: 'Total Amount', 
+      width: 130,
+      renderCell: (params: GridRenderCellParams) => (
+        <span>${typeof params.value === 'number' ? params.value.toFixed(2) : Number(params.value || 0).toFixed(2)}</span>
+      )
+    },
+    { 
+      field: 'created_at', 
+      headerName: 'Created', 
+      width: 120,
+      renderCell: (params: GridRenderCellParams) => 
+        params.value ? new Date(params.value).toLocaleDateString() : 'N/A'
+    },
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 200,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams) => (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton
+            size="small"
+            onClick={() => navigate(`/purchase-orders/detail/${params.row.po_id}`)}
+            sx={{ 
+              backgroundColor: '#FF6600',
+              color: 'white',
+              '&:hover': { backgroundColor: '#e65c00' }
+            }}
+            title="View Details"
+          >
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => openDocumentDialog(params.row.po_id, params.row.po_number || '')}
+            sx={{ 
+              backgroundColor: '#0066A1',
+              color: 'white',
+              '&:hover': { backgroundColor: '#004d7a' }
+            }}
+            title="View Documents"
+          >
+            <DescriptionIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => handleDelete(params.row.po_id)}
+            sx={{ 
+              backgroundColor: '#f44336',
+              color: 'white',
+              '&:hover': { backgroundColor: '#d32f2f' }
+            }}
+            title="Delete"
+          >
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Box>
+      )
+    }
+  ];
 
-        {/* Visual indicator for historical received orders */}
-        {!showHistoricalReceived && (
-          <div style={{ 
-            backgroundColor: '#f8f9fa', 
-            padding: '10px 20px', 
-            borderTop: '1px solid #e9ecef',
-            borderBottom: '1px solid #e9ecef',
-            fontSize: '14px',
-            color: '#6c757d'
-          }}>
-            <span style={{ fontWeight: 'bold' }}>ℹ️ Info:</span> Received purchase orders older than 7 days are hidden. 
-            Use the "Show historical received orders" checkbox above to view them.
-          </div>
+  return (
+    <Container 
+      maxWidth="xl" 
+      sx={{ 
+        backgroundColor: '#0066A1',
+        padding: '2rem',
+        borderRadius: '1rem',
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
+        backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent)',
+        backgroundSize: '20px 20px'
+      }}
+    >
+      {/* Apply Fiserv brand styling */}
+      <style>{FiservStyles}</style>
+      
+      <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
+        Purchase Orders Management
+        {isRefreshing && (
+          <CircularProgress 
+            size={24} 
+            sx={{ ml: 2, color: '#FF6600' }} 
+            title="Refreshing purchase orders..." 
+          />
         )}
+      </Typography>
+      
+      <Box sx={{ my: 2 }}>
+        {/* Search and Actions */}
+        <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: '0.75rem', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
+          <Grid container spacing={3} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                placeholder="Search by PO number, supplier, or status..."
+                value={searchTerm}
+                onChange={handleSearch}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon />
+                    </InputAdornment>
+                  ),
+                  sx: { borderRadius: '0.5rem' }
+                }}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    '& fieldset': {
+                      borderColor: '#e0e0e0',
+                    },
+                    '&:hover fieldset': {
+                      borderColor: '#FF6600',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#FF6600',
+                    },
+                  },
+                }}
+              />
+              {loading && searchTerm && (
+                <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
+              )}
+            </Grid>
+            
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <Button
+                  variant="contained"
+                  onClick={() => navigate('/purchase-orders/create')}
+                  startIcon={<AddIcon />}
+                  sx={{ 
+                    backgroundColor: '#FF6600', 
+                    borderColor: '#FF6600',
+                    '&:hover': { backgroundColor: '#e65c00' },
+                    minWidth: '140px'
+                  }}
+                >
+                  Generate PO
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/purchase-orders/create-manual')}
+                  startIcon={<AddIcon />}
+                  sx={{ 
+                    borderColor: '#FF6600',
+                    color: '#FF6600',
+                    '&:hover': { 
+                      borderColor: '#e65c00',
+                      backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                    },
+                    minWidth: '140px'
+                  }}
+                >
+                  Manual PO
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/purchase-orders/suppliers')}
+                  startIcon={<BusinessIcon />}
+                  sx={{ 
+                    borderColor: '#FF6600',
+                    color: '#FF6600',
+                    '&:hover': { 
+                      borderColor: '#e65c00',
+                      backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                    },
+                    minWidth: '140px'
+                  }}
+                >
+                  Suppliers
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleExportAllToExcel}
+                  disabled={exportLoading}
+                  startIcon={exportLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
+                  sx={{ 
+                    borderColor: '#FF6600',
+                    color: '#FF6600',
+                    '&:hover': { 
+                      borderColor: '#e65c00',
+                      backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                    },
+                    minWidth: '120px'
+                  }}
+                >
+                  {exportLoading ? 'Exporting...' : 'Export'}
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
 
-        <div style={{ padding: '15px 20px' }}>
-          {loading ? (
-            <div className="d-flex justify-content-center align-items-center p-5">
-              <div className="spinner-border text-primary me-2" role="status">
-                <span className="visually-hidden">Loading...</span>
-              </div>
-              <span>Loading purchase orders...</span>
-            </div>
-          ) : error ? (
-            <div className="alert alert-danger" role="alert">
-              {error}
-            </div>
-          ) : purchaseOrders.length === 0 ? (
-            <div className="text-center p-5">
-              <p className="mb-2">No purchase orders found</p>
-              <p className="text-muted mb-3">
-                Use the "Create Manual PO" button to enter purchase order details manually.
-              </p>
-            </div>
-          ) : (
-            <div className="table-responsive">
-              <table className="table table-striped table-hover">
-                <thead>
-                  <tr>
-                    <th>PO Number</th>
-                    <th>Supplier</th>
-                    <th>Status</th>
-                    <th className="text-end">Total Amount</th>
-                    <th>Created</th>
-                    <th className="text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {purchaseOrders.map((po) => (
-                    <tr key={po.po_id}>
-                      <td>{po.po_number}</td>
-                      <td>{po.supplier_name || po.vendor_name || 'N/A'}</td>
-                      <td>
-                        <span className={getStatusClass(po.status)}>
-                          {po.status || 'pending'}
-                        </span>
-                      </td>
-                      <td className="text-end">
-                        ${typeof po.total_amount === 'number' ? po.total_amount.toFixed(2) : Number(po.total_amount || 0).toFixed(2)}
-                      </td>
-                      <td>
-                        {po.created_at ? new Date(po.created_at).toLocaleDateString() : 'N/A'}
-                      </td>
-                      <td className="text-center">
-                        <div className="d-flex justify-content-center gap-2">
-                          <button 
-                            style={{ 
-                              width: '30px', 
-                              height: '20px', 
-                              backgroundColor: '#ff6200', 
-                              border: 'none', 
-                              borderRadius: '30px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: 0
-                            }}
-                            onClick={() => navigate(`/purchase-orders/detail/${po.po_id}`)}
-                            title="View Details"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16">
-                              <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
-                              <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
-                            </svg>
-                          </button>
-                          {/* Document Button */}
-                          <button 
-                            style={{ 
-                              width: '30px', 
-                              height: '20px', 
-                              backgroundColor: '#0066A1', 
-                              border: 'none', 
-                              borderRadius: '30px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: 0
-                            }}
-                            onClick={() => openDocumentDialog(po.po_id, po.po_number || '')}
-                            title="View Documents"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="white" viewBox="0 0 16 16">
-                              <path d="M4 0h5.293A1 1 0 0 1 10 .293L13.707 4a1 1 0 0 1 .293.707V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2zm5.5 1.5v2a1 1 0 0 0 1 1h2l-3-3z"/>
-                            </svg>
-                          </button>
-                          <button 
-                            style={{ 
-                              width: '30px', 
-                              height: '20px', 
-                              backgroundColor: '#ff4d4d', 
-                              border: 'none', 
-                              borderRadius: '30px',
-                              cursor: 'pointer',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              padding: 0
-                            }}
-                            onClick={() => handleDelete(po.po_id)}
-                            title="Delete"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="white" viewBox="0 0 16 16">
-                              <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                              <path fillRule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                            </svg>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {/* Options and Statistics */}
+          <Box sx={{ mt: 3, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={showHistoricalReceived}
+                  onChange={(e) => setShowHistoricalReceived(e.target.checked)}
+                  sx={{
+                    color: '#FF6600',
+                    '&.Mui-checked': {
+                      color: '#FF6600',
+                    },
+                  }}
+                />
+              }
+              label="Show historical received orders"
+              sx={{ 
+                '& .MuiFormControlLabel-label': { 
+                  fontSize: '0.875rem',
+                  color: '#666'
+                }
+              }}
+            />
+            
+            <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
+              <Chip 
+                label={`${filteredOrders.length} orders showing`} 
+                color="primary" 
+                variant="outlined"
+                sx={{ 
+                  borderColor: '#FF6600',
+                  color: '#FF6600',
+                  backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                }}
+              />
+              <Chip 
+                label={`${purchaseOrders.length} total orders`} 
+                color="primary" 
+                sx={{ 
+                  backgroundColor: '#FF6600',
+                  color: 'white'
+                }}
+              />
+              {searchTerm && (
+                <Chip 
+                  label={`Search: "${searchTerm}"`} 
+                  color="primary" 
+                  onDelete={() => setSearchTerm('')}
+                  sx={{ 
+                    backgroundColor: '#0066A1',
+                    color: 'white'
+                  }}
+                />
+              )}
+            </Box>
+          </Box>
+
+          {/* Info message for historical orders */}
+          {!showHistoricalReceived && (
+            <Box sx={{ 
+              mt: 2, 
+              p: 2, 
+              backgroundColor: 'rgba(255, 193, 7, 0.1)', 
+              borderRadius: '0.5rem',
+              border: '1px solid rgba(255, 193, 7, 0.3)'
+            }}>
+              <Typography variant="body2" sx={{ color: '#856404' }}>
+                <strong>ℹ️ Info:</strong> Received purchase orders older than 7 days are hidden. 
+                Use the checkbox above to view them.
+              </Typography>
+            </Box>
           )}
-        </div>
-      </div>
+        </Paper>
+
+        {/* Purchase Orders Table */}
+        <Paper 
+          elevation={0} 
+          sx={{ 
+            width: '100%', 
+            mb: 3, 
+            borderRadius: '0.75rem',
+            overflow: 'hidden',
+            boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)',
+            backgroundColor: 'white'
+          }}
+        >
+          <Box sx={{ width: '100%', height: 650 }}>
+            {loading ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <CircularProgress sx={{ color: '#FF6600' }} />
+                <Typography variant="body1" sx={{ mt: 2 }}>Loading purchase orders...</Typography>
+              </Box>
+            ) : error ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="h6" color="error" gutterBottom>
+                  Error Loading Purchase Orders
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  {error}
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={fetchPurchaseOrders}
+                  startIcon={<RefreshIcon />}
+                  sx={{ 
+                    backgroundColor: '#FF6600',
+                    '&:hover': { backgroundColor: '#e65c00' }
+                  }}
+                >
+                  Retry
+                </Button>
+              </Box>
+            ) : filteredOrders.length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center' }}>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  {searchTerm ? 'No orders match your search' : 'No purchase orders found'}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  {searchTerm ? 
+                    'Try adjusting your search terms or clear the search to see all orders.' :
+                    'Use the "Generate PO" or "Manual PO" buttons to create purchase orders.'}
+                </Typography>
+                {!searchTerm && (
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+                    <Button
+                      variant="contained"
+                      onClick={() => navigate('/purchase-orders/create')}
+                      startIcon={<AddIcon />}
+                      sx={{ 
+                        backgroundColor: '#FF6600',
+                        '&:hover': { backgroundColor: '#e65c00' }
+                      }}
+                    >
+                      Generate PO
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={() => navigate('/purchase-orders/create-manual')}
+                      startIcon={<AddIcon />}
+                      sx={{ 
+                        borderColor: '#FF6600',
+                        color: '#FF6600',
+                        '&:hover': { 
+                          borderColor: '#e65c00',
+                          backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                        }
+                      }}
+                    >
+                      Manual PO
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+            ) : (
+              <StyledDataGrid
+                columns={columns}
+                rows={filteredOrders}
+                getRowId={(row) => row.po_id}
+                paginationModel={paginationModel}
+                onPaginationModelChange={setPaginationModel}
+                pageSizeOptions={[25, 50, 100]}
+                disableRowSelectionOnClick
+                disableColumnMenu
+                sx={{
+                  '& .MuiDataGrid-cell': {
+                    py: 1.5,
+                    px: 2
+                  },
+                  '& .MuiDataGrid-columnHeaders': {
+                    bgcolor: '#f8f9fa',
+                    borderBottom: '2px solid #e9ecef',
+                    py: 1.5
+                  },
+                  '& .MuiDataGrid-row': {
+                    borderBottom: '1px solid #e9ecef',
+                  },
+                  '& .MuiDataGrid-row:hover': {
+                    bgcolor: 'rgba(0, 102, 161, 0.04)',
+                  },
+                  '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
+                    outline: 'none',
+                  },
+                  border: 'none',
+                  borderRadius: '0.75rem',
+                  '& .MuiDataGrid-columnSeparator': {
+                    display: 'none',
+                  },
+                  '& .MuiDataGrid-iconButtonContainer': {
+                    color: '#0066A1',
+                  }
+                }}
+              />
+            )}
+          </Box>
+        </Paper>
+      </Box>
 
       {/* Document Dialog */}
       <Dialog 
@@ -535,24 +849,80 @@ const PurchaseOrderList: React.FC = () => {
         onClose={closeDocumentDialog}
         maxWidth="md"
         fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: '0.75rem'
+          }
+        }}
       >
-        <DialogTitle>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <DescriptionIcon style={{ marginRight: '8px' }} />
-              Documents for PO #{selectedPoNumber}
-            </div>
-            <IconButton onClick={closeDocumentDialog} size="small">
+        <DialogTitle sx={{ 
+          backgroundColor: '#0066A1', 
+          color: 'white',
+          borderRadius: '0.75rem 0.75rem 0 0'
+        }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <DescriptionIcon sx={{ mr: 1, color: '#FF6600' }} />
+              <Typography variant="h6" sx={{ color: 'white' }}>
+                Documents for PO #{selectedPoNumber}
+              </Typography>
+            </Box>
+            <IconButton 
+              onClick={closeDocumentDialog} 
+              size="small"
+              sx={{ color: 'white' }}
+            >
               <CloseIcon />
             </IconButton>
-          </div>
+          </Box>
         </DialogTitle>
-        <DialogContent dividers>
+        <DialogContent dividers sx={{ p: 0 }}>
           {selectedPoId && <SimplePODocuments poId={selectedPoId} />}
         </DialogContent>
       </Dialog>
-      </div>
-    </>
+
+      {/* Success/Error Feedback */}
+      {(success || error) && (
+        <Box
+          sx={{
+            position: 'fixed',
+            bottom: 20,
+            right: 20,
+            zIndex: 9999,
+            maxWidth: '400px',
+          }}
+        >
+          {success && (
+            <Paper
+              elevation={6}
+              sx={{
+                p: 2,
+                backgroundColor: '#4caf50',
+                color: 'white',
+                borderRadius: '0.75rem',
+                mb: 1,
+              }}
+            >
+              <Typography variant="body2">✅ {success}</Typography>
+            </Paper>
+          )}
+          {error && (
+            <Paper
+              elevation={6}
+              sx={{
+                p: 2,
+                backgroundColor: '#f44336',
+                color: 'white',
+                borderRadius: '0.75rem',
+              }}
+            >
+              <Typography variant="body2">❌ {error}</Typography>
+            </Paper>
+          )}
+        </Box>
+      )}
+
+    </Container>
   );
 };
 
