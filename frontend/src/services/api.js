@@ -3,7 +3,7 @@ import axiosRetry from 'axios-retry';
 
 // Create axios instance with base URL
 const axiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://192.168.50.1:4000',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000',
   timeout: 60000, // Increase default timeout to 60 seconds
   headers: {
     'Content-Type': 'application/json'
@@ -259,7 +259,7 @@ const api = {
       try {
         // Create a new axios instance with longer timeout for this specific request
         const statusAxios = axios.create({
-          baseURL: process.env.REACT_APP_API_URL || 'http://192.168.50.1:4000',
+          baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000',
           timeout: 180000, // 3 minutes for status updates
           headers: {
             'Content-Type': 'application/json'

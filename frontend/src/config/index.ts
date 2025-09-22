@@ -1,4 +1,4 @@
-const apiUrl = process.env.REACT_APP_API_URL || 'http://192.168.50.1:4000';
+const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:4000';
 console.log('Current API URL:', apiUrl);
 
 export const API_URL = apiUrl;

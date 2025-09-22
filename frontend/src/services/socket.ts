@@ -2,7 +2,7 @@ import io from 'socket.io-client';
 
 // Connect to the backend server's socket.io endpoint
 // Use the same URL as the API but with the socket.io path
-const socket = io(process.env.REACT_APP_API_URL || 'http://192.168.50.1:4000', {
+const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:4000', {
   transports: ['websocket', 'polling'], // Try websocket first, then fall back to polling
   autoConnect: true,
   reconnection: true,
