@@ -7,8 +7,8 @@ interface Part {
   id?: number;
   part_id: string;
   name: string;
-  crc_part_number: string;
-  manufacturer_part_number: string;
+  crc_part_number?: string;
+  manufacturer_part_number?: string;
   quantity: number;
   minimum_quantity: number;
 }
@@ -294,8 +294,8 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
                           <div>
                             <div className="fw-bold">{part.name}</div>
                             <div className="info-text">
-                              CRC: {part.crc_part_number} | 
-                              Mfr: {part.manufacturer_part_number}
+                              CRC: {part.crc_part_number || 'N/A'} | 
+                              Mfr: {part.manufacturer_part_number || 'N/A'}
                             </div>
                           </div>
                           <div className="text-end">
@@ -318,8 +318,8 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
                       <div>
                         <div className="fw-bold">{selectedPart.name}</div>
                         <div className="info-text">
-                          CRC: {selectedPart.crc_part_number}<br />
-                          Mfr: {selectedPart.manufacturer_part_number}
+                          CRC: {selectedPart.crc_part_number || 'N/A'}<br />
+                          Mfr: {selectedPart.manufacturer_part_number || 'N/A'}
                         </div>
                       </div>
                       <button
