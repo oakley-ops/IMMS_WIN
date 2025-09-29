@@ -5,7 +5,7 @@ import '../styles/Dialog.css';
 import ModalPortal from './ModalPortal';
 
 interface Part {
-  part_id: number;
+  part_id: string;
   name: string;
   crc_part_number: string;
   manufacturer_part_number: string;
@@ -35,8 +35,8 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, pre
     if (preSelectedPart && open) {
       // Convert the preSelectedPart to match the expected format
       const formattedPart: Part = {
-        part_id: preSelectedPart.part_id || preSelectedPart.id || 0,
-        id: preSelectedPart.id || preSelectedPart.part_id || 0,
+        part_id: preSelectedPart.part_id?.toString() || preSelectedPart.id?.toString() || '0',
+        id: typeof preSelectedPart.part_id === 'string' ? parseInt(preSelectedPart.part_id) : preSelectedPart.part_id || preSelectedPart.id || 0,
         name: preSelectedPart.name,
         crc_part_number: preSelectedPart.crc_part_number,
         manufacturer_part_number: preSelectedPart.manufacturer_part_number,
