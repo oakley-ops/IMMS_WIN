@@ -76,6 +76,11 @@ class PurchaseOrderController {
     try {
       const { startDate, endDate, search, page = 0, limit = 10, status, includeHistoricalReceived = 'false' } = req.query;
       
+      console.log('=== PO SEARCH REQUEST ===');
+      console.log('Raw query params:', req.query);
+      console.log('Search parameter:', search);
+      console.log('Search type:', typeof search);
+      
       console.log('Query params:', req.query);
       console.log('Searching for:', search);
       console.log('Include historical received:', includeHistoricalReceived);
@@ -176,6 +181,7 @@ class PurchaseOrderController {
         
         if (searchTerms.length > 0) {
           const metadataConditions = [];
+          let partSearchPoIds = [];
           
           // Look for each term in metadata
           searchTerms.forEach(term => {
@@ -188,13 +194,77 @@ class PurchaseOrderController {
             paramIndex++;
           });
           
-          // Add document search results if any
-          if (poIdsFromDocSearch.length > 0) {
-            conditions.push(`(${metadataConditions.join(' OR ')} OR po.po_id = ANY($${paramIndex}))`);
-            params.push(poIdsFromDocSearch);
+          // Search for parts within purchase orders
+          try {
+            const partSearchQuery = `
+              SELECT DISTINCT poi.po_id
+              FROM purchase_order_items poi
+              JOIN parts p ON poi.part_id = p.part_id
+              WHERE 
+                ${searchTerms.map((_, index) => `(
+                  p.name ILIKE $${paramIndex + index * 4} OR 
+                  p.manufacturer_part_number ILIKE $${paramIndex + index * 4 + 1} OR
+                  p.fiserv_part_number ILIKE $${paramIndex + index * 4 + 2} OR
+                  poi.part_name ILIKE $${paramIndex + index * 4 + 3}
+                )`).join(' OR ')}
+            `;
+            
+            const partSearchParams = [];
+            searchTerms.forEach(term => {
+              partSearchParams.push(`%${term}%`, `%${term}%`, `%${term}%`, `%${term}%`);
+            });
+            
+            console.log('Part search query:', partSearchQuery);
+            console.log('Part search params:', partSearchParams);
+            
+            const partSearchResult = await this.pool.query(partSearchQuery, partSearchParams);
+            partSearchPoIds = partSearchResult.rows.map(row => row.po_id);
+            
+            console.log(`Found ${partSearchPoIds.length} purchase orders with matching parts`);
+            console.log('Part search detailed results:', partSearchResult.rows);
+            
+            // Update paramIndex to account for part search parameters
+            paramIndex += searchTerms.length * 4;
+          } catch (partSearchError) {
+            console.error('Error searching parts:', partSearchError);
+          }
+          
+          // Smart search logic: prioritize part number matches for numeric searches
+          const isNumericSearch = searchTerms.length === 1 && /^\d+$/.test(searchTerms[0]);
+          
+          console.log('=== SEARCH DEBUG ===');
+          console.log('Search terms:', searchTerms);
+          console.log('Is numeric search:', isNumericSearch);
+          console.log('Part search PO IDs found:', partSearchPoIds);
+          console.log('Document search PO IDs found:', poIdsFromDocSearch);
+          console.log('Metadata conditions:', metadataConditions.length);
+          
+          if (isNumericSearch && partSearchPoIds.length > 0) {
+            // For numeric searches, if we found part matches, only show those POs
+            console.log('✅ Numeric search detected with part matches - showing ONLY POs with matching parts');
+            console.log('PO IDs that will be returned:', partSearchPoIds);
+            const uniquePoIds = [...new Set(partSearchPoIds)];
+            conditions.push(`po.po_id = ANY($${paramIndex})`);
+            params.push(uniquePoIds);
             paramIndex++;
           } else {
-            conditions.push(`(${metadataConditions.join(' OR ')})`);
+            // For text searches or when no part matches found, use broader search
+            let allSearchConditions = [...metadataConditions];
+            let allMatchingPoIds = [...poIdsFromDocSearch];
+            
+            if (partSearchPoIds.length > 0) {
+              allMatchingPoIds = [...allMatchingPoIds, ...partSearchPoIds];
+            }
+            
+            if (allMatchingPoIds.length > 0) {
+              // Remove duplicates
+              const uniquePoIds = [...new Set(allMatchingPoIds)];
+              conditions.push(`(${allSearchConditions.join(' OR ')} OR po.po_id = ANY($${paramIndex}))`);
+              params.push(uniquePoIds);
+              paramIndex++;
+            } else {
+              conditions.push(`(${allSearchConditions.join(' OR ')})`);
+            }
           }
         }
       }

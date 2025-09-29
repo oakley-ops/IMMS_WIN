@@ -4,9 +4,11 @@ import './LowStockReport.css';
 import { Part } from '../types';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axios';
+import * as XLSX from 'xlsx';
 
 interface LowStockReportProps {
   data: Part[];
+  exportRef?: React.MutableRefObject<(() => void) | null>;
 }
 
 interface PartOrderStatus {
@@ -15,13 +17,21 @@ interface PartOrderStatus {
   po_id?: number;
 }
 
-const LowStockReport: React.FC<LowStockReportProps> = ({ data = [] }) => {
+const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef }) => {
   const [sortConfig, setSortConfig] = useState<{
     key: keyof Part | 'stockStatus' | 'location' | 'orderStatus';
     direction: 'ascending' | 'descending';
   } | null>(null);
   const [partOrderStatuses, setPartOrderStatuses] = useState<PartOrderStatus[]>([]);
+  const [exportLoading, setExportLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Expose the export function to parent component
+  useEffect(() => {
+    if (exportRef) {
+      exportRef.current = handleExportToExcel;
+    }
+  }, [exportRef, data, partOrderStatuses]);
 
   useEffect(() => {
     const fetchPartOrderStatuses = async () => {
@@ -129,6 +139,93 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [] }) => {
 
   const sortedParts = sortData(data);
 
+  const handleExportToExcel = async () => {
+    try {
+      setExportLoading(true);
+      
+      // Transform data for export
+      const exportData = data.map((part) => {
+        const status = getStockStatus(part);
+        const orderStatus = getOrderStatus(part.part_id.toString());
+        
+        return {
+          'Part Name': part.name,
+          'Manufacturer Part #': part.manufacturer_part_number || 'N/A',
+          'Fiserv Part #': part.fiserv_part_number || 'N/A',
+          'Location': part.location || part.machine_name || 'N/A',
+          'Current Quantity': part.quantity,
+          'Minimum Quantity': part.minimum_quantity,
+          'Stock Status': status.label,
+          'Order Status': orderStatus.order_status !== 'none' ? orderStatus.order_status.toUpperCase() : 'No orders',
+          'Description': part.description || 'N/A',
+          'Last Updated': part.updated_at ? new Date(part.updated_at).toLocaleDateString() : 'N/A'
+        };
+      });
+
+      // Create worksheet
+      const worksheet = XLSX.utils.json_to_sheet(exportData);
+
+      // Set column widths
+      const columnWidths = [
+        { wch: 30 }, // Part Name
+        { wch: 20 }, // Manufacturer Part #
+        { wch: 20 }, // Fiserv Part #
+        { wch: 15 }, // Location
+        { wch: 12 }, // Current Quantity
+        { wch: 12 }, // Minimum Quantity
+        { wch: 15 }, // Stock Status
+        { wch: 15 }, // Order Status
+        { wch: 35 }, // Description
+        { wch: 15 }  // Last Updated
+      ];
+      worksheet['!cols'] = columnWidths;
+
+      // Style the header row
+      const range = XLSX.utils.decode_range(worksheet['!ref']!);
+      const headerStyle = {
+        font: { bold: true, color: { rgb: 'FFFFFF' } },
+        fill: { fgColor: { rgb: 'FF6200' } },
+        alignment: { horizontal: 'center', vertical: 'center' }
+      };
+
+      // Apply header style to first row
+      for (let col = range.s.c; col <= range.e.c; col++) {
+        const cellRef = XLSX.utils.encode_cell({ r: 0, c: col });
+        if (!worksheet[cellRef]) continue;
+        worksheet[cellRef].s = headerStyle;
+      }
+
+      // Create workbook and append sheet
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory Status');
+      
+      // Generate filename with timestamp
+      const timestamp = new Date().toISOString().split('T')[0];
+      const filename = `inventory_status_alerts_${timestamp}.xlsx`;
+        
+      // Export file
+      XLSX.writeFile(workbook, filename);
+      console.log('Inventory status exported successfully!');
+    } catch (error: any) {
+      console.error('Error exporting inventory status:', error);
+    } finally {
+      setExportLoading(false);
+    }
+  };
+
+  const handlePartClick = (partId: number | string) => {
+    // Find the part to get its manufacturer part number for exact searching
+    const part = data.find(p => p.part_id === partId);
+    if (part) {
+      // Use manufacturer part number for exact match, fall back to name if not available
+      const searchTerm = part.manufacturer_part_number || part.fiserv_part_number || part.name;
+      navigate(`/parts?search=${encodeURIComponent(searchTerm)}`);
+    } else {
+      // Fallback to general parts page
+      navigate('/parts');
+    }
+  };
+
   return (
     <div className="low-stock-report">
       <div className="table-responsive">
@@ -148,7 +245,21 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [] }) => {
                 
                 return (
                   <tr key={part.part_id}>
-                    <td>{part.name}</td>
+                    <td>
+                      <span 
+                        className="part-name-link"
+                        onClick={() => handlePartClick(part.part_id)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            handlePartClick(part.part_id);
+                          }
+                        }}
+                      >
+                        {part.name}
+                      </span>
+                    </td>
                     <td>
                       <span className={`status-chip ${status.className}`}>
                         {status.label}
@@ -160,7 +271,9 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [] }) => {
                           {getStatusLabel(orderStatus.order_status)}
                         </span>
                       ) : (
-                        <span className="text-muted">No orders</span>
+                        <span className="order-status-chip no-orders">
+                          No orders
+                        </span>
                       )}
                     </td>
                   </tr>

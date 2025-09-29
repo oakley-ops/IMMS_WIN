@@ -417,16 +417,6 @@ const ProjectList: React.FC = () => {
       )
     },
     { 
-      field: 'project_manager', 
-      headerName: 'Project Manager', 
-      width: 150,
-      renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">
-          {params.value || 'Not assigned'}
-        </Typography>
-      )
-    },
-    { 
       field: 'start_date', 
       headerName: 'Start Date', 
       width: 120,

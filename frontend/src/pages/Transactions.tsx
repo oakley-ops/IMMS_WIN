@@ -29,7 +29,7 @@ import {
   GridPaginationModel,
 } from '@mui/x-data-grid';
 import { styled } from '@mui/material/styles';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import axios from 'axios';
 
 interface Transaction {
@@ -130,8 +130,12 @@ const Transactions = () => {
       if (start) params.append('startDate', `${start}T00:00:00`);
       if (end) params.append('endDate', `${end}T23:59:59`);
 
-      const response = await axios.get<Transaction[]>(`/api/v1/transactions?${params.toString()}`);
-      console.log('Transactions:', response.data);
+      const url = `/api/v1/transactions?${params.toString()}`;
+      console.log('Fetching transactions from URL:', url);
+      console.log('Date params:', { start, end });
+
+      const response = await axios.get<Transaction[]>(url);
+      console.log('Transactions response:', response.data.length, 'transactions');
       setTransactions(response.data);
       setFilteredTransactions(response.data);
     } catch (error: any) {
@@ -148,8 +152,8 @@ const Transactions = () => {
       setFilteredTransactions(transactions);
     } else {
       const filtered = transactions.filter(transaction =>
-        transaction.part_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.fiserv_part_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.part_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.fiserv_part_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.manufacturer_part_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.machine_name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -161,8 +165,19 @@ const Transactions = () => {
     fetchTransactions();
   }, [fetchTransactions]);
 
+  // Auto-filter when dates change
+  useEffect(() => {
+    if (startDate || endDate) {
+      fetchTransactions(startDate, endDate);
+    } else if (startDate === '' && endDate === '') {
+      // When both dates are cleared, load all transactions
+      fetchTransactions();
+    }
+  }, [startDate, endDate, fetchTransactions]);
+
   const handleFilter = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('Filter button clicked with dates:', { startDate, endDate });
     fetchTransactions(startDate, endDate);
   };
 
@@ -170,7 +185,7 @@ const Transactions = () => {
     setStartDate('');
     setEndDate('');
     setSearchTerm('');
-    fetchTransactions();
+    // fetchTransactions() will be called automatically by the useEffect when dates are cleared
   };
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -181,46 +196,125 @@ const Transactions = () => {
     try {
       setExportLoading(true);
       
-      // Use filtered transactions for export
-      const transactionsToExport = filteredTransactions;
+      // Use filtered transactions for export, but only show usage transactions
+      const transactionsToExport = filteredTransactions.filter(transaction => transaction.type === 'usage');
 
-      // Transform data for export
-      const exportData = transactionsToExport.map((transaction: Transaction) => ({
-        'Date': formatDate(transaction.date),
-        'Part Name': transaction.part_name,
-        'Fiserv Part #': transaction.fiserv_part_number,
-        'Manufacturer Part #': transaction.manufacturer_part_number || '',
-        'Machine': transaction.machine_name || 'N/A',
-        'Quantity': transaction.quantity,
-        'Unit Cost': transaction.unit_cost ? `$${Number(transaction.unit_cost).toFixed(2)}` : '$0.00'
-      }));
+      // Calculate summary data
+      const totalItems = transactionsToExport.length;
+      const totalCost = transactionsToExport.reduce((sum, transaction) => {
+        return sum + (Number(transaction.unit_cost) || 0);
+      }, 0);
 
-      // Create worksheet
-      const worksheet = XLSX.utils.json_to_sheet(exportData);
+      // Create a new workbook and worksheet
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Parts Usage History');
 
       // Set column widths
-      const columnWidths = [
-        { wch: 20 }, // Date
-        { wch: 35 }, // Part Name
-        { wch: 25 }, // Fiserv Part #
-        { wch: 30 }, // Manufacturer Part #
-        { wch: 25 }, // Machine
-        { wch: 12 }, // Quantity
-        { wch: 15 }, // Unit Cost
+      worksheet.columns = [
+        { width: 15 }, // Date
+        { width: 35 }, // Part Name  
+        { width: 25 }, // Fiserv Part #
+        { width: 25 }, // Machine
+        { width: 12 }, // Quantity
+        { width: 15 }, // Unit Cost
+        { width: 15 }, // Extra column for better layout
       ];
-      worksheet['!cols'] = columnWidths;
 
-      // Create workbook and append sheet
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Transactions');
+      // Add title row
+      const titleRow = worksheet.addRow(['Parts Usage History Report', '', '', '', '', '', '']);
+      titleRow.height = 25;
       
+      // Style title row
+      worksheet.mergeCells('A1:G1');
+      titleRow.getCell(1).font = { bold: true, size: 14 };
+      titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // Add summary row
+      const summaryRow = worksheet.addRow(['Summary', '', '', `Total Items: ${totalItems}`, '', `Total Cost: $${totalCost.toFixed(2)}`, '']);
+      summaryRow.height = 20;
+      
+      // Style summary row
+      worksheet.mergeCells('A2:C2');
+      worksheet.mergeCells('F2:G2');
+      summaryRow.getCell(1).font = { bold: true, size: 11 };
+      summaryRow.getCell(4).font = { bold: true };
+      summaryRow.getCell(6).font = { bold: true };
+      summaryRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6E6FA' } };
+      summaryRow.getCell(4).alignment = { horizontal: 'center' };
+      summaryRow.getCell(6).alignment = { horizontal: 'center' };
+
+      // Add empty row
+      worksheet.addRow([]);
+
+      // Add header row
+      const headerRow = worksheet.addRow(['Date', 'Part Name', 'Fiserv Part #', 'Machine', 'Quantity', 'Unit Cost']);
+      headerRow.height = 20;
+      
+      // Style header row
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+        cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF4472C4' } };
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+        cell.border = {
+          top: { style: 'thin' },
+          left: { style: 'thin' },
+          bottom: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+
+      // Add data rows
+      transactionsToExport.forEach((transaction, index) => {
+        const row = worksheet.addRow([
+          formatDateShort(transaction.date),
+          transaction.part_name,
+          transaction.fiserv_part_number,
+          transaction.machine_name || 'N/A',
+          transaction.quantity,
+          Number(transaction.unit_cost) || 0
+        ]);
+
+        // Style data rows
+        row.eachCell((cell, colNumber) => {
+          cell.border = {
+            top: { style: 'thin' },
+            left: { style: 'thin' },
+            bottom: { style: 'thin' },
+            right: { style: 'thin' }
+          };
+
+          // Alternate row colors
+          if (index % 2 === 1) {
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF2F2F2' } };
+          }
+
+          // Format currency column
+          if (colNumber === 6) {
+            cell.numFmt = '$#,##0.00';
+          }
+
+          // Center align quantity and cost
+          if (colNumber === 5 || colNumber === 6) {
+            cell.alignment = { horizontal: 'center' };
+          }
+        });
+      });
+
       // Generate filename
       const dateRange = startDate && endDate ? `_${startDate}_to_${endDate}` : '';
-      const filename = `transactions${dateRange}_${new Date().toISOString().split('T')[0]}.xlsx`;
-        
+      const filename = `Parts_Usage_History${dateRange}_${new Date().toISOString().split('T')[0]}.xlsx`;
+      
       // Export file
-      XLSX.writeFile(workbook, filename);
-      setSuccess('Transactions exported successfully!');
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      window.URL.revokeObjectURL(url);
+
+      setSuccess('Parts Usage History exported successfully!');
     } catch (error: any) {
       console.error('Error exporting transactions:', error);
       setError('Failed to export transactions');
@@ -250,9 +344,14 @@ const Transactions = () => {
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ 
           fontWeight: 'bold',
-          color: params.row.type === 'checkout' ? '#f44336' : '#4caf50'
+          color: params.row.type === 'usage' ? '#f44336' : 
+                 params.row.type === 'return' ? '#2196f3' : '#4caf50'
         }}>
-          {params.row.type === 'checkout' ? '-' : '+'}{params.value}
+          {params.row.type === 'usage' ? '-' : '+'}
+          {params.value}
+          {params.row.type === 'return' && ' (Returned)'}
+          {params.row.type === 'restock' && ' (Restocked)'}
+          {params.row.type === 'usage' && ' (Used)'}
         </Box>
       )
     },
@@ -386,19 +485,6 @@ const Transactions = () => {
             
             <Grid item xs={12} md={2}>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                <Button
-                  variant="contained"
-                  onClick={handleFilter}
-                  startIcon={<FilterListIcon />}
-                  sx={{ 
-                    backgroundColor: '#FF6600', 
-                    borderColor: '#FF6600',
-                    '&:hover': { backgroundColor: '#e65c00' },
-                    minWidth: '100px'
-                  }}
-                >
-              Filter
-            </Button>
                 <Button
                   variant="outlined"
                   onClick={handleReset}

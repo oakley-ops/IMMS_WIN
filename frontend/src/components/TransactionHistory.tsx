@@ -32,6 +32,7 @@ interface Transaction {
   quantity: number;
   usage_date: string;
   reason: string;
+  transaction_type: string;
   unit_cost: number;
 }
 
@@ -253,18 +254,41 @@ const TransactionHistory: React.FC = () => {
     }
   };
 
-  const getQuantityDisplay = (quantity: number, reason: string) => {
-    const isRestock = reason === 'Restock';
+  const getQuantityDisplay = (quantity: number, reason: string, transaction_type?: string) => {
+    // Determine the transaction type based on type field or reason fallback
+    const type = transaction_type || (reason === 'Restock' ? 'restock' : 'usage');
+    
     const displayQuantity = Math.abs(quantity);
-    const color = isRestock ? 'success' : 'error';
-    const prefix = isRestock ? '+' : '-';
+    let color: 'success' | 'error' | 'info' = 'error';
+    let prefix = '-';
+    let label = '';
+
+    switch (type) {
+      case 'return':
+        color = 'info';
+        prefix = '+';
+        label = `${prefix}${displayQuantity} (Returned)`;
+        break;
+      case 'restock':
+        color = 'success';
+        prefix = '+';
+        label = `${prefix}${displayQuantity} (Restocked)`;
+        break;
+      case 'usage':
+      default:
+        color = 'error';
+        prefix = '-';
+        label = `${prefix}${displayQuantity} (Used)`;
+        break;
+    }
 
     return (
       <Chip 
-        label={`${prefix}${displayQuantity}`}
+        label={label}
         color={color}
         size="small"
         variant="outlined"
+        sx={{ fontWeight: 'bold' }}
       />
     );
   };
@@ -350,7 +374,7 @@ const TransactionHistory: React.FC = () => {
                     <TableCell>{transaction.fiserv_part_number}</TableCell>
                     <TableCell>{transaction.machine_name || '-'}</TableCell>
                     <TableCell align="center">
-                      {getQuantityDisplay(transaction.quantity, transaction.reason)}
+                      {getQuantityDisplay(transaction.quantity, transaction.reason, transaction.transaction_type)}
                     </TableCell>
                     <TableCell align="right">
                       {typeof transaction.unit_cost === 'number' ? `$${transaction.unit_cost.toFixed(2)}` : 'N/A'}

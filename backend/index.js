@@ -507,6 +507,8 @@ server.listen(port, '0.0.0.0', () => {
   console.log('Environment:', process.env.NODE_ENV);
   
   // Start email monitoring automatically if IMAP credentials are configured
+  // EMAIL MONITORING DISABLED - To re-enable, uncomment the code below and configure IMAP settings
+  /*
   if (process.env.IMAP_USER && process.env.IMAP_PASSWORD && process.env.IMAP_HOST) {
     console.log('Starting email monitoring service...');
     
@@ -545,8 +547,10 @@ server.listen(port, '0.0.0.0', () => {
     }
   } else {
     console.log('IMAP configuration not found. Email monitoring disabled.');
-    console.log('To enable automatic email approval detection, configure IMAP_USER, IMAP_PASSWORD, and IMAP_HOST environment variables.');
   }
+  */
+  console.log('Email monitoring disabled by configuration.');
+  console.log('To enable automatic email approval detection, configure IMAP_USER, IMAP_PASSWORD, and IMAP_HOST environment variables.');
   
   // Function to start email monitor as child process (fallback)
   function startEmailMonitorAsChildProcess() {

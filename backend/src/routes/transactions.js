@@ -6,6 +6,7 @@ const { pool } = require('../database/db');
 router.get('/', async (req, res) => {
   try {
     const { startDate, endDate } = req.query;
+    console.log('Transactions API called with query params:', req.query);
     let query = `
       SELECT 
         t.transaction_id,
@@ -24,28 +25,46 @@ router.get('/', async (req, res) => {
       FROM transactions t
       LEFT JOIN parts p ON t.part_id = p.part_id
       LEFT JOIN machines m ON t.machine_id = m.machine_id
-      WHERE t.type = 'usage'
+      WHERE t.type IN ('usage', 'return', 'restock')
     `;
 
     const params = [];
     if (startDate || endDate) {
       if (startDate) {
-        params.push(`${startDate} 00:00:00`);
+        // Use the date as-is since frontend already includes time
+        params.push(startDate);
         query += ` AND t.created_at >= $${params.length}`;
+        console.log('Added start date filter:', startDate);
       }
       if (endDate) {
-        params.push(`${endDate} 23:59:59`);
+        // Use the date as-is since frontend already includes time
+        params.push(endDate);
         query += ` AND t.created_at <= $${params.length}`;
+        console.log('Added end date filter:', endDate);
       }
     }
 
     query += ' ORDER BY t.created_at DESC';
 
+    console.log('Final SQL query:', query);
+    console.log('Query params:', params);
+    
     const result = await pool.query(query, params);
+    console.log('Query returned', result.rows.length, 'transactions');
     res.json(result.rows);
   } catch (err) {
-    console.error('Error fetching transactions:', err);
-    res.status(500).json({ error: 'Failed to fetch transactions' });
+    console.error('Error fetching transactions:', {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      hint: err.hint,
+      stack: err.stack
+    });
+    res.status(500).json({ 
+      error: 'Failed to fetch transactions',
+      details: err.message,
+      code: err.code
+    });
   }
 });
 

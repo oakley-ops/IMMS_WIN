@@ -18,6 +18,7 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [calendarDate, setCalendarDate] = useState(new Date());
   const calendarRef = useRef<PMCalendarRef>(null);
+  const exportRef = useRef<(() => void) | null>(null);
   const navigate = useNavigate();
   const { hasPermission, userRole } = useAuth();
 
@@ -169,17 +170,27 @@ const Dashboard: React.FC = () => {
               <h5 className="card-title mb-0" style={{ color: '#FF6200', fontSize: '1.1rem' }}>
                 {isTechUser ? 'Stock Status' : 'Inventory Status Alerts'}
               </h5>
-              {canManagePurchaseOrders && (
-                <FiservButton onClick={() => navigate('/purchase-orders')} size="sm">
-                  View Purchase Orders
+              <div className="d-flex gap-2">
+                <FiservButton 
+                  onClick={() => exportRef.current && exportRef.current()} 
+                  size="sm"
+                  variant="outline"
+                >
+                  Export to Excel
                 </FiservButton>
-              )}
+                {canManagePurchaseOrders && (
+                  <FiservButton onClick={() => navigate('/purchase-orders')} size="sm">
+                    View Purchase Orders
+                  </FiservButton>
+                )}
+              </div>
             </div>
             <LowStockReport 
               data={[
                 ...(dashboardData.outOfStockParts || []),
                 ...(dashboardData.lowStockParts || [])
-              ]} 
+              ]}
+              exportRef={exportRef}
             />
           </div>
         </div>

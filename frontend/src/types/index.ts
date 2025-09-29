@@ -2,6 +2,9 @@ export interface Part {
   part_id: string;
   name: string;
   description?: string;
+  manufacturer?: string;
+  manufacturer_part_number?: string;
+  fiserv_part_number?: string;
   quantity: number;
   minimum_quantity: number;
   location?: string;

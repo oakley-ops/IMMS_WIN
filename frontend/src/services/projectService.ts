@@ -1,19 +1,23 @@
-import axios from 'axios';
-import axiosInstance from '../utils/axios';
 import { 
   Project, 
   EquipmentInstallation, 
   ProjectMilestone, 
   ProjectTask,
-  ProjectRisk,
   ProjectTimeline,
   EquipmentDependency
 } from '../types/project';
-import mockProjects from '../mockData/projects';
-import mockEquipment from '../mockData/equipment';
-import mockMilestones from '../mockData/milestones';
-import mockTasks from '../mockData/tasks';
-import mockDependencies from '../mockData/dependencies';
+import mockProjectsData from '../mockData/projects';
+import mockEquipmentData from '../mockData/equipment';
+import mockMilestonesData from '../mockData/milestones';
+import mockTasksData from '../mockData/tasks';
+import mockDependenciesData from '../mockData/dependencies';
+
+// Create mutable copies of mock data to avoid read-only issues
+let mockProjects = Array.from(mockProjectsData);
+let mockEquipment = Array.from(mockEquipmentData);
+let mockMilestones = Array.from(mockMilestonesData);
+let mockTasks = Array.from(mockTasksData);
+let mockDependencies = Array.from(mockDependenciesData);
 
 // Projects
 export const getAllProjects = async (): Promise<Project[]> => {
@@ -87,7 +91,8 @@ export const deleteProject = async (id: number): Promise<void> => {
     throw new Error(`Project with ID ${id} not found`);
   }
   
-  mockProjects.splice(index, 1);
+  // Use filter instead of splice to avoid read-only issues
+  mockProjects = mockProjects.filter((p: Project) => p.project_id !== id);
   return Promise.resolve();
   
   // Original API call code:
@@ -150,7 +155,8 @@ export const deleteEquipment = async (id: number): Promise<void> => {
     throw new Error(`Equipment with ID ${id} not found`);
   }
   
-  mockEquipment.splice(index, 1);
+  // Use filter instead of splice to avoid read-only issues
+  mockEquipment = mockEquipment.filter(e => e.installation_id !== id);
   return Promise.resolve();
   
   // Original API call code:
@@ -243,7 +249,8 @@ export const deleteMilestone = async (id: number): Promise<void> => {
     throw new Error(`Milestone with ID ${id} not found`);
   }
   
-  mockMilestones.splice(index, 1);
+  // Use filter instead of splice to avoid read-only issues
+  mockMilestones = mockMilestones.filter(m => m.milestone_id !== id);
   return Promise.resolve();
   
   // Original API call code:
@@ -306,7 +313,8 @@ export const deleteTask = async (id: number): Promise<void> => {
     throw new Error(`Task with ID ${id} not found`);
   }
   
-  mockTasks.splice(index, 1);
+  // Use filter instead of splice to avoid read-only issues
+  mockTasks = mockTasks.filter(t => t.task_id !== id);
   return Promise.resolve();
   
   // Original API call code:

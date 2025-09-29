@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -25,22 +25,17 @@ import {
   Chip,
   InputAdornment,
   LinearProgress,
-  Fab,
-  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Warning as WarningIcon,
-  Save as SaveIcon,
   Schedule as ScheduleIcon,
   Search as SearchIcon,
   Download as DownloadIcon,
-  Refresh as RefreshIcon,
   CalendarToday as CalendarIcon,
   Assignment as AssignmentIcon,
-  CheckCircle as CheckCircleIcon,
   Error as ErrorIcon,
   Build as BuildIcon,
 } from '@mui/icons-material';
@@ -53,7 +48,7 @@ import {
 import { styled } from '@mui/material/styles';
 import * as XLSX from 'xlsx';
 import axiosInstance from '../utils/axios';
-import PMCalendar from './PMCalendar';
+import PMCalendar, { PMCalendarRef } from './PMCalendar';
 
 // Custom CSS styles for Fiserv branding
 const FiservStyles = `
@@ -126,6 +121,12 @@ interface PMTask {
   order_position: number;
 }
 
+interface Technician {
+  technician_id: number;
+  name: string;
+  active: boolean;
+}
+
 const PMChecklistManagement: React.FC = () => {
   const [checklists, setChecklists] = useState<PMChecklist[]>([]);
   const [filteredChecklists, setFilteredChecklists] = useState<PMChecklist[]>([]);
@@ -138,7 +139,7 @@ const PMChecklistManagement: React.FC = () => {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [checklistToDelete, setChecklistToDelete] = useState<PMChecklist | null>(null);
   const [showTasks, setShowTasks] = useState<{ [key: number]: boolean }>({});
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState(1);
   const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
   const [selectedMachineForSchedule, setSelectedMachineForSchedule] = useState<Machine | null>(null);
   const [overdueCount, setOverdueCount] = useState(0);
@@ -160,6 +161,8 @@ const PMChecklistManagement: React.FC = () => {
   });
 
   const [machines, setMachines] = useState<Machine[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const pmCalendarRef = useRef<PMCalendarRef>(null);
   const [scheduleData, setScheduleData] = useState({
     machineId: '',
     checklistId: '',
@@ -217,6 +220,15 @@ const PMChecklistManagement: React.FC = () => {
     }
   };
 
+  const fetchTechnicians = async () => {
+    try {
+      const response = await axiosInstance.get('/api/v1/technicians');
+      setTechnicians(response.data);
+    } catch (err: any) {
+      console.error('Error fetching technicians:', err);
+    }
+  };
+
   const fetchMaintenanceStats = async () => {
     try {
       const response = await axiosInstance.get('/api/v1/pm/stats');
@@ -230,6 +242,7 @@ const PMChecklistManagement: React.FC = () => {
   useEffect(() => {
     fetchChecklists();
     fetchMachines();
+    fetchTechnicians();
     fetchMaintenanceStats();
   }, []);
 
@@ -262,10 +275,11 @@ const PMChecklistManagement: React.FC = () => {
     setOpenDialog(true);
   };
 
-  const handleDelete = (checklist: PMChecklist) => {
-    setChecklistToDelete(checklist);
-    setDeleteConfirmOpen(true);
-  };
+  // Note: handleDelete function exists but is not currently connected to any UI element
+  // const handleDelete = (checklist: PMChecklist) => {
+  //   setChecklistToDelete(checklist);
+  //   setDeleteConfirmOpen(true);
+  // };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
@@ -391,6 +405,10 @@ const PMChecklistManagement: React.FC = () => {
       setIsSubmitting(true);
       await axiosInstance.post('/api/v1/pm/schedule', scheduleData);
       await fetchMaintenanceStats();
+      // Refresh the calendar to show the new scheduled maintenance
+      if (pmCalendarRef.current) {
+        pmCalendarRef.current.refreshSchedule();
+      }
       handleScheduleClose();
       setSuccess('Maintenance scheduled successfully!');
     } catch (err: any) {
@@ -401,9 +419,10 @@ const PMChecklistManagement: React.FC = () => {
     }
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
+  // Note: handleTabChange function exists but tab changes are handled directly by onClick events
+  // const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  //   setActiveTab(newValue);
+  // };
 
   // Handle search input changes
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -584,7 +603,7 @@ const PMChecklistManagement: React.FC = () => {
       </Typography>
 
       {/* Stats Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={2} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Card 
             elevation={3}
@@ -595,17 +614,17 @@ const PMChecklistManagement: React.FC = () => {
               '&:hover': { transform: 'translateY(-2px)' }
             }}
           >
-            <CardContent>
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
-                  <Typography color="text.secondary" gutterBottom>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
                     Overdue
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#f44336', fontWeight: 'bold' }}>
+                  <Typography variant="h5" sx={{ color: '#f44336', fontWeight: 'bold' }}>
                     {overdueCount}
                   </Typography>
                 </Box>
-                <ErrorIcon sx={{ fontSize: '2.5rem', color: '#f44336' }} />
+                <ErrorIcon sx={{ fontSize: '1.8rem', color: '#f44336' }} />
               </Box>
             </CardContent>
           </Card>
@@ -620,17 +639,17 @@ const PMChecklistManagement: React.FC = () => {
               '&:hover': { transform: 'translateY(-2px)' }
             }}
           >
-            <CardContent>
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
-                  <Typography color="text.secondary" gutterBottom>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
                     Due Soon
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#ff9800', fontWeight: 'bold' }}>
+                  <Typography variant="h5" sx={{ color: '#ff9800', fontWeight: 'bold' }}>
                     {dueCount}
                   </Typography>
                 </Box>
-                <CalendarIcon sx={{ fontSize: '2.5rem', color: '#ff9800' }} />
+                <CalendarIcon sx={{ fontSize: '1.8rem', color: '#ff9800' }} />
               </Box>
             </CardContent>
           </Card>
@@ -646,17 +665,17 @@ const PMChecklistManagement: React.FC = () => {
               '&:hover': { transform: 'translateY(-2px)' }
             }}
           >
-            <CardContent>
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
-                  <Typography color="text.secondary" gutterBottom>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
                     Checklists
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#FF6600', fontWeight: 'bold' }}>
+                  <Typography variant="h5" sx={{ color: '#FF6600', fontWeight: 'bold' }}>
                     {checklists.length}
                   </Typography>
                 </Box>
-                <AssignmentIcon sx={{ fontSize: '2.5rem', color: '#FF6600' }} />
+                <AssignmentIcon sx={{ fontSize: '1.8rem', color: '#FF6600' }} />
               </Box>
             </CardContent>
           </Card>
@@ -672,17 +691,17 @@ const PMChecklistManagement: React.FC = () => {
               '&:hover': { transform: 'translateY(-2px)' }
             }}
           >
-            <CardContent>
+            <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
-                  <Typography color="text.secondary" gutterBottom>
+                  <Typography variant="body2" color="text.secondary" gutterBottom>
                     Machines
                   </Typography>
-                  <Typography variant="h4" sx={{ color: '#0066A1', fontWeight: 'bold' }}>
+                  <Typography variant="h5" sx={{ color: '#0066A1', fontWeight: 'bold' }}>
                     {machines.length}
                   </Typography>
                 </Box>
-                <BuildIcon sx={{ fontSize: '2.5rem', color: '#0066A1' }} />
+                <BuildIcon sx={{ fontSize: '1.8rem', color: '#0066A1' }} />
               </Box>
             </CardContent>
           </Card>
@@ -924,7 +943,7 @@ const PMChecklistManagement: React.FC = () => {
             backgroundColor: 'white'
           }}
         >
-          <PMCalendar />
+          <PMCalendar ref={pmCalendarRef} />
         </Paper>
       )}
 
@@ -1167,13 +1186,23 @@ const PMChecklistManagement: React.FC = () => {
             InputLabelProps={{ shrink: true }}
           />
 
-          <TextField
-            label="Technician Name"
-            fullWidth
-            sx={{ mb: 2 }}
-            value={scheduleData.technicianName}
-            onChange={(e) => setScheduleData({...scheduleData, technicianName: e.target.value})}
-          />
+          <FormControl fullWidth sx={{ mb: 2 }}>
+            <InputLabel>Technician</InputLabel>
+            <Select
+              value={scheduleData.technicianName}
+              label="Technician"
+              onChange={(e) => setScheduleData({...scheduleData, technicianName: e.target.value})}
+            >
+              <MenuItem value="">
+                <em>Select a technician</em>
+              </MenuItem>
+              {technicians.map((technician) => (
+                <MenuItem key={technician.technician_id} value={technician.name}>
+                  {technician.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
           <TextField
             label="Notes"

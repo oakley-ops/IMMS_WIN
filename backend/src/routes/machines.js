@@ -218,6 +218,16 @@ router.get('/pm-schedule', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), 
       );
     `);
     
+    // Add scheduled_technician column if it doesn't exist
+    try {
+      await pool.query(`
+        ALTER TABLE machines 
+        ADD COLUMN IF NOT EXISTS scheduled_technician VARCHAR(255)
+      `);
+    } catch (alterError) {
+      console.warn('Could not add scheduled_technician column:', alterError.message);
+    }
+    
     // Construct query based on whether maintenance_status column exists
     let query;
     if (columnCheck.rows[0].exists) {
@@ -231,7 +241,8 @@ router.get('/pm-schedule', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), 
           m.last_maintenance_date,
           m.next_maintenance_date,
           m.maintenance_status,
-          ps.technician_name,
+          m.scheduled_technician,
+          COALESCE(ps.technician_name, m.scheduled_technician) as technician_name,
           ps.started_at as session_started_at,
           CASE
             WHEN m.maintenance_status = 'in_progress' THEN 'in_progress'
@@ -255,7 +266,8 @@ router.get('/pm-schedule', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), 
           m.machine_type,
           m.last_maintenance_date,
           m.next_maintenance_date,
-          ps.technician_name,
+          m.scheduled_technician,
+          COALESCE(ps.technician_name, m.scheduled_technician) as technician_name,
           ps.started_at as session_started_at,
           CASE
             WHEN m.next_maintenance_date < CURRENT_DATE THEN 'overdue'

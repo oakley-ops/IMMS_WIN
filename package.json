@@ -4,8 +4,10 @@
   "dependencies": {
     "@types/exceljs": "^0.5.3",
     "bootstrap": "^5.3.3",
+    "dotenv": "^17.2.2",
     "exceljs": "^4.4.0",
     "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3",
     "quagga": "^0.12.1",
     "react-calendar": "^5.1.0",
     "react-use": "^17.6.0",
@@ -13,7 +15,8 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.6.3",

@@ -38,12 +38,16 @@ import AddCircleIcon from '@mui/icons-material/AddCircle';
 import RemoveCircleIcon from '@mui/icons-material/RemoveCircle';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import CloseIcon from '@mui/icons-material/Close';
+import UndoIcon from '@mui/icons-material/Undo';
 import * as XLSX from 'xlsx';
 import axiosInstance from '../utils/axios';
 import PartImageUpload from './PartImageUpload';
 import RestockForm from './RestockForm';
 import PartsUsageDialog from './PartsUsageDialog';
 import ImportPartsDialog from './ImportPartsDialog';
+import ReturnPartButton from './ReturnPartButton';
+import ReturnPartsDialog from './ReturnPartsDialog';
+import { Part } from '../types';
 import { 
   DataGrid, 
   GridColDef, 
@@ -57,7 +61,7 @@ import {
 
 import { styled } from '@mui/material/styles';
 import ModalPortal from './ModalPortal';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 // Add this at the top of the component to force no caching
@@ -74,20 +78,27 @@ const StyledDataGrid = styled(DataGrid, {
   ].includes(prop.toString()),
 })({});
 
-interface Part {
+// PartsList specific interface - keeping it separate to avoid type conflicts
+interface PartListItem {
   part_id: number;
   name: string;
-  description: string;
-  manufacturer: string;
-  manufacturer_part_number: string;
-  fiserv_part_number: string;
+  description?: string;
+  manufacturer?: string;
+  manufacturer_part_number?: string;
+  fiserv_part_number?: string;
   quantity: number;
   minimum_quantity: number;
-  location: string;
-  notes: string;
-  last_ordered_date: string;
-  unit_cost: number;
+  location?: string;
+  machine_name?: string;
+  stock_status?: 'in_stock' | 'low_stock' | 'out_of_stock';
+  created_at?: string;
+  updated_at?: string;
+  last_ordered_date?: string;
+  unit_cost?: number;
   status?: 'active' | 'discontinued';
+  notes?: string;
+  cost?: number; // Alternative cost field
+  id?: number; // Alternative ID field
   [key: string]: any;
 }
 
@@ -126,7 +137,7 @@ const createCostColumn = (): GridColDef => {
     headerName: 'Cost',
     type: 'number',
     flex: 0.5,
-    valueGetter: (params: { row: Part | undefined; value: any }) => {
+    valueGetter: (params: { row: PartListItem | undefined; value: any }) => {
       if (!params.row) return 0;
       
       const partId = params.row.part_id || 'unknown';
@@ -139,11 +150,11 @@ const createCostColumn = (): GridColDef => {
       
       // DIRECT TEST: Based on part ID, return hardcoded costs for the first few parts
       // This is to test if our valueGetter is working at all
-      if (partId === 587) return 100.20;
-      if (partId === 586) return 15.50;
-      if (partId === 585) return 21.00;
-      if (partId === 584) return 26.50;
-      if (partId === 583) return 32.00;
+      if (Number(partId) === 587) return 100.20;
+      if (Number(partId) === 586) return 15.50;
+      if (Number(partId) === 585) return 21.00;
+      if (Number(partId) === 584) return 26.50;
+      if (Number(partId) === 583) return 32.00;
       
       // Simple and direct approach
       let costValue = 0;
@@ -228,16 +239,18 @@ const FiservStyles = `
 const PartsList: React.FC = () => {
   const navigate = useNavigate();
   const { hasPermission } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   
   // Check if user can restock parts (admin and purchasing only)
   const canRestockParts = hasPermission('CAN_MANAGE_PURCHASE_ORDERS');
   
-  const [parts, setParts] = useState<Part[]>([]);
+  const [parts, setParts] = useState<PartListItem[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedPart, setSelectedPart] = useState<Part | null>(null);
+  const [selectedPart, setSelectedPart] = useState<PartListItem | null>(null);
   const [openDialog, setOpenDialog] = useState(false);
   const [openRestockForm, setOpenRestockForm] = useState(false);
   const [openUsageDialog, setOpenUsageDialog] = useState(false);
+  const [openReturnDialog, setOpenReturnDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -292,7 +305,7 @@ const PartsList: React.FC = () => {
     headerName: 'Actions',
     flex: 0.8,
     sortable: false,
-    renderCell: (params: GridRenderCellParams<Part>) => (
+    renderCell: (params: GridRenderCellParams<PartListItem>) => (
       <Box sx={{ display: 'flex', gap: 1 }}>
         <IconButton 
           size="small" 
@@ -319,6 +332,17 @@ const PartsList: React.FC = () => {
             <DeleteIcon />
           </IconButton>
         )}
+        <IconButton 
+          size="small"
+          onClick={() => {
+            setSelectedPart(params.row);
+            setOpenReturnDialog(true);
+          }}
+          color="info"
+          title="Return parts to inventory"
+        >
+          <UndoIcon />
+        </IconButton>
       </Box>
     )
   };
@@ -363,7 +387,7 @@ const PartsList: React.FC = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 // Open edit dialog to upload image
-                const part = params.row as Part;
+                const part = params.row as PartListItem;
                 handleOpenEdit(part);
               }}
               sx={{ p: 0.5, color: '#ccc' }}
@@ -488,20 +512,27 @@ const PartsList: React.FC = () => {
         }
         
         // Create processed part with properly typed fields
-        const processedPart: Part = {
+        const processedPart: PartListItem = {
           ...part,
           part_id: part.part_id,
           name: part.name || '',
           description: part.description || '',
+          manufacturer: part.manufacturer || '',
           manufacturer_part_number: part.manufacturer_part_number || '',
           fiserv_part_number: part.fiserv_part_number || '',
           quantity: Number(part.quantity) || 0,
           minimum_quantity: Number(part.minimum_quantity) || 0,
           location: part.location !== null && part.location !== undefined ? String(part.location) : '',
+          machine_name: part.machine_name,
+          stock_status: part.stock_status || 'in_stock',
+          created_at: part.created_at || '',
+          updated_at: part.updated_at || '',
           unit_cost: Number(unitCostValue), 
           notes: part.notes || '',
           last_ordered_date: part.last_ordered_date || '',
-          status: part.status || 'active'
+          status: part.status || 'active',
+          cost: part.cost || Number(unitCostValue),
+          id: part.id
         };
         
         if (shouldLog) {
@@ -522,7 +553,7 @@ const PartsList: React.FC = () => {
       if (updatedParts.length > 0) {
         console.log('💰 COST DEBUG: First 3 processed parts:');
         const sampleProcessed = updatedParts.slice(0, 3);
-        sampleProcessed.forEach((part: Part, i: number) => {
+        sampleProcessed.forEach((part: PartListItem, i: number) => {
           console.log(`💰 Processed Item ${i+1} (${part.name}):`, {
             unit_cost: part.unit_cost,
             cost: part.cost,
@@ -553,6 +584,14 @@ const PartsList: React.FC = () => {
       setLoading(false);
     }
   }, [paginationModel, searchTerm]);
+
+  // Effect to read URL search parameters when component mounts
+  useEffect(() => {
+    const searchParam = searchParams.get('search');
+    if (searchParam) {
+      setSearchTerm(searchParam);
+    }
+  }, [searchParams]);
 
   // Single useEffect to fetch parts when dependencies change
   useEffect(() => {
@@ -599,18 +638,18 @@ const PartsList: React.FC = () => {
     setSelectedPart(null);
   };
 
-  const handleOpenEdit = (part: Part) => {
+  const handleOpenEdit = (part: PartListItem) => {
     setFormData({
       name: part.name,
       description: part.description || '',
       manufacturer: part.manufacturer || '',
       manufacturer_part_number: part.manufacturer_part_number || '',
-      fiserv_part_number: part.fiserv_part_number,
+      fiserv_part_number: part.fiserv_part_number || '',
       quantity: part.quantity,
       minimum_quantity: part.minimum_quantity,
       location: part.location || '',
       notes: part.notes || '',
-      unit_cost: part.unit_cost,
+      unit_cost: part.unit_cost || 0,
       status: part.status || 'active'
     });
     
@@ -968,7 +1007,7 @@ const PartsList: React.FC = () => {
     setColumnVisibilityMenuAnchor(null);
   }, []);
 
-  const handleDiscontinue = async (part: Part) => {
+  const handleDiscontinue = async (part: PartListItem) => {
     if (!window.confirm('Are you sure you want to mark this part as discontinued?')) {
       return;
     }
@@ -1048,11 +1087,11 @@ const PartsList: React.FC = () => {
 
       // Filter parts by location if selected
       if (selectedLocation) {
-        parts = parts.filter((part: Part) => part.location === selectedLocation);
+        parts = parts.filter((part: PartListItem) => part.location === selectedLocation);
       }
 
       // Transform data for export
-      const exportData = parts.map((part: Part) => ({
+      const exportData = parts.map((part: PartListItem) => ({
         'Name': part.name,
         'Fiserv Part #': part.fiserv_part_number,
         'Manufacturer Part #': part.manufacturer_part_number,
@@ -1375,6 +1414,27 @@ const PartsList: React.FC = () => {
                   }}
                 >
                   <RemoveCircleIcon sx={{ fontSize: 16, color: 'white' }} /> Check Out
+                </button>
+              </div>
+              
+              <div className="d-flex gap-2 mb-2">
+                <button
+                  type="button"
+                  className="btn flex-grow-1"
+                  onClick={() => setOpenReturnDialog(true)}
+                  style={{ 
+                    backgroundColor: '#2196f3',
+                    color: 'white',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    padding: '0.375rem 0.75rem',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  <UndoIcon sx={{ fontSize: 16, color: 'white' }} /> Return Parts
                 </button>
               </div>
               
@@ -2090,7 +2150,15 @@ const PartsList: React.FC = () => {
           fetchParts();
           setSuccess('Parts restocked successfully');
         }}
-        preSelectedPart={selectedPart}
+        preSelectedPart={selectedPart ? {
+          part_id: selectedPart.part_id,
+          id: selectedPart.part_id,
+          name: selectedPart.name,
+          fiserv_part_number: selectedPart.fiserv_part_number || '',
+          manufacturer_part_number: selectedPart.manufacturer_part_number || '',
+          quantity: selectedPart.quantity,
+          minimum_quantity: selectedPart.minimum_quantity
+        } : null}
       />
 
       {/* Parts Usage Dialog */}
@@ -2101,7 +2169,40 @@ const PartsList: React.FC = () => {
           fetchParts();
           setSuccess('Parts checked out successfully');
         }}
-        preSelectedPart={selectedPart}
+        preSelectedPart={selectedPart ? {
+          part_id: selectedPart.part_id,
+          id: selectedPart.part_id,
+          name: selectedPart.name,
+          fiserv_part_number: selectedPart.fiserv_part_number || '',
+          manufacturer_part_number: selectedPart.manufacturer_part_number || '',
+          quantity: selectedPart.quantity,
+          minimum_quantity: selectedPart.minimum_quantity
+        } : null}
+      />
+
+      {/* Return Parts Dialog */}
+      <ReturnPartsDialog
+        open={openReturnDialog}
+        onClose={() => setOpenReturnDialog(false)}
+        onSuccess={() => {
+          fetchParts();
+          setSuccess('Parts returned to inventory successfully');
+        }}
+        preSelectedPart={selectedPart ? {
+          part_id: selectedPart.part_id.toString(),
+          name: selectedPart.name,
+          description: selectedPart.description,
+          manufacturer: selectedPart.manufacturer,
+          manufacturer_part_number: selectedPart.manufacturer_part_number,
+          fiserv_part_number: selectedPart.fiserv_part_number || '',
+          quantity: selectedPart.quantity,
+          minimum_quantity: selectedPart.minimum_quantity,
+          location: selectedPart.location,
+          machine_name: selectedPart.machine_name,
+          stock_status: selectedPart.stock_status || (selectedPart.quantity <= selectedPart.minimum_quantity ? 'low_stock' as const : 'in_stock' as const),
+          created_at: selectedPart.created_at || new Date().toISOString(),
+          updated_at: selectedPart.updated_at || new Date().toISOString()
+        } : null}
       />
 
       {/* Import Parts Dialog */}

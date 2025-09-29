@@ -110,20 +110,11 @@ const PurchaseOrderList: React.FC = () => {
     po.status === 'pending' || po.status === 'submitted'
   );
 
-  // Effect for filtering purchase orders based on search term
+  // Effect for filtering purchase orders based on search term - use server-side search
   useEffect(() => {
-    if (!searchTerm) {
-      setFilteredOrders(purchaseOrders);
-    } else {
-      const filtered = purchaseOrders.filter(po =>
-        po.po_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        po.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        po.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        po.status?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredOrders(filtered);
-    }
-  }, [purchaseOrders, searchTerm]);
+    // Always show all fetched orders since server-side filtering is now used
+    setFilteredOrders(purchaseOrders);
+  }, [purchaseOrders]);
 
   const fetchPurchaseOrders = useCallback(async () => {
     try {
@@ -131,7 +122,8 @@ const PurchaseOrderList: React.FC = () => {
       setError(null);
       console.log('Fetching purchase orders...');
       console.log('Show historical received:', showHistoricalReceived);
-      const response = await purchaseOrdersApi.getAll(showHistoricalReceived);
+      console.log('Search term:', searchTerm);
+      const response = await purchaseOrdersApi.getAll(showHistoricalReceived, searchTerm);
       console.log('Purchase orders response:', response);
       
       let orders: PurchaseOrder[] = [];
@@ -163,6 +155,44 @@ const PurchaseOrderList: React.FC = () => {
   useEffect(() => {
     fetchPurchaseOrders();
   }, [fetchPurchaseOrders]);
+
+  // Debounce search to avoid too many API calls
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchTerm) {
+        // Perform search-specific fetch
+        try {
+          setLoading(true);
+          setError(null);
+          console.log('Performing search for:', searchTerm);
+          const response = await purchaseOrdersApi.getAll(showHistoricalReceived, searchTerm);
+          console.log('Search response:', response);
+          
+          let orders: PurchaseOrder[] = [];
+          if (response.data && response.data.items && Array.isArray(response.data.items)) {
+            orders = response.data.items;
+          } else if (Array.isArray(response.data)) {
+            orders = response.data;
+          }
+          
+          setPurchaseOrders(orders);
+          setFilteredOrders(orders);
+        } catch (error: any) {
+          console.error('Error searching purchase orders:', error);
+          setError('Failed to search purchase orders');
+          setPurchaseOrders([]);
+          setFilteredOrders([]);
+        } finally {
+          setLoading(false);
+        }
+      } else {
+        // If search term is empty, fetch all orders
+        fetchPurchaseOrders();
+      }
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm, showHistoricalReceived, fetchPurchaseOrders]);
 
   // Auto-clear success/error messages
   useEffect(() => {

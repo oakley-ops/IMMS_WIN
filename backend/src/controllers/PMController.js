@@ -541,6 +541,83 @@ class PMController {
     }
   }
 
+  // Schedule maintenance for a machine
+  async scheduleMaintenance(req, res) {
+    try {
+      const { machineId, checklistId, nextMaintenanceDate, technicianName, notes } = req.body;
+      
+      // Validate required fields
+      if (!machineId || !checklistId || !nextMaintenanceDate) {
+        return res.status(400).json({ error: 'Machine ID, checklist ID, and next maintenance date are required' });
+      }
+
+      // Validate the date
+      const scheduleDate = new Date(nextMaintenanceDate);
+      if (isNaN(scheduleDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid date format' });
+      }
+
+      // Check if machine exists
+      const machineResult = await pool.query(
+        'SELECT machine_id, name, machine_type FROM machines WHERE machine_id = $1',
+        [machineId]
+      );
+
+      if (machineResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Machine not found' });
+      }
+
+      // Check if checklist exists
+      const checklistResult = await pool.query(
+        'SELECT checklist_id, name FROM pm_checklists WHERE checklist_id = $1 AND is_active = true',
+        [checklistId]
+      );
+
+      if (checklistResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Checklist not found or inactive' });
+      }
+
+      // Add scheduled_technician column if it doesn't exist
+      try {
+        await pool.query(`
+          ALTER TABLE machines 
+          ADD COLUMN IF NOT EXISTS scheduled_technician VARCHAR(255)
+        `);
+      } catch (alterError) {
+        console.warn('Could not add scheduled_technician column:', alterError.message);
+      }
+
+      // Update machine's next maintenance date and scheduled technician
+      await pool.query(
+        'UPDATE machines SET next_maintenance_date = $1, scheduled_technician = $2 WHERE machine_id = $3',
+        [scheduleDate, technicianName, machineId]
+      );
+
+      // Create a scheduled maintenance log entry
+      try {
+        await pool.query(
+          'INSERT INTO maintenance_logs (machine_id, status, log_date, scheduled_date, technician, notes) VALUES ($1, $2, $3, $4, $5, $6)',
+          [machineId, 'scheduled', new Date(), scheduleDate, technicianName || 'System', notes || 'Maintenance scheduled']
+        );
+      } catch (logError) {
+        console.warn('Could not log maintenance scheduling:', logError.message);
+      }
+
+      // Return success response with details
+      res.status(201).json({
+        message: 'Maintenance scheduled successfully',
+        machine: machineResult.rows[0],
+        checklist: checklistResult.rows[0],
+        scheduledDate: scheduleDate,
+        technicianName,
+        notes
+      });
+    } catch (error) {
+      console.error('Error scheduling maintenance:', error);
+      res.status(500).json({ error: 'Failed to schedule maintenance' });
+    }
+  }
+
   // Update PM interval (Admin only)
   async updateInterval(req, res) {
     try {

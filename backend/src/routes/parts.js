@@ -628,109 +628,6 @@ router.delete('/:id', authenticateToken, async (req, res) => {
   }
 });
 
-// Get all parts with pagination and filtering
-router.get('/', async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 0;
-    const limit = parseInt(req.query.limit) || 25;
-    const offset = page * limit;
-    const search = req.query.search || '';
-    const partNumber = req.query.partNumber || '';
-    const location = req.query.location || '';
-    const minQuantity = req.query.minQuantity ? parseInt(req.query.minQuantity) : null;
-    const maxQuantity = req.query.maxQuantity ? parseInt(req.query.maxQuantity) : null;
-
-    // Build the WHERE clause based on filters
-    const whereConditions = [];
-    const queryParams = [];
-    let paramCount = 1;
-
-    if (search) {
-      whereConditions.push(`(
-        p.name ILIKE $${paramCount} OR
-        p.description ILIKE $${paramCount} OR
-        p.manufacturer_part_number ILIKE $${paramCount} OR
-        p.fiserv_part_number ILIKE $${paramCount} OR
-        p.supplier ILIKE $${paramCount} OR
-        pl.name ILIKE $${paramCount}
-      )`);
-      queryParams.push(`%${search}%`);
-      paramCount++;
-    }
-
-    if (partNumber) {
-      whereConditions.push(`(
-        p.manufacturer_part_number ILIKE $${paramCount} OR
-        p.fiserv_part_number ILIKE $${paramCount}
-      )`);
-      queryParams.push(`%${partNumber}%`);
-      paramCount++;
-    }
-
-    if (location) {
-      whereConditions.push(`pl.name ILIKE $${paramCount}`);
-      queryParams.push(`%${location}%`);
-      paramCount++;
-    }
-
-    if (minQuantity !== null) {
-      whereConditions.push(`p.quantity >= $${paramCount}`);
-      queryParams.push(minQuantity);
-      paramCount++;
-    }
-
-    if (maxQuantity !== null) {
-      whereConditions.push(`p.quantity <= $${paramCount}`);
-      queryParams.push(maxQuantity);
-      paramCount++;
-    }
-
-    const whereClause = whereConditions.length > 0
-      ? 'WHERE ' + whereConditions.join(' AND ')
-      : '';
-
-    // Get total count
-    const countResult = await executeWithRetry(
-      `SELECT COUNT(DISTINCT p.part_id)
-       FROM parts p
-       ${whereClause}`,
-      queryParams
-    );
-
-    const total = parseInt(countResult.rows[0].count);
-
-    // Get paginated results
-    const result = await executeWithRetry(
-      `SELECT 
-        p.part_id as id,
-        p.name,
-        p.description,
-        p.manufacturer_part_number,
-        p.fiserv_part_number,
-        p.quantity,
-        p.minimum_quantity,
-        p.supplier as manufacturer,
-        p.unit_cost as cost,
-        p.created_at as last_ordered_date,
-        COALESCE(p.location, '') as location,
-        p.notes,
-        COALESCE(p.status, 'active') as status
-      FROM parts p
-      ${whereClause}
-      ORDER BY p.part_id DESC
-      LIMIT $${paramCount} OFFSET $${paramCount + 1}`,
-      [...queryParams, limit, offset]
-    );
-
-    res.json({
-      items: result.rows,
-      total
-    });
-  } catch (err) {
-    console.error('Error fetching parts:', err);
-    throw err;
-  }
-});
 
 // Create a new part
 router.post('/', async (req, res) => {
@@ -1222,6 +1119,79 @@ router.post('/restock', authenticateToken, roleAuthorization(ROLES.RESTOCK_PARTS
   }
 });
 
+// Return parts to inventory
+router.post('/return', authenticateToken, roleAuthorization(ROLES.INVENTORY_MANAGEMENT), async (req, res) => {
+  const { part_id, quantity, reason, original_transaction_id, work_order_number } = req.body;
+
+  console.log('Returning parts to inventory:', { part_id, quantity, reason, original_transaction_id, work_order_number });
+
+  if (!part_id || !quantity || quantity <= 0) {
+    console.error('Invalid request:', { part_id, quantity });
+    return res.status(400).json({
+      error: 'Invalid request. Required fields: part_id, quantity (> 0)'
+    });
+  }
+
+  try {
+    await executeWithRetry('BEGIN');
+
+    // Check if part exists
+    const partResult = await executeWithRetry(
+      'SELECT part_id, name FROM parts WHERE part_id = $1',
+      [part_id]
+    );
+
+    if (partResult.rows.length === 0) {
+      await executeWithRetry('ROLLBACK');
+      console.error('Part not found:', part_id);
+      return res.status(404).json({
+        error: 'Part not found'
+      });
+    }
+
+    const part = partResult.rows[0];
+
+    // Update part quantity - add the returned quantity
+    await executeWithRetry(
+      'UPDATE parts SET quantity = quantity + $1, updated_at = CURRENT_TIMESTAMP WHERE part_id = $2',
+      [quantity, part_id]
+    );
+
+    // Create return transaction record
+    const returnNotes = reason || 'Part returned to inventory (unused)';
+    const transactionResult = await executeWithRetry(
+      `INSERT INTO transactions (
+        part_id,
+        quantity,
+        type,
+        notes,
+        reference_number
+      ) VALUES ($1, $2, $3, $4, $5)
+      RETURNING *`,
+      [part_id, quantity, 'return', returnNotes, work_order_number || original_transaction_id]
+    );
+
+    await executeWithRetry('COMMIT');
+    console.log('Parts returned to inventory successfully:', transactionResult.rows[0]);
+    
+    // Notify clients of inventory change
+    notifyInventoryChange();
+    
+    res.status(200).json({ 
+      success: true,
+      message: `Successfully returned ${quantity} units of ${part.name} to inventory`,
+      transaction: transactionResult.rows[0]
+    });
+  } catch (err) {
+    await executeWithRetry('ROLLBACK');
+    console.error('Error returning parts to inventory:', err);
+    res.status(500).json({
+      error: 'Failed to return parts to inventory',
+      details: err.message
+    });
+  }
+});
+
 // Get recent parts usage (last 24 hours)
 router.get('/usage/recent', async (req, res) => {
   try {
@@ -1264,12 +1234,13 @@ router.get('/usage/history', async (req, res) => {
         t.quantity,
         t.created_at as usage_date,
         t.notes as reason,
+        t.type as transaction_type,
         COALESCE(p.unit_cost, 0) as unit_cost,
         m.name as machine_name
       FROM transactions t
       LEFT JOIN parts p ON t.part_id = p.part_id
       LEFT JOIN machines m ON t.machine_id = m.machine_id
-      WHERE t.type = 'usage'
+      WHERE t.type IN ('usage', 'return', 'restock')
     `;
 
     const queryParams = [];

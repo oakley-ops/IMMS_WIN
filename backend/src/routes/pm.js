@@ -37,4 +37,7 @@ router.put('/sessions/:sessionId/complete', authMiddleware, roleAuthorization(RO
 // PM Task Completion routes
 router.put('/sessions/:sessionId/tasks/:taskId', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), PMController.updateTaskCompletion);
 
+// PM Scheduling routes
+router.post('/schedule', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), PMController.scheduleMaintenance);
+
 module.exports = router; 

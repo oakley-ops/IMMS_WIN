@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     part_id INTEGER REFERENCES parts(part_id),
     machine_id INTEGER REFERENCES machines(machine_id),
     quantity INTEGER NOT NULL,
-    type VARCHAR(50) NOT NULL CHECK (type IN ('usage', 'restock')),
+    type VARCHAR(50) NOT NULL CHECK (type IN ('usage', 'restock', 'return')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     notes TEXT
 );

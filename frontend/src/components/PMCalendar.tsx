@@ -29,6 +29,7 @@ export interface PMCalendarRef {
   navigateBack: () => void;
   navigateNext: () => void;
   getCurrentDate: () => Date;
+  refreshSchedule: () => void;
 }
 
 interface PMCalendarProps {
@@ -62,7 +63,8 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
     navigateToday: () => handleNavigate('today'),
     navigateBack: () => handleNavigate('back'),
     navigateNext: () => handleNavigate('next'),
-    getCurrentDate: () => currentDate
+    getCurrentDate: () => currentDate,
+    refreshSchedule: () => fetchPMSchedule()
   }));
 
   useEffect(() => {
@@ -176,7 +178,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
         setEvents(prev => prev.filter(event => event.id !== machineId));
       } else if (response.data.updatedMachine) {
         // For in-progress, update the event with the new status
-        const updatedMachine = response.data.updatedMachine;
+        // const updatedMachine = response.data.updatedMachine;
         
         setEvents(prev => {
           // Find and update the specific event
@@ -340,7 +342,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
             {events.length > 0 ? (
               events.map((event, index) => {
                 const isCurrentDay = formatDate(event.start, 'yyyy-MM-dd') === formatDate(new Date(), 'yyyy-MM-dd');
-                const statusClass = `status-${event.resource.status}`;
+                // const statusClass = `status-${event.resource.status}`;
                 return (
                   <tr 
                     key={event.id} 

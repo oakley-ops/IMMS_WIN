@@ -85,13 +85,21 @@ export const suppliersApi = {
 // Purchase Orders API
 export const purchaseOrdersApi = {
   // Use public routes temporarily until auth is fixed
-  getAll: (includeHistoricalReceived?: boolean) => {
-    const params = { 
+  getAll: (includeHistoricalReceived?: boolean, search?: string) => {
+    const params: any = { 
       includeHistoricalReceived: includeHistoricalReceived ? 'true' : 'false' 
     };
-    return api.get('/api/v1/public/purchase-orders', { params });
+    if (search) {
+      params.search = search;
+    }
+    console.log('🔍 API Call Debug:');
+    console.log('  includeHistoricalReceived:', includeHistoricalReceived);
+    console.log('  search parameter:', search);
+    console.log('  final params:', params);
+    console.log('  URL will be:', '/api/v1/purchase-orders');
+    return api.get('/api/v1/purchase-orders', { params });
   },
-  getById: (id: number) => api.get(`/api/v1/public/purchase-orders/${id}`),
+  getById: (id: number) => api.get(`/api/v1/purchase-orders/${id}`),
   create: (poData: any) => api.post('/api/v1/purchase-orders', poData),
   createBlank: (poData: any) => api.post('/api/v1/purchase-orders/blank', poData),
   updateStatus: (id: number, status: string) => api.put(`/api/v1/purchase-orders/${id}/status`, { status }),
@@ -184,6 +192,18 @@ export const partsApi = {
     return response.data;
   },
   
+  // Return parts to inventory
+  returnParts: async (partId: string, quantity: number, reason?: string, originalTransactionId?: string, workOrderNumber?: string) => {
+    const response = await api.post('/api/v1/parts/return', {
+      part_id: partId,
+      quantity,
+      reason,
+      original_transaction_id: originalTransactionId,
+      work_order_number: workOrderNumber
+    });
+    return response.data;
+  },
+
   updatePartSupplier: async (partId: string, supplierId: number, data: any) => {
     const response = await api.put(`/api/v1/parts/${partId}/suppliers/${supplierId}`, data);
     return response.data;

@@ -1110,6 +1110,17 @@ const PurchaseOrderDetail: React.FC = () => {
     setReceiptNotes('');
   };
 
+  // Function to check if all items in the PO are fully received
+  const checkIfAllItemsReceived = (items: any[]) => {
+    if (!items || items.length === 0) return false;
+    
+    return items.every(item => {
+      const quantityOrdered = item.quantity || 0;
+      const quantityReceived = item.quantity_received || 0;
+      return quantityReceived >= quantityOrdered;
+    });
+  };
+
   const handleUpdateReceipt = async () => {
     if (!selectedItem || !id) return;
     
@@ -1126,14 +1137,63 @@ const PurchaseOrderDetail: React.FC = () => {
         }
       );
       
+      // Immediately update local state before closing dialog and refreshing
+      if (purchaseOrder && purchaseOrder.items) {
+        // Create updated items array with the current change
+        const updatedItems = purchaseOrder.items.map(item => 
+          item.item_id === selectedItem.item_id 
+            ? { 
+                ...item, 
+                quantity_received: quantityReceived,
+                received_by: receivedBy,
+                receipt_notes: receiptNotes,
+                received_date: new Date().toISOString()
+              }
+            : item
+        );
+        
+        // Update the purchase order state immediately
+        const updatedPO = {
+          ...purchaseOrder,
+          items: updatedItems
+        };
+        setPurchaseOrder(updatedPO);
+        
+        // Check if all items are now fully received after the update
+        if (checkIfAllItemsReceived(updatedItems) && purchaseOrder.status !== 'received') {
+          try {
+            console.log('All items received, updating PO status to "received"');
+            await purchaseOrdersApi.updateStatus(parseInt(id), 'received');
+            
+            // Update local state
+            setStatus('received');
+            setPurchaseOrder({
+              ...updatedPO,
+              status: 'received' as any
+            });
+            
+            setSnackbarMessage('Order status updated successfully - All items received! PO marked as complete.');
+            setSnackbarSeverity('success');
+            setSnackbarOpen(true);
+          } catch (statusError) {
+            console.error('Error updating PO status to received:', statusError);
+            // Still show success for the item update, but note the status update issue
+            setSnackbarMessage('Order status updated successfully, but failed to update PO status to received');
+            setSnackbarSeverity('error');
+            setSnackbarOpen(true);
+          }
+        } else {
+          setSnackbarMessage('Order status updated successfully');
+          setSnackbarSeverity('success');
+          setSnackbarOpen(true);
+        }
+      }
+      
       closeReceiptDialog();
       
-      // Refresh the purchase order data
+      // Refresh the purchase order data to ensure consistency with backend
       await fetchPurchaseOrder();
       
-      setSnackbarMessage('Order status updated successfully');
-      setSnackbarSeverity('success');
-      setSnackbarOpen(true);
     } catch (error: any) {
       console.error('Error updating order status:', error);
       
@@ -2120,195 +2180,236 @@ const PurchaseOrderDetail: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Partial Order Dialog */}
-      <Dialog open={receiptDialogOpen} onClose={closeReceiptDialog} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ 
-          bgcolor: 'primary.main', 
-          color: 'white',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 1
-        }}>
-          <Check sx={{ fontSize: 20 }} />
-          Update Order Status
-        </DialogTitle>
-        <DialogContent>
-          {selectedItem && (
-            <Box sx={{ pt: 3 }}>
-              {/* Part Information Card */}
-              <Card sx={{ mb: 3, bgcolor: 'grey.50', border: '1px solid', borderColor: 'grey.200' }}>
-                <CardContent>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Box sx={{ 
-                      width: 40, 
-                      height: 40, 
-                      bgcolor: 'primary.main', 
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      mr: 2
-                    }}>
-                      <Typography variant="h6" color="white">
-                        {(selectedItem.custom_part_name || selectedItem.part_name || 'P').charAt(0).toUpperCase()}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Typography variant="h6" gutterBottom>
-                        {selectedItem.custom_part_name || selectedItem.part_name || 'Unknown Part'}
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Part #: {selectedItem.custom_part_number || selectedItem.manufacturer_part_number || selectedItem.fiserv_part_number || 'N/A'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  
-                  {/* Quantity Status */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
-                    <Box sx={{ 
-                      bgcolor: 'info.light', 
-                      color: 'info.contrastText',
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      minWidth: 70,
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="caption" fontWeight="bold">
-                        Ordered
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: '1.1rem', lineHeight: 1.2 }}>
-                        {selectedItem.quantity}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ 
-                      bgcolor: quantityReceived > 0 ? 'success.light' : 'grey.200',
-                      color: quantityReceived > 0 ? 'success.contrastText' : 'text.secondary',
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      minWidth: 70,
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="caption" fontWeight="bold">
-                        Received
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: '1.1rem', lineHeight: 1.2 }}>
-                        {quantityReceived}
-                      </Typography>
-                    </Box>
-                    
-                    <Box sx={{ 
-                      bgcolor: (selectedItem.quantity - quantityReceived) > 0 ? 'warning.light' : 'grey.200',
-                      color: (selectedItem.quantity - quantityReceived) > 0 ? 'warning.contrastText' : 'text.secondary',
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      minWidth: 70,
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="caption" fontWeight="bold">
-                        Pending
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: '1.1rem', lineHeight: 1.2 }}>
-                        {selectedItem.quantity - quantityReceived}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
+      {/* Update Order Status Dialog - Matching Create Contact UI */}
+      <ModalPortal open={receiptDialogOpen}>
+        <div className="modal-dialog modal-dialog-centered modal-lg">
+          <div className="modal-content" style={{ borderRadius: '0.5rem', overflow: 'hidden' }}>
+            {/* Header with close button */}
+            <div style={{ 
+              background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)', 
+              color: 'white', 
+              padding: '1rem 1.5rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div className="d-flex align-items-center">
+                <Check sx={{ fontSize: 24, marginRight: 2 }} />
+                <h5 className="mb-0 fw-bold">Update Order Status</h5>
+              </div>
+              <button 
+                type="button" 
+                className="btn-close btn-close-white" 
+                onClick={closeReceiptDialog}
+                aria-label="Close"
+                style={{ fontSize: '1.2rem' }}
+              ></button>
+            </div>
 
-              {/* Receipt Form */}
-              <Grid container spacing={3}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Quantity Received"
-                    type="number"
-                    value={quantityReceived}
-                    onChange={(e) => setQuantityReceived(Math.max(0, parseInt(e.target.value) || 0))}
-                    fullWidth
-                    inputProps={{
-                      min: 0,
-                      max: selectedItem.quantity
-                    }}
-                    helperText={`Enter quantity received (0 to ${selectedItem.quantity})`}
-                    error={quantityReceived > selectedItem.quantity}
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        '&.Mui-focused fieldset': {
-                          borderColor: quantityReceived > selectedItem.quantity ? 'error.main' : 'primary.main',
-                        }
-                      }
-                    }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    label="Received By"
-                    value={receivedBy}
-                    onChange={(e) => setReceivedBy(e.target.value)}
-                    fullWidth
-                    placeholder="Enter name of person who received the items"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <Person sx={{ color: 'text.secondary' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-                
-                <Grid item xs={12}>
-                  <TextField
-                    label="Order Notes"
-                    value={receiptNotes}
-                    onChange={(e) => setReceiptNotes(e.target.value)}
-                    fullWidth
-                    multiline
-                    rows={3}
-                    placeholder="Optional notes about the order (condition, partial shipment, etc.)"
-                    sx={{
-                      '& .MuiOutlinedInput-root': {
-                        backgroundColor: 'grey.50'
-                      }
-                    }}
-                  />
-                </Grid>
-              </Grid>
-              
-              {selectedItem.received_date && (
-                <Alert severity="info" sx={{ mt: 2 }}>
-                  <Typography variant="body2">
-                    Last updated: {new Date(selectedItem.received_date).toLocaleString()}
-                    {selectedItem.received_by && ` by ${selectedItem.received_by}`}
-                  </Typography>
-                </Alert>
+            <div className="modal-body" style={{ padding: '2rem', backgroundColor: '#f8f9fa' }}>
+              {selectedItem && (
+                <>
+                  {/* Part Information Section */}
+                  <div className="mb-4">
+                    <h6 className="text-primary fw-bold mb-3" style={{ color: '#1976d2 !important' }}>
+                      Part Information
+                    </h6>
+                    <div className="card border-0 shadow-sm">
+                      <div className="card-body">
+                        <div className="d-flex align-items-center mb-3">
+                          <div 
+                            className="rounded-circle d-flex align-items-center justify-content-center me-3"
+                            style={{ 
+                              width: '48px', 
+                              height: '48px',
+                              background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                              color: 'white'
+                            }}
+                          >
+                            <span className="fw-bold fs-5">
+                              {(selectedItem.custom_part_name || selectedItem.part_name || 'P').charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex-grow-1">
+                            <h6 className="mb-1 fw-bold">
+                              {selectedItem.custom_part_name || selectedItem.part_name || 'Unknown Part'}
+                            </h6>
+                            <p className="mb-0 text-muted">
+                              <strong>Part #:</strong> {selectedItem.custom_part_number || selectedItem.manufacturer_part_number || selectedItem.fiserv_part_number || 'N/A'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {/* Quantity Status Badges */}
+                        <div className="d-flex flex-wrap gap-3">
+                          <div className="px-3 py-2 rounded" style={{ backgroundColor: '#e3f2fd', border: '1px solid #bbdefb' }}>
+                            <div className="small text-muted fw-bold">ORDERED</div>
+                            <div className="h5 mb-0 text-primary fw-bold">{selectedItem.quantity}</div>
+                          </div>
+                          
+                          <div 
+                            className="px-3 py-2 rounded"
+                            style={{ 
+                              backgroundColor: quantityReceived > 0 ? '#e8f5e8' : '#f5f5f5',
+                              border: `1px solid ${quantityReceived > 0 ? '#c8e6c9' : '#e0e0e0'}`,
+                              color: quantityReceived > 0 ? '#2e7d32' : '#757575'
+                            }}
+                          >
+                            <div className="small fw-bold">RECEIVED</div>
+                            <div className="h5 mb-0 fw-bold">{quantityReceived}</div>
+                          </div>
+                          
+                          <div 
+                            className="px-3 py-2 rounded"
+                            style={{ 
+                              backgroundColor: (selectedItem.quantity - quantityReceived) > 0 ? '#fff3e0' : '#f5f5f5',
+                              border: `1px solid ${(selectedItem.quantity - quantityReceived) > 0 ? '#ffcc02' : '#e0e0e0'}`,
+                              color: (selectedItem.quantity - quantityReceived) > 0 ? '#f57c00' : '#757575'
+                            }}
+                          >
+                            <div className="small fw-bold">PENDING</div>
+                            <div className="h5 mb-0 fw-bold">{selectedItem.quantity - quantityReceived}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Receipt Information Section */}
+                  <div className="mb-4">
+                    <h6 className="text-primary fw-bold mb-3" style={{ color: '#1976d2 !important' }}>
+                      Receipt Information
+                    </h6>
+                    <div className="card border-0 shadow-sm">
+                      <div className="card-body">
+                        <div className="row g-3">
+                          <div className="col-md-6">
+                            <label className="form-label text-dark fw-medium">
+                              Quantity Received <span className="text-danger">*</span>
+                            </label>
+                            <input
+                              type="number"
+                              className={`form-control ${quantityReceived > selectedItem.quantity ? 'is-invalid' : ''}`}
+                              value={quantityReceived}
+                              onChange={(e) => setQuantityReceived(Math.max(0, parseInt(e.target.value) || 0))}
+                              min="0"
+                              max={selectedItem.quantity}
+                              placeholder="Enter quantity received"
+                              style={{ borderRadius: '0.375rem', padding: '0.75rem' }}
+                            />
+                            <div className="form-text text-muted">
+                              Enter quantity received (0 to {selectedItem.quantity})
+                            </div>
+                            {quantityReceived > selectedItem.quantity && (
+                              <div className="invalid-feedback">
+                                Quantity received cannot exceed quantity ordered
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="col-md-6">
+                            <label className="form-label text-dark fw-medium">Received By</label>
+                            <div className="input-group">
+                              <span className="input-group-text bg-light border-end-0">
+                                <Person sx={{ fontSize: 18, color: '#757575' }} />
+                              </span>
+                              <input
+                                type="text"
+                                className="form-control border-start-0"
+                                value={receivedBy}
+                                onChange={(e) => setReceivedBy(e.target.value)}
+                                placeholder="Enter name of person who received the items"
+                                style={{ borderRadius: '0 0.375rem 0.375rem 0', padding: '0.75rem' }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Additional Notes Section */}
+                  <div className="mb-3">
+                    <h6 className="text-primary fw-bold mb-3" style={{ color: '#1976d2 !important' }}>
+                      Additional Notes
+                    </h6>
+                    <div className="card border-0 shadow-sm">
+                      <div className="card-body">
+                        <label className="form-label text-dark fw-medium">Notes</label>
+                        <textarea
+                          className="form-control"
+                          rows={4}
+                          value={receiptNotes}
+                          onChange={(e) => setReceiptNotes(e.target.value)}
+                          placeholder="Optional notes about the order (condition, partial shipment, etc.)"
+                          style={{ 
+                            borderRadius: '0.375rem', 
+                            padding: '0.75rem',
+                            backgroundColor: '#f8f9fa',
+                            resize: 'vertical'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {selectedItem.received_date && (
+                    <div className="alert alert-info border-0 shadow-sm" role="alert">
+                      <div className="d-flex align-items-center">
+                        <History sx={{ fontSize: 18, marginRight: 2 }} />
+                        <small className="mb-0">
+                          <strong>Last updated:</strong> {new Date(selectedItem.received_date).toLocaleString()}
+                          {selectedItem.received_by && ` by ${selectedItem.received_by}`}
+                        </small>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="text-muted small mt-3">
+                    <span className="text-danger">*</span> Required fields
+                  </div>
+                </>
               )}
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 2, bgcolor: 'grey.50' }}>
-          <Button 
-            onClick={closeReceiptDialog}
-            variant="outlined"
-            sx={{ minWidth: 100 }}
-          >
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleUpdateReceipt} 
-            variant="contained" 
-            disabled={isUpdating || (selectedItem && quantityReceived > selectedItem.quantity)}
-            sx={{ minWidth: 120 }}
-            startIcon={isUpdating ? <CircularProgress size={16} /> : <Check />}
-          >
-            {isUpdating ? 'Updating...' : 'Update Order'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+            </div>
+
+            {/* Footer */}
+            <div className="modal-footer bg-white border-top-0" style={{ padding: '1rem 2rem' }}>
+              <button
+                type="button"
+                className="btn btn-outline-secondary fw-medium"
+                onClick={closeReceiptDialog}
+                style={{ minWidth: '100px', borderRadius: '0.375rem' }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn fw-medium text-white"
+                onClick={handleUpdateReceipt}
+                disabled={isUpdating || (selectedItem && quantityReceived > selectedItem.quantity)}
+                style={{ 
+                  minWidth: '140px', 
+                  borderRadius: '0.375rem',
+                  background: isUpdating ? '#6c757d' : 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                  border: 'none'
+                }}
+              >
+                {isUpdating ? (
+                  <>
+                    <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <Person sx={{ fontSize: 16, mr: 1 }} />
+                    Update Order
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ModalPortal>
     </Box>
   );
 };

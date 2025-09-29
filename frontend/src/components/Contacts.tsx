@@ -35,6 +35,8 @@ import {
   Business as BusinessIcon,
   Refresh as RefreshIcon,
   FilterList as FilterListIcon,
+  PersonAdd as PersonAddIcon,
+  Visibility as VisibilityIcon,
 } from '@mui/icons-material';
 import { 
   DataGrid, 
@@ -46,7 +48,7 @@ import { styled } from '@mui/material/styles';
 import * as XLSX from 'xlsx';
 import CloseIcon from '@mui/icons-material/Close';
 import axiosInstance from '../utils/axios';
-import { Contact, ContactType, ContactStatus } from '../types/contact';
+import { Contact, ContactType, ContactStatus, ContactFormData } from '../types/contact';
 import { format } from 'date-fns';
 
 // Define contactsApi locally for now due to import issues - Updated
@@ -116,6 +118,24 @@ const Contacts: React.FC = () => {
     pageSize: 25,
   });
   const [showActiveOnly, setShowActiveOnly] = useState<boolean>(true);
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
+  const [openDetailsDialog, setOpenDetailsDialog] = useState<boolean>(false);
+  const [formData, setFormData] = useState<ContactFormData>({
+    name: '',
+    company: '',
+    type: 'vendor',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zip_code: '',
+    notes: '',
+    status: 'active'
+  });
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const navigate = useNavigate();
 
   // Effect for filtering contacts based on search term and filters
@@ -192,6 +212,132 @@ const Contacts: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [success, error]);
+
+  const handleOpenDialog = () => {
+    setIsEditing(false);
+    setSelectedContact(null);
+    setOpenDialog(true);
+    setError(null);
+    setSuccess(null);
+  };
+
+  const handleOpenEditDialog = (contact: Contact) => {
+    setIsEditing(true);
+    setSelectedContact(contact);
+    setFormData({
+      name: contact.name || '',
+      company: contact.company || '',
+      type: contact.type || 'vendor',
+      email: contact.email || '',
+      phone: contact.phone || '',
+      address: contact.address || '',
+      city: contact.city || '',
+      state: contact.state || '',
+      zip_code: contact.zip_code || '',
+      notes: contact.notes || '',
+      status: contact.status || 'active'
+    });
+    setOpenDialog(true);
+    setError(null);
+    setSuccess(null);
+  };
+
+  const handleOpenDetailsDialog = (contact: Contact) => {
+    setSelectedContact(contact);
+    setOpenDetailsDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
+    setIsEditing(false);
+    setSelectedContact(null);
+    setFormData({
+      name: '',
+      company: '',
+      type: 'vendor',
+      email: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zip_code: '',
+      notes: '',
+      status: 'active'
+    });
+  };
+
+  const handleCloseDetailsDialog = () => {
+    setOpenDetailsDialog(false);
+    setSelectedContact(null);
+  };
+
+  const handleSubmitContact = async () => {
+    try {
+      setIsSubmitting(true);
+      setError(null);
+      
+      // Basic validation
+      if (!formData.name.trim()) {
+        setError('Contact name is required');
+        return;
+      }
+      if (!formData.company.trim()) {
+        setError('Company is required');
+        return;
+      }
+      if (!formData.email.trim()) {
+        setError('Email is required');
+        return;
+      }
+      if (!formData.phone.trim()) {
+        setError('Phone is required');
+        return;
+      }
+      
+      // Email validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(formData.email)) {
+        setError('Please enter a valid email address');
+        return;
+      }
+      
+      if (isEditing && selectedContact) {
+        // Update existing contact
+        const response = await contactsApi.update(selectedContact.contact_id, formData);
+        console.log('Contact updated:', response.data);
+        
+        // Update contact in list
+        const updatedContact = response.data;
+        setContacts(prev => 
+          prev.map(contact => 
+            contact.contact_id === selectedContact.contact_id ? updatedContact : contact
+          )
+        );
+        
+        setSuccess('Contact updated successfully!');
+      } else {
+        // Create new contact
+        const response = await contactsApi.create(formData);
+        console.log('Contact created:', response.data);
+        
+        // Add new contact to list
+        const newContact = response.data;
+        setContacts(prev => [...prev, newContact]);
+        
+        setSuccess('Contact created successfully!');
+      }
+      
+      handleCloseDialog();
+      
+    } catch (error: any) {
+      console.error('Error submitting contact:', error);
+      const errorMessage = error.response?.data?.error || error.message || 
+        (isEditing ? 'Failed to update contact' : 'Failed to create contact');
+      setError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleDelete = async (id: number | undefined) => {
     if (!id) {
@@ -367,13 +513,25 @@ const Contacts: React.FC = () => {
     {
       field: 'actions',
       headerName: 'Actions',
-      width: 150,
+      width: 200,
       sortable: false,
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
             size="small"
-            onClick={() => {/* TODO: Navigate to edit contact */}}
+            onClick={() => handleOpenDetailsDialog(params.row)}
+            sx={{ 
+              backgroundColor: '#0066A1',
+              color: 'white',
+              '&:hover': { backgroundColor: '#004d7a' }
+            }}
+            title="View Details"
+          >
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+          <IconButton
+            size="small"
+            onClick={() => handleOpenEditDialog(params.row)}
             sx={{ 
               backgroundColor: '#FF6600',
               color: 'white',
@@ -460,7 +618,7 @@ const Contacts: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 <Button
                   variant="contained"
-                  onClick={() => {/* TODO: Navigate to create contact */}}
+                  onClick={handleOpenDialog}
                   startIcon={<AddIcon />}
                   sx={{ 
                     backgroundColor: '#FF6600', 
@@ -672,7 +830,7 @@ const Contacts: React.FC = () => {
                 {!searchTerm && (
                   <Button
                     variant="contained"
-                    onClick={() => {/* TODO: Navigate to create contact */}}
+                    onClick={handleOpenDialog}
                     startIcon={<AddIcon />}
                     sx={{ 
                       backgroundColor: '#FF6600',
@@ -693,6 +851,7 @@ const Contacts: React.FC = () => {
                 pageSizeOptions={[25, 50, 100]}
                 disableRowSelectionOnClick
                 disableColumnMenu
+                onRowClick={(params) => handleOpenDetailsDialog(params.row)}
                 sx={{
                   '& .MuiDataGrid-cell': {
                     py: 1.5,
@@ -708,6 +867,7 @@ const Contacts: React.FC = () => {
                   },
                   '& .MuiDataGrid-row:hover': {
                     bgcolor: 'rgba(0, 102, 161, 0.04)',
+                    cursor: 'pointer',
                   },
                   '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
                     outline: 'none',
@@ -767,6 +927,647 @@ const Contacts: React.FC = () => {
           )}
         </Box>
       )}
+
+      {/* Add Contact Dialog */}
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseDialog} 
+        maxWidth="md" 
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: '0.75rem'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          backgroundColor: '#0066A1', 
+          color: 'white',
+          borderRadius: '0.75rem 0.75rem 0 0',
+          p: 2
+        }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <PersonAddIcon sx={{ mr: 1, color: '#FF6600' }} />
+              <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
+                {isEditing ? 'Edit Contact' : 'Create New Contact'}
+              </Typography>
+            </Box>
+            <IconButton 
+              onClick={handleCloseDialog} 
+              size="small"
+              sx={{ color: 'white' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 3 }}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" sx={{ color: '#0066A1', mb: 2, fontWeight: 'bold' }}>
+              Basic Information
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  autoFocus
+                  label="Contact Name"
+                  fullWidth
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({...formData, name: e.target.value})}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Company"
+                  fullWidth
+                  required
+                  value={formData.company}
+                  onChange={(e) => setFormData({...formData, company: e.target.value})}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth required>
+                  <InputLabel>Contact Type</InputLabel>
+                  <Select
+                    value={formData.type}
+                    label="Contact Type"
+                    onChange={(e) => setFormData({...formData, type: e.target.value as 'vendor' | 'contractor' | 'supplier'})}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#FF6600',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#FF6600',
+                      },
+                    }}
+                  >
+                    <MenuItem value="vendor">
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <BusinessIcon sx={{ mr: 1, color: '#0066A1' }} />
+                        Vendor
+                      </Box>
+                    </MenuItem>
+                    <MenuItem value="contractor">
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <BusinessIcon sx={{ mr: 1, color: '#28a745' }} />
+                        Contractor
+                      </Box>
+                    </MenuItem>
+                    <MenuItem value="supplier">
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <BusinessIcon sx={{ mr: 1, color: '#17a2b8' }} />
+                        Supplier
+                      </Box>
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth>
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={formData.status}
+                    label="Status"
+                    onChange={(e) => setFormData({...formData, status: e.target.value as 'active' | 'inactive'})}
+                    sx={{
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#FF6600',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor: '#FF6600',
+                      },
+                    }}
+                  >
+                    <MenuItem value="active">
+                      <Chip label="Active" size="small" color="success" />
+                    </MenuItem>
+                    <MenuItem value="inactive">
+                      <Chip label="Inactive" size="small" color="error" />
+                    </MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" sx={{ color: '#0066A1', mb: 2, fontWeight: 'bold' }}>
+              Contact Information
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Email"
+                  type="email"
+                  fullWidth
+                  required
+                  value={formData.email}
+                  onChange={(e) => setFormData({...formData, email: e.target.value})}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon sx={{ color: '#666' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  label="Phone"
+                  fullWidth
+                  required
+                  value={formData.phone}
+                  onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PhoneIcon sx={{ color: '#666' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" sx={{ color: '#0066A1', mb: 2, fontWeight: 'bold' }}>
+              Address Information
+            </Typography>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Address"
+                  fullWidth
+                  value={formData.address}
+                  onChange={(e) => setFormData({...formData, address: e.target.value})}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="City"
+                  fullWidth
+                  value={formData.city}
+                  onChange={(e) => setFormData({...formData, city: e.target.value})}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="State"
+                  fullWidth
+                  value={formData.state}
+                  onChange={(e) => setFormData({...formData, state: e.target.value})}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <TextField
+                  label="ZIP Code"
+                  fullWidth
+                  value={formData.zip_code}
+                  onChange={(e) => setFormData({...formData, zip_code: e.target.value})}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      '& fieldset': {
+                        borderColor: '#e0e0e0',
+                      },
+                      '&:hover fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                      '&.Mui-focused fieldset': {
+                        borderColor: '#FF6600',
+                      },
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
+          </Box>
+
+          <Box>
+            <Typography variant="h6" sx={{ color: '#0066A1', mb: 2, fontWeight: 'bold' }}>
+              Additional Notes
+            </Typography>
+            <TextField
+              label="Notes"
+              fullWidth
+              multiline
+              rows={4}
+              value={formData.notes}
+              onChange={(e) => setFormData({...formData, notes: e.target.value})}
+              placeholder="Add any additional notes about this contact..."
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '& fieldset': {
+                    borderColor: '#e0e0e0',
+                  },
+                  '&:hover fieldset': {
+                    borderColor: '#FF6600',
+                  },
+                  '&.Mui-focused fieldset': {
+                    borderColor: '#FF6600',
+                  },
+                },
+              }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 3, backgroundColor: '#f8f9fa', borderTop: '1px solid #e9ecef' }}>
+          <Box sx={{ display: 'flex', gap: 2, width: '100%', justifyContent: 'space-between' }}>
+            <Typography variant="body2" sx={{ color: '#666', alignSelf: 'center', fontStyle: 'italic' }}>
+              * Required fields
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Button 
+                onClick={handleCloseDialog}
+                variant="outlined"
+                sx={{ 
+                  borderColor: '#666',
+                  color: '#666',
+                  minWidth: '100px',
+                  '&:hover': { 
+                    borderColor: '#333',
+                    backgroundColor: 'rgba(102, 102, 102, 0.04)'
+                  }
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handleSubmitContact}
+                variant="contained"
+                disabled={isSubmitting || !formData.name.trim() || !formData.company.trim() || !formData.email.trim() || !formData.phone.trim()}
+                startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <PersonAddIcon />}
+                sx={{ 
+                  backgroundColor: '#FF6600',
+                  minWidth: '140px',
+                  '&:hover': { backgroundColor: '#e65c00' },
+                  '&:disabled': { backgroundColor: '#ccc' }
+                }}
+              >
+                {isSubmitting ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Contact' : 'Create Contact')}
+              </Button>
+            </Box>
+          </Box>
+        </DialogActions>
+      </Dialog>
+
+      {/* Contact Details Dialog */}
+      <Dialog 
+        open={openDetailsDialog} 
+        onClose={handleCloseDetailsDialog} 
+        maxWidth="md" 
+        fullWidth
+        sx={{
+          '& .MuiDialog-paper': {
+            borderRadius: '0.75rem'
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          backgroundColor: '#0066A1', 
+          color: 'white',
+          borderRadius: '0.75rem 0.75rem 0 0',
+          p: 2
+        }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <VisibilityIcon sx={{ mr: 1, color: '#FF6600' }} />
+              <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
+                Contact Details
+              </Typography>
+            </Box>
+            <IconButton 
+              onClick={handleCloseDetailsDialog} 
+              size="small"
+              sx={{ color: 'white' }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+        </DialogTitle>
+        <DialogContent dividers sx={{ p: 2, maxHeight: '70vh', overflow: 'auto' }}>
+          {selectedContact && (
+            <Box>
+              {/* Basic Information */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ color: '#0066A1', mb: 1.5, fontWeight: 'bold' }}>
+                  Basic Information
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="subtitle2" sx={{ color: '#666', mb: 0.25, fontSize: '0.75rem' }}>
+                        Contact Name
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium', fontSize: '0.875rem' }}>
+                        {selectedContact.name || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="subtitle2" sx={{ color: '#666', mb: 0.25, fontSize: '0.75rem' }}>
+                        Company
+                      </Typography>
+                      <Typography variant="body1" sx={{ fontWeight: 'medium', fontSize: '0.875rem' }}>
+                        {selectedContact.company || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="subtitle2" sx={{ color: '#666', mb: 0.25, fontSize: '0.75rem' }}>
+                        Type
+                      </Typography>
+                      <Chip 
+                        label={selectedContact.type?.charAt(0).toUpperCase() + selectedContact.type?.slice(1) || 'N/A'} 
+                        size="small"
+                        color={
+                          selectedContact.type === 'vendor' ? 'primary' :
+                          selectedContact.type === 'contractor' ? 'success' :
+                          selectedContact.type === 'supplier' ? 'info' : 'default'
+                        }
+                        variant="outlined"
+                        sx={{ fontSize: '0.75rem', height: '24px' }}
+                      />
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="subtitle2" sx={{ color: '#666', mb: 0.25, fontSize: '0.75rem' }}>
+                        Status
+                      </Typography>
+                      <Chip 
+                        label={selectedContact.status || 'inactive'} 
+                        size="small"
+                        color={selectedContact.status === 'active' ? 'success' : 'error'}
+                        variant="outlined"
+                        sx={{ fontSize: '0.75rem', height: '24px' }}
+                      />
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Contact Information */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ color: '#0066A1', mb: 1.5, fontWeight: 'bold' }}>
+                  Contact Information
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="subtitle2" sx={{ color: '#666', mb: 0.25, fontSize: '0.75rem' }}>
+                        Email
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <EmailIcon fontSize="small" sx={{ color: '#666', fontSize: '1rem' }} />
+                        <a 
+                          href={`mailto:${selectedContact.email}`} 
+                          style={{ textDecoration: 'none', color: '#FF6600', fontSize: '0.875rem' }}
+                        >
+                          {selectedContact.email || 'N/A'}
+                        </a>
+                      </Box>
+                    </Box>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <Box sx={{ mb: 1 }}>
+                      <Typography variant="subtitle2" sx={{ color: '#666', mb: 0.25, fontSize: '0.75rem' }}>
+                        Phone
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                        <PhoneIcon fontSize="small" sx={{ color: '#666', fontSize: '1rem' }} />
+                        <a 
+                          href={`tel:${selectedContact.phone}`} 
+                          style={{ textDecoration: 'none', color: '#FF6600', fontSize: '0.875rem' }}
+                        >
+                          {selectedContact.phone || 'N/A'}
+                        </a>
+                      </Box>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Address Information - Only show if there's address data */}
+              {(selectedContact.address || selectedContact.city || selectedContact.state || selectedContact.zip_code) && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="h6" sx={{ color: '#0066A1', mb: 1.5, fontWeight: 'bold' }}>
+                    Address Information
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {selectedContact.address && (
+                      <Grid item xs={12}>
+                        <Box sx={{ mb: 1 }}>
+                          <Typography variant="subtitle2" sx={{ color: '#666', mb: 0.25, fontSize: '0.75rem' }}>
+                            Address
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontSize: '0.875rem' }}>
+                            {selectedContact.address}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    )}
+                    {(selectedContact.city || selectedContact.state || selectedContact.zip_code) && (
+                      <Grid item xs={12}>
+                        <Box sx={{ mb: 1 }}>
+                          <Typography variant="subtitle2" sx={{ color: '#666', mb: 0.25, fontSize: '0.75rem' }}>
+                            City, State ZIP
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontSize: '0.875rem' }}>
+                            {[selectedContact.city, selectedContact.state, selectedContact.zip_code]
+                              .filter(Boolean)
+                              .join(', ') || 'N/A'}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Box>
+              )}
+
+              {/* Notes - Only show if there are notes */}
+              {selectedContact.notes && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="h6" sx={{ color: '#0066A1', mb: 1.5, fontWeight: 'bold' }}>
+                    Notes
+                  </Typography>
+                  <Paper 
+                    elevation={0} 
+                    sx={{ 
+                      p: 1.5, 
+                      backgroundColor: '#f8f9fa', 
+                      borderRadius: '0.5rem',
+                      border: '1px solid #e9ecef'
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontSize: '0.875rem', lineHeight: 1.4 }}>
+                      {selectedContact.notes}
+                    </Typography>
+                  </Paper>
+                </Box>
+              )}
+
+              {/* Timestamps - Compact format */}
+              <Box sx={{ borderTop: '1px solid #e9ecef', pt: 1.5 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" sx={{ color: '#666', display: 'block' }}>
+                      Created: {selectedContact.created_at ? 
+                        format(new Date(selectedContact.created_at), 'MMM dd, yyyy') : 
+                        'N/A'
+                      }
+                    </Typography>
+                  </Grid>
+                  <Grid item xs={6}>
+                    <Typography variant="caption" sx={{ color: '#666', display: 'block' }}>
+                      Updated: {selectedContact.updated_at ? 
+                        format(new Date(selectedContact.updated_at), 'MMM dd, yyyy') : 
+                        'N/A'
+                      }
+                    </Typography>
+                  </Grid>
+                </Grid>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, backgroundColor: '#f8f9fa', borderTop: '1px solid #e9ecef' }}>
+          <Box sx={{ display: 'flex', gap: 2, width: '100%', justifyContent: 'space-between' }}>
+            <Button 
+              onClick={() => {
+                handleCloseDetailsDialog();
+                if (selectedContact) {
+                  handleOpenEditDialog(selectedContact);
+                }
+              }}
+              variant="contained"
+              startIcon={<EditIcon />}
+              sx={{ 
+                backgroundColor: '#FF6600',
+                '&:hover': { backgroundColor: '#e65c00' }
+              }}
+            >
+              Edit Contact
+            </Button>
+            <Button 
+              onClick={handleCloseDetailsDialog}
+              variant="outlined"
+              sx={{ 
+                borderColor: '#666',
+                color: '#666',
+                '&:hover': { 
+                  borderColor: '#333',
+                  backgroundColor: 'rgba(102, 102, 102, 0.04)'
+                }
+              }}
+            >
+              Close
+            </Button>
+          </Box>
+        </DialogActions>
+      </Dialog>
 
     </Container>
   );
