@@ -46,20 +46,20 @@ async function checkPOStatus() {
     });
     
     // Check specific approval email tracking
-    console.log('\nChecking for isaac.rodriguez@fiserv.com approvals...');
+    console.log('\nChecking for admin@company.com approvals...');
     const approvalResult = await pool.query(`
       SELECT t.*, p.po_number 
       FROM po_email_tracking t
       JOIN purchase_orders p ON t.po_id = p.po_id
-      WHERE lower(t.approval_email) = lower('isaac.rodriguez@fiserv.com')
+      WHERE lower(t.approval_email) = lower('admin@company.com')
       ORDER BY t.approval_date DESC
       LIMIT 10
     `);
     
     if (approvalResult.rows.length === 0) {
-      console.log('No approvals found from isaac.rodriguez@fiserv.com');
+      console.log('No approvals found from admin@company.com');
     } else {
-      console.log(`Found ${approvalResult.rows.length} approvals from isaac.rodriguez@fiserv.com:`);
+      console.log(`Found ${approvalResult.rows.length} approvals from admin@company.com:`);
       approvalResult.rows.forEach((record, i) => {
         console.log(`${i+1}. PO #${record.po_number} - Status: ${record.status} - Code: ${record.tracking_code}`);
       });

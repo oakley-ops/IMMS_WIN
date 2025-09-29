@@ -41,7 +41,7 @@ async function forceApproveAndRedirect() {
         SET status = 'approved', 
             approval_status = 'approved',
             approval_date = NOW(), 
-            approved_by = 'isaac.rodriguez@fiserv.com',
+            approved_by = 'admin@company.com',
             notes = 'Force approved by script',
             updated_at = NOW()
         WHERE po_id = $1
@@ -125,7 +125,7 @@ async function forceApproveAndRedirect() {
         UPDATE po_email_tracking
         SET status = 'approved',
             approval_date = NOW(),
-            approval_email = 'isaac.rodriguez@fiserv.com',
+            approval_email = 'admin@company.com',
             notes = 'Force approved by script'
         WHERE tracking_code = $1
         RETURNING tracking_id, status

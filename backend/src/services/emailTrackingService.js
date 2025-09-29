@@ -24,10 +24,10 @@ class EmailTrackingService {
       DB_SSL: process.env.DB_SSL
     });
 
-    // List of authorized approvers
+    // List of authorized approvers (updated for IMMS - configure as needed)
     this.authorizedApprovers = [
-      'isaac.rodriguez@fiserv.com',  // Isaac's email (to be changed later)
-      'christopher.sale@fiserv.com', // Christopher's email
+      // Add authorized approver emails here
+      // Example: 'admin@company.com',
     ].filter(Boolean); // Remove any undefined/null values
 
     // Use individual parameters for better control and debugging
@@ -756,11 +756,11 @@ class EmailTrackingService {
       // Prepare email content
       const subject = `[APPROVED PO] ${po.po_number} - Waiting for PO #`;
       
-      // Define multiple recipients for re-routing
+      // Define multiple recipients for re-routing (updated for IMMS)
       const recipients = [
-        'isaac.rodriguez@fiserv.com',
-        'jeffrey.clark@fiserv.com',
-        //'tammie.goff@fiserv.com',
+        // Add recipient emails here for approved PO notifications
+        // Example: 'purchasing@company.com',
+        // Example: 'manager@company.com',
       ];
       
       console.log(`Re-routing approved PO ${po.po_number} to ${recipients.join(', ')}`);

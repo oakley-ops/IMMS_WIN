@@ -204,7 +204,7 @@ class PurchaseOrderController {
                 ${searchTerms.map((_, index) => `(
                   p.name ILIKE $${paramIndex + index * 4} OR 
                   p.manufacturer_part_number ILIKE $${paramIndex + index * 4 + 1} OR
-                  p.fiserv_part_number ILIKE $${paramIndex + index * 4 + 2} OR
+                  p.crc_part_number ILIKE $${paramIndex + index * 4 + 2} OR
                   poi.part_name ILIKE $${paramIndex + index * 4 + 3}
                 )`).join(' OR ')}
             `;
@@ -347,7 +347,7 @@ class PurchaseOrderController {
 
       // Get the purchase order items
       const itemsResult = await this.pool.query(`
-        SELECT poi.*, p.name as part_name, p.manufacturer_part_number, p.fiserv_part_number
+        SELECT poi.*, p.name as part_name, p.manufacturer_part_number, p.crc_part_number
         FROM purchase_order_items poi
         LEFT JOIN parts p ON poi.part_id = p.part_id
         WHERE poi.po_id = $1
@@ -554,7 +554,7 @@ class PurchaseOrderController {
     
     // Get purchase order items
     const itemsResult = await this.pool.query(`
-      SELECT poi.*, p.name as part_name, p.fiserv_part_number, p.manufacturer_part_number
+      SELECT poi.*, p.name as part_name, p.crc_part_number, p.manufacturer_part_number
       FROM purchase_order_items poi
       LEFT JOIN parts p ON poi.part_id = p.part_id
       WHERE poi.po_id = $1
@@ -1052,7 +1052,7 @@ class PurchaseOrderController {
                 part_id: fullPart.part_id,
                 name: fullPart.name,
                 manufacturer_part_number: fullPart.manufacturer_part_number,
-                fiserv_part_number: fullPart.fiserv_part_number,
+                crc_part_number: fullPart.crc_part_number,
                 current_quantity: fullPart.quantity,
                 minimum_quantity: fullPart.minimum_quantity,
                 quantity: part.quantity || Math.max((fullPart.minimum_quantity * 2) - fullPart.quantity, fullPart.minimum_quantity),
@@ -1127,7 +1127,7 @@ class PurchaseOrderController {
               part_id: fullPart.part_id,
               name: fullPart.name,
               manufacturer_part_number: fullPart.manufacturer_part_number,
-              fiserv_part_number: fullPart.fiserv_part_number,
+              crc_part_number: fullPart.crc_part_number,
               current_quantity: fullPart.quantity,
               minimum_quantity: fullPart.minimum_quantity,
               quantity: part.quantity || Math.max((fullPart.minimum_quantity * 2) - fullPart.quantity, fullPart.minimum_quantity),
@@ -1270,7 +1270,7 @@ class PurchaseOrderController {
             
             // Add items to return data
             const items = await client.query(
-              `SELECT poi.*, p.name, p.fiserv_part_number, p.manufacturer_part_number
+              `SELECT poi.*, p.name, p.crc_part_number, p.manufacturer_part_number
                FROM purchase_order_items poi
                JOIN parts p ON poi.part_id = p.part_id
                WHERE poi.po_id = $1`,
@@ -1345,7 +1345,7 @@ class PurchaseOrderController {
                 part_id: part.part_id,
                 name: part.name,
                 manufacturer_part_number: part.manufacturer_part_number,
-                fiserv_part_number: part.fiserv_part_number,
+                crc_part_number: part.crc_part_number,
                 current_quantity: part.quantity,
                 minimum_quantity: part.minimum_quantity,
                 quantity: Math.max(
@@ -1409,7 +1409,7 @@ class PurchaseOrderController {
               part_id: part.part_id,
               name: part.name,
               manufacturer_part_number: part.manufacturer_part_number,
-              fiserv_part_number: part.fiserv_part_number,
+              crc_part_number: part.crc_part_number,
               current_quantity: part.quantity,
               minimum_quantity: part.minimum_quantity,
               quantity: orderQuantity,
@@ -1545,7 +1545,7 @@ class PurchaseOrderController {
             
             // Add items to return data
             const items = await client.query(
-              `SELECT poi.*, p.name, p.fiserv_part_number, p.manufacturer_part_number
+              `SELECT poi.*, p.name, p.crc_part_number, p.manufacturer_part_number
                FROM purchase_order_items poi
                JOIN parts p ON poi.part_id = p.part_id
                WHERE poi.po_id = $1`,
@@ -1581,7 +1581,7 @@ class PurchaseOrderController {
     try {
       // Get all parts that are currently in active purchase orders (pending, submitted, or approved)
       const query = `
-        SELECT DISTINCT poi.part_id, p.name, p.fiserv_part_number
+        SELECT DISTINCT poi.part_id, p.name, p.crc_part_number
         FROM purchase_order_items poi
         JOIN purchase_orders po ON poi.po_id = po.po_id
         JOIN parts p ON poi.part_id = p.part_id
@@ -1732,7 +1732,7 @@ class PurchaseOrderController {
       } else {
         // For database parts, fetch the part details to include in response
         const part = await client.query(
-          'SELECT name, manufacturer_part_number, fiserv_part_number FROM parts WHERE part_id = $1',
+          'SELECT name, manufacturer_part_number, crc_part_number FROM parts WHERE part_id = $1',
           [part_id]
         );
         
@@ -1740,7 +1740,7 @@ class PurchaseOrderController {
           ...itemResult.rows[0],
           part_name: part.rows[0]?.name,
           manufacturer_part_number: part.rows[0]?.manufacturer_part_number,
-          fiserv_part_number: part.rows[0]?.fiserv_part_number
+          crc_part_number: part.rows[0]?.crc_part_number
         };
       }
       
@@ -1908,7 +1908,7 @@ class PurchaseOrderController {
       
       // Get part details to include in response
       const partResult = await this.pool.query(
-        'SELECT name, manufacturer_part_number, fiserv_part_number FROM parts WHERE part_id = $1',
+        'SELECT name, manufacturer_part_number, crc_part_number FROM parts WHERE part_id = $1',
         [updatedItemResult.rows[0].part_id]
       );
       
@@ -1916,7 +1916,7 @@ class PurchaseOrderController {
         ...updatedItemResult.rows[0],
         part_name: partResult.rows[0]?.name,
         manufacturer_part_number: partResult.rows[0]?.manufacturer_part_number,
-        fiserv_part_number: partResult.rows[0]?.fiserv_part_number
+        crc_part_number: partResult.rows[0]?.crc_part_number
       };
       
       res.status(200).json(item);
@@ -2347,7 +2347,7 @@ class PurchaseOrderController {
       
       // Get part details to include in response
       const partResult = await this.pool.query(
-        'SELECT name, manufacturer_part_number, fiserv_part_number FROM parts WHERE part_id = $1',
+        'SELECT name, manufacturer_part_number, crc_part_number FROM parts WHERE part_id = $1',
         [updatedItemResult.rows[0].part_id]
       );
       
@@ -2355,7 +2355,7 @@ class PurchaseOrderController {
         ...updatedItemResult.rows[0],
         part_name: partResult.rows[0]?.name || item.part_name,
         manufacturer_part_number: partResult.rows[0]?.manufacturer_part_number || item.manufacturer_part_number,
-        fiserv_part_number: partResult.rows[0]?.fiserv_part_number || item.fiserv_part_number,
+        crc_part_number: partResult.rows[0]?.crc_part_number || item.crc_part_number,
         quantity_pending: item.quantity - quantity_received
       };
       

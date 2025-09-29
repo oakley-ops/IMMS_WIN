@@ -46,5 +46,5 @@ VALUES (
     '$2a$10$rQEk5tM.P1WqM/rR5Tq5B.ZV/x8c8R8zqC1H2MLqXmm4qZoQD1eIe',
     'Admin User',
     'admin',
-    'admin@fiserv.com'
+    'admin@company.com'
 ) ON CONFLICT (username) DO NOTHING; 

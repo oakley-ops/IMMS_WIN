@@ -211,7 +211,7 @@ const ReturnPartsDialog: React.FC<ReturnPartsDialogProps> = ({
                               </div>
                               <div className="text-muted small">
                                 <div className="mb-1">
-                                  <strong>Fiserv Part #:</strong> {part.fiserv_part_number || 'N/A'}
+                                  <strong>CRC Part #:</strong> {part.crc_part_number || 'N/A'}
                                 </div>
                                 <div className="mb-1">
                                   <strong>Mfg Part #:</strong> {part.manufacturer_part_number || 'N/A'}
@@ -236,7 +236,7 @@ const ReturnPartsDialog: React.FC<ReturnPartsDialogProps> = ({
                         <h6 className="card-title">Selected Part Details</h6>
                         <p className="card-text">
                           <strong>Name:</strong> {selectedPart.name}<br/>
-                          <strong>Fiserv Part #:</strong> {selectedPart.fiserv_part_number || 'N/A'}<br/>
+                          <strong>CRC Part #:</strong> {selectedPart.crc_part_number || 'N/A'}<br/>
                           <strong>Manufacturer Part #:</strong> {selectedPart.manufacturer_part_number || 'N/A'}<br/>
                           <strong>Current Stock:</strong> {selectedPart.quantity} units<br/>
                           <strong>New Stock After Return:</strong> {selectedPart.quantity + quantity} units

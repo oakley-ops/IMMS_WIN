@@ -27,7 +27,7 @@ interface Transaction {
   transaction_id: number;
   part_name: string;
   manufacturer_part_number: string;
-  fiserv_part_number: string;
+  crc_part_number: string;
   machine_name: string | null;
   quantity: number;
   usage_date: string;
@@ -131,7 +131,7 @@ const TransactionHistory: React.FC = () => {
       summaryRow.getCell(7).alignment = { vertical: 'middle', horizontal: 'right' };
 
       // Define headers
-      const headers = ['Date', 'Part Name', 'Mfg Part #', 'Fiserv Part #', 'Machine', 'Quantity', 'Unit Cost'];
+      const headers = ['Date', 'Part Name', 'Mfg Part #', 'CRC Part #', 'Machine', 'Quantity', 'Unit Cost'];
       const headerRow = worksheet.addRow(headers);
 
       // Style headers
@@ -155,7 +155,7 @@ const TransactionHistory: React.FC = () => {
           dayjs(record.usage_date).format('MM/DD/YYYY'),
           record.part_name,
           record.manufacturer_part_number || 'N/A',
-          record.fiserv_part_number,
+          record.crc_part_number,
           record.machine_name || 'N/A',
           record.quantity,
           isNaN(unitCost) ? 'N/A' : `$${unitCost.toFixed(2)}`
@@ -219,7 +219,7 @@ const TransactionHistory: React.FC = () => {
           case 2: // Part Name
             column.width = 27.57;
             break;
-          case 3: // Fiserv Part #
+          case 3: // CRC Part #
             column.width = 25.86;
             break;
           case 4: // Machine
@@ -359,7 +359,7 @@ const TransactionHistory: React.FC = () => {
                   <TableCell>Date</TableCell>
                   <TableCell>Part Name</TableCell>
                   <TableCell>Mfg Part #</TableCell>
-                  <TableCell>Fiserv Part #</TableCell>
+                  <TableCell>CRC Part #</TableCell>
                   <TableCell>Machine</TableCell>
                   <TableCell align="center">Quantity</TableCell>
                   <TableCell align="right">Unit Cost</TableCell>
@@ -371,7 +371,7 @@ const TransactionHistory: React.FC = () => {
                     <TableCell>{dayjs(transaction.usage_date).format('MMM D, YYYY h:mm A')}</TableCell>
                     <TableCell>{transaction.part_name}</TableCell>
                     <TableCell>{transaction.manufacturer_part_number || '-'}</TableCell>
-                    <TableCell>{transaction.fiserv_part_number}</TableCell>
+                    <TableCell>{transaction.crc_part_number}</TableCell>
                     <TableCell>{transaction.machine_name || '-'}</TableCell>
                     <TableCell align="center">
                       {getQuantityDisplay(transaction.quantity, transaction.reason, transaction.transaction_type)}

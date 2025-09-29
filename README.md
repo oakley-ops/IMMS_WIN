@@ -391,7 +391,7 @@ Access metrics at: `http://localhost:9090/metrics`
 ### Support
 
 For support, contact:
-- Email: support@fiserv.com
+- Email: support@company.com
 - Phone: 1-800-XXX-XXXX
 
 ### License

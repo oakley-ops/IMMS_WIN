@@ -37,7 +37,7 @@ interface Transaction {
   part_id: number;
   part_name: string;
   manufacturer_part_number: string;
-  fiserv_part_number: string;
+  crc_part_number: string;
   machine_name: string;
   type: string;
   quantity: number;
@@ -48,8 +48,8 @@ interface Transaction {
   unit_cost: number;
 }
 
-// Custom CSS styles for Fiserv branding
-const FiservStyles = `
+// Custom CSS styles for IMMS branding
+const ImmsStyles = `
   .text-primary {
     color: #FF6600 !important;
   }
@@ -153,7 +153,7 @@ const Transactions = () => {
     } else {
       const filtered = transactions.filter(transaction =>
         transaction.part_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.fiserv_part_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.crc_part_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.manufacturer_part_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.machine_name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -213,7 +213,7 @@ const Transactions = () => {
       worksheet.columns = [
         { width: 15 }, // Date
         { width: 35 }, // Part Name  
-        { width: 25 }, // Fiserv Part #
+        { width: 25 }, // CRC Part #
         { width: 25 }, // Machine
         { width: 12 }, // Quantity
         { width: 15 }, // Unit Cost
@@ -247,7 +247,7 @@ const Transactions = () => {
       worksheet.addRow([]);
 
       // Add header row
-      const headerRow = worksheet.addRow(['Date', 'Part Name', 'Fiserv Part #', 'Machine', 'Quantity', 'Unit Cost']);
+      const headerRow = worksheet.addRow(['Date', 'Part Name', 'CRC Part #', 'Machine', 'Quantity', 'Unit Cost']);
       headerRow.height = 20;
       
       // Style header row
@@ -268,7 +268,7 @@ const Transactions = () => {
         const row = worksheet.addRow([
           formatDateShort(transaction.date),
           transaction.part_name,
-          transaction.fiserv_part_number,
+          transaction.crc_part_number,
           transaction.machine_name || 'N/A',
           transaction.quantity,
           Number(transaction.unit_cost) || 0
@@ -333,7 +333,7 @@ const Transactions = () => {
       renderCell: (params: GridRenderCellParams) => formatDateShort(params.value)
     },
     { field: 'part_name', headerName: 'Part Name', flex: 2 },
-    { field: 'fiserv_part_number', headerName: 'Fiserv Part #', flex: 1.2 },
+    { field: 'crc_part_number', headerName: 'CRC Part #', flex: 1.2 },
     { field: 'manufacturer_part_number', headerName: 'Mfg Part #', flex: 1.2 },
     { field: 'machine_name', headerName: 'Machine', flex: 1.5 },
     { 
@@ -377,8 +377,8 @@ const Transactions = () => {
         backgroundSize: '20px 20px'
       }}
     >
-      {/* Apply Fiserv brand styling */}
-      <style>{FiservStyles}</style>
+      {/* Apply IMMS brand styling */}
+      <style>{ImmsStyles}</style>
       
       <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
         Parts Usage History

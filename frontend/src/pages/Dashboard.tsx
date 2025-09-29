@@ -5,7 +5,7 @@ import { BarChart } from '@mui/icons-material';
 import LowStockReport from '../components/LowStockReport';
 import PMCalendar, { PMCalendarRef } from '../components/PMCalendar';
 import DashboardCard from '../components/DashboardCard';
-import FiservButton from '../components/FiservButton';
+import ImmsButton from '../components/ImmsButton';
 import POStatusCard from '../components/purchaseOrders/POStatusCard';
 import axiosInstance from '../utils/axios';
 import { socket } from '../utils/socket';
@@ -91,9 +91,9 @@ const Dashboard: React.FC = () => {
           <Alert variant="danger">
             {error}
             <div className="mt-2">
-              <FiservButton onClick={() => fetchDashboardData()}>
+              <ImmsButton onClick={() => fetchDashboardData()}>
                 Try Again
-              </FiservButton>
+              </ImmsButton>
             </div>
           </Alert>
         </div>
@@ -171,17 +171,17 @@ const Dashboard: React.FC = () => {
                 {isTechUser ? 'Stock Status' : 'Inventory Status Alerts'}
               </h5>
               <div className="d-flex gap-2">
-                <FiservButton 
+                <ImmsButton 
                   onClick={() => exportRef.current && exportRef.current()} 
                   size="sm"
                   variant="outline"
                 >
                   Export to Excel
-                </FiservButton>
+                </ImmsButton>
                 {canManagePurchaseOrders && (
-                  <FiservButton onClick={() => navigate('/purchase-orders')} size="sm">
+                  <ImmsButton onClick={() => navigate('/purchase-orders')} size="sm">
                     View Purchase Orders
-                  </FiservButton>
+                  </ImmsButton>
                 )}
               </div>
             </div>

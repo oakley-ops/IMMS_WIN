@@ -72,7 +72,7 @@ curl -X POST ${BASE_URL}/debug-approval \\
   -H "Content-Type: application/json" \\
   -d '{
     "trackingCode": "YOUR_TRACKING_CODE_HERE",
-    "approvalEmail": "isaac.rodriguez@fiserv.com",
+    "approvalEmail": "admin@company.com",
     "emailBody": "approved"
   }'
     `);

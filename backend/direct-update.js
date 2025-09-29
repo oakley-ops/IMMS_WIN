@@ -28,7 +28,7 @@ async function directUpdate() {
       SET status = 'approved',
           approval_status = 'approved',
           approval_date = NOW(),
-          approved_by = 'isaac.rodriguez@fiserv.com',
+          approved_by = 'admin@company.com',
           notes = 'Directly updated via script',
           updated_at = NOW()
       WHERE po_id = 181

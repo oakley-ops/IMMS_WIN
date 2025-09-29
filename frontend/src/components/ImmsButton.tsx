@@ -1,13 +1,13 @@
 import React from 'react';
 import { Button, ButtonProps } from 'react-bootstrap';
 
-const FISERV_BLUE = '#0066A1';
+const IMMS_ORANGE = '#FF6600';
 
-interface FiservButtonProps extends ButtonProps {
+interface ImmsButtonProps extends ButtonProps {
   icon?: React.ReactNode;
 }
 
-const FiservButton: React.FC<FiservButtonProps> = ({ 
+const ImmsButton: React.FC<ImmsButtonProps> = ({ 
   children, 
   icon,
   className = '',
@@ -16,10 +16,10 @@ const FiservButton: React.FC<FiservButtonProps> = ({
   return (
     <Button
       variant="outline-primary"
-      className={`fiserv-btn ${className}`}
+      className={`imms-btn ${className}`}
       style={{ 
-        borderColor: FISERV_BLUE, 
-        color: FISERV_BLUE,
+        borderColor: IMMS_ORANGE, 
+        color: IMMS_ORANGE,
       }}
       {...props}
     >
@@ -27,10 +27,10 @@ const FiservButton: React.FC<FiservButtonProps> = ({
       {children}
       <style>
         {`
-          .fiserv-btn:hover {
-            background-color: ${FISERV_BLUE} !important;
+          .imms-btn:hover {
+            background-color: ${IMMS_ORANGE} !important;
             color: white !important;
-            border-color: ${FISERV_BLUE} !important;
+            border-color: ${IMMS_ORANGE} !important;
           }
         `}
       </style>
@@ -38,4 +38,4 @@ const FiservButton: React.FC<FiservButtonProps> = ({
   );
 };
 
-export default FiservButton; 
+export default ImmsButton;

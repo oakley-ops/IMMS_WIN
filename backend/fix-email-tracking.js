@@ -38,7 +38,7 @@ async function fixEmailTracking() {
       SET status = 'approved',
           approval_status = 'approved',
           approval_date = NOW(),
-          approved_by = 'isaac.rodriguez@fiserv.com',
+          approved_by = 'admin@company.com',
           notes = 'Fixed via tracking fix script'
       WHERE po_id = $1
       RETURNING po_id, po_number, status, approval_status
@@ -52,7 +52,7 @@ async function fixEmailTracking() {
       UPDATE po_email_tracking
       SET status = 'approved',
           approval_date = NOW(),
-          approval_email = 'isaac.rodriguez@fiserv.com',
+          approval_email = 'admin@company.com',
           notes = 'Fixed via tracking fix script'
       WHERE po_id = $1
       RETURNING tracking_id, tracking_code, status

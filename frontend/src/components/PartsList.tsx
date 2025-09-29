@@ -85,7 +85,7 @@ interface PartListItem {
   description?: string;
   manufacturer?: string;
   manufacturer_part_number?: string;
-  fiserv_part_number?: string;
+  crc_part_number?: string;
   quantity: number;
   minimum_quantity: number;
   location?: string;
@@ -107,7 +107,7 @@ interface PartFormData {
   description: string;
   manufacturer: string;
   manufacturer_part_number: string;
-  fiserv_part_number: string;
+  crc_part_number: string;
   quantity: number | '';
   minimum_quantity: number | '';
   location: string;
@@ -121,7 +121,7 @@ const initialFormData: PartFormData = {
   description: '',
   manufacturer: '',
   manufacturer_part_number: '',
-  fiserv_part_number: '',
+  crc_part_number: '',
   quantity: '',
   minimum_quantity: '',
   location: '',
@@ -199,8 +199,8 @@ const generateUniqueTBD = (): string => {
   return `TBD-${timestamp}-${random}`;
 };
 
-// Custom CSS styles for Fiserv branding
-const FiservStyles = `
+// Custom CSS styles for IMMS branding
+const ImmsStyles = `
   .text-primary {
     color: #FF6600 !important;
   }
@@ -403,12 +403,12 @@ const PartsList: React.FC = () => {
     { field: 'description', headerName: 'Description', flex: 1.5 },
     { field: 'manufacturer_part_number', headerName: 'Manufacturer Part #', flex: 1 },
     { 
-      field: 'fiserv_part_number', 
-      headerName: 'Fiserv Part #', 
+      field: 'crc_part_number', 
+      headerName: 'CRC Part #', 
       flex: 1,
       renderCell: (params) => {
-        console.log('Rendering Fiserv part #:', params.row);
-        return <span>{params.row.fiserv_part_number || ''}</span>;
+        console.log('Rendering CRC part #:', params.row);
+        return <span>{params.row.crc_part_number || ''}</span>;
       }
     },
     { field: 'location', headerName: 'Location', flex: 0.7 },
@@ -519,7 +519,7 @@ const PartsList: React.FC = () => {
           description: part.description || '',
           manufacturer: part.manufacturer || '',
           manufacturer_part_number: part.manufacturer_part_number || '',
-          fiserv_part_number: part.fiserv_part_number || '',
+          crc_part_number: part.crc_part_number || '',
           quantity: Number(part.quantity) || 0,
           minimum_quantity: Number(part.minimum_quantity) || 0,
           location: part.location !== null && part.location !== undefined ? String(part.location) : '',
@@ -699,7 +699,7 @@ const PartsList: React.FC = () => {
       
       // Check required part fields
       if (!formData.name) requiredFieldErrors.push('Part name is required');
-      if (!formData.fiserv_part_number) requiredFieldErrors.push('Fiserv part number is required');
+      if (!formData.crc_part_number) requiredFieldErrors.push('CRC part number is required');
       
       // Make sure quantity and minimum_quantity have valid values (backend requires these)
       if (formData.quantity === undefined || formData.quantity === null || formData.quantity === '') {
@@ -737,7 +737,7 @@ const PartsList: React.FC = () => {
         description: formData.description || '',
         supplier: formData.manufacturer || '', // Backend expects "supplier" not "manufacturer"
         manufacturer_part_number: formData.manufacturer_part_number || '',
-        fiserv_part_number: formData.fiserv_part_number.trim(),
+        crc_part_number: formData.crc_part_number.trim(),
         quantity: isNaN(Number(formData.quantity)) ? 0 : Number(formData.quantity),
         minimum_quantity: isNaN(Number(formData.minimum_quantity)) ? 0 : Number(formData.minimum_quantity),
         location: formData.location || '',
@@ -747,16 +747,16 @@ const PartsList: React.FC = () => {
         supplier_id: Number(preferredSupplier?.supplier_id) || null
       };
 
-      // Check if fiserv_part_number is TBD and generate a unique value
-      // Only generate unique TBD for new parts, or when explicitly changing to TBD
-      if (isTBDValue(partData.fiserv_part_number)) {
-        if (!isEditing || (isEditing && selectedPart?.fiserv_part_number !== 'TBD')) {
-          const uniqueTBD = generateUniqueTBD();
-          console.log(`Converting "TBD" to unique identifier: ${uniqueTBD}`);
-          partData.fiserv_part_number = uniqueTBD;
+      // Check if crc_part_number is TBD and generate a unique value
+      // Only generate unique CRC for new parts, or when explicitly changing to TBD
+      if (isTBDValue(partData.crc_part_number)) {
+        if (!isEditing || (isEditing && selectedPart?.crc_part_number !== 'TBD')) {
+          const uniqueCRC = generateUniqueTBD().replace('TBD-', 'CRC-');
+          console.log(`Converting "TBD" to unique identifier: ${uniqueCRC}`);
+          partData.crc_part_number = uniqueCRC;
         } else {
-          // If editing and the part already had TBD, keep the original TBD identifier
-          partData.fiserv_part_number = selectedPart?.fiserv_part_number || generateUniqueTBD();
+          // If editing and the part already had TBD, keep the original CRC identifier
+          partData.crc_part_number = selectedPart?.crc_part_number || generateUniqueTBD().replace('TBD-', 'CRC-');
         }
       }
 
@@ -925,22 +925,22 @@ const PartsList: React.FC = () => {
           console.error('Error response data:', error.response?.data);
           
           // Special handling for unique constraint violations
-          if (error.response?.data?.error?.includes('unique_fiserv_part_number') ||
+          if (error.response?.data?.error?.includes('unique_crc_part_number') ||
               error.response?.data?.error?.includes('duplicate key value') ||
-              error.response?.data?.error?.includes('Key (fiserv_part_number)')) {
+              error.response?.data?.error?.includes('Key (crc_part_number)')) {
             
             // If this was a TBD value, update with a new unique one and try again
-            if (isTBDValue(formData.fiserv_part_number)) {
-              const newUniqueTBD = generateUniqueTBD();
-              setError(`We're generating a new unique ID for "TBD": ${newUniqueTBD}. Please try submitting again.`);
+            if (isTBDValue(formData.crc_part_number)) {
+              const newUniqueCRC = generateUniqueTBD().replace('TBD-', 'CRC-');
+              setError(`We're generating a new unique ID for "TBD": ${newUniqueCRC}. Please try submitting again.`);
               
               // Update the form data with the new unique TBD
               setFormData({
                 ...formData,
-                fiserv_part_number: newUniqueTBD
+                crc_part_number: newUniqueCRC
               });
             } else {
-              setError('A part with this Fiserv part number already exists. Please use a different value.');
+              setError('A part with this CRC part number already exists. Please use a different value.');
             }
           } else {
             setError(`Error saving part: ${error.response?.data?.error || error.message || 'Unknown error'}`);
@@ -1093,7 +1093,7 @@ const PartsList: React.FC = () => {
       // Transform data for export
       const exportData = parts.map((part: PartListItem) => ({
         'Name': part.name,
-        'Fiserv Part #': part.fiserv_part_number,
+        'CRC Part #': part.crc_part_number,
         'Manufacturer Part #': part.manufacturer_part_number,
         'Manufacturer': part.manufacturer,
         'Location': part.location,
@@ -1112,7 +1112,7 @@ const PartsList: React.FC = () => {
       // Set column widths
       const columnWidths = [
         { wch: 30 }, // Name
-        { wch: 15 }, // Fiserv Part #
+        { wch: 15 }, // CRC Part #
         { wch: 20 }, // Manufacturer Part #
         { wch: 20 }, // Manufacturer
         { wch: 15 }, // Location
@@ -1320,8 +1320,8 @@ const PartsList: React.FC = () => {
         backgroundSize: '20px 20px'
       }}
     >
-      {/* Apply Fiserv brand styling */}
-      <style>{FiservStyles}</style>
+      {/* Apply IMMS brand styling */}
+      <style>{ImmsStyles}</style>
       
       <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
         Parts Inventory
@@ -1546,7 +1546,7 @@ const PartsList: React.FC = () => {
                   return `part-${row.id}`;
                 }
                 // Fallback: use a combination of name and other fields to create a stable ID
-                const fallbackId = `fallback-${row.name || 'unknown'}-${row.fiserv_part_number || 'no-part-num'}-${Date.now()}`;
+                const fallbackId = `fallback-${row.name || 'unknown'}-${row.crc_part_number || 'no-part-num'}-${Date.now()}`;
                 console.warn('Using fallback row ID:', fallbackId, 'for row:', row);
                 return fallbackId;
               }}
@@ -1707,8 +1707,8 @@ const PartsList: React.FC = () => {
                       <div className="info-value">{selectedPart.manufacturer_part_number || 'N/A'}</div>
                     </div>
                     <div className="mb-3">
-                      <div className="info-text">Fiserv Part #</div>
-                      <div className="info-value">{selectedPart.fiserv_part_number}</div>
+                      <div className="info-text">CRC Part #</div>
+                      <div className="info-value">{selectedPart.crc_part_number}</div>
                     </div>
                     <div className="mb-3">
                       <div className="info-text">Status</div>
@@ -1823,19 +1823,19 @@ const PartsList: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Fiserv Part # *</label>
+                    <label className="form-label">CRC Part # *</label>
                     <input
                       type="text"
                       className="form-control"
-                      name="fiserv_part_number"
-                      value={formData.fiserv_part_number}
+                      name="crc_part_number"
+                      value={formData.crc_part_number}
                       onChange={handleInputChange}
                       required
                     />
                     <small className="text-muted">
-                      If you don't have the Fiserv part number yet, enter "TBD". A unique identifier will be generated.
+                      If you don't have the CRC part number yet, enter "TBD". A unique identifier will be generated.
                     </small>
-                    {isTBDValue(formData.fiserv_part_number) && (
+                    {isTBDValue(formData.crc_part_number) && (
                       <div className="alert alert-info mt-2 p-2" role="alert">
                         <small>
                           <strong>TBD Detected</strong>: A unique ID will be generated when you submit.
@@ -2154,7 +2154,7 @@ const PartsList: React.FC = () => {
           part_id: selectedPart.part_id,
           id: selectedPart.part_id,
           name: selectedPart.name,
-          fiserv_part_number: selectedPart.fiserv_part_number || '',
+          crc_part_number: selectedPart.crc_part_number || '',
           manufacturer_part_number: selectedPart.manufacturer_part_number || '',
           quantity: selectedPart.quantity,
           minimum_quantity: selectedPart.minimum_quantity
@@ -2173,7 +2173,7 @@ const PartsList: React.FC = () => {
           part_id: selectedPart.part_id,
           id: selectedPart.part_id,
           name: selectedPart.name,
-          fiserv_part_number: selectedPart.fiserv_part_number || '',
+          crc_part_number: selectedPart.crc_part_number || '',
           manufacturer_part_number: selectedPart.manufacturer_part_number || '',
           quantity: selectedPart.quantity,
           minimum_quantity: selectedPart.minimum_quantity
@@ -2194,7 +2194,7 @@ const PartsList: React.FC = () => {
           description: selectedPart.description,
           manufacturer: selectedPart.manufacturer,
           manufacturer_part_number: selectedPart.manufacturer_part_number,
-          fiserv_part_number: selectedPart.fiserv_part_number || '',
+          crc_part_number: selectedPart.crc_part_number || '',
           quantity: selectedPart.quantity,
           minimum_quantity: selectedPart.minimum_quantity,
           location: selectedPart.location,
@@ -2326,7 +2326,7 @@ const PartsList: React.FC = () => {
               <div className="card mb-3 border-primary">
                 <div className="card-body">
                   <h6 className="card-title">Selected Part: {selectedPart?.name}</h6>
-                  <p className="card-text">Part #: {selectedPart?.fiserv_part_number}</p>
+                  <p className="card-text">Part #: {selectedPart?.crc_part_number}</p>
                   <div className="d-flex justify-content-between align-items-center mt-2">
                     <span className="text-muted">Current Stock: {selectedPart?.quantity}</span>
                     <span className={`badge ${(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'bg-warning' : 'bg-success'}`}>

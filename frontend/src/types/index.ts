@@ -4,7 +4,7 @@ export interface Part {
   description?: string;
   manufacturer?: string;
   manufacturer_part_number?: string;
-  fiserv_part_number?: string;
+  crc_part_number?: string;
   quantity: number;
   minimum_quantity: number;
   location?: string;
