@@ -644,7 +644,7 @@ const PartsList: React.FC = () => {
       description: part.description || '',
       manufacturer: part.manufacturer || '',
       manufacturer_part_number: part.manufacturer_part_number || '',
-      fiserv_part_number: part.fiserv_part_number || '',
+      crc_part_number: part.crc_part_number || '',
       quantity: part.quantity,
       minimum_quantity: part.minimum_quantity,
       location: part.location || '',
@@ -2151,13 +2151,19 @@ const PartsList: React.FC = () => {
           setSuccess('Parts restocked successfully');
         }}
         preSelectedPart={selectedPart ? {
-          part_id: selectedPart.part_id,
-          id: selectedPart.part_id,
+          part_id: selectedPart.part_id.toString(),
           name: selectedPart.name,
-          crc_part_number: selectedPart.crc_part_number || '',
-          manufacturer_part_number: selectedPart.manufacturer_part_number || '',
+          description: selectedPart.description || undefined,
+          manufacturer: selectedPart.manufacturer || undefined,
+          manufacturer_part_number: selectedPart.manufacturer_part_number || undefined,
+          crc_part_number: selectedPart.crc_part_number || undefined,
           quantity: selectedPart.quantity,
-          minimum_quantity: selectedPart.minimum_quantity
+          minimum_quantity: selectedPart.minimum_quantity,
+          location: selectedPart.location || undefined,
+          machine_name: selectedPart.machine_name || undefined,
+          stock_status: (selectedPart.stock_status || (selectedPart.quantity <= selectedPart.minimum_quantity ? 'low_stock' : 'in_stock')) as 'in_stock' | 'low_stock' | 'out_of_stock',
+          created_at: selectedPart.created_at || new Date().toISOString(),
+          updated_at: selectedPart.updated_at || new Date().toISOString()
         } : null}
       />
 
@@ -2170,13 +2176,19 @@ const PartsList: React.FC = () => {
           setSuccess('Parts checked out successfully');
         }}
         preSelectedPart={selectedPart ? {
-          part_id: selectedPart.part_id,
-          id: selectedPart.part_id,
+          part_id: selectedPart.part_id.toString(),
           name: selectedPart.name,
-          crc_part_number: selectedPart.crc_part_number || '',
-          manufacturer_part_number: selectedPart.manufacturer_part_number || '',
+          description: selectedPart.description || undefined,
+          manufacturer: selectedPart.manufacturer || undefined,
+          manufacturer_part_number: selectedPart.manufacturer_part_number || undefined,
+          crc_part_number: selectedPart.crc_part_number || undefined,
           quantity: selectedPart.quantity,
-          minimum_quantity: selectedPart.minimum_quantity
+          minimum_quantity: selectedPart.minimum_quantity,
+          location: selectedPart.location || undefined,
+          machine_name: selectedPart.machine_name || undefined,
+          stock_status: (selectedPart.stock_status || (selectedPart.quantity <= selectedPart.minimum_quantity ? 'low_stock' : 'in_stock')) as 'in_stock' | 'low_stock' | 'out_of_stock',
+          created_at: selectedPart.created_at || new Date().toISOString(),
+          updated_at: selectedPart.updated_at || new Date().toISOString()
         } : null}
       />
 
