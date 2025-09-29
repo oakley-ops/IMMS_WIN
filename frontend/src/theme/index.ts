@@ -1,9 +1,14 @@
 import { createTheme } from '@mui/material';
 
-// Fiserv colors
-export const FISERV_BLUE = '#0066A1';
-export const FISERV_ORANGE = '#FF6200';
-export const FISERV_ORANGE_DARK = '#e55800';
+// IMMS colors (keeping the same color scheme)
+export const IMMS_BLUE = '#0066A1';
+export const IMMS_ORANGE = '#FF6200';
+export const IMMS_ORANGE_DARK = '#e55800';
+
+// Keep legacy exports for compatibility
+export const FISERV_BLUE = IMMS_BLUE;
+export const FISERV_ORANGE = IMMS_ORANGE;
+export const FISERV_ORANGE_DARK = IMMS_ORANGE_DARK;
 
 // Common styles
 export const commonStyles = {
@@ -16,7 +21,7 @@ export const commonStyles = {
     fontWeight: 'medium',
     textTransform: 'none',
     fontSize: '1rem',
-    color: FISERV_ORANGE,
+    color: IMMS_ORANGE,
     '&:hover': {
       backgroundColor: 'rgba(255, 255, 255, 0.3)',
     },
@@ -26,23 +31,23 @@ export const commonStyles = {
     py: 1.5,
     textTransform: 'none',
     fontSize: '1.1rem',
-    backgroundColor: FISERV_ORANGE,
+    backgroundColor: IMMS_ORANGE,
     '&:hover': {
-      backgroundColor: FISERV_ORANGE_DARK,
+      backgroundColor: IMMS_ORANGE_DARK,
     },
   },
   title: {
-    color: FISERV_ORANGE,
+    color: IMMS_ORANGE,
     fontWeight: 'bold',
     mb: 3,
   },
   subtitle: {
     mb: 4,
-    color: FISERV_BLUE,
+    color: IMMS_BLUE,
   },
   container: {
     minHeight: '100vh',
-    backgroundColor: FISERV_BLUE,
+    backgroundColor: IMMS_BLUE,
     display: 'flex',
     alignItems: 'center',
   },
@@ -52,10 +57,10 @@ export const commonStyles = {
 export const theme = createTheme({
   palette: {
     primary: {
-      main: FISERV_BLUE,
+      main: IMMS_BLUE,
     },
     secondary: {
-      main: FISERV_ORANGE,
+      main: IMMS_ORANGE,
     },
   },
   typography: {

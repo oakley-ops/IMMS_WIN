@@ -2393,6 +2393,26 @@ const PartsList: React.FC = () => {
                 >
                   Check Out
                 </button>
+                <button
+                  type="button"
+                  className="btn"
+                  onClick={() => {
+                    if (selectedPart) {
+                      setOpenReturnDialog(true);
+                    }
+                    setOpenEditConfirm(false);
+                  }}
+                  style={{ 
+                    backgroundColor: '#007bff', 
+                    color: 'white',
+                    border: 'none',
+                    fontSize: '0.875rem',
+                    padding: '0.375rem 0.75rem'
+                  }}
+                >
+                  <UndoIcon style={{ fontSize: '16px', marginRight: '4px' }} />
+                  Return Part
+                </button>
               </div>
             </div>
           </div>

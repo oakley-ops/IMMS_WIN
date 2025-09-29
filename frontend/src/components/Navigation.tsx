@@ -39,7 +39,7 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { theme, FISERV_ORANGE } from '../theme';
 
-const FISERV_BLUE = '#0066A1';
+const IMMS_BLUE = '#0066A1';
 const DRAWER_WIDTH = 240;
 
 interface NavigationProps {
@@ -102,7 +102,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      bgcolor: FISERV_BLUE,
+      bgcolor: IMMS_BLUE,
       color: 'white'
     }}>
       <Box sx={{ p: 2, textAlign: 'left' }}>
@@ -125,11 +125,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
           component={Link}
           to="/"
         >
-          <img 
-            src="/assets/fiserv_logo_orange_rgb.png" 
-            alt="Fiserv" 
-            style={{ height: '40px', marginRight: '18px' }} 
-          />
+          IMMS
   
         </Typography>
         <Typography variant="body2" sx={{ color: 'white', fontSize: '0.9rem', paddingLeft: isCompact ? '48px' : '0' }}>
@@ -198,7 +194,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
               left: 8,
               top: 8,
               zIndex: 1300,
-              bgcolor: FISERV_BLUE,
+              bgcolor: IMMS_BLUE,
               color: 'white',
               width: 40,
               height: 40,
