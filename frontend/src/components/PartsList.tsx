@@ -58,7 +58,6 @@ import {
   GridPreProcessEditCellProps,
   GridValueGetter
 } from '@mui/x-data-grid';
-
 import { styled } from '@mui/material/styles';
 import ModalPortal from './ModalPortal';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -115,6 +114,23 @@ interface PartFormData {
   unit_cost: number | '';
   status: 'active' | 'discontinued';
 }
+
+// Helper function to convert PartListItem to Part interface
+const convertToPartInterface = (partListItem: PartListItem): Part => ({
+  part_id: partListItem.part_id.toString(),
+  name: partListItem.name,
+  description: partListItem.description,
+  manufacturer: partListItem.manufacturer,
+  manufacturer_part_number: partListItem.manufacturer_part_number,
+  crc_part_number: partListItem.crc_part_number,
+  quantity: partListItem.quantity,
+  minimum_quantity: partListItem.minimum_quantity,
+  location: partListItem.location,
+  machine_name: partListItem.machine_name,
+  stock_status: partListItem.stock_status || (partListItem.quantity <= partListItem.minimum_quantity ? 'low_stock' : 'in_stock'),
+  created_at: partListItem.created_at || new Date().toISOString(),
+  updated_at: partListItem.updated_at || new Date().toISOString()
+});
 
 const initialFormData: PartFormData = {
   name: '',
@@ -2150,21 +2166,7 @@ const PartsList: React.FC = () => {
           fetchParts();
           setSuccess('Parts restocked successfully');
         }}
-        preSelectedPart={selectedPart ? {
-          part_id: selectedPart.part_id.toString(),
-          name: selectedPart.name,
-          description: selectedPart.description || undefined,
-          manufacturer: selectedPart.manufacturer || undefined,
-          manufacturer_part_number: selectedPart.manufacturer_part_number || undefined,
-          crc_part_number: selectedPart.crc_part_number || undefined,
-          quantity: selectedPart.quantity,
-          minimum_quantity: selectedPart.minimum_quantity,
-          location: selectedPart.location || undefined,
-          machine_name: selectedPart.machine_name || undefined,
-          stock_status: (selectedPart.stock_status || (selectedPart.quantity <= selectedPart.minimum_quantity ? 'low_stock' : 'in_stock')) as 'in_stock' | 'low_stock' | 'out_of_stock',
-          created_at: selectedPart.created_at || new Date().toISOString(),
-          updated_at: selectedPart.updated_at || new Date().toISOString()
-        } : null}
+        preSelectedPart={selectedPart ? convertToPartInterface(selectedPart) : null}
       />
 
       {/* Parts Usage Dialog */}
@@ -2175,21 +2177,7 @@ const PartsList: React.FC = () => {
           fetchParts();
           setSuccess('Parts checked out successfully');
         }}
-        preSelectedPart={selectedPart ? {
-          part_id: selectedPart.part_id.toString(),
-          name: selectedPart.name,
-          description: selectedPart.description || undefined,
-          manufacturer: selectedPart.manufacturer || undefined,
-          manufacturer_part_number: selectedPart.manufacturer_part_number || undefined,
-          crc_part_number: selectedPart.crc_part_number || undefined,
-          quantity: selectedPart.quantity,
-          minimum_quantity: selectedPart.minimum_quantity,
-          location: selectedPart.location || undefined,
-          machine_name: selectedPart.machine_name || undefined,
-          stock_status: (selectedPart.stock_status || (selectedPart.quantity <= selectedPart.minimum_quantity ? 'low_stock' : 'in_stock')) as 'in_stock' | 'low_stock' | 'out_of_stock',
-          created_at: selectedPart.created_at || new Date().toISOString(),
-          updated_at: selectedPart.updated_at || new Date().toISOString()
-        } : null}
+        preSelectedPart={selectedPart ? convertToPartInterface(selectedPart) : null}
       />
 
       {/* Return Parts Dialog */}

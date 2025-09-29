@@ -7,7 +7,7 @@ import ModalPortal from './ModalPortal';
 interface Part {
   part_id: number;
   name: string;
-  fiserv_part_number: string;
+  crc_part_number: string;
   manufacturer_part_number: string;
   quantity: number;
   minimum_quantity: number;
@@ -38,7 +38,7 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, pre
         part_id: preSelectedPart.part_id || preSelectedPart.id || 0,
         id: preSelectedPart.id || preSelectedPart.part_id || 0,
         name: preSelectedPart.name,
-        fiserv_part_number: preSelectedPart.fiserv_part_number,
+        crc_part_number: preSelectedPart.crc_part_number,
         manufacturer_part_number: preSelectedPart.manufacturer_part_number,
         quantity: preSelectedPart.quantity,
         minimum_quantity: preSelectedPart.minimum_quantity
@@ -179,7 +179,7 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, pre
                           <div>
                             <div>{part.name}</div>
                             <div className="part-info">
-                              Fiserv: {part.fiserv_part_number} | Mfr: {part.manufacturer_part_number}
+                              CRC: {part.crc_part_number} | Mfr: {part.manufacturer_part_number}
                             </div>
                           </div>
                           <div className="text-end">
@@ -201,7 +201,7 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, pre
                       {getStockStatus(selectedPart)}
                     </div>
                     <div className="part-info mb-2">
-                      Fiserv: {selectedPart.fiserv_part_number} | Mfr: {selectedPart.manufacturer_part_number}
+                      CRC: {selectedPart.crc_part_number} | Mfr: {selectedPart.manufacturer_part_number}
                     </div>
                     <div className="quantity-info">
                       Current Stock: {selectedPart.quantity} | Minimum Required: {selectedPart.minimum_quantity}
