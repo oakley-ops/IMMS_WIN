@@ -4,6 +4,12 @@ const { body, validationResult } = require('express-validator');
 const { format } = require('date-fns');
 const { getClientWithTimeout } = require('../../utils/dbUtils');
 const PODocumentService = require('../services/PODocumentService');
+const SimplePartMatcher = require('../services/SimplePartMatcher');
+const SupplierMatcher = require('../services/SupplierMatcher');
+const AiDocumentExtractor = require('../services/AiDocumentExtractor');
+const { extractTextFromPDF } = require('../utils/pdfExtractor');
+const { parseFiservPDF } = require('../utils/fiservPdfParser');
+const { convertPdfToImage, cleanupImage } = require('../utils/pdfToImage');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs').promises;
@@ -64,12 +70,18 @@ class PurchaseOrderController {
     // Initialize the document service
     this.documentService = new PODocumentService(this.pool);
     
+    // Initialize import services
+    this.partMatcher = new SimplePartMatcher(this.pool);
+    this.supplierMatcher = new SupplierMatcher(this.pool);
+    this.aiExtractor = new AiDocumentExtractor();
+    
     // Bind methods to instance to prevent 'this' context loss
     this.createBlankPurchaseOrder = this.createBlankPurchaseOrder.bind(this);
     this.uploadDocument = this.uploadDocument.bind(this);
     this.getDocumentsByPurchaseOrderId = this.getDocumentsByPurchaseOrderId.bind(this);
     this.downloadDocument = this.downloadDocument.bind(this);
     this.deleteDocument = this.deleteDocument.bind(this);
+    this.importFromPDF = this.importFromPDF.bind(this);
   }
 
   async getAllPurchaseOrders(req, res) {
@@ -753,6 +765,14 @@ class PurchaseOrderController {
           queryParams.push(updateData.approved_by);
           paramIndex++;
           console.log(`Updating approved_by to: ${updateData.approved_by}`);
+        }
+        
+        // Handle supplier_id updates
+        if (updateData.hasOwnProperty('supplier_id')) {
+          updateFields.push(`supplier_id = $${paramIndex}`);
+          queryParams.push(updateData.supplier_id);
+          paramIndex++;
+          console.log(`Updating supplier_id to: ${updateData.supplier_id}`);
         }
         
         // Always update timestamp
@@ -1604,9 +1624,11 @@ class PurchaseOrderController {
 
   getValidationRules(isBlank = false) {
     const baseRules = [
-      body('supplier_id').isInt().withMessage('Supplier ID must be an integer'),
-      body('requested_by').optional().isString().withMessage('Requested by must be a string'),
-      body('approved_by').optional().isString().withMessage('Approved by must be a string')
+      // Note: supplier_id validation is handled manually in createBlankPurchaseOrder
+      // because we need to allow either supplier_id OR manual_supplier_name
+      body('manual_supplier_name').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Manual supplier name must be a string'),
+      body('requested_by').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Requested by must be a string'),
+      body('approved_by').optional({ nullable: true, checkFalsy: true }).isString().withMessage('Approved by must be a string')
     ];
     
     if (!isBlank) {
@@ -1933,11 +1955,14 @@ class PurchaseOrderController {
   async createBlankPurchaseOrder(req, res) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error('Validation errors in createBlankPurchaseOrder:', JSON.stringify(errors.array(), null, 2));
+      console.error('Request body:', JSON.stringify(req.body, null, 2));
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { 
       supplier_id, 
+      manual_supplier_name,
       notes = '', 
       is_urgent = false,
       next_day_air = false,
@@ -1950,6 +1975,23 @@ class PurchaseOrderController {
 
     console.log("Creating blank PO with data:", req.body);
     
+    // Validate that we have either supplier_id or manual_supplier_name
+    if (!supplier_id && !manual_supplier_name) {
+      return res.status(400).json({ 
+        error: 'Either supplier_id or manual_supplier_name must be provided' 
+      });
+    }
+    
+    // If supplier_id is provided, validate it's a valid integer
+    if (supplier_id !== undefined && supplier_id !== null) {
+      const parsedSupplierId = parseInt(supplier_id);
+      if (isNaN(parsedSupplierId) || parsedSupplierId <= 0) {
+        return res.status(400).json({
+          error: 'supplier_id must be a valid positive integer'
+        });
+      }
+    }
+    
     // Format the notes to include special fields
     const formattedNotes = JSON.stringify({
       original_notes: notes,
@@ -1959,7 +2001,8 @@ class PurchaseOrderController {
       tax_amount,
       priority,
       requested_by,
-      approved_by
+      approved_by,
+      manual_supplier_name: manual_supplier_name || null
     });
     
     let client;
@@ -2006,7 +2049,7 @@ class PurchaseOrderController {
         `INSERT INTO purchase_orders (
           po_number, supplier_id, status, notes
         ) VALUES ($1, $2, $3, $4) RETURNING po_id`,
-        [poNumber, supplier_id, 'pending', formattedNotes]
+        [poNumber, supplier_id || null, 'pending', formattedNotes]
       );
       
       const poId = insertPoResult.rows[0].po_id;
@@ -2367,6 +2410,484 @@ class PurchaseOrderController {
       res.status(500).json({ message: 'Failed to update item receipt status' });
     } finally {
       client.release();
+    }
+  }
+
+  /**
+   * Import Purchase Order from PDF
+   * Automatically extracts data, matches/creates supplier and parts, and creates the PO
+   */
+  async importFromPDF(req, res) {
+    const file = req.file;
+    
+    if (!file) {
+      return res.status(400).json({ error: 'No PDF file provided' });
+    }
+    
+    console.log('=== Starting PDF Import ===');
+    console.log('File:', file.filename);
+    
+    let client;
+    let tempImagePath = null;
+    
+    try {
+      // Try AI extraction first (for scanned/image-based PDFs)
+      console.log('Step 1: Converting PDF to image for AI processing...');
+      let parsedData = null;
+      
+      try {
+        tempImagePath = await convertPdfToImage(file.path);
+        console.log('Step 2: Extracting data using AI...');
+        parsedData = await this.aiExtractor.extractFromImage(tempImagePath);
+        console.log('AI extraction successful');
+      } catch (aiError) {
+        console.warn('AI extraction failed, trying text-based extraction:', aiError.message);
+        
+        // Fallback to text extraction for digital PDFs
+        console.log('Step 1b: Extracting text from PDF...');
+        const pdfText = await extractTextFromPDF(file.path);
+        console.log('PDF text extraction complete');
+        
+        console.log('Step 2b: Parsing Fiserv PDF format...');
+        parsedData = parseFiservPDF(pdfText);
+      }
+      
+      if (!parsedData.vendor || !parsedData.vendor.name) {
+        return res.status(400).json({ error: 'Could not extract vendor information from PDF' });
+      }
+      
+      if (!parsedData.lineItems || parsedData.lineItems.length === 0) {
+        return res.status(400).json({ error: 'Could not extract line items from PDF' });
+      }
+      
+      console.log('PDF parsing complete:', {
+        poNumber: parsedData.poNumber,
+        vendor: parsedData.vendor.name,
+        itemCount: parsedData.lineItems.length
+      });
+      
+      // 3. Match or create supplier
+      console.log('Step 3: Matching or creating supplier...');
+      const supplierResult = await this.supplierMatcher.matchOrCreateSupplier(parsedData.vendor);
+      console.log(`Supplier ${supplierResult.created ? 'created' : 'matched'}:`, supplierResult.name);
+      
+      // 4. Create PO
+      console.log('Step 4: Creating purchase order...');
+      
+      client = await this.pool.connect();
+      await client.query('BEGIN');
+      
+      // Generate PO number if not in PDF or use the one from PDF
+      let poNumber = parsedData.poNumber;
+      
+      if (!poNumber) {
+        const currentDate = new Date();
+        const poPrefix = format(currentDate, 'yyyyMM');
+        
+        const poNumResult = await client.query(
+          "SELECT po_number FROM purchase_orders WHERE po_number LIKE $1 ORDER BY po_number DESC LIMIT 1",
+          [`${poPrefix}%`]
+        );
+        
+        let nextNum = 1;
+        if (poNumResult.rows.length > 0) {
+          const lastPO = poNumResult.rows[0].po_number;
+          const parts = lastPO.split('-');
+          if (parts.length >= 2) {
+            const lastNum = parseInt(parts[1]);
+            if (!isNaN(lastNum)) {
+              nextNum = lastNum + 1;
+            }
+          }
+        }
+        
+        poNumber = `${poPrefix}-${nextNum.toString().padStart(4, '0')}`;
+      }
+      
+      // Prepare notes with ship-to and other info
+      const notesData = {
+        buyer: parsedData.buyer,
+        ship_to: parsedData.shipTo,
+        authorized_by: parsedData.authorizedBy,
+        comments: parsedData.comments,
+        imported_from_pdf: true,
+        import_date: new Date().toISOString(),
+        original_po_number: parsedData.poNumber
+      };
+      
+      // Create the PO
+      const poResult = await client.query(
+        `INSERT INTO purchase_orders (
+          po_number, 
+          supplier_id, 
+          status, 
+          total_amount, 
+          tax_amount,
+          order_date,
+          requested_by,
+          notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) 
+        RETURNING *`,
+        [
+          poNumber,
+          supplierResult.supplier_id,
+          'pending',
+          parsedData.total || 0,
+          parsedData.tax || 0,
+          parsedData.poDate ? new Date(parsedData.poDate) : new Date(),
+          parsedData.buyer || null,
+          JSON.stringify(notesData)
+        ]
+      );
+      
+      const po = poResult.rows[0];
+      console.log(`PO created: ${po.po_number} (ID: ${po.po_id})`);
+      
+      // 5. Process line items - match or create parts
+      console.log('Step 5: Processing line items and matching/creating parts...');
+      const processedItems = [];
+      const createdParts = [];
+      const matchedParts = [];
+      
+      for (const lineItem of parsedData.lineItems) {
+        console.log(`\nProcessing line item: ${lineItem.description}`);
+        
+        // Match or create part
+        const partResult = await this.partMatcher.matchOrCreatePart(
+          lineItem,
+          supplierResult.supplier_id,
+          po.po_number
+        );
+        
+        if (partResult.created) {
+          createdParts.push(partResult);
+        } else {
+          matchedParts.push(partResult);
+        }
+        
+        // Add item to PO
+        const itemResult = await client.query(
+          `INSERT INTO purchase_order_items (
+            po_id,
+            part_id,
+            part_name,
+            manufacturer_part_number,
+            quantity,
+            unit_cost,
+            total_cost,
+            notes
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+          RETURNING *`,
+          [
+            po.po_id,
+            partResult.part_id,
+            partResult.part_name,
+            partResult.manufacturer_part_number,
+            lineItem.quantity,
+            lineItem.unitPrice,
+            lineItem.extendedPrice,
+            partResult.created ? 'Part auto-created from PDF import' : 'Part matched from existing inventory'
+          ]
+        );
+        
+        processedItems.push({
+          ...itemResult.rows[0],
+          created: partResult.created,
+          matched: partResult.matched
+        });
+      }
+      
+      // Store the uploaded PDF as a document
+      console.log('Step 6: Storing PDF as document...');
+      await client.query(
+        `INSERT INTO purchase_order_documents (
+          po_id, 
+          file_path, 
+          file_name, 
+          document_type, 
+          created_by, 
+          notes
+        ) VALUES ($1, $2, $3, $4, $5, $6)`,
+        [
+          po.po_id,
+          file.path,
+          file.filename,
+          'pdf',
+          req.user?.username || 'system',
+          `Original PO PDF imported on ${new Date().toISOString()}`
+        ]
+      );
+      
+      await client.query('COMMIT');
+      
+      console.log('=== PDF Import Complete ===');
+      console.log('Summary:', {
+        po_number: po.po_number,
+        total_items: processedItems.length,
+        matched_parts: matchedParts.length,
+        created_parts: createdParts.length,
+        supplier_created: supplierResult.created
+      });
+      
+      // 6. Return success response
+      res.status(201).json({
+        success: true,
+        po_id: po.po_id,
+        po_number: po.po_number,
+        supplier: {
+          id: supplierResult.supplier_id,
+          name: supplierResult.name,
+          created: supplierResult.created
+        },
+        stats: {
+          total_items: processedItems.length,
+          matched_parts: matchedParts.length,
+          created_parts: createdParts.length
+        },
+        created_parts: createdParts.map(p => ({
+          part_id: p.part_id,
+          name: p.part_name,
+          manufacturer_part_number: p.manufacturer_part_number
+        })),
+        items: processedItems
+      });
+      
+    } catch (error) {
+      if (client) {
+        await client.query('ROLLBACK');
+      }
+      console.error('Error importing PDF:', error);
+      res.status(500).json({ 
+        error: 'Failed to import PDF',
+        message: error.message,
+        details: error.stack
+      });
+    } finally {
+      // Cleanup temp image if created
+      if (this.tempImagePath) {
+        await cleanupImage(this.tempImagePath);
+        this.tempImagePath = null;
+      }
+      
+      if (client) {
+        client.release();
+      }
+    }
+  }
+
+  /**
+   * Manual Import from PDF
+   * User enters data manually while viewing the PDF
+   */
+  async importManual(req, res) {
+    const file = req.file;
+    const { vendorName, poNumber, poDate, tax, notes, lineItems } = req.body;
+
+    console.log('=== Starting Manual PDF Import ===');
+    console.log('Vendor:', vendorName);
+
+    let client;
+
+    try {
+      // Parse line items from JSON string
+      const items = JSON.parse(lineItems);
+
+      if (!vendorName || !vendorName.trim()) {
+        return res.status(400).json({ error: 'Vendor name is required' });
+      }
+
+      if (!items || items.length === 0) {
+        return res.status(400).json({ error: 'At least one line item is required' });
+      }
+
+      // 1. Match or create supplier
+      console.log('Step 1: Matching or creating supplier...');
+      const supplierResult = await this.supplierMatcher.matchOrCreateSupplier({
+        name: vendorName,
+        address: null
+      });
+      console.log(`Supplier ${supplierResult.created ? 'created' : 'matched'}:`, supplierResult.name);
+
+      // 2. Create PO
+      console.log('Step 2: Creating purchase order...');
+
+      client = await this.pool.connect();
+      await client.query('BEGIN');
+
+      // Generate PO number if not provided
+      let finalPoNumber = poNumber;
+
+      if (!finalPoNumber || !finalPoNumber.trim()) {
+        const currentDate = new Date();
+        const poPrefix = format(currentDate, 'yyyyMM');
+
+        const poNumResult = await client.query(
+          "SELECT po_number FROM purchase_orders WHERE po_number LIKE $1 ORDER BY po_number DESC LIMIT 1",
+          [`${poPrefix}%`]
+        );
+
+        let nextNum = 1;
+        if (poNumResult.rows.length > 0) {
+          const lastPO = poNumResult.rows[0].po_number;
+          const parts = lastPO.split('-');
+          if (parts.length >= 2) {
+            const lastNum = parseInt(parts[1]);
+            if (!isNaN(lastNum)) {
+              nextNum = lastNum + 1;
+            }
+          }
+        }
+
+        finalPoNumber = `${poPrefix}-${nextNum.toString().padStart(4, '0')}`;
+      }
+
+      // Calculate total
+      const subtotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
+      const taxAmount = parseFloat(tax) || 0;
+      const totalAmount = subtotal + taxAmount;
+
+      // Prepare notes
+      const notesData = {
+        user_notes: notes,
+        manually_entered: true,
+        import_date: new Date().toISOString(),
+        original_po_number: poNumber
+      };
+
+      // Create the PO
+      const poResult = await client.query(
+        `INSERT INTO purchase_orders (
+          po_number, 
+          supplier_id, 
+          status, 
+          total_amount, 
+          tax_amount,
+          order_date,
+          notes
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+        [
+          finalPoNumber,
+          supplierResult.supplier_id,
+          'pending',
+          totalAmount,
+          taxAmount,
+          poDate || new Date().toISOString().split('T')[0],
+          JSON.stringify(notesData)
+        ]
+      );
+
+      const po = poResult.rows[0];
+      console.log('PO created:', po.po_number);
+
+      // 3. Process line items
+      console.log('Step 3: Processing line items...');
+      const processedItems = [];
+      const createdParts = [];
+      const matchedParts = [];
+
+      for (const item of items) {
+        if (!item.description || !item.description.trim()) {
+          continue;
+        }
+
+        // Try to match or create part
+        const partResult = await this.partMatcher.matchOrCreatePart(
+          item.description,
+          supplierResult.supplier_id,
+          item.unitPrice || 0
+        );
+
+        if (partResult.created) {
+          createdParts.push(partResult);
+        } else {
+          matchedParts.push(partResult);
+        }
+
+        // Insert PO item
+        const poItemResult = await client.query(
+          `INSERT INTO purchase_order_items (
+            po_id,
+            part_id,
+            part_name,
+            manufacturer_part_number,
+            quantity,
+            unit_cost,
+            total_cost
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
+          [
+            po.po_id,
+            partResult.part_id,
+            partResult.part_name,
+            partResult.manufacturer_part_number,
+            item.quantity || 1,
+            item.unitPrice || 0,
+            item.total || 0
+          ]
+        );
+
+        processedItems.push(poItemResult.rows[0]);
+      }
+
+      console.log(`Processed ${processedItems.length} items (${matchedParts.length} matched, ${createdParts.length} created)`);
+
+      // 4. Store PDF document if provided
+      if (file) {
+        console.log('Step 4: Storing PDF document...');
+        await client.query(
+          `INSERT INTO purchase_order_documents (
+            po_id, file_path, file_name, file_type, uploaded_by, notes
+          ) VALUES ($1, $2, $3, $4, $5, $6)`,
+          [
+            po.po_id,
+            file.path,
+            file.filename,
+            'pdf',
+            req.user?.username || 'system',
+            `Manually entered PO from PDF on ${new Date().toISOString()}`
+          ]
+        );
+      }
+
+      await client.query('COMMIT');
+
+      console.log('=== Manual PDF Import Complete ===');
+
+      // 5. Return success response
+      res.status(201).json({
+        success: true,
+        po_id: po.po_id,
+        po_number: po.po_number,
+        supplier: {
+          id: supplierResult.supplier_id,
+          name: supplierResult.name,
+          created: supplierResult.created
+        },
+        stats: {
+          total_items: processedItems.length,
+          matched_parts: matchedParts.length,
+          created_parts: createdParts.length
+        },
+        created_parts: createdParts.map(p => ({
+          part_id: p.part_id,
+          name: p.part_name,
+          manufacturer_part_number: p.manufacturer_part_number
+        })),
+        items: processedItems
+      });
+
+    } catch (error) {
+      if (client) {
+        await client.query('ROLLBACK');
+      }
+      console.error('Error in manual import:', error);
+      res.status(500).json({
+        error: 'Failed to create PO',
+        message: error.message
+      });
+    } finally {
+      if (client) {
+        client.release();
+      }
     }
   }
 }

@@ -24,8 +24,12 @@ import ProjectTimeline from './components/projects/ProjectTimeline';
 import TechnicianManagement from './components/TechnicianManagement';
 import PMChecklistManagement from './components/PMChecklistManagement';
 import Contacts from './components/Contacts';
-// Comment out or remove this import since it's creating an error
-// import TestPOPage from './pages/TestPOPage';
+import WorkOrders from './pages/WorkOrders';
+import WorkOrderForm from './pages/WorkOrderForm';
+import WorkOrderDetail from './pages/WorkOrderDetail';
+import DieTracker from './pages/DieTracker';
+import DieDetail from './pages/DieDetail';
+import DieReports from './pages/DieReports';
 
 const App: React.FC = () => {
   return (
@@ -90,6 +94,38 @@ const App: React.FC = () => {
             }
           />
           
+          {/* Die Tracker - requires CAN_VIEW_MACHINES permission */}
+          <Route
+            path="/die-tracker"
+            element={
+              <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
+                <Navigation>
+                  <DieTracker />
+                </Navigation>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/die-tracker/detail/:dieId"
+            element={
+              <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
+                <Navigation>
+                  <DieDetail />
+                </Navigation>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/die-tracker/reports"
+            element={
+              <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
+                <Navigation>
+                  <DieReports />
+                </Navigation>
+              </ProtectedRoute>
+            }
+          />
+
           {/* Machine Costs - requires CAN_VIEW_ALL permission */}
           <Route
             path="/machine-costs/*"
@@ -215,6 +251,48 @@ const App: React.FC = () => {
             }
           />
           
+          {/* Work Orders - requires CAN_VIEW_MACHINES permission */}
+          <Route
+            path="/work-orders"
+            element={
+              <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
+                <Navigation>
+                  <WorkOrders />
+                </Navigation>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/work-orders/new"
+            element={
+              <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
+                <Navigation>
+                  <WorkOrderForm />
+                </Navigation>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/work-orders/:id"
+            element={
+              <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
+                <Navigation>
+                  <WorkOrderDetail />
+                </Navigation>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/work-orders/:id/edit"
+            element={
+              <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
+                <Navigation>
+                  <WorkOrderForm />
+                </Navigation>
+              </ProtectedRoute>
+            }
+          />
+
           {/* Test PO Page - Public route, no authentication required */}
           <Route path="/test-po" element={<div>Test PO Page</div>} />
           

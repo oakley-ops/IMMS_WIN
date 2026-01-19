@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const pool = require('../../db');
+const { pool } = require('../../db');
 const auth = require('../middleware/auth');
 
 /**
@@ -390,6 +390,92 @@ router.get('/:id/timeline', auth, async (req, res) => {
     }
   } catch (err) {
     console.error('Error fetching project timeline:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+/**
+ * @swagger
+ * /api/projects/{id}/progress:
+ *   get:
+ *     summary: Get project progress summary including milestone completion
+ *     tags: [Projects]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Project progress data
+ */
+router.get('/:id/progress', auth, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Get project details
+    const projectResult = await pool.query(
+      'SELECT * FROM projects WHERE project_id = $1',
+      [id]
+    );
+    
+    if (projectResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+    
+    // Get milestone statistics
+    const milestoneStats = await pool.query(
+      `SELECT 
+        COUNT(*) as total_milestones,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_milestones,
+        COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress_milestones,
+        COUNT(CASE WHEN status = 'delayed' THEN 1 END) as delayed_milestones,
+        COUNT(CASE WHEN status = 'pending' THEN 1 END) as pending_milestones
+      FROM project_milestones 
+      WHERE project_id = $1`,
+      [id]
+    );
+    
+    // Get task statistics
+    const taskStats = await pool.query(
+      `SELECT 
+        COUNT(*) as total_tasks,
+        COUNT(CASE WHEN status = 'completed' THEN 1 END) as completed_tasks,
+        COUNT(CASE WHEN status = 'in_progress' THEN 1 END) as in_progress_tasks
+      FROM project_tasks 
+      WHERE project_id = $1`,
+      [id]
+    );
+    
+    const stats = milestoneStats.rows[0];
+    const tasks = taskStats.rows[0];
+    const total = parseInt(stats.total_milestones) || 0;
+    const completed = parseInt(stats.completed_milestones) || 0;
+    
+    // Calculate overall progress percentage
+    const progressPercentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+    
+    res.json({
+      project: projectResult.rows[0],
+      milestones: {
+        total: total,
+        completed: completed,
+        in_progress: parseInt(stats.in_progress_milestones) || 0,
+        delayed: parseInt(stats.delayed_milestones) || 0,
+        pending: parseInt(stats.pending_milestones) || 0,
+      },
+      tasks: {
+        total: parseInt(tasks.total_tasks) || 0,
+        completed: parseInt(tasks.completed_tasks) || 0,
+        in_progress: parseInt(tasks.in_progress_tasks) || 0,
+      },
+      progress_percentage: progressPercentage
+    });
+  } catch (err) {
+    console.error('Error fetching project progress:', err);
     res.status(500).json({ error: 'Server error' });
   }
 });

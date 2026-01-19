@@ -56,6 +56,8 @@ const ManualPOForm: React.FC = () => {
   const [supplierSearchTerm, setSupplierSearchTerm] = useState('');
   const [supplierResults, setSupplierResults] = useState<Supplier[]>([]);
   const [searchingSuppliers, setSearchingSuppliers] = useState(false);
+  const [isManualSupplier, setIsManualSupplier] = useState(false);
+  const [manualSupplierName, setManualSupplierName] = useState('');
 
   // State for the purchase order
   const [purchaseOrder, setPurchaseOrder] = useState<PurchaseOrder>({
@@ -194,9 +196,9 @@ const ManualPOForm: React.FC = () => {
     
     const searchTerm = term.toLowerCase();
     const filteredSuppliers = suppliers.filter(supplier => 
-      supplier.name.toLowerCase().includes(searchTerm) ||
-      supplier.contact_name.toLowerCase().includes(searchTerm) ||
-      supplier.email.toLowerCase().includes(searchTerm)
+      (supplier.name && supplier.name.toLowerCase().includes(searchTerm)) ||
+      (supplier.contact_name && supplier.contact_name.toLowerCase().includes(searchTerm)) ||
+      (supplier.email && supplier.email.toLowerCase().includes(searchTerm))
     );
     
     setSupplierResults(filteredSuppliers);
@@ -284,9 +286,17 @@ const ManualPOForm: React.FC = () => {
   // Preview PO as PDF
   const previewPO = async () => {
     // Validate required fields
-    if (!purchaseOrder.supplier.supplier_id) {
+    if (!purchaseOrder.supplier.supplier_id && !isManualSupplier) {
       setMessage({
-        text: 'Please select a supplier.',
+        text: 'Please select a supplier or enable manual entry.',
+        type: 'warning'
+      });
+      return;
+    }
+    
+    if (isManualSupplier && !manualSupplierName.trim()) {
+      setMessage({
+        text: 'Please enter a supplier name.',
         type: 'warning'
       });
       return;
@@ -304,7 +314,7 @@ const ManualPOForm: React.FC = () => {
       // Find the selected supplier's details
       const selectedSupplier = suppliers.find(s => s.supplier_id === purchaseOrder.supplier.supplier_id);
       
-      if (!selectedSupplier) {
+      if (!selectedSupplier && !isManualSupplier) {
         setMessage({
           text: 'Invalid supplier selected. Please select a valid supplier.',
           type: 'error'
@@ -315,7 +325,7 @@ const ManualPOForm: React.FC = () => {
       // Generate PDF
       const pdfBlob = await generatePurchaseOrderPDF({
         ...purchaseOrder,
-        supplier: selectedSupplier
+        supplier: selectedSupplier || { name: manualSupplierName }
       });
       
       // Check if pdfBlob is a valid blob
@@ -351,7 +361,7 @@ const ManualPOForm: React.FC = () => {
       const pdfBlob = await generatePurchaseOrderPDF({
         ...purchaseOrder,
         poNumber,
-        supplier: selectedSupplier
+        supplier: selectedSupplier || { name: manualSupplierName }
       });
       
       // Check if pdfBlob is a valid blob
@@ -402,10 +412,18 @@ const ManualPOForm: React.FC = () => {
   // Save PO
   const savePO = async () => {
     try {
-      // Validate required fields
-      if (!purchaseOrder.supplier.supplier_id) {
+      // Validate required fields - either DB supplier or manual supplier name
+      if (!purchaseOrder.supplier.supplier_id && !isManualSupplier) {
         setMessage({
-          text: 'Please select a supplier.',
+          text: 'Please select a supplier from the list or enable manual entry.',
+          type: 'warning'
+        });
+        return;
+      }
+      
+      if (isManualSupplier && !manualSupplierName.trim()) {
+        setMessage({
+          text: 'Please enter a supplier name.',
           type: 'warning'
         });
         return;
@@ -421,20 +439,24 @@ const ManualPOForm: React.FC = () => {
       
       setSubmitting(true);
       
-      // Make sure supplier_id is a valid number
-      const supplier_id = parseInt(String(purchaseOrder.supplier.supplier_id));
+      // Determine supplier_id based on manual or DB selection
+      let supplier_id: number | null = null;
       
-      if (isNaN(supplier_id) || supplier_id <= 0) {
-        setMessage({
-          text: 'Invalid supplier selected. Please select a valid supplier.',
-          type: 'error'
-        });
-        return;
+      if (!isManualSupplier) {
+        supplier_id = parseInt(String(purchaseOrder.supplier.supplier_id));
+        
+        if (isNaN(supplier_id) || supplier_id <= 0) {
+          setMessage({
+            text: 'Invalid supplier selected. Please select a valid supplier.',
+            type: 'error'
+          });
+          return;
+        }
       }
       
       // Prepare the data for the backend (note: special fields will be encoded in the notes)
-      const poData = {
-        supplier_id,
+      const poData: any = {
+        supplier_id: supplier_id || undefined,
         notes: purchaseOrder.notes || '',
         is_urgent: purchaseOrder.urgent || false,
         next_day_air: purchaseOrder.nextDayShipping || false,
@@ -445,10 +467,16 @@ const ManualPOForm: React.FC = () => {
         items: [] // Add empty items array to satisfy validation
       };
       
+      // If manual supplier, add supplier name to notes
+      if (isManualSupplier && manualSupplierName.trim()) {
+        poData.manual_supplier_name = manualSupplierName.trim();
+      }
+      
       console.log('Creating blank PO with data:', poData);
       
       // Create a blank PO first
       try {
+        console.log('Attempting to create blank PO with data:', JSON.stringify(poData, null, 2));
         const blankPoResponse = await purchaseOrdersApi.createBlankPO(poData);
         console.log('Blank PO Response:', blankPoResponse);
         
@@ -494,8 +522,22 @@ const ManualPOForm: React.FC = () => {
         }, 2000);
       } catch (error: any) {
         console.error('Error creating PO:', error);
+        console.error('Error response:', error.response);
+        console.error('Error response data:', error.response?.data);
+        
+        // Try to extract the most detailed error message
+        let errorMessage = 'Failed to create purchase order.';
+        if (error.response?.data?.errors) {
+          // Validation errors array
+          errorMessage = error.response.data.errors.map((e: any) => e.msg).join(', ');
+        } else if (error.response?.data?.error) {
+          errorMessage = error.response.data.error;
+        } else if (error.response?.data?.message) {
+          errorMessage = error.response.data.message;
+        }
+        
         setMessage({
-          text: error.response?.data?.message || 'Failed to create purchase order.',
+          text: errorMessage,
           type: 'error'
         });
       } finally {
@@ -544,26 +586,65 @@ const ManualPOForm: React.FC = () => {
               
               {/* Supplier Selection */}
               <div className="mb-3">
-                <label className="form-label">Supplier</label>
-                <div className="search-container">
+                <div className="d-flex justify-content-between align-items-center mb-2">
+                  <label className="form-label mb-0">Supplier</label>
+                  <div className="form-check form-switch">
+                    <input
+                      className="form-check-input"
+                      type="checkbox"
+                      id="manualSupplierToggle"
+                      checked={isManualSupplier}
+                      onChange={(e) => {
+                        setIsManualSupplier(e.target.checked);
+                        if (e.target.checked) {
+                          // Clear DB supplier selection
+                          setPurchaseOrder({
+                            ...purchaseOrder,
+                            supplier: { supplier_id: 0 }
+                          });
+                          setSupplierSearchTerm('');
+                          setSupplierResults([]);
+                        } else {
+                          // Clear manual supplier name
+                          setManualSupplierName('');
+                        }
+                      }}
+                    />
+                    <label className="form-check-label" htmlFor="manualSupplierToggle">
+                      Manual Entry
+                    </label>
+                  </div>
+                </div>
+                
+                {isManualSupplier ? (
                   <input
                     type="text"
                     className="form-control"
-                    value={supplierSearchTerm}
-                    onChange={handleSupplierSearchChange}
-                    placeholder="Search for a supplier"
-                    disabled={!!getSelectedSupplier()}
+                    value={manualSupplierName}
+                    onChange={(e) => setManualSupplierName(e.target.value)}
+                    placeholder="Enter supplier name manually"
                   />
-                  {searchingSuppliers && (
-                    <div className="spinner-border spinner-border-sm text-primary position-absolute" 
-                         style={{ right: '1rem', top: '0.75rem' }} 
-                         role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                  )}
-                </div>
+                ) : (
+                  <div className="search-container">
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={supplierSearchTerm}
+                      onChange={handleSupplierSearchChange}
+                      placeholder="Search for a supplier"
+                      disabled={!!getSelectedSupplier()}
+                    />
+                    {searchingSuppliers && (
+                      <div className="spinner-border spinner-border-sm text-primary position-absolute" 
+                           style={{ right: '1rem', top: '0.75rem' }} 
+                           role="status">
+                        <span className="visually-hidden">Loading...</span>
+                      </div>
+                    )}
+                  </div>
+                )}
                 
-                {supplierResults.length > 0 && !getSelectedSupplier() && (
+                {!isManualSupplier && supplierResults.length > 0 && !getSelectedSupplier() && (
                   <div className="search-results">
                     {supplierResults.map((supplier) => (
                       <div
@@ -585,7 +666,7 @@ const ManualPOForm: React.FC = () => {
                   </div>
                 )}
                 
-                {getSelectedSupplier() && (
+                {!isManualSupplier && getSelectedSupplier() && (
                   <div className="info-panel mt-3">
                     <div className="d-flex justify-content-between align-items-start">
                       <div>
@@ -788,6 +869,7 @@ const ManualPOForm: React.FC = () => {
                         name="price"
                         value={currentItem.price}
                         onChange={handleItemChange}
+                        onFocus={(e) => e.target.select()}
                         min="0"
                         step="0.01"
                       />
@@ -878,7 +960,7 @@ const ManualPOForm: React.FC = () => {
                 type="button"
                 className="btn btn-outline-primary"
                 onClick={previewPO}
-                disabled={submitting || purchaseOrder.items.length === 0 || !purchaseOrder.supplier.supplier_id}
+                disabled={submitting || purchaseOrder.items.length === 0 || (!purchaseOrder.supplier.supplier_id && !isManualSupplier) || (isManualSupplier && !manualSupplierName.trim())}
               >
                 <PictureAsPdfIcon fontSize="small" style={{ marginRight: '4px' }} />
                 Preview PDF
@@ -886,7 +968,7 @@ const ManualPOForm: React.FC = () => {
               <button
                 type="submit"
                 className="btn btn-primary"
-                disabled={submitting || purchaseOrder.items.length === 0 || !purchaseOrder.supplier.supplier_id}
+                disabled={submitting || purchaseOrder.items.length === 0 || (!purchaseOrder.supplier.supplier_id && !isManualSupplier) || (isManualSupplier && !manualSupplierName.trim())}
               >
                 {submitting ? (
                   <>

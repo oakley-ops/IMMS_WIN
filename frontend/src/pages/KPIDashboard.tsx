@@ -23,6 +23,7 @@ const KPIDashboard: React.FC = () => {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exportingPDF, setExportingPDF] = useState(false);
   const navigate = useNavigate();
 
   const fetchDashboardData = async () => {
@@ -62,6 +63,32 @@ const KPIDashboard: React.FC = () => {
   useEffect(() => {
     fetchDashboardData();
   }, []);
+
+  const handleExportPDF = async () => {
+    setExportingPDF(true);
+    try {
+      console.log('Requesting PDF export (Puppeteer - Chrome rendering)...');
+      const pdfBlob = await analyticsService.exportAnalyticsPDFPuppeteer();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      const filename = `analytics-report-${new Date().toISOString().split('T')[0]}.pdf`;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      console.log('✅ PDF downloaded successfully!');
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      alert('Failed to export PDF. Please try again or check the console for details.');
+    } finally {
+      setExportingPDF(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -110,12 +137,35 @@ const KPIDashboard: React.FC = () => {
     <div className="kpi-dashboard-page px-3 py-3" style={{ backgroundColor: '#f8f9fb' }}>
       <div className="mb-4 d-flex justify-content-between align-items-center">
         <h1 className="h2 mb-0">KPI Dashboard</h1>
-        <Button 
-          variant="outline-primary" 
-          onClick={() => navigate('/dashboard')}
-        >
-          Back to Dashboard
-        </Button>
+        <div className="d-flex gap-2">
+          <Button 
+            variant="success"
+            onClick={handleExportPDF}
+            disabled={exportingPDF || !analyticsData.inventoryHealth}
+            style={{ 
+              backgroundColor: '#FF6600', 
+              borderColor: '#FF6600',
+              fontWeight: 600
+            }}
+          >
+            {exportingPDF ? (
+              <>
+                <Spinner animation="border" size="sm" className="me-2" />
+                Generating PDF...
+              </>
+            ) : (
+              <>
+                📄 Export PDF Report
+              </>
+            )}
+          </Button>
+          <Button 
+            variant="outline-primary" 
+            onClick={() => navigate('/dashboard')}
+          >
+            Back to Dashboard
+          </Button>
+        </div>
       </div>
       
       {/* Analytics Cards Row */}

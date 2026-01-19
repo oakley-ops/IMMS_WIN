@@ -38,6 +38,7 @@ import {
   deleteEquipment,
   addEquipmentDependency,
   createMilestone,
+  updateMilestone,
   createTask,
 } from '../../services/projectService';
 import {
@@ -104,6 +105,7 @@ const ProjectTimeline: React.FC = () => {
   
   // Milestone dialog state
   const [openMilestoneDialog, setOpenMilestoneDialog] = useState<boolean>(false);
+  const [editingMilestone, setEditingMilestone] = useState<ProjectMilestone | null>(null);
   const [milestoneFormData, setMilestoneFormData] = useState<Partial<ProjectMilestone>>({
     name: '',
     description: '',
@@ -127,6 +129,7 @@ const ProjectTimeline: React.FC = () => {
   const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
   const [selectedDependency, setSelectedDependency] = useState<string | null>(null);
   const [equipmentOptions, setEquipmentOptions] = useState<EquipmentInstallation[]>([]);
+  const [milestoneOptions, setMilestoneOptions] = useState<ProjectMilestone[]>([]);
   const [dependencies, setDependencies] = useState<EquipmentDependency[]>([]);
   
   // Fetch project and timeline data
@@ -207,6 +210,7 @@ const ProjectTimeline: React.FC = () => {
         
         setTimelineItems(mappedItems);
         setEquipmentOptions(timelineData.equipment);
+        setMilestoneOptions(timelineData.milestones);
         setDependencies(timelineData.dependencies);
         setLoading(false);
       } catch (err) {
@@ -329,18 +333,31 @@ const ProjectTimeline: React.FC = () => {
   };
   
   // Milestone form handlers
-  const handleOpenMilestoneDialog = () => {
-    setMilestoneFormData({
-      name: '',
-      description: '',
-      due_date: '',
-      status: 'pending'
-    });
+  const handleOpenMilestoneDialog = (milestone?: ProjectMilestone) => {
+    if (milestone) {
+      setEditingMilestone(milestone);
+      setMilestoneFormData({
+        name: milestone.name,
+        description: milestone.description || '',
+        due_date: milestone.due_date || '',
+        completion_date: milestone.completion_date || '',
+        status: milestone.status
+      });
+    } else {
+      setEditingMilestone(null);
+      setMilestoneFormData({
+        name: '',
+        description: '',
+        due_date: '',
+        status: 'pending'
+      });
+    }
     setOpenMilestoneDialog(true);
   };
   
   const handleCloseMilestoneDialog = () => {
     setOpenMilestoneDialog(false);
+    setEditingMilestone(null);
   };
   
   const handleMilestoneFormChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -356,29 +373,66 @@ const ProjectTimeline: React.FC = () => {
     try {
       if (!projectId) return;
       
-      const milestoneData = {
-        ...milestoneFormData,
-        project_id: parseInt(projectId)
-      };
+      const projectIdNum = parseInt(projectId);
       
-      // Create new milestone
-      const newMilestone = await createMilestone(milestoneData as Omit<ProjectMilestone, 'milestone_id' | 'created_at' | 'updated_at'>);
+      if (editingMilestone) {
+        // Update existing milestone
+        await updateMilestone(editingMilestone.milestone_id, milestoneFormData);
+      } else {
+        // Create new milestone
+        const milestoneData = {
+          ...milestoneFormData,
+          project_id: projectIdNum
+        };
+        await createMilestone(milestoneData as Omit<ProjectMilestone, 'milestone_id' | 'created_at' | 'updated_at'>);
+      }
       
       // Refresh timeline data
-      const timelineData = await getProjectTimeline(parseInt(projectId));
+      const timelineData = await getProjectTimeline(projectIdNum);
       
-      // Update timeline items
-      const mappedItems = [...timelineItems];
+      // Rebuild timeline items from fresh data
+      const mappedItems: TimelineItemType[] = [];
       
-      // Add the new milestone
-      mappedItems.push({
-        id: `milestone-${newMilestone.milestone_id}`,
-        title: newMilestone.name,
-        date: newMilestone.due_date || '',
-        type: 'milestone',
-        description: newMilestone.description || '',
-        status: newMilestone.status,
-        color: statusColors[newMilestone.status] || statusColors.default
+      // Add equipment
+      timelineData.equipment.forEach(equipment => {
+        mappedItems.push({
+          id: `equipment-${equipment.installation_id}`,
+          title: equipment.equipment_name,
+          date: equipment.planned_installation_date || '',
+          endDate: equipment.actual_installation_date || undefined,
+          type: 'equipment',
+          description: equipment.installation_notes || '',
+          status: equipment.status,
+          location: equipment.location_in_facility || '',
+          color: statusColors[equipment.status] || statusColors.default
+        });
+      });
+      
+      // Add milestones
+      timelineData.milestones.forEach(milestone => {
+        mappedItems.push({
+          id: `milestone-${milestone.milestone_id}`,
+          title: milestone.name,
+          date: milestone.due_date || '',
+          type: 'milestone',
+          description: milestone.description || '',
+          status: milestone.status,
+          color: statusColors[milestone.status] || statusColors.default
+        });
+      });
+      
+      // Add tasks
+      timelineData.tasks.forEach(task => {
+        mappedItems.push({
+          id: `task-${task.task_id}`,
+          title: task.name,
+          date: task.start_date || '',
+          endDate: task.end_date || undefined,
+          type: 'task',
+          description: task.description || '',
+          status: task.status,
+          color: statusColors.default
+        });
       });
       
       // Sort items by date
@@ -608,6 +662,23 @@ const ProjectTimeline: React.FC = () => {
                     </Tooltip>
                   </Box>
                 )}
+                
+                {item.type === 'milestone' && (
+                  <Box>
+                    <Tooltip title="Edit Milestone">
+                      <IconButton 
+                        size="small" 
+                        onClick={() => {
+                          const milestoneId = parseInt(item.id.split('-')[1]);
+                          const milestone = milestoneOptions.find(m => m.milestone_id === milestoneId);
+                          if (milestone) handleOpenMilestoneDialog(milestone);
+                        }}
+                      >
+                        <EditIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  </Box>
+                )}
               </Box>
               
               <Chip 
@@ -711,24 +782,6 @@ const ProjectTimeline: React.FC = () => {
           <Button 
             variant="contained" 
             startIcon={<AddIcon />} 
-            onClick={() => handleOpenEquipmentDialog()}
-            sx={{ mr: 1 }}
-          >
-            Add Equipment
-          </Button>
-          <Button 
-            variant="contained"
-            color="success"
-            startIcon={<FlagIcon />}
-            onClick={handleOpenMilestoneDialog}
-            sx={{ mr: 1 }}
-          >
-            Add Milestone
-          </Button>
-          <Button 
-            variant="contained"
-            color="info"
-            startIcon={<AssignmentIcon />}
             onClick={handleOpenTaskDialog}
             sx={{ mr: 1 }}
           >
@@ -890,7 +943,7 @@ const ProjectTimeline: React.FC = () => {
       
       {/* Milestone Dialog */}
       <Dialog open={openMilestoneDialog} onClose={handleCloseMilestoneDialog} maxWidth="md" fullWidth>
-        <DialogTitle>Add New Milestone</DialogTitle>
+        <DialogTitle>{editingMilestone ? 'Edit Milestone' : 'Add New Milestone'}</DialogTitle>
         <form onSubmit={handleSubmitMilestone}>
           <DialogContent>
             <Grid container spacing={2}>
@@ -924,6 +977,18 @@ const ProjectTimeline: React.FC = () => {
                   value={milestoneFormData.due_date}
                   onChange={handleMilestoneFormChange}
                   InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Completion Date"
+                  name="completion_date"
+                  type="date"
+                  value={milestoneFormData.completion_date || ''}
+                  onChange={handleMilestoneFormChange}
+                  InputLabelProps={{ shrink: true }}
+                  helperText="Set this when marking milestone as completed"
                 />
               </Grid>
               <Grid item xs={12} sm={6}>

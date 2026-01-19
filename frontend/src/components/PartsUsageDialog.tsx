@@ -178,11 +178,6 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
       return;
     }
 
-    if (!reason.trim()) {
-      setError('Please provide a reason for usage');
-      return;
-    }
-
     setLoading(true);
     setError(null);
 
@@ -457,8 +452,7 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
                     !selectedPart || 
                     !selectedMachine || 
                     quantity <= 0 || 
-                    quantity > (selectedPart?.quantity || 0) || 
-                    !reason.trim()
+                    quantity > (selectedPart?.quantity || 0)
                   }
                 >
                   {loading ? (

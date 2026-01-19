@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS project_milestones (
     due_date DATE,
     completion_date DATE,
     status VARCHAR(50) CHECK (status IN ('pending', 'in_progress', 'completed', 'delayed')),
+    order_index INTEGER DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );

@@ -20,6 +20,13 @@ const equipmentRouter = require('./src/routes/equipment');
 const techniciansRouter = require('./src/routes/technicians');
 const contactsRouter = require('./src/routes/contacts');
 const transactionsRouter = require('./src/routes/transactions');
+const analyticsRouter = require('./src/routes/analytics');
+const milestonesRouter = require('./src/routes/milestones');
+const tasksRouter = require('./src/routes/tasks');
+const workOrdersRouter = require('./src/routes/workOrders');
+const diesRouter = require('./src/routes/dies');
+const dieSharpeningRouter = require('./src/routes/dieSharpening');
+const dieDocumentsRouter = require('./src/routes/dieDocuments');
 const http = require('http');
 const { Server } = require('socket.io');
 const app = require('./src/app');
@@ -35,6 +42,9 @@ const io = new Server(server, {
       'http://localhost:3002',
       'http://10.1.10.171:3000',
       'http://10.1.10.171:3002',
+      'http://10.1.10.50:3000',
+      'http://10.1.10.50:3001',
+      'http://10.1.10.50:3002',
       'http://192.168.50.1:3000',
       'http://192.168.50.1:3001',
       'http://192.168.50.1:3002'
@@ -64,6 +74,9 @@ app.use(cors({
     "http://localhost:3002",
     "http://10.1.10.171:3000",
     "http://10.1.10.171:3002",
+    "http://10.1.10.50:3000",
+    "http://10.1.10.50:3001",
+    "http://10.1.10.50:3002",
     "http://192.168.50.1:3000",
     "http://192.168.50.1:3002"
   ],
@@ -201,6 +214,13 @@ app.use('/api/v1/equipment', equipmentRouter);
 app.use('/api/v1/technicians', techniciansRouter);
 app.use('/api/v1/contacts', contactsRouter);
 app.use('/api/v1/transactions', transactionsRouter);
+app.use('/api/v1/analytics', analyticsRouter);
+app.use('/api/v1/milestones', milestonesRouter);
+app.use('/api/v1/tasks', tasksRouter);
+app.use('/api/v1/work-orders', workOrdersRouter);
+app.use('/api/v1/dies', diesRouter);
+app.use('/api/v1/die-sharpening', dieSharpeningRouter);
+app.use('/api/v1/die-documents', dieDocumentsRouter);
 
 // Comment out the original parts usage controller since we're using our custom route
 // app.post('/api/v1/parts/usage', (req, res) => partsUsageController.recordUsage(req, res));

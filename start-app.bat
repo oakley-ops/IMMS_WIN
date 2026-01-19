@@ -24,18 +24,18 @@ start /min cmd /k "cd frontend && npm run start:localhost-3002"
 :: Wait for localhost server to start
 timeout /t 3
 
-:: Start the frontend server for network access  
-echo Starting Frontend Server - Network (http://192.168.50.1:3001)...
+:: Start the frontend server for network access (with API URL for Pi access)
+echo Starting Frontend Server - Network (http://10.1.10.50:3001)...
 start /min cmd /k "cd frontend && npm run start:network-pi"
 
 echo.
 echo PC ACCESS: http://localhost:3002 (Camera enabled - Main interface)
 echo.
 echo NETWORK ACCESS OPTIONS:
-echo   - http://192.168.50.1:3001 (Ethernet - For Raspberry Pi)
-echo   - http://10.1.10.171:3001 (WiFi - For other devices)
+echo   - http://10.1.10.50:3001 (Ethernet - For Raspberry Pi and network devices)
+echo   - http://10.1.10.171:3001 (WiFi - For other devices, if available)
 echo.
-echo Raspberry Pi can access via: http://192.168.50.1:3001
+echo Raspberry Pi can access via: http://10.1.10.50:3001
 echo.
 
 :: Wait for servers to fully initialize

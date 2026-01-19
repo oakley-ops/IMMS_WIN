@@ -311,6 +311,7 @@ const PartsList: React.FC = () => {
 
   const [currentSupplierNotes, setCurrentSupplierNotes] = useState('');
   const [openEditConfirm, setOpenEditConfirm] = useState(false);
+  const [editingSupplier, setEditingSupplier] = useState<number | null>(null);
   
   // Image preview state
   const [previewImage, setPreviewImage] = useState<string | null>(null);
@@ -1098,12 +1099,27 @@ const PartsList: React.FC = () => {
   const handleExport = async () => {
     try {
       setExportLoading(true);
-      const response = await axiosInstance.get('/api/v1/parts');
+      // Fetch ALL parts without pagination by setting a very high limit
+      const response = await axiosInstance.get('/api/v1/parts', {
+        params: {
+          limit: 999999, // Set a very high limit to get all parts
+          page: 0
+        }
+      });
       let parts = response.data.items || response.data;
+
+      console.log(`Fetched ${parts.length} parts for export`);
 
       // Filter parts by location if selected
       if (selectedLocation) {
         parts = parts.filter((part: PartListItem) => part.location === selectedLocation);
+        console.log(`Filtered to ${parts.length} parts for location: ${selectedLocation}`);
+      }
+
+      // Check if there are parts to export
+      if (!parts || parts.length === 0) {
+        setError('No parts found to export');
+        return;
       }
 
       // Transform data for export
@@ -1181,7 +1197,7 @@ const PartsList: React.FC = () => {
         
       // Export file
       XLSX.writeFile(workbook, filename);
-      setSuccess('Inventory exported successfully!');
+      setSuccess(`Inventory exported successfully! ${parts.length} parts exported to ${filename}`);
     } catch (error: any) {
       console.error('Error exporting inventory:', error);
       setError('Failed to export inventory');
@@ -1231,6 +1247,36 @@ const PartsList: React.FC = () => {
       return;
     }
 
+    // Validate unit cost - allow blank values (will default to 0)
+    if (currentUnitCost && (isNaN(Number(currentUnitCost)) || Number(currentUnitCost) < 0)) {
+      setError('Please enter a valid unit cost (must be 0 or greater)');
+      return;
+    }
+
+    // Check if we're editing an existing supplier
+    if (editingSupplier !== null) {
+      const updatedSuppliers = selectedSuppliers.map(s => 
+        s.supplier_id === editingSupplier 
+          ? {
+              ...s,
+              unit_cost: Number(currentUnitCost) || 0,
+              lead_time_days: currentLeadTimeDays ? Number(currentLeadTimeDays) : null,
+              notes: currentSupplierNotes || ''
+            }
+          : s
+      );
+      setSelectedSuppliers(updatedSuppliers);
+      
+      // Reset editing state
+      setEditingSupplier(null);
+      setCurrentSupplierId('');
+      setCurrentUnitCost('');
+      setCurrentLeadTimeDays('');
+      setCurrentSupplierNotes('');
+      setError(null);
+      return;
+    }
+
     // Check if this supplier already exists
     const existingSupplier = selectedSuppliers.find(
       (s) => s.supplier_id === Number(currentSupplierId)
@@ -1247,12 +1293,6 @@ const PartsList: React.FC = () => {
 
     if (!selectedSupplier) {
       setError('Invalid supplier selected');
-      return;
-    }
-
-    // Validate unit cost - allow blank values (will default to 0)
-    if (currentUnitCost && (isNaN(Number(currentUnitCost)) || Number(currentUnitCost) < 0)) {
-      setError('Please enter a valid unit cost (must be 0 or greater)');
       return;
     }
 
@@ -1278,6 +1318,27 @@ const PartsList: React.FC = () => {
     setError(null);
   };
 
+  const handleEditSupplier = (supplierId: number) => {
+    const supplier = selectedSuppliers.find(s => s.supplier_id === supplierId);
+    if (supplier) {
+      setEditingSupplier(supplierId);
+      setCurrentSupplierId(supplierId.toString());
+      setCurrentUnitCost(supplier.unit_cost?.toString() || '');
+      setCurrentLeadTimeDays(supplier.lead_time_days?.toString() || '');
+      setCurrentSupplierNotes(supplier.notes || '');
+      setError(null);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingSupplier(null);
+    setCurrentSupplierId('');
+    setCurrentUnitCost('');
+    setCurrentLeadTimeDays('');
+    setCurrentSupplierNotes('');
+    setError(null);
+  };
+
   const handleRemoveSupplier = (supplierId: number) => {
     const updatedSuppliers = selectedSuppliers.filter(s => s.supplier_id !== supplierId);
     
@@ -1287,6 +1348,11 @@ const PartsList: React.FC = () => {
     }
     
     setSelectedSuppliers(updatedSuppliers);
+    
+    // If we're editing this supplier, cancel the edit
+    if (editingSupplier === supplierId) {
+      handleCancelEdit();
+    }
   };
 
   const handleSetPreferred = (supplierId: number) => {
@@ -1989,7 +2055,7 @@ const PartsList: React.FC = () => {
                   {/* Add Supplier Form */}
                   <div className="card mb-3 border-primary">
                     <div className="card-header bg-light">
-                      <strong>Add Supplier</strong>
+                      <strong>{editingSupplier ? 'Edit Supplier' : 'Add Supplier'}</strong>
                     </div>
                     <div className="card-body">
                       <div className="grid-container grid-3-cols">
@@ -1999,6 +2065,7 @@ const PartsList: React.FC = () => {
                             className="form-select"
                             value={currentSupplierId}
                             onChange={(e) => setCurrentSupplierId(e.target.value)}
+                            disabled={editingSupplier !== null}
                           >
                             <option value="">Select a supplier</option>
                             {suppliers.map((supplier) => (
@@ -2045,10 +2112,10 @@ const PartsList: React.FC = () => {
                           />
                         </div>
 
-                        <div className="form-group d-flex align-items-end">
+                        <div className="form-group d-flex align-items-end gap-2">
                           <button
                             type="button"
-                            className="btn btn-primary w-100"
+                            className="btn btn-primary flex-grow-1"
                             onClick={handleAddSupplier}
                             style={{ 
                               padding: '0.375rem 0.75rem',
@@ -2057,8 +2124,21 @@ const PartsList: React.FC = () => {
                               borderColor: '#FF6600'
                             }}
                           >
-                            Add Supplier
+                            {editingSupplier ? 'Update Supplier' : 'Add Supplier'}
                           </button>
+                          {editingSupplier && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              onClick={handleCancelEdit}
+                              style={{ 
+                                padding: '0.375rem 0.75rem',
+                                fontSize: '0.875rem'
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -2098,6 +2178,15 @@ const PartsList: React.FC = () => {
                                 </div>
                               </td>
                               <td>
+                                <button
+                                  type="button"
+                                  className="btn btn-sm btn-outline-primary me-1"
+                                  onClick={() => handleEditSupplier(supplier.supplier_id)}
+                                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                                  disabled={editingSupplier === supplier.supplier_id}
+                                >
+                                  Edit
+                                </button>
                                 <button
                                   type="button"
                                   className="btn btn-sm btn-outline-danger"

@@ -101,7 +101,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
     manufacturer: '',
     installation_date: '',
     notes: '',
-    status: 'active'
+    status: 'active',
+    compatible_die_types: [] as string[]
   });
   const [selectedManufacturer, setSelectedManufacturer] = useState('all');
 
@@ -195,7 +196,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
       manufacturer: '',
       installation_date: '',
       notes: '',
-      status: 'active'
+      status: 'active',
+      compatible_die_types: []
     });
     // Return focus to the add button
     if (addButtonRef.current) {
@@ -217,7 +219,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
       location: machine.location || '',
       manufacturer: machine.manufacturer || '',
       notes: machine.notes || '',
-      status: machine.status || 'active'
+      status: machine.status || 'active',
+      compatible_die_types: machine.compatible_die_types || []
     });
     setEditOpen(true);
   };
@@ -245,6 +248,27 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
       ...prev,
       [name]: value,
     } : null);
+  };
+
+  const handleDieTypeChange = (dieType: string, checked: boolean, isEdit: boolean) => {
+    if (isEdit) {
+      setSelectedMachine(prev => {
+        if (!prev) return null;
+        const currentTypes = prev.compatible_die_types || [];
+        const newTypes = checked
+          ? [...currentTypes, dieType]
+          : currentTypes.filter(t => t !== dieType);
+        return { ...prev, compatible_die_types: newTypes };
+      });
+    } else {
+      setNewMachine(prev => {
+        const currentTypes = prev.compatible_die_types || [];
+        const newTypes = checked
+          ? [...currentTypes, dieType]
+          : currentTypes.filter(t => t !== dieType);
+        return { ...prev, compatible_die_types: newTypes };
+      });
+    }
   };
 
   const handleAddMachine = async () => {
@@ -723,6 +747,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
         onEditInputChange={handleEditInputChange}
         onAddMachine={handleAddMachine}
         onUpdateMachine={handleUpdateMachine}
+        onDieTypeChange={handleDieTypeChange}
       />
 
       <Snackbar

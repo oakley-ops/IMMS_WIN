@@ -71,7 +71,19 @@ const uploadDocument = multer({
 // Get all machines
 router.get('/', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM machines ORDER BY name ASC');
+    const { machine_type } = req.query;
+    
+    let query = 'SELECT * FROM machines';
+    const params = [];
+    
+    if (machine_type) {
+      query += ' WHERE machine_type = $1';
+      params.push(machine_type);
+    }
+    
+    query += ' ORDER BY name ASC';
+    
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (err) {
     console.error('Error fetching machines:', err);
@@ -349,7 +361,8 @@ router.post('/', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (req
     last_maintenance_date,
     next_maintenance_date,
     notes,
-    status
+    status,
+    compatible_die_types
   } = req.body;
 
   try {
@@ -363,14 +376,15 @@ router.post('/', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (req
       last_maintenance_date,
       next_maintenance_date,
       notes,
-      status
+      status,
+      compatible_die_types
     });
-    
+
     // Convert empty date strings to NULL
     const processedInstallationDate = installation_date === '' ? null : installation_date;
     const processedLastMaintenanceDate = last_maintenance_date === '' ? null : last_maintenance_date;
     const processedNextMaintenanceDate = next_maintenance_date === '' ? null : next_maintenance_date;
-    
+
     const result = await pool.query(
       `INSERT INTO machines (
         name,
@@ -382,10 +396,11 @@ router.post('/', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (req
         last_maintenance_date,
         next_maintenance_date,
         notes,
-        status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
-      [name, model, serial_number, location, manufacturer, processedInstallationDate, 
-       processedLastMaintenanceDate, processedNextMaintenanceDate, notes, status]
+        status,
+        compatible_die_types
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
+      [name, model, serial_number, location, manufacturer, processedInstallationDate,
+       processedLastMaintenanceDate, processedNextMaintenanceDate, notes, status, compatible_die_types]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -457,7 +472,8 @@ router.put('/:id', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (r
     last_maintenance_date,
     next_maintenance_date,
     notes,
-    status
+    status,
+    compatible_die_types
   } = req.body;
 
   try {
@@ -465,7 +481,7 @@ router.put('/:id', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (r
     const processedInstallationDate = installation_date === '' ? null : installation_date;
     const processedLastMaintenanceDate = last_maintenance_date === '' ? null : last_maintenance_date;
     const processedNextMaintenanceDate = next_maintenance_date === '' ? null : next_maintenance_date;
-    
+
     const result = await pool.query(
       `UPDATE machines SET
         name = COALESCE($1, name),
@@ -477,8 +493,9 @@ router.put('/:id', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (r
         last_maintenance_date = COALESCE($7, last_maintenance_date),
         next_maintenance_date = COALESCE($8, next_maintenance_date),
         notes = COALESCE($9, notes),
-        status = COALESCE($10, status)
-      WHERE machine_id = $11
+        status = COALESCE($10, status),
+        compatible_die_types = COALESCE($11, compatible_die_types)
+      WHERE machine_id = $12
       RETURNING *`,
       [
         name,
@@ -491,6 +508,7 @@ router.put('/:id', authMiddleware, roleAuthorization(ROLES.ADMIN_ONLY), async (r
         processedNextMaintenanceDate,
         notes,
         status,
+        compatible_die_types,
         machineId
       ]
     );

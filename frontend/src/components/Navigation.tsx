@@ -10,16 +10,12 @@ import {
   ListItemText,
   ListItemIcon,
   Divider,
-  useMediaQuery,
-  useTheme,
   IconButton,
   CssBaseline,
-  Menu,
-  MenuItem,
 } from '@mui/material';
-import { 
-  AccountCircle, 
-  Logout, 
+import {
+  AccountCircle,
+  Logout,
   Menu as MenuIcon,
   Dashboard,
   Inventory,
@@ -35,6 +31,7 @@ import {
   Engineering,
   PlaylistAddCheck,
   Contacts as ContactsIcon,
+  Category,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { theme, FISERV_ORANGE } from '../theme';
@@ -58,19 +55,21 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
   const navigate = useNavigate();
   const { logout, user, hasPermission } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const muiTheme = useTheme();
-  const isCompact = useMediaQuery(muiTheme.breakpoints.down('lg'));
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const navigationItems: NavigationItem[] = [
     { path: '/', label: 'DASHBOARD', icon: <Dashboard /> },
     { path: '/parts', label: 'PARTS', icon: <Inventory /> },
-    { path: '/machines', label: 'MACHINES', icon: <Build />, requiredPermission: 'CAN_VIEW_MACHINES' },
-    { path: '/pm-checklists', label: 'PM MANAGEMENT', icon: <PlaylistAddCheck />, requiredPermission: 'CAN_MANAGE_PM_CHECKLISTS' },
-    { path: '/contacts', label: 'CONTACTS', icon: <ContactsIcon />, requiredPermission: 'CAN_VIEW_CONTACTS' },
-    { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
     { path: '/purchase-orders', label: 'PURCHASE ORDERS', icon: <ShoppingCart />, requiredPermission: 'CAN_MANAGE_PURCHASE_ORDERS' },
+    { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
+    { path: '/machines', label: 'MACHINES', icon: <Build />, requiredPermission: 'CAN_VIEW_MACHINES' },
+    { path: '/work-orders', label: 'WORK ORDERS', icon: <Engineering />, requiredPermission: 'CAN_VIEW_MACHINES' },
+    { path: '/pm-checklists', label: 'PM MANAGEMENT', icon: <PlaylistAddCheck />, requiredPermission: 'CAN_MANAGE_PM_CHECKLISTS' },
     { path: '/projects', label: 'PROJECTS', icon: <Assignment />, requiredPermission: 'CAN_MANAGE_PROJECTS' },
+    { path: '/die-tracker', label: 'DIE MANAGEMENT', icon: <Category />, requiredPermission: 'CAN_VIEW_MACHINES' },
+    { path: '/contacts', label: 'CONTACTS', icon: <ContactsIcon />, requiredPermission: 'CAN_VIEW_CONTACTS' },
+    { path: '/technicians', label: 'TECHNICIANS', icon: <People />, requiredPermission: 'CAN_MANAGE_USERS' },
+
   ];
 
   if (hasPermission('CAN_VIEW_ALL')) {
@@ -93,11 +92,11 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
   };
 
   const handleDrawerToggle = () => {
-    setMobileOpen(!mobileOpen);
+    setDrawerOpen(!drawerOpen);
   };
 
   const drawer = (
-    <Box sx={{ 
+    <Box sx={{
       width: DRAWER_WIDTH,
       height: '100%',
       display: 'flex',
@@ -106,15 +105,14 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
       color: 'white'
     }}>
       <Box sx={{ p: 2, textAlign: 'left' }}>
-        <Typography 
-          variant="h6" 
-          sx={{ 
-            color: FISERV_ORANGE, 
+        <Typography
+          variant="h6"
+          sx={{
+            color: FISERV_ORANGE,
             fontWeight: 'bold',
             textDecoration: 'none',
             fontSize: '1.3rem',
             mb: 0.5,
-            paddingLeft: isCompact ? '48px' : '0',
             display: 'flex',
             alignItems: 'flex-bottom',
             '&:hover': {
@@ -124,23 +122,24 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
           }}
           component={Link}
           to="/"
+          onClick={() => setDrawerOpen(false)}
         >
           IMMS
-  
         </Typography>
-        <Typography variant="body2" sx={{ color: 'white', fontSize: '0.9rem', paddingLeft: isCompact ? '48px' : '0' }}>
+        <Typography variant="body2" sx={{ color: 'white', fontSize: '0.9rem' }}>
           {user?.name} ({user?.role?.toUpperCase()})
         </Typography>
       </Box>
       <Divider sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)' }} />
       <List sx={{ flexGrow: 1, pt: 1 }}>
         {filteredNavigationItems.map(({ path, label, icon }) => (
-          <ListItem 
-            button 
-            key={path} 
-            component={Link} 
+          <ListItem
+            button
+            key={path}
+            component={Link}
             to={path}
             selected={location.pathname === path}
+            onClick={() => setDrawerOpen(false)}
             sx={{
               py: 1.5,
               bgcolor: location.pathname === path ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
@@ -150,14 +149,14 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
             }}
           >
             <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>{icon}</ListItemIcon>
-            <ListItemText 
-              primary={label} 
-              sx={{ 
-                '& .MuiListItemText-primary': { 
+            <ListItemText
+              primary={label}
+              sx={{
+                '& .MuiListItemText-primary': {
                   fontSize: '0.9rem',
                   fontWeight: location.pathname === path ? 'bold' : 'normal'
-                } 
-              }} 
+                }
+              }}
             />
           </ListItem>
         ))}
@@ -183,76 +182,57 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
     <ThemeProvider theme={theme}>
       <Box sx={{ display: 'flex', minHeight: '100vh', maxWidth: '100vw', overflow: 'hidden' }}>
         <CssBaseline />
-        {isCompact && (
-          <IconButton
-            color="inherit"
-            aria-label="open drawer"
-            edge="start"
-            onClick={handleDrawerToggle}
-            sx={{
-              position: 'fixed',
-              left: 8,
-              top: 8,
-              zIndex: 1300,
-              bgcolor: IMMS_BLUE,
-              color: 'white',
-              width: 40,
-              height: 40,
-              '&:hover': {
-                bgcolor: 'rgba(0, 102, 161, 0.9)',
-              }
-            }}
-          >
-            <MenuIcon />
-          </IconButton>
-        )}
-        
-        <Box sx={{ 
-          width: { lg: DRAWER_WIDTH }, 
-          flexShrink: { lg: 0 },
-          display: { xs: isCompact ? 'none' : 'block' }
-        }}>
-          <Drawer
-            variant="temporary"
-            open={mobileOpen}
-            onClose={handleDrawerToggle}
-            ModalProps={{
-              keepMounted: true,
-            }}
-            sx={{
-              display: { xs: 'block', lg: 'none' },
-              '& .MuiDrawer-paper': { 
-                boxSizing: 'border-box', 
-                width: DRAWER_WIDTH,
-                borderRight: 'none'
-              },
-            }}
-          >
-            {drawer}
-          </Drawer>
-          <Drawer
-            variant="permanent"
-            sx={{
-              display: { xs: 'none', lg: 'block' },
-              '& .MuiDrawer-paper': { 
-                boxSizing: 'border-box', 
-                width: DRAWER_WIDTH,
-                borderRight: 'none'
-              },
-            }}
-            open
-          >
-            {drawer}
-          </Drawer>
-        </Box>
-        
+
+        {/* Hamburger Menu Button - Always visible */}
+        <IconButton
+          color="inherit"
+          aria-label="open drawer"
+          edge="start"
+          onClick={handleDrawerToggle}
+          sx={{
+            position: 'fixed',
+            left: 8,
+            top: 8,
+            zIndex: 1300,
+            bgcolor: IMMS_BLUE,
+            color: 'white',
+            width: 40,
+            height: 40,
+            '&:hover': {
+              bgcolor: 'rgba(0, 102, 161, 0.9)',
+            }
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+
+        {/* Temporary Drawer - Opens on hamburger click */}
+        <Drawer
+          variant="temporary"
+          open={drawerOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{
+            keepMounted: true,
+          }}
+          sx={{
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: DRAWER_WIDTH,
+              borderRight: 'none'
+            },
+          }}
+        >
+          {drawer}
+        </Drawer>
+
+        {/* Main Content */}
         <Box
           component="main"
-          sx={{ 
-            flexGrow: 1, 
-            p: isCompact ? 1 : 3,
-            pt: isCompact ? 7 : 3,
-            width: { lg: `calc(100% - ${DRAWER_WIDTH}px)` },
+          sx={{
+            flexGrow: 1,
+            p: 2,
+            pt: 7,
+            width: '100%',
             maxWidth: '100%',
             bgcolor: '#f5f5f5',
             overflow: 'auto'

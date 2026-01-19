@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { purchaseOrdersApi } from '../../services/api';
+import { purchaseOrdersApi, suppliersApi } from '../../services/api';
 import {
   Box,
   Paper,
@@ -137,6 +137,13 @@ const PurchaseOrderDetail: React.FC = () => {
   const [isCustomPart, setIsCustomPart] = useState<boolean>(false);
   const [customPartName, setCustomPartName] = useState<string>('');
   const [customPartNumber, setCustomPartNumber] = useState<string>('');
+  
+  // Supplier editing state
+  const [suppliers, setSuppliers] = useState<any[]>([]);
+  const [supplierDialogOpen, setSupplierDialogOpen] = useState<boolean>(false);
+  const [selectedSupplierId, setSelectedSupplierId] = useState<number | null>(null);
+  const [supplierSearchTerm, setSupplierSearchTerm] = useState<string>('');
+  const [loadingSuppliers, setLoadingSuppliers] = useState<boolean>(false);
   
   // Partial order state
   const [receiptDialogOpen, setReceiptDialogOpen] = useState<boolean>(false);
@@ -886,38 +893,43 @@ const PurchaseOrderDetail: React.FC = () => {
     setSnackbarOpen(false);
   };
 
-  // Modify the fetchAvailableParts function to handle errors better and log results
+  // Modify the fetchAvailableParts function to fetch ALL parts (no pagination)
   const fetchAvailableParts = async () => {
     try {
       setLoadingParts(true);
       
       try {
-        // Add more detailed logging of the exact response structure
-        console.log('Fetching parts with getAll()');
-        const response = await partsApi.getAll();
+        // Fetch all parts by setting a very high limit to avoid pagination issues
+        console.log('Fetching all parts with getAll(1, 10000)');
+        const response = await partsApi.getAll(1, 10000);
         console.log('Parts API response structure:', {
           hasData: !!response.data,
           dataType: typeof response.data,
           isArray: Array.isArray(response.data),
           responseKeys: Object.keys(response),
-          firstItem: response.data && response.data.length > 0 ? response.data[0] : null,
+          total: response.total || response.data?.total,
           itemsProperty: response.data?.items ? 'Has items property' : 'No items property'
         });
         
-        // Check if the data is inside a nested 'items' property like in PartsUsageDialog
+        // Check if the data is inside a nested 'items' property
         if (response.data && response.data.items && Array.isArray(response.data.items)) {
-          console.log('Found parts in response.data.items:', response.data.items.length);
+          console.log('Found parts in response.data.items:', response.data.items.length, 'of', response.data.total);
           setAvailableParts(response.data.items);
         } 
+        // Check if response has items directly
+        else if (response.items && Array.isArray(response.items)) {
+          console.log('Found parts in response.items:', response.items.length, 'of', response.total);
+          setAvailableParts(response.items);
+        }
         // Check if data is directly an array
         else if (Array.isArray(response.data)) {
           console.log('Found parts in response.data array:', response.data.length);
           setAvailableParts(response.data);
         } 
-        // If neither, try direct axios call like PartsUsageDialog does
+        // If neither, try direct axios call without pagination
         else {
-          console.log('Trying direct axios approach like PartsUsageDialog');
-          const directResponse = await axios.get('/api/v1/parts');
+          console.log('Trying direct axios approach without pagination');
+          const directResponse = await axios.get('/api/v1/parts?limit=10000');
           console.log('Direct axios response:', directResponse);
           
           if (directResponse.data && Array.isArray(directResponse.data)) {
@@ -946,6 +958,63 @@ const PurchaseOrderDetail: React.FC = () => {
     }
   };
   
+  // Fetch suppliers from database
+  const fetchSuppliers = async () => {
+    try {
+      setLoadingSuppliers(true);
+      const response = await suppliersApi.getAll();
+      console.log('Suppliers fetched:', response.data);
+      setSuppliers(Array.isArray(response.data) ? response.data : []);
+    } catch (error) {
+      console.error('Error fetching suppliers:', error);
+      setSnackbarMessage('Failed to load suppliers');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setLoadingSuppliers(false);
+    }
+  };
+
+  // Open supplier change dialog
+  const openSupplierDialog = () => {
+    fetchSuppliers();
+    setSelectedSupplierId(purchaseOrder?.supplier_id || null);
+    setSupplierSearchTerm('');
+    setSupplierDialogOpen(true);
+  };
+
+  // Change supplier on PO
+  const handleChangeSupplier = async () => {
+    if (!selectedSupplierId || !purchaseOrder || !purchaseOrder.po_id) {
+      setSnackbarMessage('Please select a supplier');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    try {
+      setIsUpdating(true);
+      await purchaseOrdersApi.update(purchaseOrder.po_id, {
+        supplier_id: selectedSupplierId
+      });
+      
+      // Refresh the PO data
+      await fetchPurchaseOrder();
+      
+      setSupplierDialogOpen(false);
+      setSnackbarMessage('Supplier updated successfully');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+    } catch (error: any) {
+      console.error('Error updating supplier:', error);
+      setSnackbarMessage(error.response?.data?.error || 'Failed to update supplier');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   // Update the openAddPartDialog to reset custom part fields
   const openAddPartDialog = () => {
     fetchAvailableParts();
@@ -1214,11 +1283,26 @@ const PurchaseOrderDetail: React.FC = () => {
   
   // Modify the filter parts logic to handle undefined values
   const filteredParts = partSearchTerm && availableParts
-    ? availableParts.filter(part => 
-        (part.name && part.name.toLowerCase().includes(partSearchTerm.toLowerCase())) ||
-        (part.fiserv_part_number && part.fiserv_part_number.toLowerCase().includes(partSearchTerm.toLowerCase())) ||
-        (part.manufacturer_part_number && part.manufacturer_part_number.toLowerCase().includes(partSearchTerm.toLowerCase()))
-      )
+    ? availableParts.filter(part => {
+        const searchLower = partSearchTerm.toLowerCase();
+        const matches = (part.name && part.name.toLowerCase().includes(searchLower)) ||
+          (part.fiserv_part_number && part.fiserv_part_number.toLowerCase().includes(searchLower)) ||
+          (part.manufacturer_part_number && part.manufacturer_part_number.toLowerCase().includes(searchLower)) ||
+          (part.description && part.description.toLowerCase().includes(searchLower));
+        
+        // Log when searching for specific part number
+        if (searchLower.includes('61082043')) {
+          console.log('Checking part:', {
+            name: part.name,
+            fiserv: part.fiserv_part_number,
+            mfr: part.manufacturer_part_number,
+            desc: part.description,
+            matches: matches
+          });
+        }
+        
+        return matches;
+      })
     : availableParts || [];
   
   // Check if PO is editable (pending or on_hold)
@@ -1316,9 +1400,21 @@ const PurchaseOrderDetail: React.FC = () => {
           <Grid item xs={12} md={6}>
             <Card variant="outlined" sx={{ height: '100%' }}>
               <CardContent>
-                <Typography variant="h6" fontWeight="bold" gutterBottom>
-                  Supplier Information
-                </Typography>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <Typography variant="h6" fontWeight="bold">
+                    Supplier Information
+                  </Typography>
+                  {isPOEditable() && (
+                    <IconButton
+                      size="small"
+                      color="primary"
+                      onClick={openSupplierDialog}
+                      title="Change Supplier"
+                    >
+                      <Edit />
+                    </IconButton>
+                  )}
+                </Box>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                   <Typography variant="body1" fontWeight="bold">
                     {purchaseOrder.supplier_name || purchaseOrder.vendor_name || 'No Supplier Name'}
@@ -2410,6 +2506,101 @@ const PurchaseOrderDetail: React.FC = () => {
           </div>
         </div>
       </ModalPortal>
+
+      {/* Supplier Change Dialog */}
+      <Dialog 
+        open={supplierDialogOpen} 
+        onClose={() => setSupplierDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          Change Supplier
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Select a new supplier for this purchase order. The supplier information will be updated immediately.
+          </DialogContentText>
+          
+          {/* Search field */}
+          <TextField
+            fullWidth
+            label="Search Suppliers"
+            variant="outlined"
+            value={supplierSearchTerm}
+            onChange={(e) => setSupplierSearchTerm(e.target.value)}
+            placeholder="Search by name, contact, or email"
+            sx={{ mb: 3 }}
+          />
+
+          {/* Supplier list */}
+          {loadingSuppliers ? (
+            <Box display="flex" justifyContent="center" p={3}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <List sx={{ maxHeight: 400, overflow: 'auto' }}>
+              {suppliers
+                .filter(supplier => {
+                  if (!supplierSearchTerm) return true;
+                  const searchLower = supplierSearchTerm.toLowerCase();
+                  return (
+                    (supplier.name && supplier.name.toLowerCase().includes(searchLower)) ||
+                    (supplier.contact_name && supplier.contact_name.toLowerCase().includes(searchLower)) ||
+                    (supplier.email && supplier.email.toLowerCase().includes(searchLower))
+                  );
+                })
+                .map((supplier) => (
+                  <ListItem
+                    key={supplier.supplier_id}
+                    onClick={() => setSelectedSupplierId(supplier.supplier_id)}
+                    sx={{
+                      border: selectedSupplierId === supplier.supplier_id ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                      borderRadius: 1,
+                      mb: 1,
+                      cursor: 'pointer',
+                      backgroundColor: selectedSupplierId === supplier.supplier_id ? '#e3f2fd' : 'transparent',
+                      '&:hover': {
+                        backgroundColor: selectedSupplierId === supplier.supplier_id ? '#bbdefb' : '#f5f5f5',
+                      }
+                    }}
+                  >
+                    <ListItemIcon>
+                      {selectedSupplierId === supplier.supplier_id && <Check color="primary" />}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Typography fontWeight={selectedSupplierId === supplier.supplier_id ? 'bold' : 'normal'}>
+                          {supplier.name}
+                        </Typography>
+                      }
+                      secondary={
+                        <>
+                          {supplier.contact_name && <div>Contact: {supplier.contact_name}</div>}
+                          {supplier.email && <div>Email: {supplier.email}</div>}
+                          {supplier.phone && <div>Phone: {supplier.phone}</div>}
+                        </>
+                      }
+                    />
+                  </ListItem>
+                ))}
+            </List>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSupplierDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleChangeSupplier}
+            variant="contained"
+            disabled={!selectedSupplierId || isUpdating}
+            startIcon={isUpdating ? <CircularProgress size={16} /> : <Check />}
+          >
+            {isUpdating ? 'Updating...' : 'Change Supplier'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

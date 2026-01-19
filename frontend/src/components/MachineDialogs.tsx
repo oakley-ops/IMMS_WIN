@@ -12,6 +12,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  FormControlLabel,
+  Checkbox,
+  FormGroup,
+  FormLabel,
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Description as DocumentIcon, Build as BuildIcon } from '@mui/icons-material';
 import MachineDocuments from './MachineDocuments';
@@ -32,7 +36,10 @@ interface Machine {
   next_maintenance_date: string;
   notes: string;
   status: string;
+  compatible_die_types?: string[];
 }
+
+const DIE_TYPE_OPTIONS = ['4 up die', '8 up die'];
 
 interface MachineDialogsProps {
   open: boolean;
@@ -45,6 +52,7 @@ interface MachineDialogsProps {
   onEditInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   onAddMachine: () => void;
   onUpdateMachine: () => void;
+  onDieTypeChange?: (dieType: string, checked: boolean, isEdit: boolean) => void;
 }
 
 const MachineDialogs: React.FC<MachineDialogsProps> = ({
@@ -58,6 +66,7 @@ const MachineDialogs: React.FC<MachineDialogsProps> = ({
   onEditInputChange,
   onAddMachine,
   onUpdateMachine,
+  onDieTypeChange,
 }) => {
   const [editTabValue, setEditTabValue] = useState(0);
 
@@ -179,6 +188,23 @@ const MachineDialogs: React.FC<MachineDialogsProps> = ({
                     multiline
                     rows={3}
                   />
+                </Grid>
+                <Grid item xs={12}>
+                  <FormLabel component="legend" sx={{ mb: 1 }}>Compatible Die Types</FormLabel>
+                  <FormGroup row>
+                    {DIE_TYPE_OPTIONS.map((dieType) => (
+                      <FormControlLabel
+                        key={dieType}
+                        control={
+                          <Checkbox
+                            checked={newMachine.compatible_die_types?.includes(dieType) || false}
+                            onChange={(e) => onDieTypeChange?.(dieType, e.target.checked, false)}
+                          />
+                        }
+                        label={dieType}
+                      />
+                    ))}
+                  </FormGroup>
                 </Grid>
               </Grid>
         </DialogContent>
@@ -314,6 +340,25 @@ const MachineDialogs: React.FC<MachineDialogsProps> = ({
                             onChange={onEditInputChange}
                             rows={3}
                           />
+                        </div>
+                        <div className="col-12 mb-3">
+                          <label className="form-label">Compatible Die Types</label>
+                          <div className="d-flex gap-3">
+                            {DIE_TYPE_OPTIONS.map((dieType) => (
+                              <div key={dieType} className="form-check">
+                                <input
+                                  type="checkbox"
+                                  className="form-check-input"
+                                  id={`edit-die-type-${dieType}`}
+                                  checked={selectedMachine.compatible_die_types?.includes(dieType) || false}
+                                  onChange={(e) => onDieTypeChange?.(dieType, e.target.checked, true)}
+                                />
+                                <label className="form-check-label" htmlFor={`edit-die-type-${dieType}`}>
+                                  {dieType}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       </div>
                     </div>

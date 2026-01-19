@@ -231,7 +231,7 @@ const api = {
         if (error.response) {
           // The request was made and the server responded with a status code
           // that falls out of the range of 2xx
-          console.error('Error response data:', error.response.data);
+          console.error('Error response data:', JSON.stringify(error.response.data, null, 2));
           console.error('Error response status:', error.response.status);
           console.error('Error response headers:', error.response.headers);
         } else if (error.request) {

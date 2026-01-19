@@ -8,11 +8,20 @@ const pdfParse = require('pdf-parse');
  */
 async function extractTextFromPDF(filePath) {
   try {
+    console.log('Reading PDF file:', filePath);
+    
     // Read the PDF file
     const dataBuffer = await fs.readFile(filePath);
+    console.log('PDF file size:', dataBuffer.length, 'bytes');
     
     // Parse the PDF content
     const data = await pdfParse(dataBuffer);
+    
+    console.log('PDF metadata:', {
+      pages: data.numpages,
+      info: data.info,
+      textLength: data.text.length
+    });
     
     // Return the text content
     return data.text;

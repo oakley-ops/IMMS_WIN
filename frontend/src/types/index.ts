@@ -84,4 +84,5 @@ export interface Machine {
   next_maintenance_date: string;
   notes: string;
   status: string;
+  compatible_die_types?: string[];
 }

@@ -107,7 +107,7 @@ router.get('/', authenticateToken, roleAuthorization(ROLES.ALL), async (req, res
     console.log('Parts GET request received with params:', req.query);
     
     const page = parseInt(req.query.page) || 0;
-    const limit = parseInt(req.query.limit) || 25;
+    const limit = parseInt(req.query.limit) || 10000; // Default to high limit to show all parts
     const offset = page * limit;
     const search = req.query.search || '';
     const partNumber = req.query.partNumber || '';

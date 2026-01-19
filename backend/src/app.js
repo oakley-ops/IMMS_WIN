@@ -22,6 +22,10 @@ const supplierRoutes = require('./routes/supplierRoutes');
 const emailRoutes = require('./routes/emailRoutes');
 const pmRouter = require('./routes/pm');
 const techniciansRouter = require('./routes/technicians');
+const analyticsRouter = require('./routes/analytics');
+const milestonesRouter = require('./routes/milestones');
+const tasksRouter = require('./routes/tasks');
+const workOrdersRouter = require('./routes/workOrders');
 
 // Routes
 app.use('/api/v1/parts', partsRouter);
@@ -33,6 +37,10 @@ app.use('/api/v1/suppliers', supplierRoutes);
 app.use('/api/v1/email', emailRoutes);  // Mount email routes with v1 prefix
 app.use('/api/v1/pm', pmRouter);  // Mount PM routes with v1 prefix
 app.use('/api/v1/technicians', techniciansRouter);  // Mount technicians routes with v1 prefix
+app.use('/api/v1/analytics', analyticsRouter);  // Mount analytics routes
+app.use('/api/v1/milestones', milestonesRouter);  // Mount milestones routes
+app.use('/api/v1/tasks', tasksRouter);  // Mount tasks routes
+app.use('/api/v1/work-orders', workOrdersRouter);  // Mount work orders routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {

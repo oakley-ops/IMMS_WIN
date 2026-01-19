@@ -242,3 +242,29 @@ export const authApi = {
 };
 
 export default api;
+
+// Work Orders API
+export const workOrdersApi = {
+  getAll: (status?: string, machineName?: string) => {
+    const params: any = {};
+    if (status) params.status = status;
+    if (machineName) params.machine_name = machineName;
+    return api.get('/api/v1/work-orders', { params });
+  },
+  getById: (id: number) => api.get(`/api/v1/work-orders/${id}`),
+  create: (workOrderData: {
+    work_order_number?: string;
+    title: string;
+    description?: string;
+    machine_name?: string;
+    technician_name?: string;
+    status?: 'open' | 'in_progress' | 'completed' | 'cancelled';
+    priority?: 'low' | 'medium' | 'high' | 'urgent';
+    scheduled_date?: string;
+    notes?: string;
+    created_by?: string;
+    assigned_to?: string;
+  }) => api.post('/api/v1/work-orders', workOrderData),
+  update: (id: number, workOrderData: any) => api.put(`/api/v1/work-orders/${id}`, workOrderData),
+  delete: (id: number) => api.delete(`/api/v1/work-orders/${id}`),
+};

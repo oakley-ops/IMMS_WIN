@@ -3,9 +3,45 @@ const PurchaseOrderController = require('../controllers/PurchaseOrderController'
 const authenticate = require('../middleware/authMiddleware');
 const roleAuthorization = require('../middleware/roleMiddleware');
 const { body } = require('express-validator');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs').promises;
 
 const router = express.Router();
 const purchaseOrderController = new PurchaseOrderController();
+
+// Configure multer for PDF import uploads
+const importStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'po_documents');
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (error) {
+      cb(error);
+    }
+  },
+  filename: (req, file, cb) => {
+    const timestamp = Date.now();
+    const fileExt = path.extname(file.originalname);
+    const filename = `import-${timestamp}${fileExt}`;
+    cb(null, filename);
+  }
+});
+
+const importUpload = multer({
+  storage: importStorage,
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype === 'application/pdf') {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF files are allowed for import.'), false);
+    }
+  },
+  limits: {
+    fileSize: 10 * 1024 * 1024 // 10MB max
+  }
+});
 
 // Define role permissions
 const ROLES = {
@@ -143,7 +179,9 @@ router.post('/blank',
   authenticate,
   roleAuthorization(ROLES.ADMIN_PURCHASING),
   [
-    body('supplier_id').isInt().withMessage('Supplier ID must be an integer'),
+    // Note: supplier_id is optional - can use either supplier_id OR manual_supplier_name
+    body('supplier_id').optional().isInt().withMessage('Supplier ID must be an integer'),
+    body('manual_supplier_name').optional().isString().withMessage('Manual supplier name must be a string'),
     body('notes').optional().isString().withMessage('Notes must be a string'),
     body('is_urgent').optional().isBoolean().withMessage('is_urgent must be a boolean'),
     body('next_day_air').optional().isBoolean().withMessage('next_day_air must be a boolean'),
@@ -154,6 +192,22 @@ router.post('/blank',
     body('priority').optional().isString().withMessage('Priority must be a string')
   ], 
   purchaseOrderController.createBlankPurchaseOrder.bind(purchaseOrderController)
+);
+
+// POST import purchase order from PDF - admin and purchasing
+router.post('/import-from-pdf',
+  authenticate,
+  roleAuthorization(ROLES.ADMIN_PURCHASING),
+  importUpload.single('pdf'),
+  purchaseOrderController.importFromPDF
+);
+
+// POST manual import with PDF - admin and purchasing
+router.post('/import-manual',
+  authenticate,
+  roleAuthorization(ROLES.ADMIN_PURCHASING),
+  importUpload.single('pdf'),
+  purchaseOrderController.importManual.bind(purchaseOrderController)
 );
 
 module.exports = router;

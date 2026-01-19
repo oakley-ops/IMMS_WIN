@@ -39,6 +39,7 @@ export interface ProjectMilestone {
   due_date: string | null;
   completion_date: string | null;
   status: 'pending' | 'in_progress' | 'completed' | 'delayed';
+  order_index?: number;
   created_at: string;
   updated_at: string;
 }

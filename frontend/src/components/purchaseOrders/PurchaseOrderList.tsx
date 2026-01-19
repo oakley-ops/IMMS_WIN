@@ -29,6 +29,7 @@ import {
   Business as BusinessIcon,
   Refresh as RefreshIcon,
   FilterList as FilterListIcon,
+  Upload as UploadIcon,
 } from '@mui/icons-material';
 import { 
   DataGrid, 
@@ -44,6 +45,7 @@ import { PurchaseOrder } from '../../types/purchaseOrder';
 import { format } from 'date-fns';
 import '../../styles/Dialog.css'; // Using the same styles as PartsUsageDialog
 import SimplePODocuments from './SimplePODocuments';
+import POImportDialog from './POImportDialog';
 import socket from '../../services/socket'; // Import socket for real-time updates
 
 // Custom CSS styles for IMMS branding
@@ -103,6 +105,8 @@ const PurchaseOrderList: React.FC = () => {
   const [selectedPoNumber, setSelectedPoNumber] = useState<string>('');
   // Add state for showing historical received orders
   const [showHistoricalReceived, setShowHistoricalReceived] = useState<boolean>(false);
+  // Add state for PDF import dialog
+  const [importDialogOpen, setImportDialogOpen] = useState<boolean>(false);
   const navigate = useNavigate();
 
   // Add a derived state to check for pending POs
@@ -641,6 +645,22 @@ const PurchaseOrderList: React.FC = () => {
                 </Button>
                 <Button
                   variant="outlined"
+                  onClick={() => setImportDialogOpen(true)}
+                  startIcon={<UploadIcon />}
+                  sx={{ 
+                    borderColor: '#FF6600',
+                    color: '#FF6600',
+                    '&:hover': { 
+                      borderColor: '#e65c00',
+                      backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                    },
+                    minWidth: '140px'
+                  }}
+                >
+                  Import PDF
+                </Button>
+                <Button
+                  variant="outlined"
                   onClick={() => navigate('/purchase-orders/suppliers')}
                   startIcon={<BusinessIcon />}
                   sx={{ 
@@ -951,6 +971,16 @@ const PurchaseOrderList: React.FC = () => {
           )}
         </Box>
       )}
+
+      {/* PDF Import Dialog */}
+      <POImportDialog
+        isOpen={importDialogOpen}
+        onClose={() => setImportDialogOpen(false)}
+        onSuccess={() => {
+          setImportDialogOpen(false);
+          fetchPurchaseOrders();
+        }}
+      />
 
     </Container>
   );

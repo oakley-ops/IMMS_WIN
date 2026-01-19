@@ -51,8 +51,11 @@ import {
   createProject,
   updateProject,
   deleteProject,
+  createProjectWithMilestones,
+  getProjectProgress,
 } from '../../services/projectService';
 import { Project } from '../../types/project';
+import ProjectCreationWizard from './ProjectCreationWizard';
 
 // Custom CSS styles for Fiserv branding
 const FiservStyles = `
@@ -128,9 +131,11 @@ const ProjectList: React.FC = () => {
     pageSize: 25,
   });
   const [showActiveOnly, setShowActiveOnly] = useState<boolean>(true);
+  const [projectProgress, setProjectProgress] = useState<Map<number, number>>(new Map());
   
   // Project dialog state
   const [openProjectDialog, setOpenProjectDialog] = useState<boolean>(false);
+  const [openWizard, setOpenWizard] = useState<boolean>(false);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [projectFormData, setProjectFormData] = useState<Partial<Project>>({
     name: '',
@@ -202,6 +207,25 @@ const ProjectList: React.FC = () => {
   useEffect(() => {
     fetchProjects();
   }, [fetchProjects]);
+
+  useEffect(() => {
+    const fetchProgress = async () => {
+      const progressMap = new Map<number, number>();
+      for (const project of projects) {
+        try {
+          const progress = await getProjectProgress(project.project_id);
+          progressMap.set(project.project_id, progress.progress_percentage);
+        } catch (error) {
+          console.error(`Error fetching progress for project ${project.project_id}:`, error);
+        }
+      }
+      setProjectProgress(progressMap);
+    };
+    
+    if (projects.length > 0) {
+      fetchProgress();
+    }
+  }, [projects]);
 
   // Auto-clear success/error messages
   useEffect(() => {
@@ -370,25 +394,62 @@ const ProjectList: React.FC = () => {
     }
   };
 
+  const handleWizardSubmit = async (projectData: Partial<Project>, milestones: any[]) => {
+    try {
+      await createProjectWithMilestones(
+        projectData as Omit<Project, 'project_id' | 'created_at' | 'updated_at'>,
+        milestones
+      );
+      setSuccess(`Project created successfully with ${milestones.length} milestones`);
+      await fetchProjects();
+    } catch (error: any) {
+      console.error('Error creating project with milestones:', error);
+      setError('Failed to create project');
+      throw error;
+    }
+  };
+
   // Define DataGrid columns
   const columns: GridColDef[] = [
     { 
       field: 'name', 
       headerName: 'Project Name', 
-      width: 200,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box>
-          <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-            {params.value}
-          </Typography>
-          {params.row.description && (
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-              {params.row.description.substring(0, 40)}
-              {params.row.description.length > 40 ? '...' : ''}
+      width: 250,
+      renderCell: (params: GridRenderCellParams) => {
+        const progress = projectProgress.get(params.row.project_id) || 0;
+        return (
+          <Box sx={{ width: '100%' }}>
+            <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
+              {params.value}
             </Typography>
-          )}
-        </Box>
-      )
+            {params.row.description && (
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+                {params.row.description.substring(0, 40)}
+                {params.row.description.length > 40 ? '...' : ''}
+              </Typography>
+            )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+              <LinearProgress 
+                variant="determinate" 
+                value={progress} 
+                sx={{ 
+                  flex: 1, 
+                  height: 6, 
+                  borderRadius: 3,
+                  backgroundColor: '#e0e0e0',
+                  '& .MuiLinearProgress-bar': { 
+                    backgroundColor: progress === 100 ? '#4caf50' : '#FF6600',
+                    borderRadius: 3
+                  }
+                }} 
+              />
+              <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#0066A1', minWidth: '35px' }}>
+                {progress}%
+              </Typography>
+            </Box>
+          </Box>
+        );
+      }
     },
     { 
       field: 'status', 
@@ -554,7 +615,7 @@ const ProjectList: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 <Button
                   variant="contained"
-                  onClick={() => handleOpenProjectDialog()}
+                  onClick={() => setOpenWizard(true)}
                   startIcon={<AddIcon />}
                   sx={{ 
                     backgroundColor: '#FF6600', 
@@ -770,14 +831,14 @@ const ProjectList: React.FC = () => {
                 {!searchTerm && (
                   <Button
                     variant="contained"
-                    onClick={() => handleOpenProjectDialog()}
+                    onClick={() => setOpenWizard(true)}
                     startIcon={<AddIcon />}
                     sx={{ 
                       backgroundColor: '#FF6600',
                       '&:hover': { backgroundColor: '#e65c00' }
                     }}
                   >
-                    New Project
+                    Create Your First Project
                   </Button>
                 )}
               </Box>
@@ -791,9 +852,10 @@ const ProjectList: React.FC = () => {
                 pageSizeOptions={[25, 50, 100]}
                 disableRowSelectionOnClick
                 disableColumnMenu
+                getRowHeight={() => 'auto'}
                 sx={{
                   '& .MuiDataGrid-cell': {
-                    py: 1.5,
+                    py: 2,
                     px: 2
                   },
                   '& .MuiDataGrid-columnHeaders': {
@@ -825,7 +887,14 @@ const ProjectList: React.FC = () => {
         </Paper>
       </Box>
 
-      {/* Project Dialog */}
+      {/* Project Creation Wizard */}
+      <ProjectCreationWizard
+        open={openWizard}
+        onClose={() => setOpenWizard(false)}
+        onSubmit={handleWizardSubmit}
+      />
+
+      {/* Project Dialog (for editing) */}
       <Dialog 
         open={openProjectDialog} 
         onClose={handleCloseProjectDialog}

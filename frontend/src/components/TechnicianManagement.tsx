@@ -380,7 +380,7 @@ const TechnicianManagement: React.FC = () => {
         </TableContainer>
       </Paper>
 
-      {/* Inactive Technicians Table */}
+      {/* Inactive Technicians Table
       {inactiveTechnicians.length > 0 && (
         <Paper>
           <Box sx={{ p: 3, backgroundColor: '#f44336', color: 'white' }}>
@@ -440,7 +440,7 @@ const TechnicianManagement: React.FC = () => {
             </Table>
           </TableContainer>
         </Paper>
-      )}
+      )} */}
 
       {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>

@@ -6,362 +6,158 @@ import {
   ProjectTimeline,
   EquipmentDependency
 } from '../types/project';
-import mockProjectsData from '../mockData/projects';
-import mockEquipmentData from '../mockData/equipment';
-import mockMilestonesData from '../mockData/milestones';
-import mockTasksData from '../mockData/tasks';
-import mockDependenciesData from '../mockData/dependencies';
-
-// Create mutable copies of mock data to avoid read-only issues
-let mockProjects = Array.from(mockProjectsData);
-let mockEquipment = Array.from(mockEquipmentData);
-let mockMilestones = Array.from(mockMilestonesData);
-let mockTasks = Array.from(mockTasksData);
-let mockDependencies = Array.from(mockDependenciesData);
+import axiosInstance from '../utils/axios';
 
 // Projects
 export const getAllProjects = async (): Promise<Project[]> => {
-  // Use mock data instead of API call
-  return Promise.resolve(mockProjects);
-  
-  // Original API call code:
-  // const response = await axiosInstance.get('/api/v1/projects');
-  // return response.data;
+  const response = await axiosInstance.get('/api/v1/projects');
+  return response.data;
 };
 
 export const getProjectById = async (id: number): Promise<Project> => {
-  // Use mock data instead of API call
-  const project = mockProjects.find((p: Project) => p.project_id === id);
-  if (!project) {
-    throw new Error(`Project with ID ${id} not found`);
-  }
-  return Promise.resolve(project);
-  
-  // Original API call code:
-  // const response = await axiosInstance.get(`/api/v1/projects/${id}`);
-  // return response.data;
+  const response = await axiosInstance.get(`/api/v1/projects/${id}`);
+  return response.data;
 };
 
 export const createProject = async (project: Omit<Project, 'project_id' | 'created_at' | 'updated_at'>): Promise<Project> => {
-  // Mock creating a project
-  // Use timestamp to create unique IDs, avoiding conflicts with mock data
-  const timestamp = new Date().getTime();
-  const uniqueId = Math.floor(timestamp / 1000) + 10000; // Convert to seconds and add offset
-  
-  const newProject: Project = {
-    ...project as any,
-    project_id: uniqueId,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  
-  mockProjects.push(newProject);
-  return Promise.resolve(newProject);
-  
-  // Original API call code:
-  // const response = await axiosInstance.post('/api/v1/projects', project);
-  // return response.data;
+  const response = await axiosInstance.post('/api/v1/projects', project);
+  return response.data;
 };
 
 export const updateProject = async (id: number, project: Partial<Project>): Promise<Project> => {
-  // Mock updating a project
-  const index = mockProjects.findIndex((p: Project) => p.project_id === id);
-  if (index === -1) {
-    throw new Error(`Project with ID ${id} not found`);
-  }
-  
-  const updatedProject: Project = {
-    ...mockProjects[index],
-    ...project,
-    updated_at: new Date().toISOString()
-  };
-  
-  mockProjects[index] = updatedProject;
-  return Promise.resolve(updatedProject);
-  
-  // Original API call code:
-  // const response = await axiosInstance.put(`/api/v1/projects/${id}`, project);
-  // return response.data;
+  const response = await axiosInstance.put(`/api/v1/projects/${id}`, project);
+  return response.data;
 };
 
 export const deleteProject = async (id: number): Promise<void> => {
-  // Mock deleting a project
-  const index = mockProjects.findIndex((p: Project) => p.project_id === id);
-  if (index === -1) {
-    throw new Error(`Project with ID ${id} not found`);
-  }
-  
-  // Use filter instead of splice to avoid read-only issues
-  mockProjects = mockProjects.filter((p: Project) => p.project_id !== id);
-  return Promise.resolve();
-  
-  // Original API call code:
-  // await axiosInstance.delete(`/api/v1/projects/${id}`);
+  await axiosInstance.delete(`/api/v1/projects/${id}`);
 };
 
 // Equipment Installations
 export const getProjectEquipment = async (projectId: number): Promise<EquipmentInstallation[]> => {
-  // Use mock data
-  const equipment = mockEquipment.filter(e => e.project_id === projectId);
-  return Promise.resolve(equipment);
-  
-  // Original API call code:
-  // const response = await axiosInstance.get(`/api/v1/projects/${projectId}/equipment`);
-  // return response.data;
+  const response = await axiosInstance.get(`/api/v1/projects/${projectId}/equipment`);
+  return response.data;
 };
 
 export const createEquipment = async (equipment: Omit<EquipmentInstallation, 'installation_id' | 'created_at' | 'updated_at'>): Promise<EquipmentInstallation> => {
-  // Mock creating equipment
-  const newEquipment: EquipmentInstallation = {
-    ...equipment as any,
-    installation_id: mockEquipment.length > 0 ? Math.max(...mockEquipment.map(e => e.installation_id)) + 1 : 1,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  
-  mockEquipment.push(newEquipment);
-  return Promise.resolve(newEquipment);
-  
-  // Original API call code:
-  // const response = await axiosInstance.post('/api/v1/equipment', equipment);
-  // return response.data;
+  const response = await axiosInstance.post('/api/v1/equipment', equipment);
+  return response.data;
 };
 
 export const updateEquipment = async (id: number, equipment: Partial<EquipmentInstallation>): Promise<EquipmentInstallation> => {
-  // Mock updating equipment
-  const index = mockEquipment.findIndex(e => e.installation_id === id);
-  if (index === -1) {
-    throw new Error(`Equipment with ID ${id} not found`);
-  }
-  
-  const updatedEquipment: EquipmentInstallation = {
-    ...mockEquipment[index],
-    ...equipment,
-    updated_at: new Date().toISOString()
-  };
-  
-  mockEquipment[index] = updatedEquipment;
-  return Promise.resolve(updatedEquipment);
-  
-  // Original API call code:
-  // const response = await axiosInstance.put(`/api/v1/equipment/${id}`, equipment);
-  // return response.data;
+  const response = await axiosInstance.put(`/api/v1/equipment/${id}`, equipment);
+  return response.data;
 };
 
 export const deleteEquipment = async (id: number): Promise<void> => {
-  // Mock deleting equipment
-  const index = mockEquipment.findIndex(e => e.installation_id === id);
-  if (index === -1) {
-    throw new Error(`Equipment with ID ${id} not found`);
-  }
-  
-  // Use filter instead of splice to avoid read-only issues
-  mockEquipment = mockEquipment.filter(e => e.installation_id !== id);
-  return Promise.resolve();
-  
-  // Original API call code:
-  // await axiosInstance.delete(`/api/v1/equipment/${id}`);
+  await axiosInstance.delete(`/api/v1/equipment/${id}`);
 };
 
 // Equipment Dependencies
 export const getEquipmentDependencies = async (equipmentId: number): Promise<EquipmentDependency[]> => {
-  // Use mock data
-  const dependencies = mockDependencies.filter(d => d.equipment_id === equipmentId);
-  return Promise.resolve(dependencies);
-  
-  // Original API call code:
-  // const response = await axiosInstance.get(`/api/v1/equipment/${equipmentId}/dependencies`);
-  // return response.data;
+  const response = await axiosInstance.get(`/api/v1/equipment/${equipmentId}/dependencies`);
+  return response.data;
 };
 
 export const addEquipmentDependency = async (equipmentId: number, dependency: { depends_on_id: number, dependency_type?: string, notes?: string }): Promise<EquipmentDependency> => {
-  // Mock adding a dependency
-  const newDependency: EquipmentDependency = {
-    dependency_id: mockDependencies.length > 0 ? Math.max(...mockDependencies.map(d => d.dependency_id)) + 1 : 1,
-    equipment_id: equipmentId,
-    depends_on_id: dependency.depends_on_id,
-    dependency_type: dependency.dependency_type || null,
-    notes: dependency.notes || null,
-    created_at: new Date().toISOString()
-  };
-  
-  mockDependencies.push(newDependency);
-  return Promise.resolve(newDependency);
-  
-  // Original API call code:
-  // const response = await axiosInstance.post(`/api/v1/equipment/${equipmentId}/dependencies`, dependency);
-  // return response.data;
+  const response = await axiosInstance.post(`/api/v1/equipment/${equipmentId}/dependencies`, dependency);
+  return response.data;
 };
 
 // Project Milestones
 export const getProjectMilestones = async (projectId: number): Promise<ProjectMilestone[]> => {
-  // Use mock data
-  const milestones = mockMilestones.filter(m => m.project_id === projectId);
-  return Promise.resolve(milestones);
-  
-  // Original API call code:
-  // const response = await axiosInstance.get(`/api/v1/projects/${projectId}/milestones`);
-  // return response.data;
+  const response = await axiosInstance.get(`/api/v1/projects/${projectId}/milestones`);
+  return response.data;
 };
 
 export const createMilestone = async (milestone: Omit<ProjectMilestone, 'milestone_id' | 'created_at' | 'updated_at'>): Promise<ProjectMilestone> => {
-  // Mock creating a milestone
-  const newMilestone: ProjectMilestone = {
-    ...milestone as any,
-    milestone_id: Math.max(...mockMilestones.map(m => m.milestone_id), 0) + 1,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  
-  mockMilestones.push(newMilestone);
-  return Promise.resolve(newMilestone);
-  
-  // Original API call code:
-  // const response = await axiosInstance.post('/api/v1/milestones', milestone);
-  // return response.data;
+  const response = await axiosInstance.post('/api/v1/milestones', milestone);
+  return response.data;
 };
 
 export const updateMilestone = async (id: number, milestone: Partial<ProjectMilestone>): Promise<ProjectMilestone> => {
-  // Mock updating a milestone
-  const index = mockMilestones.findIndex(m => m.milestone_id === id);
-  if (index === -1) {
-    throw new Error(`Milestone with ID ${id} not found`);
-  }
-  
-  const updatedMilestone: ProjectMilestone = {
-    ...mockMilestones[index],
-    ...milestone,
-    updated_at: new Date().toISOString()
-  };
-  
-  mockMilestones[index] = updatedMilestone;
-  return Promise.resolve(updatedMilestone);
-  
-  // Original API call code:
-  // const response = await axiosInstance.put(`/api/v1/milestones/${id}`, milestone);
-  // return response.data;
+  const response = await axiosInstance.put(`/api/v1/milestones/${id}`, milestone);
+  return response.data;
 };
 
 export const deleteMilestone = async (id: number): Promise<void> => {
-  // Mock deleting a milestone
-  const index = mockMilestones.findIndex(m => m.milestone_id === id);
-  if (index === -1) {
-    throw new Error(`Milestone with ID ${id} not found`);
-  }
-  
-  // Use filter instead of splice to avoid read-only issues
-  mockMilestones = mockMilestones.filter(m => m.milestone_id !== id);
-  return Promise.resolve();
-  
-  // Original API call code:
-  // await axiosInstance.delete(`/api/v1/milestones/${id}`);
+  await axiosInstance.delete(`/api/v1/milestones/${id}`);
 };
 
 // Project Tasks
 export const getProjectTasks = async (projectId: number): Promise<ProjectTask[]> => {
-  // Use mock data
-  const tasks = mockTasks.filter(t => t.project_id === projectId);
-  return Promise.resolve(tasks);
-  
-  // Original API call code:
-  // const response = await axiosInstance.get(`/api/v1/projects/${projectId}/tasks`);
-  // return response.data;
+  const response = await axiosInstance.get(`/api/v1/projects/${projectId}/tasks`);
+  return response.data;
 };
 
 export const createTask = async (task: Omit<ProjectTask, 'task_id' | 'created_at' | 'updated_at'>): Promise<ProjectTask> => {
-  // Mock creating a task
-  const newTask: ProjectTask = {
-    ...task as any,
-    task_id: Math.max(...mockTasks.map(t => t.task_id), 0) + 1,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString()
-  };
-  
-  mockTasks.push(newTask);
-  return Promise.resolve(newTask);
-  
-  // Original API call code:
-  // const response = await axiosInstance.post('/api/v1/tasks', task);
-  // return response.data;
+  const response = await axiosInstance.post('/api/v1/tasks', task);
+  return response.data;
 };
 
 export const updateTask = async (id: number, task: Partial<ProjectTask>): Promise<ProjectTask> => {
-  // Mock updating a task
-  const index = mockTasks.findIndex(t => t.task_id === id);
-  if (index === -1) {
-    throw new Error(`Task with ID ${id} not found`);
-  }
-  
-  const updatedTask: ProjectTask = {
-    ...mockTasks[index],
-    ...task,
-    updated_at: new Date().toISOString()
-  };
-  
-  mockTasks[index] = updatedTask;
-  return Promise.resolve(updatedTask);
-  
-  // Original API call code:
-  // const response = await axiosInstance.put(`/api/v1/tasks/${id}`, task);
-  // return response.data;
+  const response = await axiosInstance.put(`/api/v1/tasks/${id}`, task);
+  return response.data;
 };
 
 export const deleteTask = async (id: number): Promise<void> => {
-  // Mock deleting a task
-  const index = mockTasks.findIndex(t => t.task_id === id);
-  if (index === -1) {
-    throw new Error(`Task with ID ${id} not found`);
-  }
-  
-  // Use filter instead of splice to avoid read-only issues
-  mockTasks = mockTasks.filter(t => t.task_id !== id);
-  return Promise.resolve();
-  
-  // Original API call code:
-  // await axiosInstance.delete(`/api/v1/tasks/${id}`);
+  await axiosInstance.delete(`/api/v1/tasks/${id}`);
 };
 
 // Project Timeline
 export const getProjectTimeline = async (projectId: number): Promise<ProjectTimeline> => {
-  // Mock timeline data using our mock collections
-  const projectEquipment = mockEquipment.filter(e => e.project_id === projectId);
-  const projectMilestones = mockMilestones.filter(m => m.project_id === projectId);
-  const projectTasks = mockTasks.filter(t => t.project_id === projectId);
-  const equipmentIds = projectEquipment.map(e => e.installation_id);
-  const projectDependencies = mockDependencies.filter(d => 
-    equipmentIds.includes(d.equipment_id) || equipmentIds.includes(d.depends_on_id)
-  );
-  
-  // Return mock timeline
-  return Promise.resolve({
-    equipment: projectEquipment,
-    milestones: projectMilestones,
-    tasks: projectTasks,
-    dependencies: projectDependencies
-  });
-  
-  // Original API call code:
-  // const response = await axiosInstance.get(`/api/v1/projects/${projectId}/timeline`);
-  // return response.data;
+  const response = await axiosInstance.get(`/api/v1/projects/${projectId}/timeline`);
+  return response.data;
 };
 
-// Remove all functions after this point
-// export const getProjects = () => {
-//   return axiosInstance.get('/api/v1/projects');
-// };
+// Create Project with Milestones
+export const createProjectWithMilestones = async (
+  project: Omit<Project, 'project_id' | 'created_at' | 'updated_at'>,
+  milestones: Array<{ name: string; description: string; due_date: string; status?: string }>
+): Promise<{ project: Project; milestones: ProjectMilestone[] }> => {
+  const projectResponse = await axiosInstance.post('/api/v1/projects', project);
+  const createdProject = projectResponse.data;
 
-// export const getProjectById = (id: number) => {
-//   return axiosInstance.get(`/api/v1/projects/${id}`);
-// };
+  if (milestones.length > 0) {
+    const milestonesResponse = await axiosInstance.post('/api/v1/milestones/bulk', {
+      project_id: createdProject.project_id,
+      milestones: milestones
+    });
+    return { project: createdProject, milestones: milestonesResponse.data };
+  }
 
-// export const createProject = (data: any) => {
-//   return axiosInstance.post('/api/v1/projects', data);
-// };
+  return { project: createdProject, milestones: [] };
+};
 
-// export const updateProject = (id: number, data: any) => {
-//   return axiosInstance.put(`/api/v1/projects/${id}`, data);
-// };
+// Get Project Progress
+export const getProjectProgress = async (projectId: number): Promise<{
+  project: Project;
+  milestones: {
+    total: number;
+    completed: number;
+    in_progress: number;
+    delayed: number;
+    pending: number;
+  };
+  tasks: {
+    total: number;
+    completed: number;
+    in_progress: number;
+  };
+  progress_percentage: number;
+}> => {
+  const response = await axiosInstance.get(`/api/v1/projects/${projectId}/progress`);
+  return response.data;
+};
 
-// export const deleteProject = (id: number) => {
-//   return axiosInstance.delete(`/api/v1/projects/${id}`);
-// }; 
+// Bulk create milestones
+export const createMilestonesBulk = async (
+  projectId: number,
+  milestones: Array<{ name: string; description: string; due_date: string; status?: string }>
+): Promise<ProjectMilestone[]> => {
+  const response = await axiosInstance.post('/api/v1/milestones/bulk', {
+    project_id: projectId,
+    milestones: milestones
+  });
+  return response.data;
+}; 
