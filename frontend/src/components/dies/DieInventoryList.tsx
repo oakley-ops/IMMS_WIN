@@ -37,7 +37,9 @@ import {
 import axios from 'axios';
 import DieBarcodeScanner from './DieBarcodeScanner';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+const API_URL = process.env.REACT_APP_API_URL
+  ? `${process.env.REACT_APP_API_URL}/api/v1`
+  : 'http://localhost:4000/api/v1';
 
 interface Die {
   die_id: number;
@@ -106,7 +108,7 @@ const DieInventoryList: React.FC<DieInventoryListProps> = ({
   const getStatusColor = (status: string) => {
     const colors: any = {
       'SHARP': '#4CAF50',
-      'USED': '#F44336',
+      'USED': '#FFC107',
       'OUT_FOR_SHARPENING': '#FF9800',
       'IN_MACHINE': '#2196F3',
     };

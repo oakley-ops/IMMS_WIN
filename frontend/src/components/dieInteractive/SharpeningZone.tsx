@@ -16,7 +16,9 @@ import {
 import { useDroppable } from '@dnd-kit/core';
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+const API_URL = process.env.REACT_APP_API_URL
+  ? `${process.env.REACT_APP_API_URL}/api/v1`
+  : 'http://localhost:4000/api/v1';
 
 interface OutForSharpeningDie {
   die_id: number;
@@ -30,7 +32,7 @@ interface OutForSharpeningDie {
 interface SharpeningZoneProps {
   isDropTarget?: boolean;
   outForSharpening?: OutForSharpeningDie[];
-  onReceiveBack?: () => void;
+  onReceiveBack?: (dieId?: number) => void;
 }
 
 const SharpeningZone: React.FC<SharpeningZoneProps> = ({
@@ -53,13 +55,11 @@ const SharpeningZone: React.FC<SharpeningZoneProps> = ({
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      // Update die status back to SHARP
-      await axios.put(`${API_URL}/dies/${die.die_id}`, {
-        status: 'SHARP',
-      }, { headers });
+      // Use the quick-receive endpoint to update both die AND sharpening record
+      await axios.put(`${API_URL}/die-sharpening/quick-receive/die/${die.die_id}`, {}, { headers });
 
       if (onReceiveBack) {
-        onReceiveBack();
+        onReceiveBack(die.die_id);
       }
     } catch (error) {
       console.error('Error receiving die back:', error);

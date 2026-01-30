@@ -170,13 +170,19 @@ const DieShelf: React.FC<DieShelfProps> = ({
               gap: 1.5,
             }}
           >
-            {filteredDies.map(die => (
-              <DieChip
-                key={die.die_id}
-                die={die}
-                compatibleMachineIds={die.compatible_machine_ids || undefined}
-              />
-            ))}
+            {filteredDies.map(die => {
+              const machineNames = die.compatible_machine_ids
+                ?.map(id => machines.find(m => m.machine_id === id)?.name)
+                .filter((name): name is string => !!name) || [];
+              return (
+                <DieChip
+                  key={die.die_id}
+                  die={die}
+                  compatibleMachineIds={die.compatible_machine_ids || undefined}
+                  compatibleMachineNames={machineNames}
+                />
+              );
+            })}
           </Box>
         )}
       </Box>

@@ -75,6 +75,7 @@
     "start:localhost-3002": "cross-env HOST=localhost PORT=3002 GENERATE_SOURCEMAP=false BROWSER=none react-scripts start",
     "start:network": "cross-env HOST=0.0.0.0 PORT=3000 GENERATE_SOURCEMAP=false BROWSER=none react-scripts start",
     "start:network-pi": "cross-env HOST=0.0.0.0 PORT=3001 REACT_APP_API_URL=http://10.1.10.50:4000 GENERATE_SOURCEMAP=false BROWSER=none react-scripts start",
+    "start:hotspot": "cross-env HOST=0.0.0.0 PORT=3001 REACT_APP_API_URL=http://192.168.137.1:4000 GENERATE_SOURCEMAP=false BROWSER=none react-scripts start",
     "build": "react-scripts build",
     "test": "jest",
     "test:watch": "jest --watch",

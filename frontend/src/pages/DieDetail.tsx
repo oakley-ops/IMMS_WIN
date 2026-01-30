@@ -36,7 +36,9 @@ import DieSharpeningHistoryTab from '../components/dies/detail/DieSharpeningHist
 import DieDocumentsTab from '../components/dies/detail/DieDocumentsTab';
 import AddEditDieDialog from '../components/dies/AddEditDieDialog';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+const API_URL = process.env.REACT_APP_API_URL
+  ? `${process.env.REACT_APP_API_URL}/api/v1`
+  : 'http://localhost:4000/api/v1';
 
 const DieDetail: React.FC = () => {
   const { dieId } = useParams<{ dieId: string }>();

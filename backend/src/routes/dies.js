@@ -58,7 +58,8 @@ router.get('/stats', auth, async (req, res) => {
         COUNT(*) FILTER (WHERE status = 'SHARP') as sharp,
         COUNT(*) FILTER (WHERE status = 'IN_MACHINE') as in_machine,
         COUNT(*) FILTER (WHERE status = 'OUT_FOR_SHARPENING') as out_for_sharpening,
-        COUNT(*) FILTER (WHERE status = 'USED') as used
+        COUNT(*) FILTER (WHERE status = 'USED') as used,
+        COUNT(*) FILTER (WHERE status = 'DULL') as dull
       FROM dies
     `);
 
@@ -122,8 +123,17 @@ router.post('/', auth, async (req, res) => {
       VALUES ($1, $2, $3, $4, 'SHARP', $5, $6)
       RETURNING *
     `, [die_number, finalDieName, die_type, notes, req.user.id, compatible_machine_ids || null]);
-    
+
     await client.query('COMMIT');
+
+    // Emit socket event for real-time updates
+    if (global.io) {
+      global.io.emit('die_updated', {
+        action: 'create',
+        die: result.rows[0]
+      });
+    }
+
     res.status(201).json(result.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
@@ -152,6 +162,14 @@ router.put('/:id', auth, async (req, res) => {
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Die not found' });
+    }
+
+    // Emit socket event for real-time updates
+    if (global.io) {
+      global.io.emit('die_updated', {
+        action: 'update',
+        die: result.rows[0]
+      });
     }
 
     res.json(result.rows[0]);
@@ -258,12 +276,21 @@ router.post('/:id/install', auth, async (req, res) => {
     ]);
     
     await client.query('COMMIT');
-    
+
     const result = await client.query(
       'SELECT * FROM dies WHERE die_id = $1',
       [id]
     );
-    
+
+    // Emit socket event for real-time updates
+    if (global.io) {
+      global.io.emit('die_updated', {
+        action: 'install',
+        die: result.rows[0],
+        machine_id: machine_id
+      });
+    }
+
     res.json(result.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
@@ -308,9 +335,9 @@ router.post('/:id/remove', auth, async (req, res) => {
       throw new Error('Die is not installed in a machine');
     }
 
-    const newStatus = next_status || (
-      die_condition === 'POOR' ? 'USED' : 'SHARP'
-    );
+    // When a die is removed from a machine, it's considered used
+    // Allow next_status override only for special cases (e.g., sending to sharpening)
+    const newStatus = next_status || 'USED';
     
     await client.query(`
       UPDATE dies SET
@@ -349,12 +376,21 @@ router.post('/:id/remove', auth, async (req, res) => {
     ]);
     
     await client.query('COMMIT');
-    
+
     const result = await client.query(
       'SELECT * FROM dies WHERE die_id = $1',
       [id]
     );
-    
+
+    // Emit socket event for real-time updates
+    if (global.io) {
+      global.io.emit('die_updated', {
+        action: 'remove',
+        die: result.rows[0],
+        machine_id: die.machine_id
+      });
+    }
+
     res.json(result.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
@@ -396,12 +432,21 @@ router.delete('/:id', auth, async (req, res) => {
     await client.query('DELETE FROM die_sharpening_records WHERE die_id = $1', [id]);
     await client.query('DELETE FROM die_change_history WHERE die_id = $1', [id]);
     await client.query('DELETE FROM dies WHERE die_id = $1', [id]);
-    
+
     await client.query('COMMIT');
-    
-    res.json({ 
-      success: true, 
-      message: `Die ${die.die_number} has been permanently deleted` 
+
+    // Emit socket event for real-time updates
+    if (global.io) {
+      global.io.emit('die_updated', {
+        action: 'delete',
+        die_id: id,
+        die_number: die.die_number
+      });
+    }
+
+    res.json({
+      success: true,
+      message: `Die ${die.die_number} has been permanently deleted`
     });
   } catch (error) {
     await client.query('ROLLBACK');

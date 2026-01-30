@@ -2,7 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../../styles/Dialog.css';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1';
+const API_URL = process.env.REACT_APP_API_URL
+  ? `${process.env.REACT_APP_API_URL}/api/v1`
+  : 'http://localhost:4000/api/v1';
 const FISERV_BLUE = '#0066A1';
 
 interface DieChangeDialogProps {

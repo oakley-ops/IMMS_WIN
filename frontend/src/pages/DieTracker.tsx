@@ -40,6 +40,8 @@ import {
   closestCenter,
 } from '@dnd-kit/core';
 import axios from 'axios';
+import socket from '../services/socket';
+import { useAuth } from '../contexts/AuthContext';
 
 // Die management components
 import DieInventoryList from '../components/dies/DieInventoryList';
@@ -49,12 +51,14 @@ import SharpeningQueueList from '../components/dies/SharpeningQueueList';
 import ScheduleSharpeningDialog from '../components/dies/ScheduleSharpeningDialog';
 import ShipReceiveDialog from '../components/dies/ShipReceiveDialog';
 import DocumentUploadDialog from '../components/dies/DocumentUploadDialog';
+import SharpeningDetailDialog from '../components/dies/SharpeningDetailDialog';
 
 // Interactive drag-and-drop components
 import DiePressCard from '../components/dieInteractive/DiePressCard';
 import DieShelf from '../components/dieInteractive/DieShelf';
 import DieChip from '../components/dieInteractive/DieChip';
 import SharpeningZone from '../components/dieInteractive/SharpeningZone';
+import DullDieZone from '../components/dieInteractive/DullDieZone';
 import SharpeningConfirmDialog from '../components/dieInteractive/SharpeningConfirmDialog';
 import RemovalReasonDialog from '../components/dieInteractive/RemovalReasonDialog';
 
@@ -78,6 +82,8 @@ interface Die {
   status: string;
   compatible_machine_ids: number[] | null;
   machine_id?: number | null;
+  last_inspection_date?: string;
+  sharpenings_count?: number;
 }
 
 interface OutForSharpeningDie {
@@ -91,6 +97,8 @@ interface OutForSharpeningDie {
 
 const DieTracker: React.FC = () => {
   const navigate = useNavigate();
+  const { userRole } = useAuth();
+  const isAdmin = userRole?.toLowerCase() === 'admin';
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState(0);
   const [stats, setStats] = useState({
@@ -99,6 +107,7 @@ const DieTracker: React.FC = () => {
     in_machine: 0,
     out_for_sharpening: 0,
     used: 0,
+    dull: 0,
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -122,9 +131,12 @@ const DieTracker: React.FC = () => {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [availableDies, setAvailableDies] = useState<Die[]>([]);
   const [outForSharpening, setOutForSharpening] = useState<OutForSharpeningDie[]>([]);
+  const [dullDies, setDullDies] = useState<Die[]>([]);
   const [activeDie, setActiveDie] = useState<Die | null>(null);
   const [sharpeningDialogOpen, setSharpeningDialogOpen] = useState(false);
   const [dieForSharpening, setDieForSharpening] = useState<Die | null>(null);
+  const [sharpeningDetailOpen, setSharpeningDetailOpen] = useState(false);
+  const [selectedSharpeningId, setSelectedSharpeningId] = useState<number | null>(null);
   const [removalDialogOpen, setRemovalDialogOpen] = useState(false);
   const [dieForRemoval, setDieForRemoval] = useState<Die | null>(null);
   const [pendingActionAfterRemoval, setPendingActionAfterRemoval] = useState<'shelf' | 'sharpening' | null>(null);
@@ -141,6 +153,68 @@ const DieTracker: React.FC = () => {
   useEffect(() => {
     fetchAllData();
   }, [refreshTrigger]);
+
+  // Listen for real-time die updates from other clients
+  useEffect(() => {
+    const handleDieUpdate = (data: any) => {
+      console.log('Received die update:', data);
+      // Silent refresh - don't show loading state for real-time updates
+      refreshDataSilently();
+    };
+
+    socket.on('die_updated', handleDieUpdate);
+
+    return () => {
+      socket.off('die_updated', handleDieUpdate);
+    };
+  }, []);
+
+  // Silent refresh for real-time updates (no loading spinner)
+  const refreshDataSilently = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const [statsResponse, machinesResponse, diesResponse] = await Promise.all([
+        axios.get(`${API_URL}/dies/stats`, { headers }),
+        axios.get(`${API_URL}/machines`, { headers }),
+        axios.get(`${API_URL}/dies`, { headers }),
+      ]);
+
+      setStats(statsResponse.data);
+
+      const diePressMachines = machinesResponse.data.filter((m: any) =>
+        m.name?.toLowerCase().includes('die press') ||
+        m.machine_type?.toLowerCase().includes('die press')
+      );
+
+      const allDies = diesResponse.data;
+
+      const machinesWithDies = diePressMachines.map((machine: Machine) => {
+        const currentDie = allDies.find((d: Die) => d.die_id === machine.current_die_id);
+        return { ...machine, current_die: currentDie || null };
+      });
+
+      const available = allDies.filter((d: Die) =>
+        (d.status === 'SHARP' || d.status === 'USED') && !d.machine_id
+      );
+
+      const outForSharpeningDies = allDies.filter((d: Die) =>
+        d.status === 'OUT_FOR_SHARPENING'
+      );
+
+      const dullDiesList = allDies.filter((d: Die) =>
+        d.status === 'DULL'
+      );
+
+      setMachines(machinesWithDies);
+      setAvailableDies(available);
+      setOutForSharpening(outForSharpeningDies);
+      setDullDies(dullDiesList);
+    } catch (err: any) {
+      console.error('Error refreshing data silently:', err);
+    }
+  };
 
   const fetchAllData = async () => {
     try {
@@ -180,9 +254,15 @@ const DieTracker: React.FC = () => {
         d.status === 'OUT_FOR_SHARPENING'
       );
 
+      // Filter dull dies (awaiting tech review)
+      const dullDiesList = allDies.filter((d: Die) =>
+        d.status === 'DULL'
+      );
+
       setMachines(machinesWithDies);
       setAvailableDies(available);
       setOutForSharpening(outForSharpeningDies);
+      setDullDies(dullDiesList);
     } catch (err: any) {
       console.error('Error fetching data:', err);
       setError('Failed to load die data');
@@ -197,13 +277,27 @@ const DieTracker: React.FC = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      await axios.post(`${API_URL}/dies/${dieId}/install`, {
+      const response = await axios.post(`${API_URL}/dies/${dieId}/install`, {
         machine_id: machineId,
         change_reason_code: 'INSTALL',
         change_reason_notes: 'Installed via interactive UI',
       }, { headers });
 
-      await fetchAllData();
+      const updatedDie = response.data;
+
+      // Optimistic local state update
+      setAvailableDies(prev => prev.filter(d => d.die_id !== dieId));
+      setMachines(prev => prev.map(m => {
+        if (m.machine_id === machineId) {
+          return { ...m, current_die_id: dieId, current_die: updatedDie };
+        }
+        return m;
+      }));
+      setStats(prev => ({
+        ...prev,
+        sharp: Math.max(0, prev.sharp - 1),
+        in_machine: prev.in_machine + 1,
+      }));
     } catch (err: any) {
       console.error('Error installing die:', err);
       setError(err.response?.data?.error || 'Failed to install die');
@@ -215,12 +309,26 @@ const DieTracker: React.FC = () => {
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      await axios.post(`${API_URL}/dies/${dieId}/remove`, {
+      const response = await axios.post(`${API_URL}/dies/${dieId}/remove`, {
         change_reason_code: reasonCode,
         change_reason_notes: notes,
       }, { headers });
 
-      await fetchAllData();
+      const updatedDie = response.data;
+
+      // Optimistic local state update
+      setMachines(prev => prev.map(m => {
+        if (m.current_die?.die_id === dieId) {
+          return { ...m, current_die_id: null, current_die: null };
+        }
+        return m;
+      }));
+      setAvailableDies(prev => [...prev, { ...updatedDie, machine_id: null }]);
+      setStats(prev => ({
+        ...prev,
+        in_machine: Math.max(0, prev.in_machine - 1),
+        used: prev.used + 1,
+      }));
     } catch (err: any) {
       console.error('Error removing die:', err);
       setError(err.response?.data?.error || 'Failed to remove die');
@@ -260,7 +368,134 @@ const DieTracker: React.FC = () => {
         notes: notes || 'Sent via interactive UI',
       }, { headers });
 
-      await fetchAllData();
+      // Optimistic local state update
+      const dieToMove = availableDies.find(d => d.die_id === dieId);
+      if (dieToMove) {
+        setAvailableDies(prev => prev.filter(d => d.die_id !== dieId));
+        setOutForSharpening(prev => [...prev, {
+          ...dieToMove,
+          status: 'OUT_FOR_SHARPENING',
+          current_location: 'Mathias',
+        } as OutForSharpeningDie]);
+        setStats(prev => ({
+          ...prev,
+          sharp: Math.max(0, prev.sharp - 1),
+          out_for_sharpening: prev.out_for_sharpening + 1,
+        }));
+      }
+    } catch (err: any) {
+      console.error('Error sending to sharpening:', err);
+      setError(err.response?.data?.error || 'Failed to send die to sharpening');
+      throw err;
+    }
+  };
+
+  // Handler for when a die is received back from sharpening (via SharpeningZone)
+  const handleReceiveFromSharpening = (dieId?: number) => {
+    if (dieId) {
+      // Optimistic local state update for specific die
+      const dieToMove = outForSharpening.find(d => d.die_id === dieId);
+      if (dieToMove) {
+        setOutForSharpening(prev => prev.filter(d => d.die_id !== dieId));
+        setAvailableDies(prev => [...prev, {
+          die_id: dieToMove.die_id,
+          die_number: dieToMove.die_number,
+          die_name: dieToMove.die_name,
+          die_type: dieToMove.die_type,
+          status: 'SHARP',
+          compatible_machine_ids: null,
+          machine_id: null,
+        }]);
+        setStats(prev => ({
+          ...prev,
+          out_for_sharpening: Math.max(0, prev.out_for_sharpening - 1),
+          sharp: prev.sharp + 1,
+        }));
+      }
+    } else {
+      // Fallback: silent refresh if no specific die ID
+      refreshDataSilently();
+    }
+  };
+
+  // Handler for marking a die as dull (operator/tech action)
+  const handleMarkAsDull = async (die: Die) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      await axios.put(`${API_URL}/dies/${die.die_id}`, {
+        status: 'DULL',
+      }, { headers });
+
+      // Optimistic local state update
+      setAvailableDies(prev => prev.filter(d => d.die_id !== die.die_id));
+      setDullDies(prev => [...prev, { ...die, status: 'DULL' }]);
+      setStats(prev => ({
+        ...prev,
+        used: Math.max(0, prev.used - 1),
+        sharp: die.status === 'SHARP' ? Math.max(0, prev.sharp - 1) : prev.sharp,
+        dull: prev.dull + 1,
+      }));
+    } catch (err: any) {
+      console.error('Error marking die as dull:', err);
+      setError(err.response?.data?.error || 'Failed to mark die as dull');
+      throw err;
+    }
+  };
+
+  // Handler for admin to send a dull die to sharpening
+  const handleSendDullToSharpening = (die: Die) => {
+    // Move from dull zone to sharpening dialog
+    setDieForSharpening(die);
+    setSharpeningDialogOpen(true);
+  };
+
+  // Modified handler to support sending dull dies to sharpening
+  const handleSendDullDieToSharpening = async (dieId: number, notes: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      const headers = { Authorization: `Bearer ${token}` };
+
+      const today = new Date().toISOString().split('T')[0];
+
+      await axios.post(`${API_URL}/die-sharpening`, {
+        die_id: dieId,
+        sharpening_vendor: 'Mathias',
+        scheduled_date: today,
+        service_type: 'SHARPENING',
+        notes: notes || 'Sent via interactive UI',
+      }, { headers });
+
+      // Optimistic local state update - check both availableDies and dullDies
+      const dieFromAvailable = availableDies.find(d => d.die_id === dieId);
+      const dieFromDull = dullDies.find(d => d.die_id === dieId);
+      const dieToMove = dieFromAvailable || dieFromDull;
+
+      if (dieToMove) {
+        if (dieFromAvailable) {
+          setAvailableDies(prev => prev.filter(d => d.die_id !== dieId));
+          setStats(prev => ({
+            ...prev,
+            sharp: dieToMove.status === 'SHARP' ? Math.max(0, prev.sharp - 1) : prev.sharp,
+            used: dieToMove.status === 'USED' ? Math.max(0, prev.used - 1) : prev.used,
+            out_for_sharpening: prev.out_for_sharpening + 1,
+          }));
+        } else if (dieFromDull) {
+          setDullDies(prev => prev.filter(d => d.die_id !== dieId));
+          setStats(prev => ({
+            ...prev,
+            dull: Math.max(0, prev.dull - 1),
+            out_for_sharpening: prev.out_for_sharpening + 1,
+          }));
+        }
+
+        setOutForSharpening(prev => [...prev, {
+          ...dieToMove,
+          status: 'OUT_FOR_SHARPENING',
+          current_location: 'Mathias',
+        } as OutForSharpeningDie]);
+      }
     } catch (err: any) {
       console.error('Error sending to sharpening:', err);
       setError(err.response?.data?.error || 'Failed to send die to sharpening');
@@ -317,13 +552,31 @@ const DieTracker: React.FC = () => {
       openRemovalDialog(dieData, 'shelf');
     }
 
-    // Dropping on sharpening zone
+    // Dropping on sharpening zone (admin only)
     if (dropType === 'sharpening') {
       if (fromMachine) {
         openRemovalDialog(dieData, 'sharpening');
       } else {
         setDieForSharpening(dieData);
         setSharpeningDialogOpen(true);
+      }
+    }
+
+    // Dropping on dull die zone (all users)
+    if (dropType === 'dull') {
+      if (fromMachine) {
+        // First remove from machine, then mark as dull
+        try {
+          await handleInteractiveRemoveDie(dieData.die_id, 'DULL', 'Marked as dull - needs inspection');
+          // After removal, mark as dull
+          const removedDie = { ...dieData, status: 'USED', machine_id: null };
+          await handleMarkAsDull(removedDie);
+        } catch (err) {
+          // Error already handled in the individual functions
+        }
+      } else {
+        // Die is already on shelf, just mark as dull
+        await handleMarkAsDull(dieData);
       }
     }
   };
@@ -407,7 +660,8 @@ const DieTracker: React.FC = () => {
   };
 
   const handleViewSharpeningDetails = (sharpeningId: number) => {
-    console.log('View sharpening details:', sharpeningId);
+    setSelectedSharpeningId(sharpeningId);
+    setSharpeningDetailOpen(true);
   };
 
   if (loading) {
@@ -460,44 +714,62 @@ const DieTracker: React.FC = () => {
               Die Press Machines
             </Typography>
 
-            <Grid container spacing={3} sx={{ mb: 4 }}>
-              {machines.length === 0 ? (
-                <Grid item xs={12}>
-                  <Card sx={{ p: 4, textAlign: 'center' }}>
-                    <Typography color="text.secondary">
-                      No die press machines found
-                    </Typography>
-                  </Card>
-                </Grid>
-              ) : (
-                <>
-                  {machines.map((machine) => (
-                    <Grid item xs={12} sm={6} md={4} lg={3} key={machine.machine_id}>
-                      <DiePressCard
-                        machine={machine}
-                        onRemoveDie={openRemovalDialog}
-                        isDropTarget={activeDie !== null && !machine.current_die}
-                      />
+            {/* Main Layout: Machines + Die Shelf on left, Zones on right */}
+            <Grid container spacing={3}>
+              {/* Left Column - Machines and Die Shelf */}
+              <Grid item xs={12} lg={9}>
+                {/* Machines Section */}
+                <Grid container spacing={3} sx={{ mb: 3 }}>
+                  {machines.length === 0 ? (
+                    <Grid item xs={12}>
+                      <Card sx={{ p: 4, textAlign: 'center' }}>
+                        <Typography color="text.secondary">
+                          No die press machines found
+                        </Typography>
+                      </Card>
                     </Grid>
-                  ))}
-                  {/* Sharpening Zone */}
-                  <Grid item xs={12} sm={6} md={4} lg={3}>
+                  ) : (
+                    machines.map((machine) => (
+                      <Grid item xs={12} sm={6} md={4} key={machine.machine_id}>
+                        <DiePressCard
+                          machine={machine}
+                          onRemoveDie={openRemovalDialog}
+                          isDropTarget={activeDie !== null && !machine.current_die}
+                        />
+                      </Grid>
+                    ))
+                  )}
+                </Grid>
+
+                {/* Die Shelf - below machines, left of zones */}
+                <DieShelf
+                  dies={availableDies}
+                  machines={machines}
+                  isDropTarget={activeDie !== null}
+                />
+              </Grid>
+
+              {/* Right Column - Zones */}
+              <Grid item xs={12} lg={3}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {/* Dull Die Zone - visible to all users */}
+                  <DullDieZone
+                    isDropTarget={activeDie !== null}
+                    dullDies={dullDies}
+                    isAdmin={isAdmin}
+                    onSendToSharpening={handleSendDullToSharpening}
+                  />
+                  {/* Sharpening Zone - only visible to admin */}
+                  {isAdmin && (
                     <SharpeningZone
                       isDropTarget={activeDie !== null}
                       outForSharpening={outForSharpening}
-                      onReceiveBack={fetchAllData}
+                      onReceiveBack={handleReceiveFromSharpening}
                     />
-                  </Grid>
-                </>
-              )}
+                  )}
+                </Box>
+              </Grid>
             </Grid>
-
-            {/* Die Shelf */}
-            <DieShelf
-              dies={availableDies}
-              machines={machines}
-              isDropTarget={activeDie !== null}
-            />
           </Box>
         )}
 
@@ -589,6 +861,12 @@ const DieTracker: React.FC = () => {
           record={selectedSharpeningRecord}
         />
 
+        <SharpeningDetailDialog
+          open={sharpeningDetailOpen}
+          onClose={() => setSharpeningDetailOpen(false)}
+          sharpeningId={selectedSharpeningId}
+        />
+
         {/* Delete Confirmation Dialog */}
         <Dialog
           open={deleteDialogOpen}
@@ -633,7 +911,7 @@ const DieTracker: React.FC = () => {
             setSharpeningDialogOpen(false);
             setDieForSharpening(null);
           }}
-          onConfirm={handleSendToSharpening}
+          onConfirm={handleSendDullDieToSharpening}
         />
 
         <RemovalReasonDialog

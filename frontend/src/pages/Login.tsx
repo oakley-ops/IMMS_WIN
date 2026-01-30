@@ -9,6 +9,8 @@ import {
   Box,
   Alert,
   ThemeProvider,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
 import { theme, commonStyles } from '../theme';
@@ -16,6 +18,10 @@ import { theme, commonStyles } from '../theme';
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [rememberMe, setRememberMe] = useState(() => {
+    // Default to checked if previously set (for kiosk convenience)
+    return localStorage.getItem('rememberMe') === 'true';
+  });
   const [error, setError] = useState('');
   const { login, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
@@ -35,7 +41,7 @@ const Login: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(username, password);
+      await login(username, password, rememberMe);
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to login');
@@ -91,7 +97,18 @@ const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                sx={{ mb: 3 }}
+                sx={{ mb: 2 }}
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    color="secondary"
+                  />
+                }
+                label="Remember Me"
+                sx={{ mb: 2 }}
               />
               <Button
                 type="submit"

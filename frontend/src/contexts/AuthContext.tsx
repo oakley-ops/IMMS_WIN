@@ -12,7 +12,7 @@ interface User {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (username: string, password: string) => Promise<void>;
+  login: (username: string, password: string, rememberMe?: boolean) => Promise<void>;
   logout: () => void;
   loading: boolean;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
@@ -31,13 +31,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const userRole = user?.role || null;
 
   useEffect(() => {
-    // Add event listener for when the window is closed or refreshed
+    // Only clear token on page close if "Remember Me" was not checked
     const handleUnload = () => {
-      localStorage.removeItem('token');
+      const rememberMe = localStorage.getItem('rememberMe') === 'true';
+      if (!rememberMe) {
+        localStorage.removeItem('token');
+      }
     };
 
     window.addEventListener('beforeunload', handleUnload);
-    
+
     checkAuthStatus();
 
     // Cleanup
@@ -65,16 +68,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('rememberMe');
     delete axiosInstance.defaults.headers.common['Authorization'];
     setUser(null);
     setIsAuthenticated(false);
   };
 
-  const login = async (username: string, password: string) => {
+  const login = async (username: string, password: string, rememberMe: boolean = false) => {
     try {
       const response = await axiosInstance.post('/api/v1/auth/login', { username, password });
       const { token, user } = response.data;
       localStorage.setItem('token', token);
+      localStorage.setItem('rememberMe', rememberMe.toString());
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
       setIsAuthenticated(true);

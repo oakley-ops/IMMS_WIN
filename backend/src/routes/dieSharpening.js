@@ -93,6 +93,16 @@ router.post('/', auth, async (req, res) => {
     `, [sharpening_vendor, die_id]);
 
     await client.query('COMMIT');
+
+    // Emit socket event for real-time updates
+    if (global.io) {
+      global.io.emit('die_updated', {
+        action: 'sharpening_scheduled',
+        die_id: die_id,
+        sharpening_record: result.rows[0]
+      });
+    }
+
     res.status(201).json(result.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
@@ -134,6 +144,16 @@ router.put('/:id/ship', auth, async (req, res) => {
     `, [result.rows[0].sharpening_vendor, result.rows[0].die_id]);
 
     await client.query('COMMIT');
+
+    // Emit socket event for real-time updates
+    if (global.io) {
+      global.io.emit('die_updated', {
+        action: 'sharpening_shipped',
+        die_id: result.rows[0].die_id,
+        sharpening_record: result.rows[0]
+      });
+    }
+
     res.json(result.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
@@ -197,8 +217,18 @@ router.put('/:id/receive', auth, async (req, res) => {
         last_inspection_notes = $2
       WHERE die_id = $3
     `, [returnDate, inspection_notes, sharpeningResult.rows[0].die_id]);
-    
+
     await client.query('COMMIT');
+
+    // Emit socket event for real-time updates
+    if (global.io) {
+      global.io.emit('die_updated', {
+        action: 'sharpening_received',
+        die_id: sharpeningResult.rows[0].die_id,
+        sharpening_record: sharpeningResult.rows[0]
+      });
+    }
+
     res.json(sharpeningResult.rows[0]);
   } catch (error) {
     await client.query('ROLLBACK');
@@ -212,9 +242,9 @@ router.put('/:id/receive', auth, async (req, res) => {
 router.get('/:id', auth, async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const result = await pool.query(`
-      SELECT 
+      SELECT
         dsr.*,
         d.die_number,
         d.die_name,
@@ -223,15 +253,100 @@ router.get('/:id', auth, async (req, res) => {
       JOIN dies d ON dsr.die_id = d.die_id
       WHERE dsr.sharpening_id = $1
     `, [id]);
-    
+
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Sharpening record not found' });
     }
-    
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error('Error fetching sharpening record:', error);
     res.status(500).json({ error: 'Failed to fetch sharpening record' });
+  }
+});
+
+// Quick receive - finds the active sharpening record for a die and marks it as returned
+// Used by the interactive SharpeningZone component
+router.put('/quick-receive/die/:dieId', auth, async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const { dieId } = req.params;
+
+    // Find the most recent non-returned sharpening record for this die
+    const recordResult = await client.query(`
+      SELECT sharpening_id, die_id, sharpening_vendor
+      FROM die_sharpening_records
+      WHERE die_id = $1 AND status IN ('SCHEDULED', 'SHIPPED', 'AT_VENDOR')
+      ORDER BY scheduled_date DESC
+      LIMIT 1
+    `, [dieId]);
+
+    if (recordResult.rows.length === 0) {
+      // No active sharpening record found - just update the die status directly
+      await client.query(`
+        UPDATE dies SET
+          status = 'SHARP',
+          current_location = 'Storage'
+        WHERE die_id = $1
+      `, [dieId]);
+
+      await client.query('COMMIT');
+
+      // Emit socket event
+      if (global.io) {
+        global.io.emit('die_updated', {
+          action: 'sharpening_received',
+          die_id: parseInt(dieId)
+        });
+      }
+
+      return res.json({ message: 'Die marked as sharp (no active sharpening record found)' });
+    }
+
+    const sharpeningId = recordResult.rows[0].sharpening_id;
+    const returnDate = new Date();
+
+    // Update the sharpening record to RETURNED
+    const sharpeningResult = await client.query(`
+      UPDATE die_sharpening_records SET
+        status = 'RETURNED',
+        actual_return_date = $1,
+        turnaround_days = $1::date - COALESCE(shipped_date, scheduled_date)::date
+      WHERE sharpening_id = $2
+      RETURNING *
+    `, [returnDate, sharpeningId]);
+
+    // Update the die status to SHARP
+    await client.query(`
+      UPDATE dies SET
+        status = 'SHARP',
+        current_location = 'Storage',
+        sharpenings_count = COALESCE(sharpenings_count, 0) + 1,
+        last_inspection_date = $1
+      WHERE die_id = $2
+    `, [returnDate, dieId]);
+
+    await client.query('COMMIT');
+
+    // Emit socket event for real-time updates
+    if (global.io) {
+      global.io.emit('die_updated', {
+        action: 'sharpening_received',
+        die_id: parseInt(dieId),
+        sharpening_record: sharpeningResult.rows[0]
+      });
+    }
+
+    res.json(sharpeningResult.rows[0]);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Error quick receiving die:', error);
+    res.status(500).json({ error: error.message || 'Failed to receive die' });
+  } finally {
+    client.release();
   }
 });
 
