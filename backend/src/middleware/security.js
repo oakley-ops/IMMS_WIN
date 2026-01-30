@@ -37,10 +37,10 @@ const productionMiddleware = (app) => {
     crossOriginEmbedderPolicy: false,
   }));
   
-  // Rate limiting - adjusted for 3 devices and 10 users
+  // Rate limiting - balanced for security and usability
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 3000, // Increased for multiple users per device
+    max: parseInt(process.env.RATE_LIMIT_MAX) || 500, // 500 requests per 15 min (~33/min) - configurable via env
     message: 'Too many requests, please try again later.',
     standardHeaders: true,
     legacyHeaders: false,
@@ -70,7 +70,7 @@ const productionMiddleware = (app) => {
     cookie: {
       secure: process.env.NODE_ENV === 'production', // true in production
       httpOnly: true,
-      maxAge: parseInt(process.env.SESSION_MAX_AGE) || 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: parseInt(process.env.SESSION_MAX_AGE) || 8 * 60 * 60 * 1000, // 8 hours default (reduced from 24)
       sameSite: 'strict'
     },
     name: 'sessionId', // Custom name instead of default 'connect.sid'

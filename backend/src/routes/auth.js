@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const { executeWithRetry } = require('../../db');
 const rateLimit = require('express-rate-limit');
+const { validateLogin, validatePasswordChange, sanitizeBody } = require('../middleware/validation');
 
 // Rate limiting for login attempts
 const loginLimiter = rateLimit({
@@ -15,12 +16,12 @@ const loginLimiter = rateLimit({
   trustProxy: true // Enable trust proxy
 });
 
-// Login route with rate limiting
-router.post('/login', loginLimiter, async (req, res) => {
+// Login route with rate limiting and input validation
+router.post('/login', sanitizeBody, loginLimiter, async (req, res) => {
   try {
     const { username, password } = req.body;
     console.log('Login attempt for username:', username);
-    console.log('Provided password:', password);
+    // SECURITY: Never log passwords
 
     if (!username || !password) {
       console.log('Missing username or password');
@@ -35,18 +36,14 @@ router.post('/login', loginLimiter, async (req, res) => {
 
     const user = userResult.rows[0];
     console.log('User found:', user ? 'Yes' : 'No');
-    if (user) {
-      console.log('Stored hash:', user.password_hash);
-    }
+    // SECURITY: Never log password hashes
 
     if (!user) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     // Verify password
-    console.log('Comparing passwords...');
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
-    console.log('Password valid:', isValidPassword);
 
     if (!isValidPassword) {
       // Try to log failed attempt, but don't fail if table doesn't exist
@@ -61,14 +58,19 @@ router.post('/login', loginLimiter, async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Generate JWT token
+    // Generate JWT token - require JWT_SECRET to be set
+    if (!process.env.JWT_SECRET) {
+      console.error('JWT_SECRET environment variable is not set');
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+
     const token = jwt.sign(
-      { 
+      {
         id: user.user_id,
         username: user.username,
-        role: user.role 
+        role: user.role
       },
-      process.env.JWT_SECRET || 'your-secret-key',
+      process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN || '24h' }
     );
 
@@ -115,7 +117,10 @@ router.get('/verify', async (req, res) => {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
     // Get user from database using executeWithRetry
     const userResult = await executeWithRetry(
@@ -136,19 +141,49 @@ router.get('/verify', async (req, res) => {
   }
 });
 
-// Change password route
-router.post('/change-password', async (req, res) => {
+// Password complexity validation helper
+const validatePasswordComplexity = (password) => {
+  const errors = [];
+  if (password.length < 8) {
+    errors.push('Password must be at least 8 characters long');
+  }
+  if (!/[a-z]/.test(password)) {
+    errors.push('Password must contain at least one lowercase letter');
+  }
+  if (!/[A-Z]/.test(password)) {
+    errors.push('Password must contain at least one uppercase letter');
+  }
+  if (!/[0-9]/.test(password)) {
+    errors.push('Password must contain at least one number');
+  }
+  if (!/[!@#$%^&*]/.test(password)) {
+    errors.push('Password must contain at least one special character (!@#$%^&*)');
+  }
+  return errors;
+};
+
+// Change password route with validation
+router.post('/change-password', sanitizeBody, async (req, res) => {
   try {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key');
+    if (!process.env.JWT_SECRET) {
+      return res.status(500).json({ message: 'Server configuration error' });
+    }
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const { currentPassword, newPassword } = req.body;
 
     if (!currentPassword || !newPassword) {
       return res.status(400).json({ message: 'Current and new passwords are required' });
+    }
+
+    // Validate new password complexity
+    const passwordErrors = validatePasswordComplexity(newPassword);
+    if (passwordErrors.length > 0) {
+      return res.status(400).json({ message: passwordErrors.join('. ') });
     }
 
     // Get user from database

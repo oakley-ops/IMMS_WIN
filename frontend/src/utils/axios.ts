@@ -9,40 +9,31 @@ const axiosInstance = axios.create({
   }
 });
 
+// Check if we're in development mode
+const isDev = process.env.NODE_ENV === 'development';
+
 // Add a request interceptor
 axiosInstance.interceptors.request.use(
   (config) => {
     // Get token from localStorage
     const token = localStorage.getItem('token');
 
-    // More verbose logging for debugging
-    console.log('Request Token Debug:', {
-      hasToken: !!token,
-      tokenPrefix: token ? token.substring(0, 10) + '...' : 'none',
-      endpoint: config.url
-    });
-    
-    // Log request details
-    console.log('Request:', {
-      method: config.method,
-      url: config.url,
-      baseURL: config.baseURL,
-      fullURL: `${config.baseURL}${config.url}`,
-      headers: {
-        ...config.headers,
-        Authorization: token ? 'Bearer [HIDDEN]' : undefined
-      }
-    });
-    
     // If token exists, add to headers
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
+    // Only log in development, and never log sensitive data
+    if (isDev) {
+      console.log(`[API] ${config.method?.toUpperCase()} ${config.url}`);
+    }
+
     return config;
   },
   (error) => {
-    console.error('Request error:', error);
+    if (isDev) {
+      console.error('[API] Request error:', error.message);
+    }
     return Promise.reject(error);
   }
 );
@@ -50,26 +41,17 @@ axiosInstance.interceptors.request.use(
 // Add a response interceptor
 axiosInstance.interceptors.response.use(
   (response) => {
-    // Log response details
-    console.log('Response:', {
-      status: response.status,
-      url: response.config.url,
-      baseURL: response.config.baseURL,
-      fullURL: `${response.config.baseURL}${response.config.url}`,
-      data: response.data
-    });
+    // Only log in development
+    if (isDev) {
+      console.log(`[API] ${response.status} ${response.config.url}`);
+    }
     return response;
   },
   (error) => {
-    // Log error details
-    console.error('Response error:', {
-      message: error.message,
-      status: error.response?.status,
-      url: error.config?.url,
-      baseURL: error.config?.baseURL,
-      fullURL: error.config ? `${error.config.baseURL}${error.config.url}` : undefined,
-      data: error.response?.data
-    });
+    // Only log in development, without sensitive data
+    if (isDev) {
+      console.error(`[API] Error ${error.response?.status || 'NETWORK'} ${error.config?.url}: ${error.message}`);
+    }
 
     // Handle unauthorized errors
     if (error.response?.status === 401) {

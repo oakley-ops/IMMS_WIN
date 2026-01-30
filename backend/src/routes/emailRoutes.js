@@ -14,7 +14,7 @@ emailService.initializeEmailTracking();
  * @desc Send a purchase order PDF via email
  * @access Private
  */
-router.post('/send-email', async (req, res) => {
+router.post('/send-email', authenticateToken, async (req, res) => {
   try {
     const { pdfBase64, recipient, poNumber, poId, notes } = req.body;
 
@@ -85,7 +85,7 @@ router.post('/send-email', async (req, res) => {
  * @desc Process email approval/rejection
  * @access Private
  */
-router.post('/process-approval', async (req, res) => {
+router.post('/process-approval', authenticateToken, async (req, res) => {
   try {
     const { trackingCode, approvalEmail, action } = req.body;
 
@@ -129,7 +129,7 @@ router.post('/process-approval', async (req, res) => {
  * @desc Get email history for a purchase order
  * @access Private
  */
-router.get('/history/:poId', async (req, res) => {
+router.get('/history/:poId', authenticateToken, async (req, res) => {
   try {
     const { poId } = req.params;
 
@@ -156,7 +156,7 @@ router.get('/history/:poId', async (req, res) => {
 });
 
 // Add a route for manual email approval processing
-router.post('/manual-approval', async (req, res) => {
+router.post('/manual-approval', authenticateToken, async (req, res) => {
   try {
     const { trackingCode, approverEmail, isApproved } = req.body;
     
@@ -188,26 +188,31 @@ router.post('/manual-approval', async (req, res) => {
   }
 });
 
-// Test endpoint for email functionality
-router.get('/test-email', async (req, res) => {
+// Test endpoint for email functionality - DEVELOPMENT ONLY
+router.get('/test-email', authenticateToken, async (req, res) => {
+  // Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'This endpoint is disabled in production' });
+  }
+
   try {
     // Use the singleton instance instead of creating a new one
     // Initialize the email tracking service to ensure it's available
     emailService.initializeEmailTracking();
-    
+
     const recipient = req.query.email || process.env.NOTIFICATION_RECIPIENTS.split(',')[0];
-    
+
     console.log(`Testing email functionality to: ${recipient}`);
-    
+
     const result = await emailService.sendEmail(
-      'Email System Test', 
+      'Email System Test',
       `<h1>Test Email</h1>
        <p>This is a test email to verify the email system functionality.</p>
        <p>If you received this email, the system is working correctly.</p>
        <p>Sent at: ${new Date().toLocaleString()}</p>`,
       recipient
     );
-    
+
     res.json({
       success: true,
       message: 'Test email sent successfully',
@@ -226,50 +231,44 @@ router.get('/test-email', async (req, res) => {
   }
 });
 
-// Debug endpoint to manually test approval processing
-router.post('/debug-approval', async (req, res) => {
+// Debug endpoint to manually test approval processing - DEVELOPMENT ONLY
+router.post('/debug-approval', authenticateToken, async (req, res) => {
+  // Only allow in development mode
+  if (process.env.NODE_ENV === 'production') {
+    return res.status(403).json({ error: 'This endpoint is disabled in production' });
+  }
+
   try {
     const { trackingCode, approvalEmail, emailBody } = req.body;
-    
+
     if (!trackingCode || !approvalEmail || !emailBody) {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'trackingCode, approvalEmail, and emailBody are required' 
+      return res.status(400).json({
+        success: false,
+        error: 'trackingCode, approvalEmail, and emailBody are required'
       });
     }
-    
+
     console.log('=== DEBUG APPROVAL PROCESSING ===');
     console.log('Tracking Code:', trackingCode);
     console.log('Approval Email:', approvalEmail);
-    console.log('Email Body:', emailBody);
-    
+    // SECURITY: Don't log full email body in production
+
     // Test the approval keyword detection logic
     const bodyLower = emailBody.toLowerCase();
     const bodyLines = emailBody.split('\n').map(line => line.trim().toLowerCase());
-    
-    console.log('Body lines for analysis:', bodyLines);
-    
+
     // Define approval keywords (same as in monitorEmails.js)
-    const approvalKeywords = ['approved', 'approval', 'accept', 'accepted', 'yes', 'confirm', 'confirmed', 
+    const approvalKeywords = ['approved', 'approval', 'accept', 'accepted', 'yes', 'confirm', 'confirmed',
                              'looks good', 'i approve', 'approve', 'ok', 'good', 'fine', 'agreed', 'correct'];
-    
+
     // Test approval detection
-    const hasApprovalInLines = bodyLines.some(line => 
+    const hasApprovalInLines = bodyLines.some(line =>
       approvalKeywords.some(keyword => line.includes(keyword))
     );
-    
+
     const hasApprovalInBody = approvalKeywords.some(keyword => bodyLower.includes(keyword));
     const isApproved = hasApprovalInLines || hasApprovalInBody;
-    
-    console.log('Body lines contain approval:', hasApprovalInLines);
-    console.log('Full body contains approval:', hasApprovalInBody);
-    console.log('Final approval status:', isApproved ? 'APPROVED' : 'NOT APPROVED');
-    
-    if (isApproved) {
-      const foundKeywords = approvalKeywords.filter(keyword => bodyLower.includes(keyword));
-      console.log('Found approval keywords:', foundKeywords);
-    }
-    
+
     // Actually process the approval
     const result = await emailTrackingService.processEmailApproval(
       trackingCode,
@@ -277,12 +276,11 @@ router.post('/debug-approval', async (req, res) => {
       isApproved,
       emailBody
     );
-    
+
     res.json({
       success: true,
       message: 'Debug approval processing completed',
       analysis: {
-        bodyLines,
         hasApprovalInLines,
         hasApprovalInBody,
         isApproved,
@@ -290,13 +288,13 @@ router.post('/debug-approval', async (req, res) => {
       },
       result
     });
-    
+
   } catch (error) {
-    console.error('Debug approval processing failed:', error);
+    console.error('Debug approval processing failed:', error.message);
     res.status(500).json({
       success: false,
-      error: error.message,
-      details: error.stack
+      error: error.message
+      // SECURITY: Don't expose stack traces
     });
   }
 });
@@ -304,7 +302,7 @@ router.post('/debug-approval', async (req, res) => {
 /**
  * Route to send a purchase order email with PDF attachment
  */
-router.post('/purchase-order', async (req, res) => {
+router.post('/purchase-order', authenticateToken, async (req, res) => {
   try {
     const { recipient, poNumber, pdfBase64, poId } = req.body;
     
@@ -347,7 +345,8 @@ router.post('/purchase-order', async (req, res) => {
 emailService.initializeEmailTracking();
 
 // Route for sending a general email (for testing purposes)
-router.post('/send-email',
+router.post('/send-general-email',
+  authenticateToken,
   [
     body('subject').trim().notEmpty().withMessage('Subject is required'),
     body('html').trim().notEmpty().withMessage('HTML content is required'),
@@ -387,7 +386,7 @@ router.post('/send-email',
 );
 
 // Status endpoint to check email monitor status
-router.get('/monitor-status', async (req, res) => {
+router.get('/monitor-status', authenticateToken, async (req, res) => {
   try {
     // Check if email monitor process is running
     const isProcessRunning = global.emailMonitorProcess && !global.emailMonitorProcess.killed;
@@ -441,7 +440,7 @@ router.get('/monitor-status', async (req, res) => {
 });
 
 // Force restart email monitor endpoint
-router.post('/restart-monitor', async (req, res) => {
+router.post('/restart-monitor', authenticateToken, async (req, res) => {
   try {
     console.log('Manual restart of email monitor requested...');
     
@@ -502,7 +501,7 @@ router.post('/restart-monitor', async (req, res) => {
 });
 
 // Force refresh purchase order status endpoint
-router.post('/refresh-po/:poId', async (req, res) => {
+router.post('/refresh-po/:poId', authenticateToken, async (req, res) => {
   try {
     const poId = parseInt(req.params.poId);
     
@@ -575,7 +574,7 @@ router.post('/refresh-po/:poId', async (req, res) => {
 });
 
 // Get current PO status endpoint
-router.get('/po-status/:poId', async (req, res) => {
+router.get('/po-status/:poId', authenticateToken, async (req, res) => {
   try {
     const poId = parseInt(req.params.poId);
     

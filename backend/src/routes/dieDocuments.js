@@ -2,11 +2,29 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
+const crypto = require('crypto');
 const { pool } = require('../../db');
 const auth = require('../middleware/auth');
 const DieDocumentService = require('../services/DieDocumentService');
 
 const documentService = new DieDocumentService(pool);
+
+// Allowed MIME types mapped to extensions for validation
+const ALLOWED_MIME_TYPES = {
+  'application/pdf': '.pdf',
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/gif': '.gif',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '.docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '.xlsx'
+};
+
+// Generate secure random filename to prevent path traversal attacks
+const generateSecureFilename = (originalname) => {
+  const ext = path.extname(originalname).toLowerCase();
+  const randomName = crypto.randomBytes(16).toString('hex');
+  return `${Date.now()}-${randomName}${ext}`;
+};
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -14,25 +32,38 @@ const storage = multer.diskStorage({
     cb(null, uploadDir);
   },
   filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname);
+    // SECURITY: Use secure random filename instead of original name
+    cb(null, generateSecureFilename(file.originalname));
   }
 });
 
 const upload = multer({
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024
+    fileSize: 10 * 1024 * 1024 // 10MB
   },
   fileFilter: function (req, file, cb) {
-    const allowedTypes = /pdf|jpg|jpeg|png|gif|docx|xlsx/;
-    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    // SECURITY: Validate both extension and MIME type strictly
+    const ext = path.extname(file.originalname).toLowerCase();
+    const allowedExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.docx', '.xlsx'];
 
-    if (mimetype && extname) {
-      return cb(null, true);
-    } else {
-      cb(new Error('Only PDF, images, and document files are allowed!'));
+    // Check extension
+    if (!allowedExtensions.includes(ext)) {
+      return cb(new Error('File extension not allowed. Only PDF, images, and document files are permitted.'));
     }
+
+    // Check MIME type
+    if (!ALLOWED_MIME_TYPES[file.mimetype]) {
+      return cb(new Error('File type not allowed. Only PDF, images, and document files are permitted.'));
+    }
+
+    // Verify extension matches MIME type (prevent extension spoofing)
+    const expectedExt = ALLOWED_MIME_TYPES[file.mimetype];
+    if (ext !== expectedExt && !(ext === '.jpeg' && expectedExt === '.jpg')) {
+      return cb(new Error('File extension does not match file type.'));
+    }
+
+    cb(null, true);
   }
 });
 
