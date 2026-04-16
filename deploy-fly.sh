@@ -34,7 +34,7 @@ flyctl ssh console -C "cd /app && npm run migrate"
 
 # Verify the deployment
 echo "Verifying deployment..."
-HEALTH_CHECK=$(curl -s https://fiserv-inventory-api.fly.dev/health)
+HEALTH_CHECK=$(curl -s https://imms-api.fly.dev/health)
 
 if [[ $HEALTH_CHECK == *"healthy"* ]]; then
     echo "Deployment successful! Application is healthy."
@@ -50,8 +50,8 @@ echo "
 Important Information:
 ---------------------
 Frontend URL: https://your-app.netlify.app
-Backend API: https://fiserv-inventory-api.fly.dev
-Health Check: https://fiserv-inventory-api.fly.dev/health
+Backend API: https://imms-api.fly.dev
+Health Check: https://imms-api.fly.dev/health
 
 To monitor the application:
 - View logs: flyctl logs

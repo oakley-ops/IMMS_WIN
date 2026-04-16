@@ -1,7 +1,7 @@
 # Raspberry Pi Connection Troubleshooting Guide
 
 ## Problem Description
-When accessing the Fiserv Inventory application from a Raspberry Pi, you may encounter connection errors like:
+When accessing the IMMS application from a Raspberry Pi, you may encounter connection errors like:
 - `net::ERR_CONNECTION_REFUSED`
 - `WebSocket connection to 'ws://localhost:4000/socket.io/' failed`
 - `Socket.io connection error: TransportError: websocket error`

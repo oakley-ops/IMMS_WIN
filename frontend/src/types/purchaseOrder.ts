@@ -42,7 +42,7 @@ export interface PurchaseOrderItem {
   part_id?: number;
   part_name?: string;
   manufacturer_part_number?: string;
-  fiserv_part_number?: string;
+  internal_part_number?: string;
   custom_part_name?: string;
   custom_part_number?: string;
   custom_part?: boolean;
@@ -97,7 +97,7 @@ export interface Part {
   part_id: number;
   name: string;
   description?: string;
-  fiserv_part_number: string;
+  internal_part_number: string;
   manufacturer_part_number?: string;
   quantity: number;
   minimum_quantity: number;

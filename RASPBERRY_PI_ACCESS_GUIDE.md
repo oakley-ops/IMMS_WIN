@@ -1,12 +1,12 @@
-# Raspberry Pi Browser Access Guide for Fiserv Inventory App
+# Raspberry Pi Browser Access Guide for IMMS App
 
-This guide documents all the steps needed to access the Fiserv Inventory application from a Raspberry Pi web browser over the network.
+This guide documents all the steps needed to access the IMMS application from a Raspberry Pi web browser over the network.
 
 ## 🎯 **Objective**
-Enable network access to the locally running Fiserv Inventory app so it can be accessed from a Raspberry Pi web browser using the Windows machine's IP address.
+Enable network access to the locally running IMMS app so it can be accessed from a Raspberry Pi web browser using the Windows machine's IP address.
 
 ## 📋 **Prerequisites**
-- Windows machine running the Fiserv Inventory app
+- Windows machine running the IMMS app
 - Raspberry Pi on the same network
 - Both devices connected to the same network (WiFi or Ethernet)
 
@@ -34,7 +34,7 @@ ipconfig | findstr IPv4
 **Updated configuration:**
 ```batch
 @echo off
-echo Starting Fiserv Inventory Application...
+echo Starting IMMS Application...
 echo.
 
 :: Display network information
@@ -47,7 +47,7 @@ taskkill /F /IM node.exe >nul 2>&1
 
 :: Start the backend server with email monitoring in a minimized window
 echo Starting Backend Server with Email Monitoring (http://0.0.0.0:4000)...
-start /min cmd /k "cd backend && set PORT=4000 && set PGHOST=localhost && set PGUSER=postgres && set PGDATABASE=fiservinventory && set HOST=0.0.0.0 && npm run start:all"
+start /min cmd /k "cd backend && set PORT=4000 && set PGHOST=localhost && set PGUSER=postgres && set PGDATABASE=imms_inventory && set HOST=0.0.0.0 && npm run start:all"
 
 :: Wait for a moment to let backend initialize
 timeout /t 8
@@ -114,8 +114,8 @@ app.use(cors({
 
 **Solution:** Add firewall rules (requires Administrator privileges)
 ```cmd
-netsh advfirewall firewall add rule name="Fiserv Inventory Frontend" dir=in action=allow protocol=TCP localport=3000
-netsh advfirewall firewall add rule name="Fiserv Inventory Backend" dir=in action=allow protocol=TCP localport=4000
+netsh advfirewall firewall add rule name="IMMS Frontend" dir=in action=allow protocol=TCP localport=3000
+netsh advfirewall firewall add rule name="IMMS Backend" dir=in action=allow protocol=TCP localport=4000
 ```
 
 **Note:** These commands must be run as Administrator in Command Prompt or PowerShell.

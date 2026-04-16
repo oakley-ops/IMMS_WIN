@@ -583,7 +583,7 @@ const PurchaseOrderDetail: React.FC = () => {
           // Determine part number using fallbacks
           const partNumber = item.custom_part_number || 
                            item.manufacturer_part_number || 
-                           item.fiserv_part_number || 
+                           item.internal_part_number || 
                            (() => {
                              // Try to extract from notes if available
                              if (item.notes) {
@@ -794,7 +794,7 @@ const PurchaseOrderDetail: React.FC = () => {
           ...item,
           // Ensure we have consistent naming for the PDF generator
           part_name: item.part_name || item.custom_part_name || '',
-          part_number: item.fiserv_part_number || item.manufacturer_part_number || item.custom_part_number || ''
+          part_number: item.internal_part_number || item.manufacturer_part_number || item.custom_part_number || ''
         })) : []
       };
       
@@ -1286,7 +1286,7 @@ const PurchaseOrderDetail: React.FC = () => {
     ? availableParts.filter(part => {
         const searchLower = partSearchTerm.toLowerCase();
         const matches = (part.name && part.name.toLowerCase().includes(searchLower)) ||
-          (part.fiserv_part_number && part.fiserv_part_number.toLowerCase().includes(searchLower)) ||
+          (part.internal_part_number && part.internal_part_number.toLowerCase().includes(searchLower)) ||
           (part.manufacturer_part_number && part.manufacturer_part_number.toLowerCase().includes(searchLower)) ||
           (part.description && part.description.toLowerCase().includes(searchLower));
         
@@ -1294,7 +1294,7 @@ const PurchaseOrderDetail: React.FC = () => {
         if (searchLower.includes('61082043')) {
           console.log('Checking part:', {
             name: part.name,
-            fiserv: part.fiserv_part_number,
+            internal: part.internal_part_number,
             mfr: part.manufacturer_part_number,
             desc: part.description,
             matches: matches
@@ -1793,7 +1793,7 @@ const PurchaseOrderDetail: React.FC = () => {
                   <TableCell>
                     {item.custom_part_number || 
                      item.manufacturer_part_number || 
-                     item.fiserv_part_number || 
+                     item.internal_part_number || 
                      (() => {
                        // Try to extract custom part number from notes if available
                        if (item.notes) {
@@ -2161,7 +2161,7 @@ const PurchaseOrderDetail: React.FC = () => {
                             <div>
                               <div className="fw-bold">{part.name}</div>
                               <div className="info-text">
-                                Fiserv: {part.fiserv_part_number} | 
+                                Internal: {part.internal_part_number} | 
                                 Mfr: {part.manufacturer_part_number}
                               </div>
                             </div>
@@ -2331,7 +2331,7 @@ const PurchaseOrderDetail: React.FC = () => {
                               {selectedItem.custom_part_name || selectedItem.part_name || 'Unknown Part'}
                             </h6>
                             <p className="mb-0 text-muted">
-                              <strong>Part #:</strong> {selectedItem.custom_part_number || selectedItem.manufacturer_part_number || selectedItem.fiserv_part_number || 'N/A'}
+                              <strong>Part #:</strong> {selectedItem.custom_part_number || selectedItem.manufacturer_part_number || selectedItem.internal_part_number || 'N/A'}
                             </p>
                           </div>
                         </div>

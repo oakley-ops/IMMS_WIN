@@ -11,7 +11,7 @@ You now have a **single, beautiful PDF export button** that uses Puppeteer (Chro
 ### Single Export Button
 **Location:** KPI Dashboard (top right)
 
-**Button:** 📄 Export PDF Report (Orange - Fiserv branded)
+**Button:** 📄 Export PDF Report (Orange - app branded)
 
 **Technology:** Puppeteer with Chrome rendering
 
@@ -33,7 +33,7 @@ You now have a **single, beautiful PDF export button** that uses Puppeteer (Chro
 ```
 ┌─────────────────────────────────────────────┐
 │ [Blue Gradient Header]                      │
-│ 📊 FISERV Analytics Report                 │
+│ 📊 IMMS Analytics Report                 │
 │ Generated: Monday, December 13, 2024...    │
 └─────────────────────────────────────────────┘
 
@@ -100,8 +100,8 @@ Clean alternating rows
 ## 🎨 Design Features
 
 ### Colors
-- **Primary Blue:** #0066A1 (Fiserv)
-- **Accent Orange:** #FF6600 (Fiserv)
+- **Primary Blue:** #0066A1 (IMMS)
+- **Accent Orange:** #FF6600 (IMMS)
 - **Success Green:** #28a745
 - **Warning Yellow:** #ffc107
 - **Danger Red:** #dc3545
@@ -275,7 +275,7 @@ You chose Puppeteer because:
 ## 🎉 Summary
 
 ### You Now Have:
-✅ **One beautiful PDF export button** (orange, Fiserv-branded)
+✅ **One beautiful PDF export button** (orange, branded)
 ✅ **Puppeteer-powered PDF generation** (Chrome rendering)
 ✅ **Professional 3-page report** (Executive summary + analytics)
 ✅ **Modern design** (gradients, shadows, rounded corners)

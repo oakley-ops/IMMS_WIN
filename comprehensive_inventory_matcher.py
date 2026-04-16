@@ -58,14 +58,14 @@ class ComprehensiveInventoryMatcher:
         """Load data from Parts Inventory 2025.2 (1).xlsx"""
         print(f"Loading Parts Inventory 2025: {file_path}")
         
-        # Load Full Fiserv parts list
-        df_full = pd.read_excel(file_path, sheet_name='Full Fiserv parts list', skiprows=2)
+        # Load Full Internal parts list
+        df_full = pd.read_excel(file_path, sheet_name='Full Internal parts list', skiprows=2)
         df_full.columns = ['ITEM_NUMB', 'ITEM_DESC1', 'Date', 'Col4', 'ITEM_DESC2', 'KIND_DESC', 'LOC', 'WHSE', 'OnHandQuantity'] + [f'Col{i}' for i in range(10, 14)]
         
         for _, row in df_full.iterrows():
             if pd.notna(row['ITEM_NUMB']) and str(row['ITEM_NUMB']).strip():
                 self.inventory1_data.append({
-                    'Source': 'Full Fiserv parts list',
+                    'Source': 'Full Internal parts list',
                     'Part_Number': self.clean_part_number(row['ITEM_NUMB']),
                     'Description': self.clean_description(str(row['ITEM_DESC1']) + ' ' + str(row['ITEM_DESC2']) if pd.notna(row['ITEM_DESC2']) else str(row['ITEM_DESC1'])),
                     'Original_Part_Number': row['ITEM_NUMB'],

@@ -34,7 +34,7 @@ import {
   Category,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { theme, FISERV_ORANGE } from '../theme';
+import { theme, IMMS_ORANGE } from '../theme';
 
 const IMMS_BLUE = '#0066A1';
 const DRAWER_WIDTH = 240;
@@ -108,7 +108,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
         <Typography
           variant="h6"
           sx={{
-            color: FISERV_ORANGE,
+            color: IMMS_ORANGE,
             fontWeight: 'bold',
             textDecoration: 'none',
             fontSize: '1.3rem',

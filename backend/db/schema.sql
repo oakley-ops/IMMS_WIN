@@ -27,7 +27,7 @@ CREATE TABLE parts (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     manufacturer_part_number VARCHAR(255),
-    fiserv_part_number VARCHAR(255),
+    internal_part_number VARCHAR(255),
     quantity INTEGER NOT NULL DEFAULT 0,
     minimum_quantity INTEGER DEFAULT 0,
     machine_id INTEGER REFERENCES machines(machine_id) ON DELETE SET NULL,
@@ -69,7 +69,7 @@ CREATE TABLE parts_usage (
 CREATE INDEX idx_parts_machine_id ON parts(machine_id);
 CREATE INDEX idx_transactions_part_id ON transactions(part_id);
 CREATE INDEX idx_parts_manufacturer_number ON parts(manufacturer_part_number);
-CREATE INDEX idx_parts_fiserv_number ON parts(fiserv_part_number);
+CREATE INDEX idx_parts_internal_number ON parts(internal_part_number);
 CREATE INDEX idx_parts_usage_part_id ON parts_usage(part_id);
 CREATE INDEX idx_parts_usage_machine_id ON parts_usage(machine_id);
 

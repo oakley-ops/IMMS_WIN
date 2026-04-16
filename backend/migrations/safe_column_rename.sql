@@ -1,13 +1,13 @@
--- Safe migration to rename fiserv_part_number to crc_part_number
+-- Safe migration to rename internal_part_number to crc_part_number
 -- This approach handles dependent objects safely
 
 -- Step 1: Add the new crc_part_number column
 ALTER TABLE parts 
 ADD COLUMN IF NOT EXISTS crc_part_number VARCHAR(100);
 
--- Step 2: Copy data from fiserv_part_number to crc_part_number
+-- Step 2: Copy data from internal_part_number to crc_part_number
 UPDATE parts 
-SET crc_part_number = fiserv_part_number 
+SET crc_part_number = internal_part_number 
 WHERE crc_part_number IS NULL;
 
 -- Step 3: Check what views depend on the column (for information)
@@ -16,15 +16,15 @@ SELECT
     viewname,
     definition
 FROM pg_views 
-WHERE definition LIKE '%fiserv_part_number%';
+WHERE definition LIKE '%internal_part_number%';
 
--- Step 4: Drop the view that depends on fiserv_part_number
+-- Step 4: Drop the view that depends on internal_part_number
 -- We'll recreate it in the next step
 DROP VIEW IF EXISTS machine_parts_detail_view;
 
 -- Step 5: Now we can drop the old column
 ALTER TABLE parts 
-DROP COLUMN fiserv_part_number;
+DROP COLUMN internal_part_number;
 
 -- Step 6: Recreate the view with the new column name
 -- This is a common view structure - adjust if your view is different
@@ -47,7 +47,7 @@ LEFT JOIN part_assignments pa ON m.machine_id = pa.machine_id
 LEFT JOIN parts p ON pa.part_id = p.part_id;
 
 -- Step 7: Update indexes and constraints
-DROP INDEX IF EXISTS unique_fiserv_part_number;
+DROP INDEX IF EXISTS unique_internal_part_number;
 CREATE UNIQUE INDEX IF NOT EXISTS unique_crc_part_number ON parts(crc_part_number);
 
 -- Step 8: Add constraint if it doesn't exist
@@ -62,8 +62,8 @@ BEGIN
 END $$;
 
 -- Add comments
-COMMENT ON COLUMN parts.crc_part_number IS 'CRC internal part number (formerly fiserv_part_number)';
+COMMENT ON COLUMN parts.crc_part_number IS 'CRC internal part number (formerly internal_part_number)';
 COMMENT ON VIEW machine_parts_detail_view IS 'Machine parts detail view updated for IMMS (using crc_part_number)';
 
 -- Display completion message
-SELECT 'Migration completed successfully: fiserv_part_number -> crc_part_number' as status;
+SELECT 'Migration completed successfully: internal_part_number -> crc_part_number' as status;

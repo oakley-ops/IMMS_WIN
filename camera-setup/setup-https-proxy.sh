@@ -69,21 +69,21 @@ echo "🌐 Step 2: Configuring nginx proxy..."
 
 # Create nginx configuration with Windows PC IP
 echo "📝 Creating nginx configuration for proxy to $WINDOWS_IP:3000..."
-sed "s/WINDOWS_PC_IP/$WINDOWS_IP/g" fiservinventory-proxy.conf > fiservinventory-proxy-configured.conf
+sed "s/WINDOWS_PC_IP/$WINDOWS_IP/g" imms_inventory-proxy.conf > imms_inventory-proxy-configured.conf
 
 # Backup existing configuration if it exists
-if [ -f /etc/nginx/sites-enabled/fiservinventory-proxy.conf ]; then
+if [ -f /etc/nginx/sites-enabled/imms_inventory-proxy.conf ]; then
     echo "📋 Backing up existing configuration..."
-    sudo cp /etc/nginx/sites-enabled/fiservinventory-proxy.conf /etc/nginx/sites-enabled/fiservinventory-proxy.conf.backup
+    sudo cp /etc/nginx/sites-enabled/imms_inventory-proxy.conf /etc/nginx/sites-enabled/imms_inventory-proxy.conf.backup
 fi
 
 # Copy new configuration
 echo "📝 Installing nginx proxy configuration..."
-sudo cp fiservinventory-proxy-configured.conf /etc/nginx/sites-available/fiservinventory-proxy.conf
+sudo cp imms_inventory-proxy-configured.conf /etc/nginx/sites-available/imms_inventory-proxy.conf
 
 # Enable the site
 echo "🔗 Enabling nginx proxy site..."
-sudo ln -sf /etc/nginx/sites-available/fiservinventory-proxy.conf /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/imms_inventory-proxy.conf /etc/nginx/sites-enabled/
 
 # Disable default site if it exists
 if [ -f /etc/nginx/sites-enabled/default ]; then

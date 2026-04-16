@@ -10,21 +10,21 @@ async function fixTBDValues() {
     // Start a transaction
     await client.query('BEGIN');
     
-    // Find all parts with fiserv_part_number = 'TBD'
-    console.log('Finding parts with TBD as fiserv_part_number...');
+    // Find all parts with internal_part_number = 'TBD'
+    console.log('Finding parts with TBD as internal_part_number...');
     const result = await client.query(
-      "SELECT part_id, fiserv_part_number FROM parts WHERE fiserv_part_number = 'TBD'"
+      "SELECT part_id, internal_part_number FROM parts WHERE internal_part_number = 'TBD'"
     );
     
-    console.log(`Found ${result.rows.length} parts with TBD as fiserv_part_number`);
+    console.log(`Found ${result.rows.length} parts with TBD as internal_part_number`);
     
     // Update each part with a unique TBD value
     for (const part of result.rows) {
       const uniqueTBD = `TBD-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-      console.log(`Updating part ${part.part_id} from "${part.fiserv_part_number}" to "${uniqueTBD}"`);
+      console.log(`Updating part ${part.part_id} from "${part.internal_part_number}" to "${uniqueTBD}"`);
       
       await client.query(
-        'UPDATE parts SET fiserv_part_number = $1 WHERE part_id = $2',
+        'UPDATE parts SET internal_part_number = $1 WHERE part_id = $2',
         [uniqueTBD, part.part_id]
       );
       

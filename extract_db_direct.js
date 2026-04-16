@@ -22,10 +22,10 @@ const dbConfigs = [
   // Production/Fly.io config
   process.env.DATABASE_URL,
   // Local development configs
-  `postgresql://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'password'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'fiservinventory'}`,
+  `postgresql://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'password'}@${process.env.DB_HOST || 'localhost'}:${process.env.DB_PORT || 5432}/${process.env.DB_NAME || 'imms_inventory'}`,
   // Default local config
-  'postgresql://postgres:password@localhost:5432/fiservinventory',
-  'postgresql://postgres@localhost:5432/fiservinventory'
+  'postgresql://postgres:password@localhost:5432/imms_inventory',
+  'postgresql://postgres@localhost:5432/imms_inventory'
 ];
 
 async function connectToDatabase() {
@@ -70,7 +70,7 @@ async function extractPartsData(pool) {
       p.name,
       p.description,
       p.manufacturer_part_number,
-      p.fiserv_part_number,
+      p.internal_part_number,
       p.quantity,
       p.minimum_quantity,
       p.supplier,
@@ -126,7 +126,7 @@ async function extractPartsData(pool) {
         name,
         description,
         manufacturer_part_number,
-        fiserv_part_number,
+        internal_part_number,
         quantity,
         minimum_quantity,
         supplier,
@@ -165,7 +165,7 @@ async function exportToExcel(partsData) {
     'Name': part.name || '',
     'Description': part.description || '',
     'Manufacturer Part Number': part.manufacturer_part_number || '',
-    'Fiserv Part Number': part.fiserv_part_number || '',
+    'Internal Part Number': part.internal_part_number || '',
     'Quantity': part.quantity || 0,
     'Minimum Quantity': part.minimum_quantity || 0,
     'Supplier': part.supplier || '',

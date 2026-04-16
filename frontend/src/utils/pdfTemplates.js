@@ -49,7 +49,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
       // Extract part number using multiple fallbacks (prioritizing manufacturer part number)
       const partNumber = item.manufacturer_part_number || 
                          item.custom_part_number || 
-                         item.fiserv_part_number || 
+                         item.internal_part_number || 
                          item.part_number || 
                          item.partNumber || 
                          item.PartNumber || 
@@ -98,8 +98,8 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
     console.log('Line Items:', JSON.stringify(lineItems, null, 2));
     console.log('Calculated Totals:', { subtotal, shippingCost, taxAmount, totalAmount });
 
-    // Fiserv orange color
-    const fiservOrange = '#FF6200';
+    // app orange color
+    const immsOrange = '#FF6200';
 
     // Generate HTML content for the PDF
     const html = `
@@ -134,7 +134,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
             height: auto;
           }
           .header-title {
-            color: ${fiservOrange};
+            color: ${immsOrange};
             font-size: 16px;
             font-weight: bold;
             position: absolute;
@@ -143,7 +143,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
             top: 0;
           }
           .header-border {
-            border-bottom: 2px solid ${fiservOrange};
+            border-bottom: 2px solid ${immsOrange};
             margin-top: 0px;
             width: 100%;
           }
@@ -168,7 +168,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
           }
           .section-title {
             font-weight: bold;
-            color: ${fiservOrange};
+            color: ${immsOrange};
             margin-bottom: 5px;
           }
           table {
@@ -183,7 +183,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
             text-align: left;
           }
           th {
-            background-color: ${fiservOrange};
+            background-color: ${immsOrange};
             color: white;
             font-weight: bold;
           }
@@ -205,7 +205,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
           }
           .grand-total {
             font-weight: bold;
-            border-top: 1px solid ${fiservOrange};
+            border-top: 1px solid ${immsOrange};
           }
           .footer {
             margin-top: 20px;
@@ -214,7 +214,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
             color: #555;
           }
           .print-button {
-            background-color: ${fiservOrange};
+            background-color: ${immsOrange};
             color: white;
             border: none;
             padding: 8px 15px;
@@ -249,7 +249,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
       <body>
         <div class="container">
           <div class="header">
-            <img src="/assets/fiserv_logo_orange_rgb.png" alt="Fiserv Logo" class="logo" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSIzMCI+PHRleHQgeD0iMCIgeT0iMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiNGRjYyMDAiPmZpc2VydjwvdGV4dD48L3N2Zz4=';">
+            <img src="/assets/imms_logo_orange_rgb.png" alt="IMMS Logo" class="logo" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSIzMCI+PHRleHQgeD0iMCIgeT0iMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiNGRjYyMDAiPmZpc2VydjwvdGV4dD48L3N2Zz4=';">
             <div class="header-title">PURCHASE ORDER REQUEST</div>
           </div>
           <div class="header-border"></div>

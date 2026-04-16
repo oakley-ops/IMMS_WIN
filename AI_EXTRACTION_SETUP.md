@@ -42,7 +42,7 @@ sudo apt-get install graphicsmagick ghostscript
 
 ### **Processing Flow:**
 
-1. **Upload PDF** → System receives scanned/faxed Fiserv PO
+1. **Upload PDF** → System receives scanned/faxed PO
 2. **Convert to Image** → PDF first page converted to high-res PNG (300 DPI)
 3. **AI Extraction** → Image sent to Hugging Face's free Donut model API
 4. **Parse Results** → AI extracts vendor, items, quantities, prices
@@ -86,7 +86,7 @@ Then upload your `Super 12.23.25.pdf` through the frontend:
 
 1. Go to Purchase Orders page
 2. Click "Import PDF"
-3. Upload the Fiserv PDF
+3. Upload the Purchase Order PDF
 4. Wait 5-30 seconds for AI processing
 5. Review extracted data in success dialog
 
@@ -107,7 +107,7 @@ Then upload your `Super 12.23.25.pdf` through the frontend:
 - Check Ghostscript installation: `gs --version`
 
 ### AI extraction returns empty data
-- AI model may need fine-tuning for Fiserv format
+- AI model may need fine-tuning for standard format
 - System will show what data was extracted in console logs
 - Falls back to manual entry form
 
@@ -129,7 +129,7 @@ Then upload your `Super 12.23.25.pdf` through the frontend:
 
 Once working, you can:
 
-1. **Fine-tune the AI model** with your specific Fiserv POs for better accuracy
+1. **Fine-tune the AI model** with your specific POs for better accuracy
 2. **Add retry logic** for rate limit handling
 3. **Batch processing** for multiple POs
 4. **Manual correction UI** to fix AI extraction mistakes

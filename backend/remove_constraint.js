@@ -6,8 +6,8 @@ async function removeConstraint() {
     const client = await pool.connect();
     
     try {
-      console.log('Removing unique constraint from fiserv_part_number...');
-      await client.query('ALTER TABLE parts DROP CONSTRAINT IF EXISTS unique_fiserv_part_number;');
+      console.log('Removing unique constraint from internal_part_number...');
+      await client.query('ALTER TABLE parts DROP CONSTRAINT IF EXISTS unique_internal_part_number;');
       console.log('Constraint removed successfully!');
     } finally {
       client.release();

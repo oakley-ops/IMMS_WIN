@@ -43,19 +43,19 @@ def create_comprehensive_summary():
         db_matches_count = len(db_matches)
         
         # Calculate match types
-        exact_fiserv = len(db_matches[db_matches['Match_Type'] == 'Exact Fiserv Part Number'])
+        exact_internal = len(db_matches[db_matches['Match_Type'] == 'Exact Internal Part Number'])
         exact_mfg = len(db_matches[db_matches['Match_Type'] == 'Exact Manufacturer Part Number'])
         fuzzy_desc = len(db_matches[db_matches['Match_Type'] == 'Fuzzy Description'])
         
         print(f"✅ Source: Database Parts ({db_total} items)")
         print(f"✅ Target: ZZ110 Inventory ({zz110_total} items)")
         print(f"✅ Matches Found: {db_matches_count}")
-        print(f"   • Exact Fiserv Part Numbers: {exact_fiserv}")
+        print(f"   • Exact Internal Part Numbers: {exact_internal}")
         print(f"   • Exact Manufacturer Part Numbers: {exact_mfg}")
         print(f"   • Fuzzy Descriptions: {fuzzy_desc}")
         print(f"📊 Database Match Rate: {(db_matches_count/db_total)*100:.1f}%")
         print(f"📊 ZZ110 Match Rate: {(db_matches_count/zz110_total)*100:.1f}%")
-        print(f"🏆 Quality Score: {(exact_fiserv/db_matches_count)*100:.1f}% exact matches")
+        print(f"🏆 Quality Score: {(exact_internal/db_matches_count)*100:.1f}% exact matches")
         
         # Add to summary
         summary_data['Approach'].append('Database vs ZZ110')
@@ -66,8 +66,8 @@ def create_comprehensive_summary():
         summary_data['Matches_Found'].append(db_matches_count)
         summary_data['Match_Rate_Source'].append(f"{(db_matches_count/db_total)*100:.1f}%")
         summary_data['Match_Rate_Target'].append(f"{(db_matches_count/zz110_total)*100:.1f}%")
-        summary_data['Primary_Match_Type'].append('Exact Fiserv Part Number')
-        summary_data['Quality_Score'].append(f"{(exact_fiserv/db_matches_count)*100:.1f}%")
+        summary_data['Primary_Match_Type'].append('Exact Internal Part Number')
+        summary_data['Quality_Score'].append(f"{(exact_internal/db_matches_count)*100:.1f}%")
         
         results['database_vs_zz110'] = {
             'matches': db_matches_count,
@@ -219,12 +219,12 @@ def create_comprehensive_summary():
     print(f"🏆 BEST PERFORMING APPROACH:")
     if best_approach == 'database_vs_zz110':
         print(f"   Database vs ZZ110 Matching - {best_rate:.1f}% match rate")
-        print(f"   ✅ Highest accuracy with Fiserv part numbers")
+        print(f"   ✅ Highest accuracy with internal part numbers")
         print(f"   ✅ Most reliable for procurement and inventory management")
     
     print(f"\n📊 KEY INSIGHTS:")
     print(f"   • Database extraction successful: 506 active parts")
-    print(f"   • Fiserv part numbering system is well-aligned with ZZ110")
+    print(f"   • internal part numbering system is well-aligned with ZZ110")
     print(f"   • 47 high-confidence matches found for immediate use")
     print(f"   • 459 database parts available for potential expansion")
     

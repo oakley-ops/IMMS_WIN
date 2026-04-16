@@ -1,5 +1,5 @@
 -- IMMS Database Initialization Script
--- Clean initialization without any Fiserv references
+-- Clean initialization without any IMMS references
 
 -- Create the IMMS database
 CREATE DATABASE imms;
@@ -20,7 +20,7 @@ INSERT INTO part_locations (name, description) VALUES
 ('Inspection Area', 'Parts used in quality inspection'),
 ('Maintenance Shop', 'Maintenance and repair parts storage');
 
--- Insert sample machines (clean of Fiserv references)
+-- Insert sample machines (clean of IMMS references)
 INSERT INTO machines (name, model, location, manufacturer) VALUES
 ('Hot Stamp 1A', 'HS-1000', 'Production Line 1', 'Industrial Equipment Co'),
 ('Hot Stamp 1B', 'HS-1000', 'Production Line 1', 'Industrial Equipment Co'),

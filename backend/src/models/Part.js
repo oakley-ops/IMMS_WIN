@@ -5,7 +5,7 @@ class Part {
       description,
       quantity,
       manufacturer_part_number,
-      fiserv_part_number,
+      internal_part_number,
       machine_id,
       supplier,
       image

@@ -176,7 +176,7 @@ Edit `frontend/src/config/milestoneTemplates.ts` to:
 
 ### Styling
 
-The wizard and progress bars use Fiserv brand colors:
+The wizard and progress bars use app brand colors:
 - Primary: `#FF6600` (Orange)
 - Secondary: `#0066A1` (Blue)
 - Success: `#4caf50` (Green)

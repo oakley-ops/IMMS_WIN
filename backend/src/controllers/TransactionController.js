@@ -32,7 +32,7 @@ class TransactionController {
           t.*,
           p.name as part_name,
           p.manufacturer_part_number,
-          p.fiserv_part_number,
+          p.internal_part_number,
           m.name as machine_name
         FROM transactions t
         LEFT JOIN parts p ON t.part_id = p.part_id

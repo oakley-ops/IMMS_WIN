@@ -6,7 +6,7 @@ const path = require('path');
 const dbConfig = {
   user: process.env.DB_USER || 'postgres',
   host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'fiservinventory', // Use the current database name
+  database: process.env.DB_NAME || 'imms_inventory', // Use the current database name
   password: process.env.DB_PASSWORD || 'postgres',
   port: parseInt(process.env.DB_PORT || '5432', 10),
 };
@@ -18,7 +18,7 @@ async function runMigration() {
     console.log('Connecting to database:', dbConfig.database);
     
     // Read the migration SQL file
-    const migrationPath = path.join(__dirname, 'migrations', 'rename_fiserv_to_crc_column.sql');
+    const migrationPath = path.join(__dirname, 'migrations', 'rename_internal_to_crc_column.sql');
     const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
     
     console.log('Running column rename migration...');

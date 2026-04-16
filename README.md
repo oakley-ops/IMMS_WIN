@@ -1,4 +1,4 @@
-# Fiserv Inventory Management System
+# Inventory Management System
 
 A comprehensive inventory management system for tracking parts, machines, and their usage.
 
@@ -42,8 +42,8 @@ A comprehensive inventory management system for tracking parts, machines, and th
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/fiservinventory-app.git
-   cd fiservinventory-app
+   git clone https://github.com/yourusername/imms-win.git
+   cd imms-win
    ```
 
 2. Install backend dependencies:
@@ -111,15 +111,15 @@ A comprehensive inventory management system for tracking parts, machines, and th
 3. Set up PostgreSQL:
    ```bash
    sudo -u postgres psql
-   CREATE DATABASE fiserv_inventory;
+   CREATE DATABASE imms_inventory;
    CREATE USER your_user WITH PASSWORD 'your_password';
-   GRANT ALL PRIVILEGES ON DATABASE fiserv_inventory TO your_user;
+   GRANT ALL PRIVILEGES ON DATABASE imms_inventory TO your_user;
    ```
 
 4. Clone and setup the application:
    ```bash
-   git clone https://github.com/yourusername/fiservinventory-app.git
-   cd fiservinventory-app/backend
+   git clone https://github.com/yourusername/imms-win.git
+   cd imms-win/backend
    npm install
    npm run migrate
    ```
@@ -158,7 +158,7 @@ A comprehensive inventory management system for tracking parts, machines, and th
 
 1. Create a new Heroku app:
    ```bash
-   heroku create fiserv-inventory
+   heroku create imms-inventory
    ```
 
 2. Add PostgreSQL:
@@ -198,8 +198,8 @@ A comprehensive inventory management system for tracking parts, machines, and th
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/fiservinventory-app.git
-   cd fiservinventory-app
+   git clone https://github.com/yourusername/imms-win.git
+   cd imms-win
    ```
 
 2. Run the deployment script:
@@ -245,11 +245,11 @@ Required environment variables in `.env.production`:
 
 ### Database Backup
 
-Backups are automatically scheduled daily and stored in `/var/backups/fiservinventory/db/`.
+Backups are automatically scheduled daily and stored in `/var/backups/imms_inventory/db/`.
 
 To manually backup:
    ```bash
-   sudo -u postgres pg_dump fiservinventory > backup.sql
+   sudo -u postgres pg_dump imms_inventory > backup.sql
    ```
 
 ## 🛡️ Database Backup System
@@ -328,7 +328,7 @@ Access metrics at: `http://localhost:9090/metrics`
 
 ### Log Files
 
-- Application logs: `/var/log/fiservinventory/app.log`
+- Application logs: `/var/log/imms_inventory/app.log`
 - Nginx access logs: `/var/log/nginx/access.log`
 - Nginx error logs: `/var/log/nginx/error.log`
 
@@ -380,7 +380,7 @@ Access metrics at: `http://localhost:9090/metrics`
 
 2. Rotate logs:
    ```bash
-   sudo logrotate -f /etc/logrotate.d/fiservinventory
+   sudo logrotate -f /etc/logrotate.d/imms_inventory
    ```
 
 3. Update SSL certificates:

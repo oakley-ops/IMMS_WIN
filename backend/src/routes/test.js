@@ -7,7 +7,7 @@ router.post('/email', async (req, res) => {
   try {
     const testPart = {
       name: 'Test Part',
-      fiserv_part_number: 'TEST-123',
+      internal_part_number: 'TEST-123',
       quantity: 2,
       minimum_quantity: 5,
       location: 'Warehouse A'

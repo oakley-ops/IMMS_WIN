@@ -28,7 +28,7 @@ export const generatePurchaseOrderExcel = async (purchaseOrder) => {
   worksheet.columns = [
     { header: '', key: 'a', width: 4 },    // A
     { header: '', key: 'b', width: 18 },   // B - Supplier Part # column
-    { header: '', key: 'c', width: 18 },   // C - Fiserv Part # column
+    { header: '', key: 'c', width: 18 },   // C - Internal Part # column
     { header: '', key: 'd', width: 30 },   // D - Description column
     { header: '', key: 'e', width: 4 },    // E - Spacer
     { header: '', key: 'f', width: 12 },   // F - Unit price column
@@ -58,7 +58,7 @@ export const generatePurchaseOrderExcel = async (purchaseOrder) => {
     : '03.06.25';
   
   // Row 7: Title and date
-  const row7 = worksheet.addRow(['', 'fiserv.', 'Maintenance', '', '', '', '', '', '', 'Request', '', formattedDate]);
+  const row7 = worksheet.addRow(['', 'imms.', 'Maintenance', '', '', '', '', '', '', 'Request', '', formattedDate]);
   row7.getCell(2).font = {
     name: 'Arial',
     size: 18,
@@ -134,7 +134,7 @@ export const generatePurchaseOrderExcel = async (purchaseOrder) => {
   }
   
   // Row 11: Table headers
-  const row11 = worksheet.addRow(['', 'Supplier Part #', 'Fiserv Part #', 'Description', '', 'Unit price', 'Qty', 'Total']);
+  const row11 = worksheet.addRow(['', 'Supplier Part #', 'Internal Part #', 'Description', '', 'Unit price', 'Qty', 'Total']);
   row11.eachCell((cell, colNumber) => {
     if (colNumber >= 2 && colNumber <= 8) {
       cell.font = { bold: true };
@@ -191,7 +191,7 @@ export const generatePurchaseOrderExcel = async (purchaseOrder) => {
       const itemRow = worksheet.addRow([
         '',
         item.manufacturer_part_number || '',
-        item.fiserv_part_number || '',
+        item.internal_part_number || '',
         item.part_name || item.description || '',
         '',
         unitPrice,

@@ -1,8 +1,8 @@
--- Data migration script to transfer data from fiservinventory to imms database
+-- Data migration script to transfer data from imms_inventory to imms database
 -- Run this after creating the new IMMS database schema
 
 -- Connect to the old database to extract data
-\c fiservinventory;
+\c imms_inventory;
 
 -- Create temporary export tables for data transfer
 CREATE TEMP TABLE temp_part_locations AS 
@@ -14,7 +14,7 @@ SELECT
     name,
     description,
     manufacturer_part_number,
-    fiserv_part_number, -- Will be renamed to crc_part_number
+    internal_part_number, -- Will be renamed to crc_part_number
     quantity,
     minimum_quantity,
     supplier,
@@ -33,7 +33,7 @@ SELECT * FROM machines;
 CREATE TEMP TABLE temp_transactions AS 
 SELECT * FROM transactions;
 
--- Clean users table - remove Fiserv emails
+-- Clean users table - remove IMMS emails
 CREATE TEMP TABLE temp_users AS 
 SELECT 
     user_id,
@@ -50,7 +50,7 @@ SELECT
     updated_at
 FROM users;
 
--- Clean contacts table - remove Fiserv emails
+-- Clean contacts table - remove IMMS emails
 CREATE TEMP TABLE temp_contacts AS 
 SELECT 
     contact_id,
@@ -67,7 +67,7 @@ SELECT
     updated_at
 FROM contacts;
 
--- Clean purchase_orders table - remove Fiserv emails
+-- Clean purchase_orders table - remove IMMS emails
 CREATE TEMP TABLE temp_purchase_orders AS 
 SELECT 
     po_id,
@@ -100,7 +100,7 @@ SELECT * FROM purchase_order_items;
 -- Import part_locations
 INSERT INTO part_locations SELECT * FROM temp_part_locations ON CONFLICT DO NOTHING;
 
--- Import parts with column name change (fiserv_part_number -> crc_part_number)
+-- Import parts with column name change (internal_part_number -> crc_part_number)
 INSERT INTO parts (
     part_id,
     name,
@@ -125,10 +125,10 @@ SELECT
     manufacturer_part_number,
     -- Convert TBD-* part numbers to CRC-* format
     CASE 
-        WHEN fiserv_part_number LIKE 'TBD-%' THEN 
-            REPLACE(fiserv_part_number, 'TBD-', 'CRC-')
+        WHEN internal_part_number LIKE 'TBD-%' THEN 
+            REPLACE(internal_part_number, 'TBD-', 'CRC-')
         ELSE 
-            fiserv_part_number
+            internal_part_number
     END as crc_part_number,
     quantity,
     minimum_quantity,
@@ -148,13 +148,13 @@ INSERT INTO machines SELECT * FROM temp_machines ON CONFLICT DO NOTHING;
 -- Import transactions
 INSERT INTO transactions SELECT * FROM temp_transactions ON CONFLICT DO NOTHING;
 
--- Import cleaned users (without Fiserv emails)
+-- Import cleaned users (without IMMS emails)
 INSERT INTO users SELECT * FROM temp_users ON CONFLICT DO NOTHING;
 
--- Import cleaned contacts (without Fiserv emails)
+-- Import cleaned contacts (without IMMS emails)
 INSERT INTO contacts SELECT * FROM temp_contacts ON CONFLICT DO NOTHING;
 
--- Import cleaned purchase_orders (without Fiserv emails)
+-- Import cleaned purchase_orders (without IMMS emails)
 INSERT INTO purchase_orders SELECT * FROM temp_purchase_orders ON CONFLICT DO NOTHING;
 
 -- Import purchase_order_items

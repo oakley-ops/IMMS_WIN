@@ -250,15 +250,15 @@
   background-color: rgba(0, 120, 212, 0.1);
 }
 
-/* Fiserv color scheme */
+/* IMMS color scheme */
 :root {
-  --fiserv-blue: #0066A1;
-  --fiserv-blue-hover: #005080;
-  --fiserv-orange: #FF6200;
-  --fiserv-orange-hover: #e55800;
+  --imms-blue: #0066A1;
+  --imms-blue-hover: #005080;
+  --imms-orange: #FF6200;
+  --imms-orange-hover: #e55800;
 }
 
-/* Button styling with Fiserv Blue */
+/* Button styling with IMMS Blue */
 .btn-primary,
 button.btn-primary,
 .btn.btn-primary {
@@ -515,13 +515,13 @@ button.btn-outline-primary:hover,
 }
 
 .calendar-nav-button.today {
-  background-color: var(--fiserv-blue);
+  background-color: var(--imms-blue);
   color: white;
-  border-color: var(--fiserv-blue);
+  border-color: var(--imms-blue);
 }
 
 .calendar-nav-button.today:hover {
-  background-color: var(--fiserv-blue-hover);
+  background-color: var(--imms-blue-hover);
 }
 
 /* Responsive Design */

@@ -1,6 +1,6 @@
-# Fiserv Inventory Management System - macOS Setup Guide
+# Inventory Management System - macOS Setup Guide
 
-This document provides comprehensive instructions for setting up and running the Fiserv Inventory Management System on macOS.
+This document provides comprehensive instructions for setting up and running the Inventory Management System on macOS.
 
 ## System Requirements
 
@@ -54,8 +54,8 @@ brew install git
 ### 2. Clone the Repository
 
 ```bash
-git clone https://github.com/oakley-ops/fiservinventory-app.git
-cd fiservinventory-app
+git clone https://github.com/oakley-ops/imms-win.git
+cd imms-win
 ```
 
 ### 3. Set Up the Database
@@ -67,9 +67,9 @@ psql postgres
 
 Create a database and user:
 ```sql
-CREATE DATABASE fiserv_inventory;
-CREATE USER fiserv_user WITH ENCRYPTED PASSWORD 'your_secure_password';
-GRANT ALL PRIVILEGES ON DATABASE fiserv_inventory TO fiserv_user;
+CREATE DATABASE imms_inventory;
+CREATE USER imms_user WITH ENCRYPTED PASSWORD 'your_secure_password';
+GRANT ALL PRIVILEGES ON DATABASE imms_inventory TO imms_user;
 \q
 ```
 
@@ -89,7 +89,7 @@ Open the file in your preferred text editor and add the following variables:
 ```
 NODE_ENV=development
 PORT=4000
-MONGODB_URI=mongodb://localhost:27017/fiserv_inventory
+MONGODB_URI=mongodb://localhost:27017/imms_inventory
 JWT_SECRET=your_jwt_secret_here
 ```
 
@@ -156,7 +156,7 @@ This will start the backend server, typically on port 4000.
 Open a new terminal window/tab, navigate to the frontend directory:
 
 ```bash
-cd path/to/fiservinventory-app/frontend
+cd path/to/imms-win/frontend
 npm start
 ```
 
@@ -201,7 +201,7 @@ serve -s build
 If you encounter permission issues:
 
 ```bash
-chmod -R 755 fiservinventory-app
+chmod -R 755 imms-win
 ```
 
 ### Network Access
@@ -271,12 +271,12 @@ cd ../frontend && npm install
 
 Backup your PostgreSQL database:
 ```bash
-pg_dump fiserv_inventory > backup.sql
+pg_dump imms_inventory > backup.sql
 ```
 
 Restore from backup:
 ```bash
-psql fiserv_inventory < backup.sql
+psql imms_inventory < backup.sql
 ```
 
 ## Support

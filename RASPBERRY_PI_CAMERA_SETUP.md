@@ -20,7 +20,7 @@ To enable camera access on your Raspberry Pi, you need to configure HTTPS with a
 
 ```bash
 # Navigate to your project directory
-cd /path/to/your/fiservinventory_win
+cd /path/to/your/imms_inventory_win
 
 # Run the automated setup script
 bash scripts/setup-https-camera.sh
@@ -61,10 +61,10 @@ bash scripts/generate-local-ssl.sh
 
 ```bash
 # Copy the nginx configuration
-sudo cp nginx/fiservinventory-local.conf /etc/nginx/sites-available/
+sudo cp nginx/imms_inventory-local.conf /etc/nginx/sites-available/
 
 # Enable the site
-sudo ln -s /etc/nginx/sites-available/fiservinventory-local.conf /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/imms_inventory-local.conf /etc/nginx/sites-enabled/
 
 # Test the configuration
 sudo nginx -t
@@ -117,7 +117,7 @@ sudo nginx -t
 bash scripts/generate-local-ssl.sh
 
 # Check certificate validity
-openssl x509 -in /etc/ssl/certs/fiservinventory-local.crt -text -noout
+openssl x509 -in /etc/ssl/certs/imms_inventory-local.crt -text -noout
 ```
 
 ### Camera Still Not Working
@@ -129,7 +129,7 @@ openssl x509 -in /etc/ssl/certs/fiservinventory-local.crt -text -noout
 ### Mobile Device Access
 
 To avoid security warnings on mobile devices:
-1. Export the certificate: `/etc/ssl/certs/fiservinventory-local.crt`
+1. Export the certificate: `/etc/ssl/certs/imms_inventory-local.crt`
 2. Install it on your mobile device as a trusted certificate
 3. Access the site via HTTPS
 
@@ -194,14 +194,14 @@ For production deployment:
 If you encounter issues:
 1. Check the troubleshooting section above
 2. Review nginx logs: `sudo journalctl -u nginx -f`
-3. Verify certificate: `openssl x509 -in /etc/ssl/certs/fiservinventory-local.crt -text -noout`
+3. Verify certificate: `openssl x509 -in /etc/ssl/certs/imms_inventory-local.crt -text -noout`
 4. Test network connectivity: `curl -k https://192.168.50.1`
 
 ## Files Created
 
 The setup process creates these files:
-- `nginx/fiservinventory-local.conf` - nginx configuration
+- `nginx/imms_inventory-local.conf` - nginx configuration
 - `scripts/generate-local-ssl.sh` - SSL certificate generation
 - `scripts/setup-https-camera.sh` - Automated setup script
-- `/etc/ssl/certs/fiservinventory-local.crt` - SSL certificate
-- `/etc/ssl/private/fiservinventory-local.key` - SSL private key 
+- `/etc/ssl/certs/imms_inventory-local.crt` - SSL certificate
+- `/etc/ssl/private/imms_inventory-local.key` - SSL private key 

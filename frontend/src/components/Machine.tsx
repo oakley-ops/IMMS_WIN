@@ -26,13 +26,13 @@ interface Part {
   quantity: number;
   minimum_quantity: number;
   manufacturer_part_number: string;
-  fiserv_part_number: string;
+  internal_part_number: string;
 }
 
 interface PartsUsage {
   part_id: number;
   part_name: string;
-  fiserv_part_number: string;
+  internal_part_number: string;
   manufacturer_part_number: string;
   total_quantity_used: number;
   total_cost: number;
@@ -294,7 +294,7 @@ const Machine: React.FC = () => {
                   <thead>
                     <tr>
                       <th>Part Name</th>
-                      <th>Fiserv Part #</th>
+                      <th>Internal Part #</th>
                       <th>Manufacturer Part #</th>
                       <th>Current Quantity</th>
                       <th>Status</th>
@@ -305,7 +305,7 @@ const Machine: React.FC = () => {
                     {parts.map((part) => (
                       <tr key={part.part_id}>
                         <td>{part.name}</td>
-                        <td>{part.fiserv_part_number}</td>
+                        <td>{part.internal_part_number}</td>
                         <td>{part.manufacturer_part_number}</td>
                         <td>{part.quantity}</td>
                         <td>
@@ -356,7 +356,7 @@ const Machine: React.FC = () => {
                       <thead>
                         <tr>
                           <th>Part Name</th>
-                          <th>Fiserv Part #</th>
+                          <th>Internal Part #</th>
                           <th>Total Quantity Used</th>
                           <th>Total Cost</th>
                           <th>Usage Count</th>
@@ -367,7 +367,7 @@ const Machine: React.FC = () => {
                         {partsUsage.map((usage) => (
                           <tr key={usage.part_id}>
                             <td>{usage.part_name}</td>
-                            <td>{usage.fiserv_part_number}</td>
+                            <td>{usage.internal_part_number}</td>
                             <td>{usage.total_quantity_used}</td>
                             <td>{formatCurrency(usage.total_cost)}</td>
                             <td>{usage.usage_count}</td>

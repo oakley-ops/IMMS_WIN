@@ -1,5 +1,5 @@
 -- IMMS (Inventory Management & Maintenance System) Database Schema
--- Updated schema with CRC part numbers and cleaned of Fiserv references
+-- Updated schema with CRC part numbers and cleaned of IMMS references
 
 -- Create part_locations table first (since parts table references it)
 CREATE TABLE IF NOT EXISTS part_locations (
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS parts (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     manufacturer_part_number VARCHAR(100),
-    crc_part_number VARCHAR(100), -- Changed from fiserv_part_number to crc_part_number
+    crc_part_number VARCHAR(100), -- Changed from internal_part_number to crc_part_number
     quantity INTEGER NOT NULL DEFAULT 0,
     minimum_quantity INTEGER NOT NULL DEFAULT 0,
     supplier VARCHAR(255),
@@ -170,8 +170,8 @@ ALTER TABLE parts ADD CONSTRAINT unique_crc_part_number UNIQUE (crc_part_number)
 
 -- Add comments to document the schema
 COMMENT ON TABLE parts IS 'Parts inventory table with CRC internal part numbering';
-COMMENT ON COLUMN parts.crc_part_number IS 'CRC internal part number (formerly fiserv_part_number)';
+COMMENT ON COLUMN parts.crc_part_number IS 'CRC internal part number (formerly internal_part_number)';
 COMMENT ON COLUMN transactions.type IS 'Transaction type: usage (part taken from inventory), restock (part added to inventory via purchase), return (unused part returned to inventory), checkout (deprecated), return_unused (deprecated in favor of return), purchase_order_receipt (part received from PO), purchase_order_adjustment (PO quantity adjustment)';
-COMMENT ON TABLE users IS 'System users table - emails cleaned of fiserv.com addresses';
-COMMENT ON TABLE contacts IS 'Contact information table - emails cleaned of fiserv.com addresses';
-COMMENT ON TABLE purchase_orders IS 'Purchase orders table - approval emails cleaned of fiserv.com addresses';
+COMMENT ON TABLE users IS 'System users table - emails cleaned of imms.com addresses';
+COMMENT ON TABLE contacts IS 'Contact information table - emails cleaned of imms.com addresses';
+COMMENT ON TABLE purchase_orders IS 'Purchase orders table - approval emails cleaned of imms.com addresses';

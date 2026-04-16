@@ -1,5 +1,5 @@
 {
-  "name": "fiservinventory-app",
+  "name": "imms-win",
   "version": "1.0.0",
   "dependencies": {
     "@types/exceljs": "^0.5.3",

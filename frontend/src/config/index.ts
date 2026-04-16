@@ -7,7 +7,7 @@ export const ENV = process.env.NODE_ENV || 'development';
 export const APP_CONFIG = {
   apiUrl: API_URL,
   environment: ENV,
-  appName: 'Fiserv Inventory',
+  appName: 'IMMS',
   version: '1.0.0',
   maxUploadSize: 5 * 1024 * 1024, // 5MB
   supportEmail: 'support@yourdomain.com'

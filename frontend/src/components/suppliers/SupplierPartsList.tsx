@@ -161,7 +161,7 @@ const SupplierPartsList: React.FC = () => {
                     </Typography>
                   </TableCell>
                   <TableCell>
-                    {part.fiserv_part_number || part.manufacturer_part_number || 'N/A'}
+                    {part.internal_part_number || part.manufacturer_part_number || 'N/A'}
                   </TableCell>
                   <TableCell align="right">
                     ${part.supplier_unit_cost.toFixed(2)}

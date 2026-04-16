@@ -5,9 +5,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'Fiserv Inventory API Documentation',
+      title: 'IMMS API Documentation',
       version,
-      description: 'API documentation for the Fiserv Inventory Management System',
+      description: 'API documentation for the Inventory Management System',
       license: {
         name: 'Private',
         url: 'https://yourcompany.com',
@@ -57,7 +57,7 @@ const options = {
         },
         Part: {
           type: 'object',
-          required: ['name', 'fiserv_part_number', 'quantity'],
+          required: ['name', 'internal_part_number', 'quantity'],
           properties: {
             part_id: {
               type: 'integer',
@@ -75,9 +75,9 @@ const options = {
               type: 'string',
               description: 'Manufacturer part number',
             },
-            fiserv_part_number: {
+            internal_part_number: {
               type: 'string',
-              description: 'Fiserv part number',
+              description: 'internal part number',
             },
             quantity: {
               type: 'integer',

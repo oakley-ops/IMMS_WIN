@@ -96,7 +96,7 @@ class PartsUsageController {
           pu.usage_id,
           pu.usage_date,
           p.name as part_name,
-          p.fiserv_part_number,
+          p.internal_part_number,
           m.name as machine_name,
           pu.quantity
         FROM parts_usage pu
@@ -139,7 +139,7 @@ class PartsUsageController {
         SELECT 
           pu.usage_date,
           p.name as part_name,
-          p.fiserv_part_number,
+          p.internal_part_number,
           m.name as machine_name,
           pu.quantity
         FROM parts_usage pu
@@ -170,7 +170,7 @@ class PartsUsageController {
       worksheet.columns = [
         { header: 'Date', key: 'usage_date', width: 15 },
         { header: 'Part', key: 'part_name', width: 30 },
-        { header: 'Fiserv Part #', key: 'fiserv_part_number', width: 15 },
+        { header: 'Internal Part #', key: 'internal_part_number', width: 15 },
         { header: 'Machine', key: 'machine_name', width: 30 },
         { header: 'Quantity', key: 'quantity', width: 10 }
       ];

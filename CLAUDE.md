@@ -79,7 +79,7 @@ React Frontend → HTTP/WebSocket → Express Backend → PostgreSQL
 ### Database
 Core tables: `users`, `parts`, `machines`, `part_assignments`, `transactions`, `purchase_orders`, `work_orders`, `dies`, `projects`, `technicians`
 
-Key fields: `fiserv_part_number`/`crc_part_number` (migration in progress), `manufacturer_part_number`, `quantity`, `minimum_quantity`
+Key fields: `internal_part_number`/`crc_part_number` (migration in progress), `manufacturer_part_number`, `quantity`, `minimum_quantity`
 
 ## Authentication
 
@@ -87,7 +87,7 @@ JWT-based authentication with role-based access control (RBAC). Token stored in 
 
 ## Important Patterns
 
-1. **Column naming migration**: Code may reference both `fiserv_part_number` and `crc_part_number` - check queries for both
+1. **Column naming migration**: Code may reference both `internal_part_number` and `crc_part_number` - check queries for both
 2. **API versioning**: All endpoints use `/api/v1/` prefix, with fallback routes for backwards compatibility
 3. **Real-time updates**: Socket.io used for parts usage tracking events
 4. **PDF generation**: puppeteer for dynamic PDFs (resource intensive), pdfkit for templates

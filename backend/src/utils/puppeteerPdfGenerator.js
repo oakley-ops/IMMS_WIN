@@ -61,7 +61,7 @@ async function generatePuppeteerAnalyticsPDF(analyticsData) {
       headerTemplate: '<div></div>',
       footerTemplate: `
         <div style="font-size: 9px; text-align: center; width: 100%; color: #666; padding: 10px;">
-          <span class="pageNumber"></span> / <span class="totalPages"></span> | Fiserv Inventory Management System - Confidential
+          <span class="pageNumber"></span> / <span class="totalPages"></span> | Inventory Management System - Confidential
         </div>
       `,
       timeout: 30000
@@ -419,7 +419,7 @@ function generateHTMLReport(data) {
   <!-- PAGE 1: Executive Summary -->
   <div class="page">
     <div class="header">
-      <h1>📊 FISERV Analytics Report</h1>
+      <h1>📊 IMMS Analytics Report</h1>
       <div class="subtitle">Inventory Management Dashboard</div>
       <div class="date">Generated: ${new Date().toLocaleString('en-US', {
         weekday: 'long',

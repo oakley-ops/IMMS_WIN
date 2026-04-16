@@ -1,5 +1,5 @@
--- Migration script to convert FISERVINVENTORY to IMMS
--- This script creates the new IMMS database and migrates data from fiservinventory
+-- Migration script to convert IMMSINVENTORY to IMMS
+-- This script creates the new IMMS database and migrates data from imms_inventory
 
 -- Create new IMMS database
 CREATE DATABASE imms;
@@ -16,13 +16,13 @@ CREATE TABLE IF NOT EXISTS part_locations (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create parts table with CRC part number instead of Fiserv
+-- Create parts table with CRC part number instead of IMMS
 CREATE TABLE IF NOT EXISTS parts (
     part_id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     manufacturer_part_number VARCHAR(100),
-    crc_part_number VARCHAR(100), -- Changed from fiserv_part_number
+    crc_part_number VARCHAR(100), -- Changed from internal_part_number
     quantity INTEGER NOT NULL DEFAULT 0,
     minimum_quantity INTEGER NOT NULL DEFAULT 0,
     supplier VARCHAR(255),
@@ -64,7 +64,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     reference_number VARCHAR(100)
 );
 
--- Create users table (clean of Fiserv emails)
+-- Create users table (clean of IMMS emails)
 CREATE TABLE IF NOT EXISTS users (
     user_id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -77,7 +77,7 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Create contacts table (clean of Fiserv emails)
+-- Create contacts table (clean of IMMS emails)
 CREATE TABLE IF NOT EXISTS contacts (
     contact_id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -100,9 +100,9 @@ CREATE TABLE IF NOT EXISTS purchase_orders (
     expected_delivery_date DATE,
     total_amount DECIMAL(12, 2),
     notes TEXT,
-    approved_by VARCHAR(255), -- Will be cleaned of Fiserv emails
+    approved_by VARCHAR(255), -- Will be cleaned of IMMS emails
     approved_at TIMESTAMP,
-    approval_email VARCHAR(255), -- Will be cleaned of Fiserv emails
+    approval_email VARCHAR(255), -- Will be cleaned of IMMS emails
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -143,6 +143,6 @@ CREATE INDEX IF NOT EXISTS idx_purchase_orders_status ON purchase_orders(status)
 ALTER TABLE parts ADD CONSTRAINT unique_crc_part_number UNIQUE (crc_part_number);
 
 -- Add comments to document the changes
-COMMENT ON DATABASE imms IS 'Inventory Management & Maintenance System (formerly Fiserv Inventory)';
-COMMENT ON COLUMN parts.crc_part_number IS 'CRC internal part number (formerly fiserv_part_number)';
+COMMENT ON DATABASE imms IS 'Inventory Management & Maintenance System (formerly IMMS)';
+COMMENT ON COLUMN parts.crc_part_number IS 'CRC internal part number (formerly internal_part_number)';
 COMMENT ON COLUMN transactions.type IS 'Transaction type: usage (part taken from inventory), restock (part added to inventory via purchase), return (unused part returned to inventory), checkout (deprecated), return_unused (deprecated in favor of return), purchase_order_receipt (part received from PO), purchase_order_adjustment (PO quantity adjustment)';

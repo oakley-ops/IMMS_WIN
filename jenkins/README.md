@@ -36,7 +36,7 @@ In Jenkins UI, add the following credentials:
 1. **Create New Pipeline**
 - Click "New Item"
 - Select "Pipeline"
-- Name it "fiserv-inventory"
+- Name it "imms-inventory"
 
 2. **Configure Pipeline**
 - Select "Pipeline script from SCM"

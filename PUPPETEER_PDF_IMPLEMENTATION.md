@@ -42,7 +42,7 @@ Now you have **TWO options** on the KPI Dashboard:
 ```
 ┌────────────────────────────────────────────────┐
 │  [Blue Gradient Header with Rounded Bottom]   │
-│  📊 FISERV Analytics Report                   │
+│  📊 IMMS Analytics Report                   │
 │  Inventory Management Dashboard               │
 │  Generated: Monday, December 13, 2024...      │
 └────────────────────────────────────────────────┘
@@ -208,8 +208,8 @@ Click each button and compare:
 
 ### Color Scheme
 ```css
-Primary Blue: #0066A1 (Fiserv)
-Accent Orange: #FF6600 (Fiserv)
+Primary Blue: #0066A1
+Accent Orange: #FF6600 (IMMS)
 Text Dark: #1a1a1a
 Success Green: #28a745
 Warning Yellow: #ffc107

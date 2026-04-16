@@ -153,7 +153,7 @@ router.get('/:id/parts', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), as
       SELECT DISTINCT 
         p.part_id,
         p.name,
-        p.fiserv_part_number,
+        p.internal_part_number,
         p.manufacturer_part_number,
         p.quantity,
         p.minimum_quantity

@@ -8,7 +8,7 @@ async function testEmailProcessing() {
   // Simulating an email with "On hold" content exactly as seen in the real email
   const testEmail = {
     subject: 'RE: Purchase Order #202503-0001 - [PO-APPROVAL-010618188acf4850aef9e0c65f4bfb36]',
-    body: 'On hold\n\nIsaac Rodriguez\nSr. Technical Engineer\nCard Production Services\nFiserv',
+    body: 'On hold\n\nIsaac Rodriguez\nSr. Technical Engineer\nCard Production Services',
     from: 'admin@company.com'
   };
   

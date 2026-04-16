@@ -1,4 +1,4 @@
-# Deployment Guide for Fiserv Inventory App
+# Deployment Guide for IMMS App
 
 ## Prerequisites
 
@@ -12,8 +12,8 @@
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/oakley-ops/fiservinventory-app.git
-cd fiservinventory-app
+git clone https://github.com/oakley-ops/imms-win.git
+cd imms-win
 ```
 
 2. Install dependencies:
@@ -33,27 +33,27 @@ npm install
 
 1. Create production database:
 ```bash
-createdb -U postgres fiservinventory
+createdb -U postgres imms_inventory
 ```
 
 2. Run migrations:
 ```bash
 cd backend
-psql -U postgres -d fiservinventory -f db/migrations/*.sql
+psql -U postgres -d imms_inventory -f db/migrations/*.sql
 ```
 
 ## SSL Certificate Setup
 
 1. Install SSL certificates:
 ```bash
-sudo cp ssl/fiservinventory.key /etc/ssl/private/
-sudo cp ssl/fiservinventory.crt /etc/ssl/certs/
+sudo cp ssl/imms_inventory.key /etc/ssl/private/
+sudo cp ssl/imms_inventory.crt /etc/ssl/certs/
 ```
 
 2. Set proper permissions:
 ```bash
-sudo chmod 600 /etc/ssl/private/fiservinventory.key
-sudo chmod 644 /etc/ssl/certs/fiservinventory.crt
+sudo chmod 600 /etc/ssl/private/imms_inventory.key
+sudo chmod 644 /etc/ssl/certs/imms_inventory.crt
 ```
 
 ## Monitoring Setup
@@ -68,7 +68,7 @@ sudo apt-get install -y prometheus grafana
 ```yaml
 # /etc/prometheus/prometheus.yml
 scrape_configs:
-  - job_name: 'fiservinventory'
+  - job_name: 'imms_inventory'
     static_configs:
       - targets: ['localhost:9090']
 ```
@@ -77,8 +77,8 @@ scrape_configs:
 
 1. Set up automated backups:
 ```bash
-sudo mkdir -p /var/backups/fiservinventory
-sudo chown -R $USER:$USER /var/backups/fiservinventory
+sudo mkdir -p /var/backups/imms_inventory
+sudo chown -R $USER:$USER /var/backups/imms_inventory
 ```
 
 2. Add backup script to crontab:
@@ -97,13 +97,13 @@ npm run build
 
 2. Set up systemd service:
 ```bash
-sudo nano /etc/systemd/system/fiservinventory.service
+sudo nano /etc/systemd/system/imms_inventory.service
 ```
 
 Add:
 ```ini
 [Unit]
-Description=Fiserv Inventory Application
+Description=IMMS Application
 After=network.target
 
 [Service]
@@ -120,19 +120,19 @@ WantedBy=multi-user.target
 
 3. Start service:
 ```bash
-sudo systemctl enable fiservinventory
-sudo systemctl start fiservinventory
+sudo systemctl enable imms_inventory
+sudo systemctl start imms_inventory
 ```
 
 ## Maintenance
 
 ### Logs
-- Application logs: `/var/log/fiservinventory/app.log`
-- Error logs: `/var/log/fiservinventory/error.log`
-- Access logs: `/var/log/fiservinventory/access.log`
+- Application logs: `/var/log/imms_inventory/app.log`
+- Error logs: `/var/log/imms_inventory/error.log`
+- Access logs: `/var/log/imms_inventory/access.log`
 
 ### Backup Management
-- Daily backups: `/var/backups/fiservinventory/`
+- Daily backups: `/var/backups/imms_inventory/`
 - Retention: 7 days
 
 ### Monitoring
@@ -153,17 +153,17 @@ npm update
 
 1. Check application status:
 ```bash
-sudo systemctl status fiservinventory
+sudo systemctl status imms_inventory
 ```
 
 2. View logs:
 ```bash
-journalctl -u fiservinventory -f
+journalctl -u imms_inventory -f
 ```
 
 3. Check database connection:
 ```bash
-psql -U postgres -d fiservinventory -c "SELECT NOW();"
+psql -U postgres -d imms_inventory -c "SELECT NOW();"
 ```
 
 4. Verify monitoring:

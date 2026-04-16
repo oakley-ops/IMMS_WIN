@@ -8,7 +8,7 @@ const pool = new Pool({
   port: process.env.DB_PORT || 5432,
   user: process.env.DB_USER || 'test',
   password: process.env.DB_PASSWORD || 'test',
-  database: process.env.DB_NAME || 'fiservinventory_test'
+  database: process.env.DB_NAME || 'imms_test'
 });
 
 describe('Purchase Order Documents Schema', () => {

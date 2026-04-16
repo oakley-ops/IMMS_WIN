@@ -108,7 +108,7 @@ src/
 - [ ] Build DiePressCard component (static)
 - [ ] Build DieShelf component (static)
 - [ ] Add machine images/icons
-- [ ] Style with Fiserv branding
+- [ ] Style with app branding
 
 ### Phase 2: Drag and Drop Foundation
 - [ ] Install @dnd-kit/core and @dnd-kit/sortable

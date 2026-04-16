@@ -1,4 +1,4 @@
--- Sample data for Fiserv Inventory System - Simple version
+-- Sample data for IMMS System - Simple version
 
 -- Insert sample part locations
 INSERT INTO part_locations (name, description) VALUES
@@ -12,7 +12,7 @@ INSERT INTO parts (
     name,
     description,
     manufacturer_part_number,
-    fiserv_part_number,
+    internal_part_number,
     quantity,
     minimum_quantity,
     supplier,

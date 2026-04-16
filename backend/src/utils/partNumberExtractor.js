@@ -6,7 +6,7 @@
 /**
  * Extract part number from item description
  * Handles various common formats:
- * - "Fiserv Item # NS Glycol Super cool 30%"
+ * - "Vendor Item # NS Glycol Super cool 30%"
  * - "Part # ABC-123 Description here"
  * - "Item: XYZ-456 Something"
  * 

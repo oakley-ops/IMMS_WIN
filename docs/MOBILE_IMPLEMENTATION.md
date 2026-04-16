@@ -1,7 +1,7 @@
-# Mobile Implementation Plan for Fiserv Inventory App
+# Mobile Implementation Plan for IMMS App
 
 ## Overview
-This document outlines the steps needed to make the Fiserv Inventory App fully functional on iOS and Android tablets through a Progressive Web App (PWA) approach.
+This document outlines the steps needed to make the IMMS App fully functional on iOS and Android tablets through a Progressive Web App (PWA) approach.
 
 ## Implementation Steps
 

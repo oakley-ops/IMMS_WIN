@@ -1,6 +1,6 @@
 /**
- * Fiserv PDF Parser
- * Extracts structured data from Fiserv purchase order PDFs
+ * Purchase Order PDF Parser
+ * Extracts structured data from purchase order PDFs
  */
 
 /**
@@ -138,7 +138,7 @@ function extractLineItems(text) {
     
     // Try to match line item pattern
     // Expected format: QUANTITY  UNIT  DESCRIPTION  JOB_NUMBER  UNIT_PRICE  PRICING_UNIT  EXTENDED_PRICE
-    // Example: "275     EA    Fiserv Item # NS Glycol Super cool 30%    000000    6.84    EA    1881.00"
+    // Example: "275     EA    Vendor Item # NS Glycol Super cool 30%    000000    6.84    EA    1881.00"
     
     const itemMatch = line.match(/^(\d+)\s+([A-Z]+)\s+(.*?)\s+(\d+)\s+([\d,.]+)\s+([A-Z]+)\s+([\d,.]+)$/i);
     
@@ -202,12 +202,12 @@ function extractComments(text) {
 }
 
 /**
- * Main parser function - extracts all data from Fiserv PDF
+ * Main parser function - extracts all data from Purchase Order PDF
  * @param {string} pdfText - Raw text extracted from PDF
  * @returns {Object} Parsed purchase order data
  */
-function parseFiservPDF(pdfText) {
-  console.log('Parsing Fiserv PDF...');
+function parsePurchaseOrderPDF(pdfText) {
+  console.log('Parsing Purchase Order PDF...');
   console.log('=== PDF TEXT START ===');
   console.log(pdfText);
   console.log('=== PDF TEXT END ===');
@@ -237,7 +237,7 @@ function parseFiservPDF(pdfText) {
 }
 
 module.exports = {
-  parseFiservPDF,
+  parsePurchaseOrderPDF,
   extractPONumber,
   extractPODate,
   extractVendor,

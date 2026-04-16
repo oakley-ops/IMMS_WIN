@@ -46,8 +46,8 @@ interface MachineListProps {
   machinesData?: Machine[];
 }
 
-// Custom CSS styles for Fiserv branding
-const FiservStyles = `
+// Custom CSS styles for app branding
+const AppStyles = `
   .text-primary {
     color: #FF6600 !important;
   }
@@ -455,8 +455,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
         backgroundSize: '20px 20px'
       }}
     >
-      {/* Apply Fiserv brand styling */}
-      <style>{FiservStyles}</style>
+      {/* Apply app brand styling */}
+      <style>{AppStyles}</style>
       
       <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
         Machine Management

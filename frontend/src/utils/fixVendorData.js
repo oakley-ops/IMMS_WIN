@@ -47,7 +47,7 @@ const updateVendorForParts = async () => {
             quantity: part.quantity,
             minimum_quantity: part.minimum_quantity,
             unit_cost: part.unit_cost || 0,
-            fiserv_part_number: part.fiserv_part_number || '',
+            internal_part_number: part.internal_part_number || '',
             manufacturer_part_number: part.manufacturer_part_number || '',
             unit: part.unit || '',
             location: part.location || ''

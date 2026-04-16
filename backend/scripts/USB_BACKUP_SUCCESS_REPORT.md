@@ -45,9 +45,9 @@ Database Backup → Integrity Check → USB Auto-Sync → Complete Protection
 ```
 G:\DatabaseBackups\
 ├── 📁 Backup Files:
-│   ├── fiservinventory_backup_20250905_171838.sql.custom (5.64 MB) ← Latest
-│   ├── fiservinventory_backup_20250905_171255.sql.custom (5.64 MB)
-│   └── fiservinventory_backup_20250905_171158.sql.custom (0 MB)
+│   ├── imms_inventory_backup_20250905_171838.sql.custom (5.64 MB) ← Latest
+│   ├── imms_inventory_backup_20250905_171255.sql.custom (5.64 MB)
+│   └── imms_inventory_backup_20250905_171158.sql.custom (0 MB)
 │
 ├── 📄 Log Files:
 │   ├── backup.log (backup activity)
@@ -85,7 +85,7 @@ G:\DatabaseBackups\
 
 ### **Option 1: Manual Backup with USB** (Ready Now!)
 ```powershell
-cd C:\Users\Fiser\fiservinventory_win\backend\scripts
+cd C:\Users\Fiser\imms_inventory_win\backend\scripts
 
 # Complete backup with automatic USB sync
 .\backup-database.ps1
@@ -198,7 +198,7 @@ cd C:\Users\Fiser\fiservinventory_win\backend\scripts
 
 ## 🏆 **Achievement Unlocked: ENTERPRISE-GRADE DATA PROTECTION**
 
-### **Your Fiserv Inventory System Now Has:**
+### **Your IMMS System Now Has:**
 - ✅ **Automated daily backups**
 - ✅ **Automatic USB synchronization**
 - ✅ **Multiple recovery options**

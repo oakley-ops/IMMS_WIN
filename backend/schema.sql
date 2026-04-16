@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS parts (
     name VARCHAR(255) NOT NULL,
     description TEXT,
     manufacturer_part_number VARCHAR(100),
-    fiserv_part_number VARCHAR(100),
+    internal_part_number VARCHAR(100),
     quantity INTEGER NOT NULL DEFAULT 0,
     minimum_quantity INTEGER NOT NULL DEFAULT 0,
     supplier VARCHAR(255),

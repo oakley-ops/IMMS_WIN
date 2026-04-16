@@ -84,7 +84,7 @@ const CSVUploadForm: React.FC = () => {
           />
           <Form.Text className="text-muted">
             File should be a CSV with headers: name, description, manufacturer_part_number, 
-            fiserv_part_number, quantity, minimum_quantity, machine_id, supplier, unit_cost, location
+            internal_part_number, quantity, minimum_quantity, machine_id, supplier, unit_cost, location
           </Form.Text>
         </Form.Group>
 
@@ -118,7 +118,7 @@ const CSVUploadForm: React.FC = () => {
       <div className="mt-4">
         <h5>CSV Format Example:</h5>
         <pre className="bg-light p-3 rounded">
-          {`name,description,manufacturer_part_number,fiserv_part_number,quantity,minimum_quantity,machine_id,supplier,unit_cost,location
+          {`name,description,manufacturer_part_number,internal_part_number,quantity,minimum_quantity,machine_id,supplier,unit_cost,location
 "Receipt Printer","Thermal printer","MPN123","FPN123",10,5,1,"Supplier A",99.99,"Shelf A1"
 "Card Reader","EMV Reader","MPN456","FPN456",15,8,1,"Supplier B",149.99,"Shelf B2"`}
         </pre>

@@ -7,7 +7,7 @@ describe('Part Service', () => {
         name: 'Test Part',
         quantity: 10,
         manufacturer_part_number: 'MPN123',
-        fiserv_part_number: 'FPN123'
+        internal_part_number: 'FPN123'
       };
       expect(validatePart(validPart)).toBe(true);
     });

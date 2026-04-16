@@ -233,8 +233,8 @@ app.post('/api/test-email', (req, res) => {
     // Send a simple test email
     if (req.body.recipient) {
       emailService.sendEmail(
-        'Test Email from Fiserv Inventory System', 
-        '<h3>Test Email</h3><p>This is a test email from the Fiserv Inventory System.</p>', 
+        'Test Email from IMMS System', 
+        '<h3>Test Email</h3><p>This is a test email from the IMMS System.</p>', 
         req.body.recipient
       )
         .then(info => {
@@ -351,7 +351,7 @@ app.get('/purchase-orders/:id', async (req, res) => {
 
     // Get the purchase order items
     const itemsResult = await db.query(`
-      SELECT poi.*, p.name as part_name, p.manufacturer_part_number, p.fiserv_part_number
+      SELECT poi.*, p.name as part_name, p.manufacturer_part_number, p.internal_part_number
       FROM purchase_order_items poi
       LEFT JOIN parts p ON poi.part_id = p.part_id
       WHERE poi.po_id = $1
@@ -416,7 +416,7 @@ app.get('/parts/low-stock', async (req, res) => {
         p.name,
         p.description,
         p.manufacturer_part_number,
-        p.fiserv_part_number,
+        p.internal_part_number,
         p.quantity,
         p.minimum_quantity,
         p.supplier,

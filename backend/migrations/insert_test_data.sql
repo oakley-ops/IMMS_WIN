@@ -1,5 +1,5 @@
 -- Insert test data for parts with quantity 1000
-INSERT INTO parts (name, fiserv_part_number, description, quantity, minimum_quantity, manufacturer_part_number)
+INSERT INTO parts (name, internal_part_number, description, quantity, minimum_quantity, manufacturer_part_number)
 VALUES 
   ('Thermal Print Head', 'FSV-TPH-001', 'High-quality thermal print head for receipt printers', 1000, 100, 'TPH-001'),
   ('Receipt Paper Roll', 'FSV-RPR-002', 'Standard thermal paper roll for POS printers', 1000, 200, 'RPR-002'),

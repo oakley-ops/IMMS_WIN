@@ -9,7 +9,7 @@ const register = new client.Registry();
 // Add a default label which is added to all metrics
 client.collectDefaultMetrics({
   register,
-  prefix: 'fiserv_inventory_'
+  prefix: 'imms_inventory_'
 });
 
 // Create custom metrics

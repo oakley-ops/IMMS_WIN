@@ -5,7 +5,7 @@ async function updatePrice() {
   const pool = new Pool({
     user: 'postgres',
     host: 'localhost',
-    database: 'fiservinventory',
+    database: 'imms_inventory',
     password: '1234',
     port: 5432
   });

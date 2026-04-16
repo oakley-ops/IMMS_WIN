@@ -42,7 +42,7 @@ describe('API Integration Tests', () => {
         name: 'Test Part',
         quantity: 10,
         manufacturer_part_number: 'TEST-123',
-        fiserv_part_number: 'FIS-123'
+        internal_part_number: 'FIS-123'
       };
 
       const response = await request(app)

@@ -5,7 +5,7 @@ RASPBERRY PI CAMERA SETUP INSTRUCTIONS
 🎯 Goal: Enable HTTPS for camera access
 
 📦 Files in this folder:
-- fiservinventory-local.conf  (nginx configuration)
+- imms_inventory-local.conf  (nginx configuration)
 - generate-local-ssl.sh       (SSL certificate generator)
 - setup-https-camera.sh       (automated setup script)
 - RASPBERRY_PI_CAMERA_SETUP.md (detailed documentation)
@@ -35,10 +35,10 @@ RASPBERRY PI CAMERA SETUP INSTRUCTIONS
    bash generate-local-ssl.sh
 
 2. Copy nginx config:
-   sudo cp fiservinventory-local.conf /etc/nginx/sites-available/
+   sudo cp imms_inventory-local.conf /etc/nginx/sites-available/
 
 3. Enable nginx site:
-   sudo ln -s /etc/nginx/sites-available/fiservinventory-local.conf /etc/nginx/sites-enabled/
+   sudo ln -s /etc/nginx/sites-available/imms_inventory-local.conf /etc/nginx/sites-enabled/
 
 4. Test nginx config:
    sudo nginx -t
@@ -62,4 +62,4 @@ RASPBERRY PI CAMERA SETUP INSTRUCTIONS
 2. Accept security certificate warning
 3. Camera functionality will work!
 
-Note: Replace /path/to/your/fiservinventory_win with your actual project path 
+Note: Replace /path/to/your/imms_inventory_win with your actual project path 

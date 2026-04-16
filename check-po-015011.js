@@ -91,7 +91,7 @@ async function checkPO015011() {
           poi.*,
           p.name as part_name,
           p.manufacturer_part_number,
-          p.fiserv_part_number
+          p.internal_part_number
         FROM purchase_order_items poi
         LEFT JOIN parts p ON poi.part_id = p.part_id
         WHERE poi.po_id = $1
@@ -106,7 +106,7 @@ async function checkPO015011() {
         console.log(`   ✅ Found ${itemsResult.rows.length} items:`);
         itemsResult.rows.forEach((item, index) => {
           console.log(`   ${index + 1}. ${item.custom_part_name || item.part_name || 'Unknown Part'}`);
-          console.log(`      - Part #: ${item.custom_part_number || item.manufacturer_part_number || item.fiserv_part_number || 'N/A'}`);
+          console.log(`      - Part #: ${item.custom_part_number || item.manufacturer_part_number || item.internal_part_number || 'N/A'}`);
           console.log(`      - Quantity: ${item.quantity} (Received: ${item.quantity_received || 0})`);
           console.log(`      - Unit Price: $${item.unit_price || 0}`);
           console.log(`      - Total: $${item.total_price || 0}`);

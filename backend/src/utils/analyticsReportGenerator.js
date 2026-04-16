@@ -49,7 +49,7 @@ async function generateAnalyticsReportPDF(analyticsData) {
       doc.fillColor('#FFFFFF')
          .fontSize(28)
          .font('Helvetica-Bold')
-         .text('FISERV', leftMargin, 30);
+         .text('IMMS', leftMargin, 30);
 
       // Report title
       doc.fontSize(32)
@@ -353,7 +353,7 @@ async function generateAnalyticsReportPDF(analyticsData) {
            );
 
         doc.text(
-          'Fiserv Inventory Management System - Confidential',
+          'Inventory Management System - Confidential',
           0,
           doc.page.height - 35,
           { align: 'center', width: pageWidth }

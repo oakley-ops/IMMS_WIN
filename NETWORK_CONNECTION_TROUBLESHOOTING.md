@@ -1,7 +1,7 @@
 # Network Connection Troubleshooting Guide
 
 ## Overview
-This guide helps troubleshoot common network connection issues between the frontend and backend components of the Fiserv Inventory application.
+This guide helps troubleshoot common network connection issues between the frontend and backend components of the IMMS application.
 
 ## Common Error Messages
 
@@ -182,7 +182,7 @@ app.use(cors({
 ### Update All Frontend Config Files at Once
 ```powershell
 # Navigate to project root
-cd C:\Users\Fiser\fiservinventory_win
+cd C:\Users\Fiser\imms_inventory_win
 
 # Replace old IP with localhost in all relevant files
 (Get-Content "frontend\src\config\index.ts") -replace "192\.168\.50\.1:4000", "localhost:4000" | Set-Content "frontend\src\config\index.ts"

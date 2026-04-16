@@ -18,7 +18,7 @@ interface Part {
   name: string;
   description: string;
   manufacturer_part_number: string;
-  fiserv_part_number: string;
+  internal_part_number: string;
   quantity: number;
   minimum_quantity: number;
   machine_id: number;
@@ -57,7 +57,7 @@ const PartSearch: React.FC = () => {
             part.name.toLowerCase().includes(searchTermLower) ||
             part.description?.toLowerCase().includes(searchTermLower) ||
             part.manufacturer_part_number?.toLowerCase().includes(searchTermLower) ||
-            part.fiserv_part_number?.toLowerCase().includes(searchTermLower) ||
+            part.internal_part_number?.toLowerCase().includes(searchTermLower) ||
             part.supplier?.toLowerCase().includes(searchTermLower) ||
             locationMatch
           );
@@ -151,7 +151,7 @@ const PartSearch: React.FC = () => {
                     <h5>{part.name}</h5>
                     <p className="mb-1">{part.description}</p>
                     <small>
-                      Part Numbers: {part.manufacturer_part_number} / {part.fiserv_part_number}
+                      Part Numbers: {part.manufacturer_part_number} / {part.internal_part_number}
                     </small>
                     <div>
                       <strong>Locations: </strong>

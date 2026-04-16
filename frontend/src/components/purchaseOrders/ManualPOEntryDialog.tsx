@@ -34,9 +34,9 @@ import {
 } from '@mui/icons-material';
 import '../../styles/Dialog.css';
 
-// Fiserv color constants
-const FISERV_BLUE = '#0066A1';
-const FISERV_ORANGE = '#FF6200';
+// app color constants
+const IMMS_BLUE = '#0066A1';
+const IMMS_ORANGE = '#FF6200';
 
 interface LineItem {
   id: string;
@@ -324,7 +324,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                 <Typography 
                   variant="h6" 
                   sx={{ 
-                    color: FISERV_ORANGE, 
+                    color: IMMS_ORANGE, 
                     fontWeight: 600, 
                     mb: 2,
                     fontSize: '1.1rem'
@@ -333,7 +333,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                   Basic Information
                 </Typography>
                 <div style={{ 
-                  border: `2px solid ${FISERV_ORANGE}`, 
+                  border: `2px solid ${IMMS_ORANGE}`, 
                   borderRadius: '0.75rem', 
                   padding: '1.25rem' 
                 }}>
@@ -391,7 +391,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                   <Typography 
                     variant="h6" 
                     sx={{ 
-                      color: FISERV_ORANGE, 
+                      color: IMMS_ORANGE, 
                       fontWeight: 600,
                       fontSize: '1.1rem'
                     }}
@@ -409,7 +409,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                 </Box>
 
                 <div style={{ 
-                  border: `2px solid ${FISERV_ORANGE}`, 
+                  border: `2px solid ${IMMS_ORANGE}`, 
                   borderRadius: '0.75rem', 
                   padding: '1.5rem' 
                 }}>
@@ -481,7 +481,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                                   >
                                     <Typography
                                       variant="body2"
-                                      sx={{ color: FISERV_ORANGE, fontWeight: 600 }}
+                                      sx={{ color: IMMS_ORANGE, fontWeight: 600 }}
                                     >
                                       + Create New Part "{item.description}"
                                     </Typography>
@@ -512,10 +512,10 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                                     startIcon={<AddIcon />}
                                     onClick={() => handleCreatePart(item.description)}
                                     sx={{
-                                      borderColor: FISERV_ORANGE,
-                                      color: FISERV_ORANGE,
+                                      borderColor: IMMS_ORANGE,
+                                      color: IMMS_ORANGE,
                                       '&:hover': {
-                                        borderColor: FISERV_ORANGE,
+                                        borderColor: IMMS_ORANGE,
                                         bgcolor: 'rgba(255, 102, 0, 0.1)'
                                       }
                                     }}
@@ -571,7 +571,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                 <Typography 
                   variant="h6" 
                   sx={{ 
-                    color: FISERV_ORANGE, 
+                    color: IMMS_ORANGE, 
                     fontWeight: 600, 
                     mb: 2,
                     fontSize: '1.1rem'
@@ -580,7 +580,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                   Totals & Notes
                 </Typography>
                 <div style={{ 
-                  border: `2px solid ${FISERV_ORANGE}`, 
+                  border: `2px solid ${IMMS_ORANGE}`, 
                   borderRadius: '0.75rem', 
                   padding: '1.5rem' 
                 }}>

@@ -1,9 +1,9 @@
-# Fiserv Inventory API Documentation
+# IMMS API Documentation
 
 ## API Information
 
 - Version: 1.0.0
-- Description: API documentation for the Fiserv Inventory Management System
+- Description: API documentation for the Inventory Management System
 
 ## Authentication
 

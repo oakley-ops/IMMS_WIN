@@ -6,9 +6,9 @@ export const IMMS_ORANGE = '#FF6200';
 export const IMMS_ORANGE_DARK = '#e55800';
 
 // Keep legacy exports for compatibility
-export const FISERV_BLUE = IMMS_BLUE;
-export const FISERV_ORANGE = IMMS_ORANGE;
-export const FISERV_ORANGE_DARK = IMMS_ORANGE_DARK;
+export const IMMS_BLUE = IMMS_BLUE;
+export const IMMS_ORANGE = IMMS_ORANGE;
+export const IMMS_ORANGE_DARK = IMMS_ORANGE_DARK;
 
 // Common styles
 export const commonStyles = {

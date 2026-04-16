@@ -28,7 +28,7 @@ interface PartFormData {
   description: string;
   quantity: number;
   manufacturer_part_number: string;
-  fiserv_part_number: string;
+  internal_part_number: string;
   machine_id: number;
   unit_cost: number;
   location?: string;
@@ -47,7 +47,7 @@ const EditPartForm: React.FC = () => {
     description: '',
     quantity: 0,
     manufacturer_part_number: '',
-    fiserv_part_number: '',
+    internal_part_number: '',
     machine_id: 0,
     unit_cost: 0,
     location: '',
@@ -80,7 +80,7 @@ const EditPartForm: React.FC = () => {
           description: part.description || '',
           quantity: part.quantity || 0,
           manufacturer_part_number: part.manufacturer_part_number || '',
-          fiserv_part_number: part.fiserv_part_number || '',
+          internal_part_number: part.internal_part_number || '',
           machine_id: part.machine_id || 0,
           unit_cost: part.unit_cost || 0,
           location: part.location || '',
@@ -197,13 +197,13 @@ const EditPartForm: React.FC = () => {
                 </div>
                 
                 <div className="mb-3">
-                  <label htmlFor="fiserv_part_number" className="form-label">Fiserv Part Number</label>
+                  <label htmlFor="internal_part_number" className="form-label">Internal Part Number</label>
                   <input
                     type="text"
                     className="form-control"
-                    id="fiserv_part_number"
-                    name="fiserv_part_number"
-                    value={formData.fiserv_part_number}
+                    id="internal_part_number"
+                    name="internal_part_number"
+                    value={formData.internal_part_number}
                     onChange={handleChange}
                     required
                   />

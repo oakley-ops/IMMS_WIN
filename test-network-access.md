@@ -15,7 +15,7 @@ All the necessary configuration changes have been made:
 ### 1. Start Backend (Terminal 1)
 ```powershell
 cd backend
-$env:PGHOST="localhost"; $env:PGUSER="postgres"; $env:PGDATABASE="fiservinventory"; node index.js
+$env:PGHOST="localhost"; $env:PGUSER="postgres"; $env:PGDATABASE="imms_inventory"; node index.js
 ```
 
 ### 2. Start Frontend (Terminal 2) 

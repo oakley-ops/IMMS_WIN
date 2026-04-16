@@ -18,7 +18,7 @@ export type Part = {
   name: string;
   description: string;
   manufacturer_part_number: string;
-  fiserv_part_number: string;
+  internal_part_number: string;
   quantity: number;
   minimum_quantity: number;
   machine_id: number;

@@ -118,7 +118,7 @@ class EmailService {
       <p>The following part is running low on stock:</p>
       <ul>
         <li><strong>Part Name:</strong> ${part.name}</li>
-        <li><strong>Part Number:</strong> ${part.fiserv_part_number || 'N/A'}</li>
+        <li><strong>Part Number:</strong> ${part.internal_part_number || 'N/A'}</li>
         <li><strong>Current Quantity:</strong> ${part.quantity}</li>
         <li><strong>Minimum Quantity:</strong> ${part.minimum_quantity}</li>
         <li><strong>Location:</strong> ${part.location || 'N/A'}</li>
@@ -136,7 +136,7 @@ class EmailService {
       <p>The following part is now out of stock:</p>
       <ul>
         <li><strong>Part Name:</strong> ${part.name}</li>
-        <li><strong>Part Number:</strong> ${part.fiserv_part_number || 'N/A'}</li>
+        <li><strong>Part Number:</strong> ${part.internal_part_number || 'N/A'}</li>
         <li><strong>Minimum Quantity Required:</strong> ${part.minimum_quantity}</li>
         <li><strong>Location:</strong> ${part.location || 'N/A'}</li>
       </ul>
@@ -268,7 +268,7 @@ class EmailService {
       
       // Prepare email data
       const mailOptions = {
-        from: process.env.SMTP_FROM || '"Fiserv Inventory" <ftenashville@gmail.com>',
+        from: process.env.SMTP_FROM || '"IMMS" <ftenashville@gmail.com>',
         to: recipient,
         subject,
         html,
@@ -387,7 +387,7 @@ class EmailService {
         for (const attempt of failedAttempts) {
           try {
             const mailOptions = {
-              from: process.env.SMTP_FROM || '"Fiserv Inventory" <ftenashville@gmail.com>',
+              from: process.env.SMTP_FROM || '"IMMS" <ftenashville@gmail.com>',
               to: attempt.recipient,
               subject: attempt.subject,
               html: attempt.html_content,
@@ -491,7 +491,7 @@ class EmailService {
       while (retries > 0) {
         try {
           const info = await this.transporter.sendMail({
-            from: process.env.SMTP_FROM || '"Fiserv Inventory" <ftenashville@gmail.com>',
+            from: process.env.SMTP_FROM || '"IMMS" <ftenashville@gmail.com>',
             to,
             subject,
             html,
@@ -537,7 +537,7 @@ class EmailService {
       
       // Make sure there's a from address
       if (!mailOptions.from) {
-        mailOptions.from = process.env.SMTP_FROM || '"Fiserv Inventory" <ftenashville@gmail.com>';
+        mailOptions.from = process.env.SMTP_FROM || '"IMMS" <ftenashville@gmail.com>';
       }
       
       console.log(`Sending direct email to: ${mailOptions.to}`);

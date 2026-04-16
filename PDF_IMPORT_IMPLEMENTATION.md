@@ -1,7 +1,7 @@
 # PDF Purchase Order Import - Implementation Complete ✅
 
 ## Overview
-Automated PDF import system for Fiserv purchase orders with automatic supplier and part creation.
+Automated PDF import system for purchase orders with automatic supplier and part creation.
 
 ## Implementation Date
 December 25, 2024
@@ -12,9 +12,9 @@ December 25, 2024
 
 ### ✅ Backend Components
 
-1. **PDF Parser** (`backend/src/utils/fiservPdfParser.js`)
+1. **PDF Parser** (`backend/src/utils/pdfParser.js`)
    - Extracts PO number, date, vendor info, line items, totals
-   - Handles Fiserv PDF format specifically
+   - Handles Purchase Order PDF format specifically
    - Robust regex patterns for data extraction
 
 2. **Part Number Extractor** (`backend/src/utils/partNumberExtractor.js`)
@@ -58,7 +58,7 @@ December 25, 2024
 ### User Flow
 1. User clicks "Import PDF" button on Purchase Orders page
 2. Upload dialog opens with drag-and-drop zone
-3. User drops or selects Fiserv PO PDF
+3. User drops or selects PO PDF
 4. System extracts and processes data automatically
 5. Success dialog shows:
    - PO number created
@@ -73,7 +73,7 @@ PDF Upload
     ↓
 Extract Text (pdf-parse)
     ↓
-Parse Fiserv Format (regex patterns)
+Parse PO Format (regex patterns)
     ↓
 Match/Create Supplier (exact match or new)
     ↓
@@ -107,7 +107,7 @@ All existing fields support the import:
 ## Files Created
 
 ### Backend
-- `backend/src/utils/fiservPdfParser.js`
+- `backend/src/utils/pdfParser.js`
 - `backend/src/utils/partNumberExtractor.js`
 - `backend/src/services/SimplePartMatcher.js`
 - `backend/src/services/SupplierMatcher.js`
@@ -198,7 +198,7 @@ Response (201):
 
 ---
 
-## Data Extraction from Fiserv PDF
+## Data Extraction from Purchase Order PDF
 
 ### Extracted Fields
 - ✅ PO Number (e.g., "01551")
@@ -246,7 +246,7 @@ Response (201):
 ## Testing Checklist
 
 ### Backend Testing
-- [ ] Test with Fiserv PDF format
+- [ ] Test with Purchase Order PDF format
 - [ ] Test with existing supplier (should match)
 - [ ] Test with new supplier (should create)
 - [ ] Test with existing parts (should match)
@@ -270,7 +270,7 @@ Response (201):
 ### For Users
 1. Navigate to Purchase Orders page
 2. Click "Import PDF" button
-3. Drag and drop Fiserv PO PDF or click to browse
+3. Drag and drop PO PDF or click to browse
 4. Wait for processing (usually 2-5 seconds)
 5. Review success summary
 6. Click "View Purchase Order" to see the imported PO
@@ -288,7 +288,7 @@ Response (201):
 ### Not Implemented (Per Simplified Design)
 - ❌ Fuzzy matching (kept simple with exact match only)
 - ❌ AI-based extraction (OpenAI GPT-4 Vision)
-- ❌ Multi-vendor format support (Fiserv only)
+- ❌ Multi-vendor format support (standard format only)
 - ❌ OCR for scanned PDFs
 - ❌ Review dashboard for auto-created parts
 - ❌ Email integration
@@ -337,7 +337,7 @@ Response (201):
 ### Common Issues
 
 **Issue**: "Could not extract vendor information"
-- **Solution**: Ensure PDF is in Fiserv format with vendor section
+- **Solution**: Ensure PDF is in standard format with vendor section
 
 **Issue**: "Could not extract line items"
 - **Solution**: Check PDF has line items table with expected columns
@@ -350,7 +350,7 @@ Check backend console logs for detailed extraction information:
 ```
 === Starting PDF Import ===
 Step 1: Extracting text from PDF...
-Step 2: Parsing Fiserv PDF format...
+Step 2: Parsing Purchase Order PDF format...
 Step 3: Matching or creating supplier...
 Step 4: Creating purchase order...
 Step 5: Processing line items...
@@ -384,7 +384,7 @@ Step 6: Storing PDF as document...
 ✅ Complete audit trail  
 
 ### What Works Right Now
-- Upload Fiserv PO PDF → Instant PO creation
+- Upload PO PDF → Instant PO creation
 - All suppliers and parts created automatically
 - No user intervention needed
 - Direct navigation to created PO
@@ -394,6 +394,6 @@ Step 6: Storing PDF as document...
 
 ## Conclusion
 
-The PDF import system is **fully implemented and ready for testing**. Users can now upload Fiserv purchase order PDFs and have them automatically converted into purchase orders with all suppliers and parts created as needed. The system is simple, fast, and requires zero manual data entry.
+The PDF import system is **fully implemented and ready for testing**. Users can now upload purchase order PDFs and have them automatically converted into purchase orders with all suppliers and parts created as needed. The system is simple, fast, and requires zero manual data entry.
 
 **Next step**: Test with the actual `Super 12.23.25.pdf` file to verify extraction accuracy.

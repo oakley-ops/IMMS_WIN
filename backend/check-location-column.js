@@ -16,7 +16,7 @@ async function checkLocationColumn() {
     // Check the direct location column values
     console.log('Checking location column values...');
     const locationQuery = await pool.query(`
-      SELECT part_id, name, manufacturer_part_number, fiserv_part_number, location
+      SELECT part_id, name, manufacturer_part_number, internal_part_number, location
       FROM parts
       WHERE location IS NOT NULL AND location != ''
       LIMIT 10
@@ -31,7 +31,7 @@ async function checkLocationColumn() {
       // Let's check if any parts have location in their raw data
       console.log('\nChecking for any location data:');
       const anyLocationQuery = await pool.query(`
-        SELECT part_id, name, location, fiserv_part_number
+        SELECT part_id, name, location, internal_part_number
         FROM parts
         LIMIT 10
       `);

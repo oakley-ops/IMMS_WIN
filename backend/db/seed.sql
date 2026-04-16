@@ -9,7 +9,7 @@ INSERT INTO parts (
     name,
     description,
     manufacturer_part_number,
-    fiserv_part_number,
+    internal_part_number,
     quantity,
     minimum_quantity,
     machine_id,

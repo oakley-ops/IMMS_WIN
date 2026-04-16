@@ -7,7 +7,7 @@ INSERT INTO suppliers (name, contact_name, email, phone, address, notes) VALUES
 ('Office Solutions', 'David Lee', 'david@officesolutions.example.com', '555-444-1111', '202 Office Blvd, Denver, CO 80201', 'Specializes in office equipment and supplies');
 
 -- Create test parts (without directly associating with suppliers yet)
-INSERT INTO parts (name, description, manufacturer_part_number, fiserv_part_number, location, quantity, minimum_quantity, unit_cost, status) VALUES
+INSERT INTO parts (name, description, manufacturer_part_number, internal_part_number, location, quantity, minimum_quantity, unit_cost, status) VALUES
 ('HP Toner Cartridge', 'Black toner cartridge for HP LaserJet printers', 'HP78A-BLK', 'FS-T001', 'Shelf A1', 15, 5, 89.99, 'active'),
 ('Power Supply 650W', '650W ATX power supply for workstations', 'PS650W-ATX', 'FS-P001', 'Shelf D1', 7, 3, 65.75, 'active'),
 ('Wireless Mouse', 'Logitech wireless mouse', 'LOGI-M720', 'FS-M002', 'Shelf G1', 18, 10, 34.99, 'active'),

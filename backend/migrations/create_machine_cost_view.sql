@@ -31,7 +31,7 @@ SELECT
     m.name AS machine_name,
     p.part_id,
     p.name AS part_name,
-    p.fiserv_part_number,
+    p.internal_part_number,
     p.manufacturer_part_number,
     SUM(t.quantity) AS total_quantity_used,
     SUM(t.quantity * p.unit_cost) AS total_cost,
@@ -47,6 +47,6 @@ JOIN
 WHERE
     t.type = 'usage'
 GROUP BY 
-    m.machine_id, m.name, p.part_id, p.name, p.fiserv_part_number, p.manufacturer_part_number
+    m.machine_id, m.name, p.part_id, p.name, p.internal_part_number, p.manufacturer_part_number
 ORDER BY 
     m.machine_id, total_cost DESC; 

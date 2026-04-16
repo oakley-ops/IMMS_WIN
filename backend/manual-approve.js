@@ -100,7 +100,7 @@ async function manuallyApproveOrder() {
       try {
         console.log('Sending fallback notification email...');
         const mailOptions = {
-          from: process.env.SMTP_FROM || '"Fiserv Inventory" <ftenashville@gmail.com>',
+          from: process.env.SMTP_FROM || '"IMMS" <ftenashville@gmail.com>',
           to: process.env.REROUTE_EMAIL,
           subject: `Purchase Order #${trackingRecord.po_number} Approved (Manual)`,
           html: `

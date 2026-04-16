@@ -13,7 +13,7 @@ You can now export work orders as professional PDF documents that technicians ca
 
 **Features:**
 - Professional, printable layout
-- Company branding with Fiserv colors
+- Company branding with app colors
 - Interactive checklist for tasks
 - Parts table with "Qty Used" column
 - Space for technician notes
@@ -47,7 +47,7 @@ GET /api/v1/work-orders/:id/pdf
 
 **Location:** Actions card (top of right sidebar)
 **Button:** 📄 Print Work Order
-**Style:** Orange (Fiserv brand color)
+**Style:** Orange (app brand color)
 
 ---
 
@@ -57,7 +57,7 @@ GET /api/v1/work-orders/:id/pdf
 ```
 ┌─────────────────────────────────────────────────────┐
 │ WORK ORDER                        WO-2024-00001     │
-│ Fiserv Inventory Management       🟠 HIGH PRIORITY  │
+│ IMMS Management       🟠 HIGH PRIORITY  │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -169,7 +169,7 @@ Supervisor:
 ## 🎨 PDF Design Features
 
 ### Professional Layout
-- **Fiserv Branding** - Company colors (#0066A1 blue, #FF6600 orange)
+- **App Branding** - Company colors (#0066A1 blue, #FF6600 orange)
 - **Clear Typography** - Easy to read
 - **Print-Optimized** - Perfect on standard letter paper
 - **Black & White Friendly** - Prints well without color

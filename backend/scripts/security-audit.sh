@@ -30,7 +30,7 @@ done
 
 # Check SSL configuration
 echo "🔐 Checking SSL configuration..."
-if [ ! -f "/etc/ssl/private/fiservinventory.key" ] || [ ! -f "/etc/ssl/certs/fiservinventory.crt" ]; then
+if [ ! -f "/etc/ssl/private/imms_inventory.key" ] || [ ! -f "/etc/ssl/certs/imms_inventory.crt" ]; then
     echo "❌ SSL certificates not found"
     missing_vars=$((missing_vars + 1))
 fi
@@ -47,7 +47,7 @@ fi
 
 # Check database backup
 echo "💾 Checking database backups..."
-if [ ! -d "/var/backups/fiservinventory" ]; then
+if [ ! -d "/var/backups/imms_inventory" ]; then
     echo "❌ Backup directory not found"
     missing_vars=$((missing_vars + 1))
 fi

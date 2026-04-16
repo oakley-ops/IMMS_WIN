@@ -33,7 +33,7 @@ CREATE TABLE parts (
     id SERIAL PRIMARY KEY,
     part_name VARCHAR(255) NOT NULL,
     description TEXT,
-    fiserv_part_number VARCHAR(255) UNIQUE,
+    internal_part_number VARCHAR(255) UNIQUE,
     manufacturer VARCHAR(255),
     current_stock INTEGER DEFAULT 0,
     minimum_stock INTEGER DEFAULT 0,
@@ -78,7 +78,7 @@ CREATE TABLE transactions (
 );
 
 -- Create indexes for better query performance
-CREATE INDEX idx_parts_fiserv_part_number ON parts(fiserv_part_number);
+CREATE INDEX idx_parts_internal_part_number ON parts(internal_part_number);
 CREATE INDEX idx_parts_barcode ON parts(barcode);
 CREATE INDEX idx_parts_status ON parts(status);
 CREATE INDEX idx_machines_status ON machines(status);

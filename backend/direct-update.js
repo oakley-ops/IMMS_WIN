@@ -11,7 +11,7 @@ async function directUpdate() {
       user: process.env.DB_USER || 'postgres',
       host: process.env.DB_HOST || 'localhost',
       port: process.env.DB_PORT || 5432,
-      database: process.env.DB_NAME || 'fiservinventory',
+      database: process.env.DB_NAME || 'imms_inventory',
       password: process.env.DB_PASSWORD || '1234',
       ssl: false,
       max: 1 // Only use 1 client to avoid conflicts

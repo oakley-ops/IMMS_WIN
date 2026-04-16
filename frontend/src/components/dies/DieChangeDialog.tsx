@@ -5,7 +5,7 @@ import '../../styles/Dialog.css';
 const API_URL = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/v1`
   : 'http://localhost:4000/api/v1';
-const FISERV_BLUE = '#0066A1';
+const IMMS_BLUE = '#0066A1';
 
 interface DieChangeDialogProps {
   open: boolean;
@@ -176,7 +176,7 @@ const DieChangeDialog: React.FC<DieChangeDialogProps> = ({
     <div className="modal">
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content custom-dialog">
-          <div className="dialog-header" style={{ backgroundColor: FISERV_BLUE }}>
+          <div className="dialog-header" style={{ backgroundColor: IMMS_BLUE }}>
             <h5 className="dialog-title">
               {action === 'install' ? 'Install Die in Machine' : 'Remove Die from Machine'}
             </h5>

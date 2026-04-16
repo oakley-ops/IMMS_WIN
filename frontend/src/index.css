@@ -254,51 +254,51 @@ label {
 }
 
 :root {
-  --fiserv-blue: #0066A1;
-  --fiserv-blue-hover: #005080;
-  --fiserv-orange: #FF6200;
-  --fiserv-orange-hover: #e55800;
+  --imms-blue: #0066A1;
+  --imms-blue-hover: #005080;
+  --imms-orange: #FF6200;
+  --imms-orange-hover: #e55800;
 }
 
-/* Fiserv branded button styles */
+/* IMMS branded button styles */
 .btn-primary {
-  background-color: var(--fiserv-blue) !important;
-  border-color: var(--fiserv-blue) !important;
+  background-color: var(--imms-blue) !important;
+  border-color: var(--imms-blue) !important;
 }
 
 .btn-primary:hover, 
 .btn-primary:focus, 
 .btn-primary:active {
-  background-color: var(--fiserv-blue-hover) !important;
-  border-color: var(--fiserv-blue-hover) !important;
+  background-color: var(--imms-blue-hover) !important;
+  border-color: var(--imms-blue-hover) !important;
 }
 
 .btn-outline-primary {
-  color: var(--fiserv-blue) !important;
-  border-color: var(--fiserv-blue) !important;
+  color: var(--imms-blue) !important;
+  border-color: var(--imms-blue) !important;
 }
 
 .btn-outline-primary:hover,
 .btn-outline-primary:focus,
 .btn-outline-primary:active {
-  background-color: var(--fiserv-blue) !important;
+  background-color: var(--imms-blue) !important;
   color: white !important;
 }
 
-/* Fiserv text colors */
+/* IMMS text colors */
 .text-primary {
-  color: var(--fiserv-blue) !important;
+  color: var(--imms-blue) !important;
 }
 
 .text-secondary {
-  color: var(--fiserv-orange) !important;
+  color: var(--imms-orange) !important;
 }
 
-/* Fiserv background colors */
+/* IMMS background colors */
 .bg-primary {
-  background-color: var(--fiserv-blue) !important;
+  background-color: var(--imms-blue) !important;
 }
 
 .bg-secondary {
-  background-color: var(--fiserv-orange) !important;
+  background-color: var(--imms-orange) !important;
 }

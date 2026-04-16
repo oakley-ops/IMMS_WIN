@@ -1,4 +1,4 @@
--- Extended sample data for Fiserv Inventory System
+-- Extended sample data for IMMS System
 
 -- Insert sample users (password: password123)
 INSERT INTO users (username, password_hash, email, role) VALUES
@@ -29,7 +29,7 @@ INSERT INTO parts (
     name,
     description,
     manufacturer_part_number,
-    fiserv_part_number,
+    internal_part_number,
     quantity,
     minimum_quantity,
     supplier,

@@ -14,7 +14,7 @@ manufacturers = ["Diebold", "NCR", "Wincor", "Fujitsu", "Glory", "OKI", "Epson",
 # Generate SQL file
 with open('migrations/insert_1000_parts.sql', 'w') as f:
     # Start the insert statement
-    f.write('INSERT INTO parts (name, fiserv_part_number, description, quantity, minimum_quantity, manufacturer_part_number) VALUES\n')
+    f.write('INSERT INTO parts (name, internal_part_number, description, quantity, minimum_quantity, manufacturer_part_number) VALUES\n')
     
     # Generate 1000 parts
     counter = 1000  # Start from 1000 to ensure uniqueness
@@ -24,14 +24,14 @@ with open('migrations/insert_1000_parts.sql', 'w') as f:
         model = f"M{random.randint(100,999)}"
         
         name = f"{manufacturer} {category} {model}"
-        fiserv_number = f"FSV-{manufacturer[:2].upper()}{counter:04d}"
+        internal_number = f"FSV-{manufacturer[:2].upper()}{counter:04d}"
         mfg_number = f"{manufacturer[:3].upper()}-{category[:3].upper()}-{model}"
         description = f"{manufacturer} {category} for ATM/ITM systems - Model {model}"
         quantity = 5
         min_quantity = random.randint(1, 3)
         
         # Add the values
-        f.write(f"  ('{name}', '{fiserv_number}', '{description}', {quantity}, {min_quantity}, '{mfg_number}')")
+        f.write(f"  ('{name}', '{internal_number}', '{description}', {quantity}, {min_quantity}, '{mfg_number}')")
         
         # Add comma if not last item
         if i < 1010:

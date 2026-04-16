@@ -8,7 +8,7 @@ const SimplePartMatcher = require('../services/SimplePartMatcher');
 const SupplierMatcher = require('../services/SupplierMatcher');
 const AiDocumentExtractor = require('../services/AiDocumentExtractor');
 const { extractTextFromPDF } = require('../utils/pdfExtractor');
-const { parseFiservPDF } = require('../utils/fiservPdfParser');
+const { parsePurchaseOrderPDF } = require('../utils/pdfParser');
 const { convertPdfToImage, cleanupImage } = require('../utils/pdfToImage');
 const multer = require('multer');
 const path = require('path');
@@ -2448,8 +2448,8 @@ class PurchaseOrderController {
         const pdfText = await extractTextFromPDF(file.path);
         console.log('PDF text extraction complete');
         
-        console.log('Step 2b: Parsing Fiserv PDF format...');
-        parsedData = parseFiservPDF(pdfText);
+        console.log('Step 2b: Parsing Purchase Order PDF format...');
+        parsedData = parsePurchaseOrderPDF(pdfText);
       }
       
       if (!parsedData.vendor || !parsedData.vendor.name) {

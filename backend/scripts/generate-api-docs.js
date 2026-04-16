@@ -15,7 +15,7 @@ const generateHtmlDocs = () => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fiserv Inventory API Documentation</title>
+    <title>IMMS API Documentation</title>
     <style>
         ${swaggerUiCss}
         .swagger-ui .topbar { display: none }
@@ -71,7 +71,7 @@ const generateJsonSpec = () => {
 // Function to generate Markdown documentation
 const generateMarkdownDocs = () => {
   const paths = swaggerSpec.paths;
-  let markdown = `# Fiserv Inventory API Documentation\n\n`;
+  let markdown = `# IMMS API Documentation\n\n`;
 
   // Add API information
   markdown += `## API Information\n\n`;

@@ -146,7 +146,7 @@ async function forceApproveAndRedirect() {
     console.log('\n5. Sending notification email to ikerodz@gmail.com...');
     try {
       const info = await emailService.transporter.sendMail({
-        from: process.env.SMTP_FROM || '"Fiserv Inventory" <ftenashville@gmail.com>',
+        from: process.env.SMTP_FROM || '"IMMS" <ftenashville@gmail.com>',
         to: process.env.REROUTE_EMAIL,
         subject: `Purchase Order #${PO_ID} Approved (Manual Debug)`,
         html: `

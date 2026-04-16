@@ -41,18 +41,18 @@ echo ""
 echo "🌐 Step 2: Configuring nginx..."
 
 # Backup existing configuration if it exists
-if [ -f /etc/nginx/sites-enabled/fiservinventory-local.conf ]; then
+if [ -f /etc/nginx/sites-enabled/imms_inventory-local.conf ]; then
     echo "📋 Backing up existing configuration..."
-    sudo cp /etc/nginx/sites-enabled/fiservinventory-local.conf /etc/nginx/sites-enabled/fiservinventory-local.conf.backup
+    sudo cp /etc/nginx/sites-enabled/imms_inventory-local.conf /etc/nginx/sites-enabled/imms_inventory-local.conf.backup
 fi
 
 # Copy new configuration
 echo "📝 Installing nginx configuration..."
-sudo cp nginx/fiservinventory-local.conf /etc/nginx/sites-available/
+sudo cp nginx/imms_inventory-local.conf /etc/nginx/sites-available/
 
 # Enable the site
 echo "🔗 Enabling nginx site..."
-sudo ln -sf /etc/nginx/sites-available/fiservinventory-local.conf /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/imms_inventory-local.conf /etc/nginx/sites-enabled/
 
 # Test nginx configuration
 echo "🧪 Testing nginx configuration..."

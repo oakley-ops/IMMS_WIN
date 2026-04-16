@@ -1,5 +1,5 @@
 # Database Backup Best Practices Implementation Guide
-## For Fiserv Inventory System
+## For IMMS System
 
 ### 📋 Overview
 This guide outlines comprehensive database backup best practices implemented for your PostgreSQL inventory system, following industry standards and the 3-2-1 backup rule.
@@ -29,7 +29,7 @@ This guide outlines comprehensive database backup best practices implemented for
 ## 🏗️ **Database Backup Architecture**
 
 ```
-PostgreSQL Database (fiservinventory)
+PostgreSQL Database (imms_inventory)
     ↓
 Daily Backup Process (2:00 AM)
     ├── Custom Format (.custom) → Compression → Integrity Check
@@ -71,7 +71,7 @@ Offsite Storage
 
 #### **Custom Format Backups** (Primary)
 ```powershell
-pg_dump --format=custom --verbose --file=backup.custom --dbname=fiservinventory
+pg_dump --format=custom --verbose --file=backup.custom --dbname=imms_inventory
 ```
 - **Advantages**: Compressed, parallel restore, selective restore
 - **Use Case**: Production recovery, fast restoration
@@ -79,7 +79,7 @@ pg_dump --format=custom --verbose --file=backup.custom --dbname=fiservinventory
 
 #### **SQL Format Backups** (Secondary)
 ```powershell
-pg_dump --format=plain --file=backup.sql --dbname=fiservinventory
+pg_dump --format=plain --file=backup.sql --dbname=imms_inventory
 ```
 - **Advantages**: Human-readable, portable, version control
 - **Use Case**: Development, troubleshooting, migration
@@ -204,8 +204,8 @@ backend/scripts/
 └── backup-control-panel.bat         # Quick access panel
 
 C:\DatabaseBackups/
-├── fiservinventory_backup_*.custom   # Custom format backups
-├── fiservinventory_backup_*.sql.gz   # Compressed SQL backups
+├── imms_inventory_backup_*.custom   # Custom format backups
+├── imms_inventory_backup_*.sql.gz   # Compressed SQL backups
 ├── backup.log                       # Backup activity logs
 ├── health-check.log                 # Health check logs
 ├── alerts.log                       # Alert system logs

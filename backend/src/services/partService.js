@@ -20,7 +20,7 @@ const validatePart = (part) => {
         return false;
     }
     
-    if (part.fiserv_part_number && typeof part.fiserv_part_number !== 'string') {
+    if (part.internal_part_number && typeof part.internal_part_number !== 'string') {
         return false;
     }
     

@@ -1,5 +1,5 @@
 # Database Backup System Guide
-## Comprehensive Backup Strategy for Fiserv Inventory System
+## Comprehensive Backup Strategy for IMMS System
 
 ### 📋 Overview
 This guide covers a complete database backup and recovery system for your PostgreSQL database, following industry best practices.
@@ -65,14 +65,14 @@ cd backend\scripts
 ```
 
 ### Step 2: Verify Setup
-1. Check Task Scheduler for "FiservInventory-DatabaseBackup"
+1. Check Task Scheduler for "IMMS-DatabaseBackup"
 2. Verify backup directory exists: `C:\DatabaseBackups`
 3. Check that first backup was created
 
 ### Step 3: Test Restore
 ```powershell
 # Test restore to a different database
-.\restore-database.ps1 -BackupFile "C:\DatabaseBackups\fiservinventory_backup_20250127_020000.custom" -NewDatabaseName "fiservinventory_test"
+.\restore-database.ps1 -BackupFile "C:\DatabaseBackups\imms_inventory_backup_20250127_020000.custom" -NewDatabaseName "imms_test"
 ```
 
 ---
@@ -143,7 +143,7 @@ cd backend\scripts
 ```powershell
 # Stop application
 # Restore from latest backup
-.\restore-database.ps1 -BackupFile "C:\DatabaseBackups\fiservinventory_backup_LATEST.custom" -DropExisting
+.\restore-database.ps1 -BackupFile "C:\DatabaseBackups\imms_inventory_backup_LATEST.custom" -DropExisting
 # Restart application
 ```
 

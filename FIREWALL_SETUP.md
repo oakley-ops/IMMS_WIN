@@ -5,8 +5,8 @@
 Run these commands as **Administrator** in Command Prompt or PowerShell:
 
 ```cmd
-netsh advfirewall firewall add rule name="Fiserv Inventory Frontend" dir=in action=allow protocol=TCP localport=3000
-netsh advfirewall firewall add rule name="Fiserv Inventory Backend" dir=in action=allow protocol=TCP localport=4000
+netsh advfirewall firewall add rule name="IMMS Frontend" dir=in action=allow protocol=TCP localport=3000
+netsh advfirewall firewall add rule name="IMMS Backend" dir=in action=allow protocol=TCP localport=4000
 ```
 
 ## How to Run as Administrator
@@ -20,8 +20,8 @@ netsh advfirewall firewall add rule name="Fiserv Inventory Backend" dir=in actio
 
 To verify the rules were added:
 ```cmd
-netsh advfirewall firewall show rule name="Fiserv Inventory Frontend"
-netsh advfirewall firewall show rule name="Fiserv Inventory Backend"
+netsh advfirewall firewall show rule name="IMMS Frontend"
+netsh advfirewall firewall show rule name="IMMS Backend"
 ```
 
 ## Alternative: Temporary Firewall Disable (Testing Only)

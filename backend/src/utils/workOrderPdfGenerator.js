@@ -351,7 +351,7 @@ function generateWorkOrderHTML(wo) {
     <div class="header">
       <div class="header-left">
         <h1>WORK ORDER</h1>
-        <div class="company">Fiserv Inventory Management</div>
+        <div class="company">IMMS Management</div>
       </div>
       <div class="header-right">
         <div class="wo-number">${wo.work_order_number}</div>

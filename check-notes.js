@@ -9,7 +9,7 @@ async function checkEmailTrackingNotes() {
     user: 'postgres',
     host: 'localhost',
     port: 5432,
-    database: 'fiservinventory',
+    database: 'imms_inventory',
     password: '1234',
     ssl: false
   });

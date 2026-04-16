@@ -38,7 +38,7 @@ class PartController {
       description,
       quantity,
       manufacturer_part_number,
-      fiserv_part_number,
+      internal_part_number,
       machine_id,
       location,
       minimum_quantity,
@@ -56,7 +56,7 @@ class PartController {
       const partResult = await client.query(
         `INSERT INTO parts (
           name, description, quantity, manufacturer_part_number, 
-          fiserv_part_number, machine_id, location, minimum_quantity, 
+          internal_part_number, machine_id, location, minimum_quantity, 
           unit_cost, status, notes
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *`,
         [
@@ -64,7 +64,7 @@ class PartController {
           description,
           quantity,
           manufacturer_part_number,
-          fiserv_part_number,
+          internal_part_number,
           machine_id,
           location,
           minimum_quantity || 0,
@@ -118,7 +118,7 @@ class PartController {
       description,
       quantity,
       manufacturer_part_number,
-      fiserv_part_number,
+      internal_part_number,
       machine_id,
       location,
       minimum_quantity,
@@ -136,7 +136,7 @@ class PartController {
       const result = await client.query(
         `UPDATE parts 
          SET name = $1, description = $2, quantity = $3, manufacturer_part_number = $4,
-             fiserv_part_number = $5, machine_id = $6, location = $7, minimum_quantity = $8,
+             internal_part_number = $5, machine_id = $6, location = $7, minimum_quantity = $8,
              unit_cost = $9, status = $10, notes = $11
          WHERE part_id = $12 RETURNING *`,
         [
@@ -144,7 +144,7 @@ class PartController {
           description,
           quantity,
           manufacturer_part_number,
-          fiserv_part_number,
+          internal_part_number,
           machine_id,
           location,
           minimum_quantity,

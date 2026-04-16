@@ -1,6 +1,6 @@
 # ✅ Raspberry Pi Network Access Setup Complete
 
-The Fiserv Inventory application has been successfully configured for network access according to the Raspberry Pi Access Guide.
+The IMMS application has been successfully configured for network access according to the Raspberry Pi Access Guide.
 
 ## 🔧 Changes Made
 
@@ -33,8 +33,8 @@ The Fiserv Inventory application has been successfully configured for network ac
 ### 1. Configure Windows Firewall
 **Run as Administrator:**
 ```cmd
-netsh advfirewall firewall add rule name="Fiserv Inventory Frontend" dir=in action=allow protocol=TCP localport=3000
-netsh advfirewall firewall add rule name="Fiserv Inventory Backend" dir=in action=allow protocol=TCP localport=4000
+netsh advfirewall firewall add rule name="IMMS Frontend" dir=in action=allow protocol=TCP localport=3000
+netsh advfirewall firewall add rule name="IMMS Backend" dir=in action=allow protocol=TCP localport=4000
 ```
 
 ### 2. Start the Application
@@ -72,7 +72,7 @@ If the Raspberry Pi cannot access the application:
 
 2. **Verify Firewall Rules:**
    ```cmd
-   netsh advfirewall firewall show rule name="Fiserv Inventory Frontend"
+   netsh advfirewall firewall show rule name="IMMS Frontend"
    ```
 
 3. **Check if Services are Running:**

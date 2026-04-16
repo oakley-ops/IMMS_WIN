@@ -5,9 +5,9 @@ import { addPart } from '../store/partsSlice';
 import { Part } from '../store/partsSlice';
 import '../styles/Dialog.css';
 
-// Add Fiserv color constants
-const FISERV_BLUE = '#0066A1';
-const FISERV_ORANGE = '#FF6200';
+// Add app color constants
+const IMMS_BLUE = '#0066A1';
+const IMMS_ORANGE = '#FF6200';
 
 interface Supplier {
   supplier_id: number;
@@ -32,7 +32,7 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
   const [description, setDescription] = useState('');
   const [quantity, setQuantity] = useState(0);
   const [manufacturerPartNumber, setManufacturerPartNumber] = useState('');
-  const [fiservPartNumber, setFiservPartNumber] = useState('');
+  const [internalPartNumber, setInternalPartNumber] = useState('');
   const [location, setLocation] = useState('');
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   
@@ -74,7 +74,7 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
     setDescription('');
     setQuantity(0);
     setManufacturerPartNumber('');
-    setFiservPartNumber('');
+    setInternalPartNumber('');
     setLocation('');
     setSelectedSuppliers([]);
     setCurrentSupplierId('');
@@ -149,7 +149,7 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
       unit_cost: preferredSupplier ? preferredSupplier.unit_cost : unitCost,
       location,
       manufacturer_part_number: manufacturerPartNumber,
-      fiserv_part_number: fiservPartNumber,
+      internal_part_number: internalPartNumber,
       status: 'active',
       notes,
       machine_id: 0,
@@ -181,7 +181,7 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
       <div className="modal-dialog modal-dialog-centered">
         <div className="modal-content custom-dialog">
           <div className="dialog-header" style={{ backgroundColor: 'white' }}>
-            <h5 className="dialog-title" style={{ color: FISERV_ORANGE }}>Add New Part</h5>
+            <h5 className="dialog-title" style={{ color: IMMS_ORANGE }}>Add New Part</h5>
           </div>
           <form onSubmit={handleSubmit}>
             <div className="dialog-content">
@@ -204,13 +204,13 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Fiserv Part Number*</label>
+                  <label className="form-label">Internal Part Number*</label>
                   <input
                     type="text"
                     className="form-control"
-                    name="fiserv_part_number"
-                    value={fiservPartNumber}
-                    onChange={(e) => setFiservPartNumber(e.target.value)}
+                    name="internal_part_number"
+                    value={internalPartNumber}
+                    onChange={(e) => setInternalPartNumber(e.target.value)}
                     required
                   />
                 </div>
@@ -420,7 +420,7 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
                 <button 
                   type="submit" 
                   className="btn" 
-                  style={{ backgroundColor: FISERV_BLUE, color: 'white' }}
+                  style={{ backgroundColor: IMMS_BLUE, color: 'white' }}
                   disabled={loading || selectedSuppliers.length === 0}
                 >
                   {loading ? 'Adding...' : 'Add Part'}

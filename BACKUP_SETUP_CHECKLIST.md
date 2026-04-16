@@ -13,7 +13,7 @@ cd backend\scripts
 
 ### ✅ **Step 2: Verify Automatic Backup**
 1. Open **Task Scheduler** (Windows key + R, type `taskschd.msc`)
-2. Look for task: **"FiservInventory-DatabaseBackup"**
+2. Look for task: **"IMMS-DatabaseBackup"**
 3. Check that it's scheduled for **2:00 AM daily**
 4. Verify backup directory exists: `C:\DatabaseBackups`
 
@@ -30,7 +30,7 @@ cd backend\scripts
 ls C:\DatabaseBackups\*.custom
 
 # Test restore to a test database
-.\restore-database.ps1 -BackupFile "C:\DatabaseBackups\fiservinventory_backup_YYYYMMDD_HHMMSS.custom" -NewDatabaseName "fiservinventory_test"
+.\restore-database.ps1 -BackupFile "C:\DatabaseBackups\imms_inventory_backup_YYYYMMDD_HHMMSS.custom" -NewDatabaseName "imms_test"
 ```
 
 ---
@@ -118,10 +118,10 @@ Get-Content C:\DatabaseBackups\backup.log | Select-String "ERROR" | Select-Objec
 
 ### Files to Monitor:
 - `C:\DatabaseBackups\backup.log` (backup status)
-- `C:\DatabaseBackups\fiservinventory_backup_*.custom` (backup files)
+- `C:\DatabaseBackups\imms_inventory_backup_*.custom` (backup files)
 
 ### Windows Task:
-- **Name**: FiservInventory-DatabaseBackup
+- **Name**: IMMS-DatabaseBackup
 - **Schedule**: Daily at 2:00 AM
 - **Location**: Task Scheduler
 

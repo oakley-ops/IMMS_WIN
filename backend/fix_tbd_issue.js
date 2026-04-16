@@ -12,7 +12,7 @@ async function fixTBDIssue() {
     console.log('\n--- STEP 1: Removing unique constraint ---');
     
     try {
-      await client.query('ALTER TABLE parts DROP CONSTRAINT IF EXISTS unique_fiserv_part_number;');
+      await client.query('ALTER TABLE parts DROP CONSTRAINT IF EXISTS unique_internal_part_number;');
       console.log('Successfully dropped constraint by name.');
     } catch (err) {
       console.log('Could not drop constraint by name, trying alternative approach:', err.message);
@@ -25,7 +25,7 @@ async function fixTBDIssue() {
         INNER JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
         INNER JOIN pg_attribute att ON att.attrelid = rel.oid AND att.attnum = ANY(con.conkey)
         WHERE rel.relname = 'parts'
-        AND att.attname = 'fiserv_part_number'
+        AND att.attname = 'internal_part_number'
         AND con.contype = 'u';
       `;
       
@@ -39,7 +39,7 @@ async function fixTBDIssue() {
         await client.query(`ALTER TABLE parts DROP CONSTRAINT IF EXISTS "${constraintName}";`);
         console.log(`Successfully dropped constraint: ${constraintName}`);
       } else {
-        console.log('No unique constraint found on fiserv_part_number column.');
+        console.log('No unique constraint found on internal_part_number column.');
       }
     }
     
@@ -49,23 +49,23 @@ async function fixTBDIssue() {
     // Start a transaction
     await client.query('BEGIN');
     
-    // Find all parts with fiserv_part_number = 'TBD'
-    console.log('Finding parts with TBD as fiserv_part_number...');
+    // Find all parts with internal_part_number = 'TBD'
+    console.log('Finding parts with TBD as internal_part_number...');
     const result = await client.query(
-      "SELECT part_id, fiserv_part_number FROM parts WHERE fiserv_part_number = 'TBD'"
+      "SELECT part_id, internal_part_number FROM parts WHERE internal_part_number = 'TBD'"
     );
     
-    console.log(`Found ${result.rows.length} parts with TBD as fiserv_part_number`);
+    console.log(`Found ${result.rows.length} parts with TBD as internal_part_number`);
     
     // Update each part with a unique TBD value
     for (let i = 0; i < result.rows.length; i++) {
       const part = result.rows[i];
       // Use index to ensure uniqueness even if executed quickly
       const uniqueTBD = `TBD-${Date.now()}-${i}-${Math.floor(Math.random() * 10000)}`;
-      console.log(`Updating part ${part.part_id} from "${part.fiserv_part_number}" to "${uniqueTBD}"`);
+      console.log(`Updating part ${part.part_id} from "${part.internal_part_number}" to "${uniqueTBD}"`);
       
       await client.query(
-        'UPDATE parts SET fiserv_part_number = $1 WHERE part_id = $2',
+        'UPDATE parts SET internal_part_number = $1 WHERE part_id = $2',
         [uniqueTBD, part.part_id]
       );
       
@@ -79,14 +79,14 @@ async function fixTBDIssue() {
     
     // Verify no TBD values remain
     const verifyResult = await client.query(
-      "SELECT COUNT(*) FROM parts WHERE fiserv_part_number = 'TBD'"
+      "SELECT COUNT(*) FROM parts WHERE internal_part_number = 'TBD'"
     );
     
     const remainingTBD = parseInt(verifyResult.rows[0].count);
     if (remainingTBD === 0) {
       console.log('Verification successful: No plain TBD values remain in the database.');
     } else {
-      console.log(`Warning: ${remainingTBD} parts still have 'TBD' as fiserv_part_number.`);
+      console.log(`Warning: ${remainingTBD} parts still have 'TBD' as internal_part_number.`);
     }
     
     // Step 3: Create a partial unique index that excludes TBD pattern
@@ -94,13 +94,13 @@ async function fixTBDIssue() {
     
     try {
       // Drop any existing index first
-      await client.query('DROP INDEX IF EXISTS idx_unique_fiserv_part_number;');
+      await client.query('DROP INDEX IF EXISTS idx_unique_internal_part_number;');
       
       // Create a partial unique index that excludes TBD pattern
       await client.query(`
-        CREATE UNIQUE INDEX idx_unique_fiserv_part_number 
-        ON parts (fiserv_part_number) 
-        WHERE fiserv_part_number NOT LIKE 'TBD-%';
+        CREATE UNIQUE INDEX idx_unique_internal_part_number 
+        ON parts (internal_part_number) 
+        WHERE internal_part_number NOT LIKE 'TBD-%';
       `);
       
       console.log('Successfully created partial unique index that allows TBD- values.');

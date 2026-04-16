@@ -6,7 +6,7 @@
 **Location:** `frontend/src/pages/KPIDashboard.tsx`
 
 **Features:**
-- ✅ Orange Fiserv-branded button (FF6600)
+- ✅ Orange branded button (FF6600)
 - ✅ Loading spinner during generation
 - ✅ Disabled state while processing
 - ✅ Automatic download with date in filename
@@ -34,7 +34,7 @@
 ```
 ┌─────────────────────────────────────────────────────┐
 │  [Blue Header Bar - 120px height]                  │
-│  FISERV                                             │
+│  IMMS                                             │
 │  Analytics Dashboard Report                         │
 │  Generated: Monday, December 13, 2024, 3:45 PM     │
 └─────────────────────────────────────────────────────┘
@@ -86,8 +86,8 @@
 ### Color Palette (ReportLab-Style)
 ```javascript
 {
-  primary: '#0066A1',      // Fiserv Blue (headers, accents)
-  accent: '#FF6600',       // Fiserv Orange (underlines, highlights)
+  primary: '#0066A1',      // IMMS Blue (headers, accents)
+  accent: '#FF6600',       // IMMS Orange (underlines, highlights)
   text: '#1a1a1a',         // Deep black (primary text)
   textSecondary: '#4a4a4a', // Gray (secondary text)
   border: '#CCCCCC',       // Light gray (borders)
@@ -347,7 +347,7 @@ npm install puppeteer
 ### Our PDFKit Implementation Provides:
 
 ✅ **Professional Design** - Clean, modern layout
-✅ **Brand Consistency** - Fiserv colors throughout
+✅ **Brand Consistency** - app colors throughout
 ✅ **Clear Hierarchy** - Easy to scan and read
 ✅ **Proper Formatting** - Tables, spacing, alignment
 ✅ **Executive Summary** - Quick overview at top
@@ -403,7 +403,7 @@ If you **absolutely need Python/ReportLab**, I can help set up a Python microser
 # Get JWT token first
 curl -X POST http://localhost:5001/api/v1/users/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"admin@fiserv.com","password":"yourpassword"}' \
+  -d '{"email":"admin@imms.local","password":"yourpassword"}' \
   | jq -r '.token'
 
 # Export PDF
@@ -425,7 +425,7 @@ open test-report.pdf    # Mac
 ✅ **Professional PDF Export** - ReportLab-quality design
 ✅ **One-Click Download** - Orange button on KPI Dashboard
 ✅ **Real Data** - All metrics from your PostgreSQL database
-✅ **Branded Design** - Fiserv colors and professional layout
+✅ **Branded Design** - app colors and professional layout
 ✅ **Multi-Page Report** - Executive summary + 3 detailed pages
 ✅ **Production Ready** - Error handling, loading states, proper formatting
 

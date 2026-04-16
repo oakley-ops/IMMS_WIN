@@ -111,7 +111,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
       description,
       quantity,
       manufacturer_part_number,
-      fiserv_part_number,
+      internal_part_number,
       machine_id,
       unit_cost,
       location,
@@ -128,40 +128,40 @@ router.put('/:id', authenticateToken, async (req, res) => {
     
     console.log('Updating part with ID:', id);
     console.log('Request body:', req.body);
-    console.log('Fiserv part number:', fiserv_part_number);
+    console.log('internal part number:', internal_part_number);
     
     if (!name || !quantity) {
       return res.status(400).json({ error: 'Name and quantity are required fields' });
     }
 
     // Handle TBD value specially
-    let finalFiservPartNumber = fiserv_part_number;
-    if (isTBDValue(fiserv_part_number)) {
+    let finalInternalPartNumber = internal_part_number;
+    if (isTBDValue(internal_part_number)) {
       // First check if this part already has a TBD-style number
       const currentPart = await pool.query(
-        'SELECT fiserv_part_number FROM parts WHERE part_id = $1',
+        'SELECT internal_part_number FROM parts WHERE part_id = $1',
         [id]
       );
 
-      if (currentPart.rows.length > 0 && currentPart.rows[0].fiserv_part_number?.startsWith('TBD-')) {
+      if (currentPart.rows.length > 0 && currentPart.rows[0].internal_part_number?.startsWith('TBD-')) {
         // Keep the existing TBD identifier
-        finalFiservPartNumber = currentPart.rows[0].fiserv_part_number;
+        finalInternalPartNumber = currentPart.rows[0].internal_part_number;
       } else {
         // Generate a new unique TBD identifier
-        finalFiservPartNumber = generateUniqueTBD();
+        finalInternalPartNumber = generateUniqueTBD();
       }
     } else {
-      // If not TBD, check if the new fiserv_part_number already exists for a different part
-      if (fiserv_part_number) {
+      // If not TBD, check if the new internal_part_number already exists for a different part
+      if (internal_part_number) {
         const existingPart = await pool.query(
-          'SELECT part_id FROM parts WHERE fiserv_part_number = $1 AND part_id != $2',
-          [fiserv_part_number, id]
+          'SELECT part_id FROM parts WHERE internal_part_number = $1 AND part_id != $2',
+          [internal_part_number, id]
         );
 
         if (existingPart.rows.length > 0) {
           return res.status(400).json({ 
-            error: 'A part with this Fiserv part number already exists',
-            detail: `Key (fiserv_part_number)=(${fiserv_part_number}) already exists.`
+            error: 'A part with this internal part number already exists',
+            detail: `Key (internal_part_number)=(${internal_part_number}) already exists.`
           });
         }
       }
@@ -186,7 +186,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     addUpdateField('description', description);
     addUpdateField('quantity', quantity);
     addUpdateField('manufacturer_part_number', manufacturer_part_number);
-    addUpdateField('fiserv_part_number', finalFiservPartNumber); // Use the processed Fiserv part number
+    addUpdateField('internal_part_number', finalInternalPartNumber); // Use the processed internal part number
     addUpdateField('machine_id', machine_id);
     addUpdateField('unit_cost', unit_cost);
     addUpdateField('location', location);

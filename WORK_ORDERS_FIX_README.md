@@ -41,7 +41,7 @@ You have **two options**:
 If you have access to your PostgreSQL database (pgAdmin, psql, or any database client):
 
 1. Open your PostgreSQL database client
-2. Connect to your database (probably named `fiserv_inventory` or similar)
+2. Connect to your database (probably named `imms_inventory` or similar)
 3. Run the SQL file: `backend/fix-work-orders-table.sql`
 
 Or run this command from PowerShell (replace `your_database_name` with your actual database name):

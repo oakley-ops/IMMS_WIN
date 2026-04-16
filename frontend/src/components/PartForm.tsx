@@ -11,7 +11,7 @@ interface PartFormData {
   quantity: number;
   minimum_quantity: number;
   manufacturer_part_number: string;
-  fiserv_part_number: string;
+  internal_part_number: string;
   machine_id: number; 
   supplier: string;
   unit_cost: number;
@@ -28,7 +28,7 @@ const PartForm: React.FC = () => {
     quantity: 0,
     minimum_quantity: 0,
     manufacturer_part_number: '',
-    fiserv_part_number: '',
+    internal_part_number: '',
     machine_id: 0,
     supplier: '',
     unit_cost: 0,
@@ -60,8 +60,8 @@ const PartForm: React.FC = () => {
   ) => {
     const { name, value, type } = event.target;
     
-    // Special handling for fiserv_part_number
-    if (name === 'fiserv_part_number') {
+    // Special handling for internal_part_number
+    if (name === 'internal_part_number') {
       const upperValue = value.trim().toUpperCase();
       if (upperValue === 'TBD') {
         setIsTBD(true);
@@ -88,13 +88,13 @@ const PartForm: React.FC = () => {
   };
 
   const handleBarcodeScanned = (scannedBarcode: string) => {
-    // Decide whether to populate manufacturer_part_number or fiserv_part_number
+    // Decide whether to populate manufacturer_part_number or internal_part_number
     // based on the scanned barcode format or user input
     setFormData({
       ...formData,
       manufacturer_part_number: scannedBarcode, 
       // or
-      // fiserv_part_number: scannedBarcode
+      // internal_part_number: scannedBarcode
     });
   };
 
@@ -119,8 +119,8 @@ const PartForm: React.FC = () => {
       return;
     }
     
-    if (!formData.fiserv_part_number && !isTBD) {
-      setError('Fiserv part number is required (you can use "TBD" if unknown)');
+    if (!formData.internal_part_number && !isTBD) {
+      setError('internal part number is required (you can use "TBD" if unknown)');
       setIsSubmitting(false);
       return;
     }
@@ -129,8 +129,8 @@ const PartForm: React.FC = () => {
     const submissionData = { ...formData };
     
     // If the user entered TBD, use our pre-generated unique TBD value
-    if (isTBD || submissionData.fiserv_part_number.trim().toUpperCase() === "TBD") {
-      submissionData.fiserv_part_number = uniqueTBD;
+    if (isTBD || submissionData.internal_part_number.trim().toUpperCase() === "TBD") {
+      submissionData.internal_part_number = uniqueTBD;
       console.log('Using unique TBD value:', uniqueTBD);
     }
     
@@ -153,7 +153,7 @@ const PartForm: React.FC = () => {
         quantity: 0,
         minimum_quantity: 0,
         manufacturer_part_number: '',
-        fiserv_part_number: '',
+        internal_part_number: '',
         machine_id: 0,
         supplier: '',
         unit_cost: 0,
@@ -166,22 +166,22 @@ const PartForm: React.FC = () => {
     } catch (error) {
       console.error('Error creating part:', error);
       
-      // Check for unique constraint violation on fiserv_part_number
+      // Check for unique constraint violation on internal_part_number
       if (axios.isAxiosError(error) && error.response) {
         console.error('Error response:', error.response);
         const errorMessage = error.response.data.error || error.message;
         
-        if (errorMessage.includes('unique_fiserv_part_number') || 
+        if (errorMessage.includes('unique_internal_part_number') || 
             errorMessage.includes('duplicate key value') || 
-            errorMessage.includes('Key (fiserv_part_number)')) {
+            errorMessage.includes('Key (internal_part_number)')) {
           
           // Generate a new unique TBD and suggest trying again
           const newUniqueTBD = generateUniqueTBD();
           
-          if (isTBD || formData.fiserv_part_number.trim().toUpperCase() === "TBD") {
-            setError(`There's already a part with "TBD" as the Fiserv part number. We've generated a new unique ID "${newUniqueTBD}" for you. Please try submitting again.`);
+          if (isTBD || formData.internal_part_number.trim().toUpperCase() === "TBD") {
+            setError(`There's already a part with "TBD" as the internal part number. We've generated a new unique ID "${newUniqueTBD}" for you. Please try submitting again.`);
           } else {
-            setError(`A part with this Fiserv part number already exists. Please use a different value.`);
+            setError(`A part with this internal part number already exists. Please use a different value.`);
           }
         } else {
           setError(`Error: ${errorMessage}`);
@@ -256,20 +256,20 @@ const PartForm: React.FC = () => {
         </div>
         
         <div style={{ flex: 1 }}>
-          <label htmlFor="fiserv_part_number" style={{ display: 'block', marginBottom: '5px' }}>
-            Fiserv Part Number: <span style={{ color: 'red' }}>*</span>
+          <label htmlFor="internal_part_number" style={{ display: 'block', marginBottom: '5px' }}>
+            Internal Part Number: <span style={{ color: 'red' }}>*</span>
           </label>
           <input
             type="text"
-            id="fiserv_part_number"
-            name="fiserv_part_number"
-            value={formData.fiserv_part_number}
+            id="internal_part_number"
+            name="internal_part_number"
+            value={formData.internal_part_number}
             onChange={handleChange}
             required
             style={{ width: '100%', padding: '8px' }}
           />
           <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
-            If you don't have the Fiserv part number yet, enter "TBD".
+            If you don't have the internal part number yet, enter "TBD".
           </small>
           {isTBD && (
             <div style={{ marginTop: '5px', padding: '8px', backgroundColor: '#e3f2fd', borderRadius: '4px' }}>

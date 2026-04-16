@@ -1,4 +1,4 @@
-INSERT INTO parts (name, fiserv_part_number, description, quantity, minimum_quantity, manufacturer_part_number) VALUES
+INSERT INTO parts (name, internal_part_number, description, quantity, minimum_quantity, manufacturer_part_number) VALUES
   ('Epson Lock M161', 'FSV-EP1000', 'Epson Lock for ATM/ITM systems - Model M161', 5, 3, 'EPS-LOC-M161'),
   ('Fujitsu Receipt Printer M762', 'FSV-FU1001', 'Fujitsu Receipt Printer for ATM/ITM systems - Model M762', 5, 3, 'FUJ-REC-M762'),
   ('NCR PIN Pad M566', 'FSV-NC1002', 'NCR PIN Pad for ATM/ITM systems - Model M566', 5, 2, 'NCR-PIN-M566'),

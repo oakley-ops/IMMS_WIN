@@ -13,7 +13,7 @@ interface Part {
   description: string;
   quantity: number;
   manufacturer_part_number: string;
-  fiserv_part_number: string;
+  internal_part_number: string;
   machine_id: number;
   supplier: string;
   image: string;

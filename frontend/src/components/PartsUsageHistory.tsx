@@ -35,7 +35,7 @@ interface UsageRecord {
   usage_date: string;
   reason: string;
   unit_cost: string | null;
-  fiserv_part_number: string;
+  internal_part_number: string;
 }
 
 interface PartsUsageHistoryProps {
@@ -157,7 +157,7 @@ const PartsUsageHistory: React.FC<PartsUsageHistoryProps> = ({ limit }) => {
         return {
           'Date': dayjs(record.usage_date).format('MM/DD/YYYY'),
           'Part Name': record.part_name,
-          'Fiserv Part #': record.fiserv_part_number,
+          'Internal Part #': record.internal_part_number,
           'Machine Name': record.machine_name || 'N/A',
           'Quantity Used': Math.abs(record.quantity),
           'Type': record.reason,
@@ -174,7 +174,7 @@ const PartsUsageHistory: React.FC<PartsUsageHistoryProps> = ({ limit }) => {
       const columnWidths = [
         { wch: 15 }, // Date
         { wch: 30 }, // Part Name
-        { wch: 20 }, // Fiserv Part #
+        { wch: 20 }, // Internal Part #
         { wch: 25 }, // Machine Name
         { wch: 15 }, // Quantity Used
         { wch: 15 }, // Type
@@ -306,7 +306,7 @@ const PartsUsageHistory: React.FC<PartsUsageHistoryProps> = ({ limit }) => {
               <TableRow>
                 <TableCell sx={{ width: '20%' }}>Date</TableCell>
                 <TableCell sx={{ width: '25%' }}>Part Name</TableCell>
-                <TableCell sx={{ width: '20%' }}>Fiserv Part #</TableCell>
+                <TableCell sx={{ width: '20%' }}>Internal Part #</TableCell>
                 <TableCell sx={{ width: '20%' }}>Machine</TableCell>
                 <TableCell sx={{ width: '15%' }} align="right">Total Cost</TableCell>
               </TableRow>
@@ -325,7 +325,7 @@ const PartsUsageHistory: React.FC<PartsUsageHistoryProps> = ({ limit }) => {
                   <TableRow key={record.transaction_id}>
                     <TableCell>{formatDate(record.usage_date)}</TableCell>
                     <TableCell>{record.part_name}</TableCell>
-                    <TableCell>{record.fiserv_part_number}</TableCell>
+                    <TableCell>{record.internal_part_number}</TableCell>
                     <TableCell>{record.machine_name || '-'}</TableCell>
                     <TableCell 
                       align="right" 

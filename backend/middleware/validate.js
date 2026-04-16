@@ -141,7 +141,7 @@ const schemas = {
     rules.string('name', { required: true, max: 255 }),
     rules.string('description', { max: 1000 }),
     rules.string('manufacturer_part_number', { max: 100 }),
-    rules.string('fiserv_part_number', { required: true, max: 100 }),
+    rules.string('internal_part_number', { required: true, max: 100 }),
     rules.number('quantity', { required: true, min: 0 }),
     rules.number('minimum_quantity', { min: 0 }),
     rules.string('manufacturer', { max: 255 }),

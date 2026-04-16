@@ -1,4 +1,4 @@
-// Script to remove the unique constraint on fiserv_part_number
+// Script to remove the unique constraint on internal_part_number
 const { pool } = require('./db');
 
 async function removeConstraint() {
@@ -8,11 +8,11 @@ async function removeConstraint() {
     console.log('Connecting to database...');
     client = await pool.connect();
     
-    console.log('Removing unique constraint from fiserv_part_number...');
+    console.log('Removing unique constraint from internal_part_number...');
     
     // First, try to drop the constraint directly
     try {
-      await client.query('ALTER TABLE parts DROP CONSTRAINT IF EXISTS unique_fiserv_part_number;');
+      await client.query('ALTER TABLE parts DROP CONSTRAINT IF EXISTS unique_internal_part_number;');
       console.log('Successfully dropped constraint by name.');
     } catch (err) {
       console.log('Could not drop constraint by name, trying alternative approach:', err.message);
@@ -25,7 +25,7 @@ async function removeConstraint() {
         INNER JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
         INNER JOIN pg_attribute att ON att.attrelid = rel.oid AND att.attnum = ANY(con.conkey)
         WHERE rel.relname = 'parts'
-        AND att.attname = 'fiserv_part_number'
+        AND att.attname = 'internal_part_number'
         AND con.contype = 'u';
       `;
       
@@ -39,7 +39,7 @@ async function removeConstraint() {
         await client.query(`ALTER TABLE parts DROP CONSTRAINT IF EXISTS "${constraintName}";`);
         console.log(`Successfully dropped constraint: ${constraintName}`);
       } else {
-        console.log('No unique constraint found on fiserv_part_number column.');
+        console.log('No unique constraint found on internal_part_number column.');
       }
     }
     
@@ -51,14 +51,14 @@ async function removeConstraint() {
       INNER JOIN pg_namespace nsp ON nsp.oid = rel.relnamespace
       INNER JOIN pg_attribute att ON att.attrelid = rel.oid AND att.attnum = ANY(con.conkey)
       WHERE rel.relname = 'parts'
-      AND att.attname = 'fiserv_part_number'
+      AND att.attname = 'internal_part_number'
       AND con.contype = 'u';
     `;
     
     const verifyResult = await client.query(verifyQuery);
     
     if (verifyResult.rows.length === 0) {
-      console.log('Verification successful: No unique constraint found on fiserv_part_number column.');
+      console.log('Verification successful: No unique constraint found on internal_part_number column.');
     } else {
       console.log('Warning: Unique constraint still exists:', verifyResult.rows[0].conname);
     }

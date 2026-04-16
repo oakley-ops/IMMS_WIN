@@ -65,7 +65,7 @@ class DatabasePartsmatcher:
                 'Name': 'Sensor Assembly',
                 'Description': 'Temperature sensor for main chamber',
                 'Manufacturer Part Number': 'TEMP-001',
-                'Fiserv Part Number': 'FS-TEMP-001',
+                'Internal Part Number': 'FS-TEMP-001',
                 'Quantity': 5,
                 'Minimum Quantity': 2,
                 'Supplier': 'SensorTech Inc',
@@ -82,7 +82,7 @@ class DatabasePartsmatcher:
                 'Name': 'Motor Bearing',
                 'Description': 'Ball bearing for drive motor',
                 'Manufacturer Part Number': 'SKF-6205',
-                'Fiserv Part Number': 'FS-BEARING-001',
+                'Internal Part Number': 'FS-BEARING-001',
                 'Quantity': 0,
                 'Minimum Quantity': 4,
                 'Supplier': 'SKF Industrial',
@@ -128,7 +128,7 @@ class DatabasePartsmatcher:
                 name = row.get('Name') or row.get('name') or row.get('part_name')
                 description = row.get('Description') or row.get('description')
                 mfg_part_num = row.get('Manufacturer Part Number') or row.get('manufacturer_part_number') or row.get('mfg_part_number')
-                fiserv_part_num = row.get('Fiserv Part Number') or row.get('fiserv_part_number')
+                internal_part_num = row.get('Internal Part Number') or row.get('internal_part_number')
                 quantity = row.get('Quantity') or row.get('quantity') or 0
                 supplier = row.get('Supplier') or row.get('supplier')
                 unit_cost = row.get('Unit Cost') or row.get('unit_cost') or 0
@@ -136,14 +136,14 @@ class DatabasePartsmatcher:
                 notes = row.get('Notes') or row.get('notes')
                 
                 # Skip rows without essential data
-                if pd.isna(name) and pd.isna(mfg_part_num) and pd.isna(fiserv_part_num):
+                if pd.isna(name) and pd.isna(mfg_part_num) and pd.isna(internal_part_num):
                     continue
                 
                 # Create combined description
                 combined_desc = str(name or '') + ' ' + str(description or '')
                 
                 # Use the most specific part number available
-                primary_part_num = fiserv_part_num or mfg_part_num or name
+                primary_part_num = internal_part_num or mfg_part_num or name
                 
                 self.db_parts_data.append({
                     'Source': 'Database',
@@ -153,7 +153,7 @@ class DatabasePartsmatcher:
                     'Original_Part_Number': primary_part_num,
                     'Original_Description': combined_desc.strip(),
                     'Manufacturer_Part_Number': mfg_part_num,
-                    'Fiserv_Part_Number': fiserv_part_num,
+                    'Internal_Part_Number': internal_part_num,
                     'Quantity': quantity,
                     'Supplier': supplier,
                     'Unit_Cost': unit_cost,
@@ -202,21 +202,21 @@ class DatabasePartsmatcher:
         matched_db_indices = set()
         matched_zz110_indices = set()
         
-        # Phase 1: Exact Fiserv part number matches
-        print("Phase 1: Exact Fiserv part number matching...")
+        # Phase 1: Exact internal part number matches
+        print("Phase 1: Exact internal part number matching...")
         for i, db_item in enumerate(self.db_parts_data):
             for j, zz110_item in enumerate(self.zz110_data):
                 if i in matched_db_indices or j in matched_zz110_indices:
                     continue
                 
-                fiserv_part = self.clean_part_number(db_item.get('Fiserv_Part_Number', ''))
-                if fiserv_part and fiserv_part == zz110_item['Part_Number']:
+                internal_part = self.clean_part_number(db_item.get('Internal_Part_Number', ''))
+                if internal_part and internal_part == zz110_item['Part_Number']:
                     self.matched_items.append({
-                        'Match_Type': 'Exact Fiserv Part Number',
+                        'Match_Type': 'Exact Internal Part Number',
                         'Match_Score': 1.0,
                         'DB_Part_ID': db_item['Part_ID'],
                         'DB_Part_Number': db_item['Original_Part_Number'],
-                        'DB_Fiserv_Number': db_item.get('Fiserv_Part_Number', ''),
+                        'DB_Internal_Number': db_item.get('Internal_Part_Number', ''),
                         'DB_Manufacturer_Number': db_item.get('Manufacturer_Part_Number', ''),
                         'DB_Description': db_item['Original_Description'],
                         'DB_Quantity': db_item['Quantity'],
@@ -235,7 +235,7 @@ class DatabasePartsmatcher:
                     break
         
         phase1_matches = len(self.matched_items)
-        print(f"Found {phase1_matches} Fiserv part number matches")
+        print(f"Found {phase1_matches} internal part number matches")
         
         # Phase 2: Exact manufacturer part number matches
         print("Phase 2: Exact manufacturer part number matching...")
@@ -254,7 +254,7 @@ class DatabasePartsmatcher:
                         'Match_Score': 1.0,
                         'DB_Part_ID': db_item['Part_ID'],
                         'DB_Part_Number': db_item['Original_Part_Number'],
-                        'DB_Fiserv_Number': db_item.get('Fiserv_Part_Number', ''),
+                        'DB_Internal_Number': db_item.get('Internal_Part_Number', ''),
                         'DB_Manufacturer_Number': db_item.get('Manufacturer_Part_Number', ''),
                         'DB_Description': db_item['Original_Description'],
                         'DB_Quantity': db_item['Quantity'],
@@ -305,7 +305,7 @@ class DatabasePartsmatcher:
                     'Match_Score': best_score,
                     'DB_Part_ID': db_item['Part_ID'],
                     'DB_Part_Number': db_item['Original_Part_Number'],
-                    'DB_Fiserv_Number': db_item.get('Fiserv_Part_Number', ''),
+                    'DB_Internal_Number': db_item.get('Internal_Part_Number', ''),
                     'DB_Manufacturer_Number': db_item.get('Manufacturer_Part_Number', ''),
                     'DB_Description': db_item['Original_Description'],
                     'DB_Quantity': db_item['Quantity'],
@@ -336,7 +336,7 @@ class DatabasePartsmatcher:
         
         print(f"\n📊 DATABASE vs ZZ110 MATCHING RESULTS:")
         print(f"Total matches found: {len(self.matched_items)}")
-        print(f"  - Fiserv part number matches: {phase1_matches}")
+        print(f"  - internal part number matches: {phase1_matches}")
         print(f"  - Manufacturer part number matches: {phase2_matches}")
         print(f"  - Fuzzy description matches: {phase3_matches}")
         print(f"Unmatched database parts: {len(self.unmatched_db_parts)}")

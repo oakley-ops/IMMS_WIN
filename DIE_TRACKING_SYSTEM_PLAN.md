@@ -1,7 +1,7 @@
 # Die Tracking System - Comprehensive Implementation Plan
 
 ## Executive Summary
-This document outlines a complete die tracking system for card punch machines that tracks die lifecycle, sharpening status, machine assignments, and change reasons. The system follows industry best practices for tool/die management and integrates seamlessly with your existing Fiserv Inventory Management System.
+This document outlines a complete die tracking system for card punch machines that tracks die lifecycle, sharpening status, machine assignments, and change reasons. The system follows industry best practices for tool/die management and integrates seamlessly with your existing Inventory Management System.
 
 ---
 
@@ -1593,7 +1593,7 @@ Contact: Mike Johnson (555-0123)
 
 This comprehensive die tracking system will provide complete visibility into die lifecycle, improve maintenance planning, reduce downtime, and optimize die-related costs. The phased implementation approach ensures manageable development cycles with clear deliverables at each stage.
 
-The system is designed to integrate seamlessly with your existing Fiserv Inventory Management System while adding specialized functionality for die management specific to card punch machine operations.
+The system is designed to integrate seamlessly with your existing Inventory Management System while adding specialized functionality for die management specific to card punch machine operations.
 
 **Key Enhancements - PDF/Document Management:**
 - ✅ Die documents table with full-text search capability

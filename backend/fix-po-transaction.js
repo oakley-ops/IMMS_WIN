@@ -12,7 +12,7 @@ async function fixPOTransaction() {
     user: 'postgres',
     host: 'localhost',
     port: 5432,
-    database: 'fiservinventory',
+    database: 'imms_inventory',
     password: '1234',
     ssl: false
   });
@@ -66,7 +66,7 @@ async function fixPOTransaction() {
     console.log('Sending notification email...');
     try {
       const info = await emailService.transporter.sendMail({
-        from: process.env.SMTP_FROM || '"Fiserv Inventory" <ftenashville@gmail.com>',
+        from: process.env.SMTP_FROM || '"IMMS" <ftenashville@gmail.com>',
         to: process.env.REROUTE_EMAIL || 'ikerodz@gmail.com',
         subject: `Purchase Order #${po.po_number} Status Fixed`,
         html: `

@@ -157,7 +157,7 @@ router.post('/:id/items', async (req, res) => {
           part_id: parseInt(part_id),
           part_name: part.name,
           manufacturer_part_number: part.manufacturer_part_number,
-          fiserv_part_number: part.fiserv_part_number,
+          internal_part_number: part.internal_part_number,
           quantity: parseInt(quantity),
           unit_price: parseFloat(unit_price),
           total_price: parseFloat(quantity) * parseFloat(unit_price)
