@@ -111,3 +111,8 @@ Multi-device setup:
 - `localhost:3002` - PC with camera
 - `10.1.10.50:3001` - Raspberry Pi ethernet
 - Backend binds to `0.0.0.0:4000`
+
+## References
+
+- `maintenance_call_system/PROGRAMMING_PRINCIPLES.md` — SOLID, layered architecture, naming, error handling, security, testing pyramid, anti-patterns, pre-merge checklist. Consult before designing new features, adding abstractions, or reviewing code.
+- `maintenance_call_system/TESTING.md` — Vitest testing plan and proper-unit-testing guide for backend and frontend. Consult before writing tests or setting up a test suite.

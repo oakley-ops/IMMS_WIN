@@ -61,6 +61,10 @@ frontend/node_modules/
 frontend/build/
 frontend/dist/
 
+# Next.js build output (used by maintenance_call_system/frontend)
+.next/
+next-env.d.ts
+
 # Temporary files
 tmp/
 temp/
