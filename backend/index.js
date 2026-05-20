@@ -27,6 +27,7 @@ const workOrdersRouter = require('./src/routes/workOrders');
 const diesRouter = require('./src/routes/dies');
 const dieSharpeningRouter = require('./src/routes/dieSharpening');
 const dieDocumentsRouter = require('./src/routes/dieDocuments');
+const maintenanceCallsRouter = require('./src/routes/maintenanceCalls');
 const http = require('http');
 const { Server } = require('socket.io');
 const app = require('./src/app');
@@ -221,6 +222,7 @@ app.use('/api/v1/work-orders', workOrdersRouter);
 app.use('/api/v1/dies', diesRouter);
 app.use('/api/v1/die-sharpening', dieSharpeningRouter);
 app.use('/api/v1/die-documents', dieDocumentsRouter);
+app.use('/api/v1/maintenance-calls', maintenanceCallsRouter);
 
 // Comment out the original parts usage controller since we're using our custom route
 // app.post('/api/v1/parts/usage', (req, res) => partsUsageController.recordUsage(req, res));

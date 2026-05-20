@@ -32,6 +32,7 @@ import {
   PlaylistAddCheck,
   Contacts as ContactsIcon,
   Category,
+  Campaign,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { theme, IMMS_ORANGE } from '../theme';
@@ -69,7 +70,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
     { path: '/die-tracker', label: 'DIE MANAGEMENT', icon: <Category />, requiredPermission: 'CAN_VIEW_MACHINES' },
     { path: '/contacts', label: 'CONTACTS', icon: <ContactsIcon />, requiredPermission: 'CAN_VIEW_CONTACTS' },
     { path: '/technicians', label: 'TECHNICIANS', icon: <People />, requiredPermission: 'CAN_MANAGE_USERS' },
-
+    { path: '/maintenance-calls', label: 'MAINTENANCE CALLS', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' },
   ];
 
   if (hasPermission('CAN_VIEW_ALL')) {
