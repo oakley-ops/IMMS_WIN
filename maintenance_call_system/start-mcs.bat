@@ -17,23 +17,17 @@ cd /d "C:\Users\Fiser\fiservinventory_win\maintenance_call_system"
 
 echo [%date% %time%] START bat launched > %LOGFILE%
 
-:: Use node directly to invoke PM2 — avoids bash-shim issues in detached contexts
-echo [%date% %time%] Pinging PM2 daemon... >> %LOGFILE%
-%NODE% %PM2_SCRIPT% ping >> %LOGFILE% 2>&1
-set PING_ERR=%errorlevel%
-echo [%date% %time%] PM2 ping errorlevel=%PING_ERR% >> %LOGFILE%
-
-if %PING_ERR% neq 0 (
-    echo  [*] Starting PM2 daemon and processes...
-    echo [%date% %time%] Running: pm2 start ecosystem.config.js >> %LOGFILE%
-    %NODE% %PM2_SCRIPT% start ecosystem.config.js >> %LOGFILE% 2>&1
-    echo [%date% %time%] pm2 start errorlevel=%errorlevel% >> %LOGFILE%
-) else (
-    echo  [*] Starting / restarting MCS processes...
-    echo [%date% %time%] Running: pm2 restart all >> %LOGFILE%
-    %NODE% %PM2_SCRIPT% restart all >> %LOGFILE% 2>&1
-    echo [%date% %time%] pm2 restart errorlevel=%errorlevel% >> %LOGFILE%
-)
+:: Use node directly to invoke PM2 — avoids bash-shim issues in detached contexts.
+:: `pm2 startOrRestart` is idempotent: it starts the apps if they aren't
+:: running, and restarts them in place if they are. This covers all three
+:: states cleanly (daemon down / daemon up with zero processes / daemon up
+:: with processes registered) without branching, and also avoids the prior
+:: bug where a daemon survived but its managed processes did not — the old
+:: branch ran `pm2 restart all` on an empty list and silently did nothing.
+echo  [*] Starting / restarting MCS processes...
+echo [%date% %time%] Running: pm2 startOrRestart ecosystem.config.js >> %LOGFILE%
+%NODE% %PM2_SCRIPT% startOrRestart ecosystem.config.js >> %LOGFILE% 2>&1
+echo [%date% %time%] pm2 startOrRestart errorlevel=%errorlevel% >> %LOGFILE%
 
 echo [%date% %time%] Waiting for servers... >> %LOGFILE%
 echo  [*] Waiting for servers to be ready...
