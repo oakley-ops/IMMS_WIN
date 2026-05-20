@@ -144,6 +144,7 @@ const PMChecklistManagement: React.FC = () => {
   const [selectedMachineForSchedule, setSelectedMachineForSchedule] = useState<Machine | null>(null);
   const [overdueCount, setOverdueCount] = useState(0);
   const [dueCount, setDueCount] = useState(0);
+  const [notScheduledCount, setNotScheduledCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [exportLoading, setExportLoading] = useState(false);
   const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
@@ -162,6 +163,7 @@ const PMChecklistManagement: React.FC = () => {
 
   const [machines, setMachines] = useState<Machine[]>([]);
   const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [machineTypes, setMachineTypes] = useState<string[]>([]);
   const pmCalendarRef = useRef<PMCalendarRef>(null);
   const [scheduleData, setScheduleData] = useState({
     machineId: '',
@@ -170,6 +172,7 @@ const PMChecklistManagement: React.FC = () => {
     technicianName: '',
     notes: ''
   });
+  const [scheduleValidationError, setScheduleValidationError] = useState<string | null>(null);
 
   // Effect for filtering checklists based on search term
   useEffect(() => {
@@ -220,6 +223,15 @@ const PMChecklistManagement: React.FC = () => {
     }
   };
 
+  const fetchMachineTypes = async () => {
+    try {
+      const response = await axiosInstance.get('/api/v1/machines/types');
+      setMachineTypes(response.data);
+    } catch (err: any) {
+      console.error('Error fetching machine types:', err);
+    }
+  };
+
   const fetchTechnicians = async () => {
     try {
       const response = await axiosInstance.get('/api/v1/technicians');
@@ -234,6 +246,7 @@ const PMChecklistManagement: React.FC = () => {
       const response = await axiosInstance.get('/api/v1/pm/stats');
       setOverdueCount(response.data.overdue || 0);
       setDueCount(response.data.due_soon || 0);
+      setNotScheduledCount(response.data.not_scheduled || 0);
     } catch (err: any) {
       console.error('Error fetching maintenance stats:', err);
     }
@@ -243,6 +256,7 @@ const PMChecklistManagement: React.FC = () => {
     fetchChecklists();
     fetchMachines();
     fetchTechnicians();
+    fetchMachineTypes();
     fetchMaintenanceStats();
   }, []);
 
@@ -398,6 +412,50 @@ const PMChecklistManagement: React.FC = () => {
       technicianName: '',
       notes: ''
     });
+    setScheduleValidationError(null);
+  };
+
+  const handleScheduleMachineChange = (machineId: string) => {
+    const selectedMachine = machines.find(m => String(m.machine_id || m.id) === machineId);
+
+    // Auto-select checklist based on machine type
+    let autoSelectedChecklistId = '';
+    if (selectedMachine?.machine_type) {
+      const matchingChecklist = checklists.find(c => c.machine_type === selectedMachine.machine_type);
+      if (matchingChecklist) {
+        autoSelectedChecklistId = String(matchingChecklist.checklist_id);
+      }
+    }
+
+    // If no matching checklist found, try Default
+    if (!autoSelectedChecklistId) {
+      const defaultChecklist = checklists.find(c => c.machine_type === 'Default');
+      if (defaultChecklist) {
+        autoSelectedChecklistId = String(defaultChecklist.checklist_id);
+      }
+    }
+
+    setScheduleData(prev => ({
+      ...prev,
+      machineId,
+      checklistId: autoSelectedChecklistId
+    }));
+    setSelectedMachineForSchedule(selectedMachine || null);
+    setScheduleValidationError(null);
+  };
+
+  const handleScheduleDateChange = (dateValue: string) => {
+    const selectedDate = new Date(dateValue);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    if (selectedDate < today) {
+      setScheduleValidationError('Scheduled date must be today or in the future');
+    } else {
+      setScheduleValidationError(null);
+    }
+
+    setScheduleData(prev => ({ ...prev, nextMaintenanceDate: dateValue }));
   };
 
   const handleScheduleSubmit = async () => {
@@ -682,11 +740,11 @@ const PMChecklistManagement: React.FC = () => {
         </Grid>
         
         <Grid item xs={12} sm={6} md={3}>
-          <Card 
+          <Card
             elevation={3}
-            sx={{ 
+            sx={{
               borderRadius: '0.75rem',
-              borderLeft: '4px solid #0066A1',
+              borderLeft: '4px solid #6c757d',
               transition: 'transform 0.2s',
               '&:hover': { transform: 'translateY(-2px)' }
             }}
@@ -695,13 +753,13 @@ const PMChecklistManagement: React.FC = () => {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Box>
                   <Typography variant="body2" color="text.secondary" gutterBottom>
-                    Machines
+                    Not Scheduled
                   </Typography>
-                  <Typography variant="h5" sx={{ color: '#0066A1', fontWeight: 'bold' }}>
-                    {machines.length}
+                  <Typography variant="h5" sx={{ color: '#6c757d', fontWeight: 'bold' }}>
+                    {notScheduledCount}
                   </Typography>
                 </Box>
-                <BuildIcon sx={{ fontSize: '1.8rem', color: '#0066A1' }} />
+                <BuildIcon sx={{ fontSize: '1.8rem', color: '#6c757d' }} />
               </Box>
             </CardContent>
           </Card>
@@ -1030,11 +1088,21 @@ const PMChecklistManagement: React.FC = () => {
               label="Machine Type"
               onChange={(e) => setFormData({...formData, machine_type: e.target.value})}
             >
-              <MenuItem value="ATM">ATM</MenuItem>
-              <MenuItem value="ITM">ITM</MenuItem>
-              <MenuItem value="Printer">Printer</MenuItem>
-              <MenuItem value="Scanner">Scanner</MenuItem>
-              <MenuItem value="Other">Other</MenuItem>
+              {machineTypes.length > 0 ? (
+                machineTypes.map((type) => (
+                  <MenuItem key={type} value={type}>{type}</MenuItem>
+                ))
+              ) : (
+                <>
+                  <MenuItem value="Default">Default</MenuItem>
+                  <MenuItem value="Hot Stamp">Hot Stamp</MenuItem>
+                  <MenuItem value="EMV">EMV</MenuItem>
+                  <MenuItem value="Die Press">Die Press</MenuItem>
+                  <MenuItem value="Collator">Collator</MenuItem>
+                  <MenuItem value="CML">CML</MenuItem>
+                  <MenuItem value="Laminator">Laminator</MenuItem>
+                </>
+              )}
             </Select>
           </FormControl>
 
@@ -1136,8 +1204,8 @@ const PMChecklistManagement: React.FC = () => {
 
       {/* Schedule Maintenance Dialog */}
       <Dialog open={scheduleDialogOpen} onClose={handleScheduleClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ 
-          backgroundColor: '#0066A1', 
+        <DialogTitle sx={{
+          backgroundColor: '#0066A1',
           color: 'white',
           borderRadius: '0.75rem 0.75rem 0 0'
         }}>
@@ -1146,55 +1214,101 @@ const PMChecklistManagement: React.FC = () => {
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
-          <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Machine</InputLabel>
+          <FormControl fullWidth sx={{ mb: 2, mt: 1 }}>
+            <InputLabel>Machine *</InputLabel>
             <Select
               value={scheduleData.machineId}
-              label="Machine"
-              onChange={(e) => setScheduleData({...scheduleData, machineId: e.target.value})}
+              label="Machine *"
+              onChange={(e) => handleScheduleMachineChange(e.target.value as string)}
             >
               {machines.map((machine) => (
                 <MenuItem key={machine.machine_id || machine.id} value={machine.machine_id || machine.id}>
-                  {machine.name} ({machine.location})
+                  {machine.name} - {machine.machine_type || 'Default'} ({machine.location})
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
 
+          {/* Show machine info when selected */}
+          {selectedMachineForSchedule && (
+            <Paper sx={{ p: 2, mb: 2, bgcolor: '#f5f5f5', borderRadius: '0.5rem' }}>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Type:</strong> {selectedMachineForSchedule.machine_type || 'Default'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                <strong>Location:</strong> {selectedMachineForSchedule.location || 'N/A'}
+              </Typography>
+              {selectedMachineForSchedule.last_maintenance_date && (
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Last Maintenance:</strong> {new Date(selectedMachineForSchedule.last_maintenance_date).toLocaleDateString()}
+                </Typography>
+              )}
+              {!selectedMachineForSchedule.last_maintenance_date && (
+                <Typography variant="body2" color="warning.main">
+                  <strong>Last Maintenance:</strong> Never
+                </Typography>
+              )}
+            </Paper>
+          )}
+
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Checklist</InputLabel>
+            <InputLabel>Checklist *</InputLabel>
             <Select
               value={scheduleData.checklistId}
-              label="Checklist"
-              onChange={(e) => setScheduleData({...scheduleData, checklistId: e.target.value})}
+              label="Checklist *"
+              onChange={(e) => setScheduleData({...scheduleData, checklistId: e.target.value as string})}
             >
-              {checklists.map((checklist) => (
-                <MenuItem key={checklist.checklist_id} value={checklist.checklist_id}>
-                  {checklist.name}
-                </MenuItem>
-              ))}
+              {/* Show matching checklists first */}
+              {selectedMachineForSchedule && checklists
+                .filter(c => c.machine_type === selectedMachineForSchedule.machine_type)
+                .map((checklist) => (
+                  <MenuItem key={checklist.checklist_id} value={checklist.checklist_id}>
+                    {checklist.name} ({checklist.machine_type}) - Recommended
+                  </MenuItem>
+                ))}
+              {/* Then show default checklists */}
+              {checklists
+                .filter(c => c.machine_type === 'Default' && (!selectedMachineForSchedule || c.machine_type !== selectedMachineForSchedule.machine_type))
+                .map((checklist) => (
+                  <MenuItem key={checklist.checklist_id} value={checklist.checklist_id}>
+                    {checklist.name} ({checklist.machine_type})
+                  </MenuItem>
+                ))}
+              {/* Then show all other checklists */}
+              {checklists
+                .filter(c => c.machine_type !== 'Default' && (!selectedMachineForSchedule || c.machine_type !== selectedMachineForSchedule.machine_type))
+                .map((checklist) => (
+                  <MenuItem key={checklist.checklist_id} value={checklist.checklist_id}>
+                    {checklist.name} ({checklist.machine_type})
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
 
           <TextField
-            type="datetime-local"
-            label="Next Maintenance Date"
+            type="date"
+            label="Maintenance Date *"
             fullWidth
             sx={{ mb: 2 }}
             value={scheduleData.nextMaintenanceDate}
-            onChange={(e) => setScheduleData({...scheduleData, nextMaintenanceDate: e.target.value})}
+            onChange={(e) => handleScheduleDateChange(e.target.value)}
             InputLabelProps={{ shrink: true }}
+            inputProps={{
+              min: new Date().toISOString().split('T')[0]
+            }}
+            error={!!scheduleValidationError}
+            helperText={scheduleValidationError}
           />
 
           <FormControl fullWidth sx={{ mb: 2 }}>
-            <InputLabel>Technician</InputLabel>
+            <InputLabel>Assign Technician</InputLabel>
             <Select
               value={scheduleData.technicianName}
-              label="Technician"
+              label="Assign Technician"
               onChange={(e) => setScheduleData({...scheduleData, technicianName: e.target.value})}
             >
               <MenuItem value="">
-                <em>Select a technician</em>
+                <em>No technician assigned</em>
               </MenuItem>
               {technicians.map((technician) => (
                 <MenuItem key={technician.technician_id} value={technician.name}>
@@ -1208,19 +1322,20 @@ const PMChecklistManagement: React.FC = () => {
             label="Notes"
             fullWidth
             multiline
-            rows={3}
+            rows={2}
             value={scheduleData.notes}
             onChange={(e) => setScheduleData({...scheduleData, notes: e.target.value})}
+            placeholder="Optional notes for this maintenance schedule..."
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={handleScheduleClose}>Cancel</Button>
-          <Button 
+          <Button
             onClick={handleScheduleSubmit}
             variant="contained"
-            disabled={isSubmitting || !scheduleData.machineId || !scheduleData.checklistId}
-            sx={{ 
-              backgroundColor: '#FF6600', 
+            disabled={isSubmitting || !scheduleData.machineId || !scheduleData.checklistId || !scheduleData.nextMaintenanceDate || !!scheduleValidationError}
+            sx={{
+              backgroundColor: '#FF6600',
               '&:hover': { backgroundColor: '#e65c00' }
             }}
           >

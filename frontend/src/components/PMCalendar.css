@@ -81,6 +81,10 @@
   background-color: #17a2b8; /* Info blue color */
 }
 
+.status-indicator.not_scheduled {
+  background-color: #6c757d; /* Gray color for not scheduled */
+}
+
 /* Badge styling */
 .badge {
   font-weight: 500;
@@ -114,6 +118,11 @@
 
 .badge.in_progress {
   background-color: #17a2b8 !important; /* Info blue color */
+  color: white;
+}
+
+.badge.not_scheduled {
+  background-color: #6c757d !important; /* Gray color for not scheduled */
   color: white;
 }
 
@@ -375,6 +384,7 @@ button.btn-outline-primary:hover,
 .status-count.due-soon, .status-count.due { background-color: #ffc107; color: #000; }
 .status-count.scheduled { background-color: #28a745; }
 .status-count.in_progress { background-color: #17a2b8; color: white; }
+.status-count.not_scheduled { background-color: #6c757d; color: white; }
 
 .status-label {
   font-size: 0.9rem;

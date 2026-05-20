@@ -1,7 +1,37 @@
 const { pool } = require('../config/db');
 
 class PMController {
-  
+
+  // Get PM statistics
+  async getStats(req, res) {
+    try {
+      const result = await pool.query(`
+        SELECT
+          COUNT(*) FILTER (WHERE next_maintenance_date < CURRENT_DATE AND (maintenance_status IS NULL OR maintenance_status != 'in_progress')) as overdue,
+          COUNT(*) FILTER (WHERE next_maintenance_date >= CURRENT_DATE AND next_maintenance_date <= CURRENT_DATE + INTERVAL '7 days' AND (maintenance_status IS NULL OR maintenance_status != 'in_progress')) as due_soon,
+          COUNT(*) FILTER (WHERE next_maintenance_date > CURRENT_DATE + INTERVAL '7 days' AND (maintenance_status IS NULL OR maintenance_status != 'in_progress')) as scheduled,
+          COUNT(*) FILTER (WHERE maintenance_status = 'in_progress') as in_progress,
+          COUNT(*) FILTER (WHERE next_maintenance_date IS NULL AND (maintenance_status IS NULL OR maintenance_status != 'completed')) as not_scheduled,
+          COUNT(*) as total
+        FROM machines
+        WHERE maintenance_status IS NULL OR maintenance_status != 'completed'
+      `);
+
+      const stats = result.rows[0];
+      res.json({
+        overdue: parseInt(stats.overdue) || 0,
+        due_soon: parseInt(stats.due_soon) || 0,
+        scheduled: parseInt(stats.scheduled) || 0,
+        in_progress: parseInt(stats.in_progress) || 0,
+        not_scheduled: parseInt(stats.not_scheduled) || 0,
+        total: parseInt(stats.total) || 0
+      });
+    } catch (error) {
+      console.error('Error fetching PM stats:', error);
+      res.status(500).json({ error: 'Failed to fetch PM stats' });
+    }
+  }
+
   // Get all PM intervals
   async getIntervals(req, res) {
     try {
@@ -122,21 +152,10 @@ class PMController {
       const session = sessionResult.rows[0];
 
       // Update machine maintenance_status to in_progress
-      try {
-        // First ensure the maintenance_status column exists
-        await pool.query(`
-          ALTER TABLE machines 
-          ADD COLUMN IF NOT EXISTS maintenance_status VARCHAR(20) DEFAULT 'none'
-        `);
-        
-        // Update the machine's maintenance status
-        await pool.query(
-          'UPDATE machines SET maintenance_status = $1 WHERE machine_id = $2',
-          ['in_progress', machineId]
-        );
-      } catch (columnError) {
-        console.warn('Warning: Could not update machine maintenance_status:', columnError.message);
-      }
+      await pool.query(
+        'UPDATE machines SET maintenance_status = $1 WHERE machine_id = $2',
+        ['in_progress', machineId]
+      );
 
       // Create task completion entries for all tasks in the checklist
       const tasksResult = await pool.query(
@@ -577,20 +596,10 @@ class PMController {
         return res.status(404).json({ error: 'Checklist not found or inactive' });
       }
 
-      // Add scheduled_technician column if it doesn't exist
-      try {
-        await pool.query(`
-          ALTER TABLE machines 
-          ADD COLUMN IF NOT EXISTS scheduled_technician VARCHAR(255)
-        `);
-      } catch (alterError) {
-        console.warn('Could not add scheduled_technician column:', alterError.message);
-      }
-
-      // Update machine's next maintenance date and scheduled technician
+      // Update machine's next maintenance date, scheduled technician, and scheduled checklist
       await pool.query(
-        'UPDATE machines SET next_maintenance_date = $1, scheduled_technician = $2 WHERE machine_id = $3',
-        [scheduleDate, technicianName, machineId]
+        'UPDATE machines SET next_maintenance_date = $1, scheduled_technician = $2, scheduled_checklist_id = $3 WHERE machine_id = $4',
+        [scheduleDate, technicianName, checklistId, machineId]
       );
 
       // Create a scheduled maintenance log entry
@@ -646,6 +655,157 @@ class PMController {
     } catch (error) {
       console.error('Error updating PM interval:', error);
       res.status(500).json({ error: 'Failed to update PM interval' });
+    }
+  }
+
+  // Update scheduled maintenance for a machine
+  async updateScheduledMaintenance(req, res) {
+    try {
+      const { machineId } = req.params;
+      const { checklistId, nextMaintenanceDate, technicianName, notes } = req.body;
+
+      // Validate required fields
+      if (!nextMaintenanceDate) {
+        return res.status(400).json({ error: 'Next maintenance date is required' });
+      }
+
+      // Validate the date
+      const scheduleDate = new Date(nextMaintenanceDate);
+      if (isNaN(scheduleDate.getTime())) {
+        return res.status(400).json({ error: 'Invalid date format' });
+      }
+
+      // Check if machine exists
+      const machineResult = await pool.query(
+        'SELECT machine_id, name, machine_type FROM machines WHERE machine_id = $1',
+        [machineId]
+      );
+
+      if (machineResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Machine not found' });
+      }
+
+      // If checklistId provided, verify it exists
+      if (checklistId) {
+        const checklistResult = await pool.query(
+          'SELECT checklist_id, name FROM pm_checklists WHERE checklist_id = $1 AND is_active = true',
+          [checklistId]
+        );
+
+        if (checklistResult.rows.length === 0) {
+          return res.status(404).json({ error: 'Checklist not found or inactive' });
+        }
+      }
+
+      // Update machine's scheduled maintenance
+      await pool.query(
+        'UPDATE machines SET next_maintenance_date = $1, scheduled_technician = $2, scheduled_checklist_id = $3 WHERE machine_id = $4',
+        [scheduleDate, technicianName, checklistId, machineId]
+      );
+
+      // Log the schedule update
+      try {
+        await pool.query(
+          'INSERT INTO maintenance_logs (machine_id, status, log_date, scheduled_date, technician, notes) VALUES ($1, $2, $3, $4, $5, $6)',
+          [machineId, 'rescheduled', new Date(), scheduleDate, technicianName || 'System', notes || 'Maintenance rescheduled']
+        );
+      } catch (logError) {
+        console.warn('Could not log maintenance rescheduling:', logError.message);
+      }
+
+      res.json({
+        message: 'Scheduled maintenance updated successfully',
+        machine: machineResult.rows[0],
+        scheduledDate: scheduleDate,
+        technicianName
+      });
+    } catch (error) {
+      console.error('Error updating scheduled maintenance:', error);
+      res.status(500).json({ error: 'Failed to update scheduled maintenance' });
+    }
+  }
+
+  // Cancel scheduled maintenance for a machine
+  async cancelScheduledMaintenance(req, res) {
+    try {
+      const { machineId } = req.params;
+      const { notes } = req.body;
+
+      // Check if machine exists
+      const machineResult = await pool.query(
+        'SELECT machine_id, name, next_maintenance_date FROM machines WHERE machine_id = $1',
+        [machineId]
+      );
+
+      if (machineResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Machine not found' });
+      }
+
+      const machine = machineResult.rows[0];
+
+      if (!machine.next_maintenance_date) {
+        return res.status(400).json({ error: 'No maintenance is scheduled for this machine' });
+      }
+
+      // Clear the scheduled maintenance
+      await pool.query(
+        'UPDATE machines SET next_maintenance_date = NULL, scheduled_technician = NULL, scheduled_checklist_id = NULL, maintenance_status = NULL WHERE machine_id = $1',
+        [machineId]
+      );
+
+      // Log the cancellation
+      try {
+        await pool.query(
+          'INSERT INTO maintenance_logs (machine_id, status, log_date, notes) VALUES ($1, $2, $3, $4)',
+          [machineId, 'cancelled', new Date(), notes || 'Scheduled maintenance cancelled']
+        );
+      } catch (logError) {
+        console.warn('Could not log maintenance cancellation:', logError.message);
+      }
+
+      res.json({
+        message: 'Scheduled maintenance cancelled successfully',
+        machine: machine
+      });
+    } catch (error) {
+      console.error('Error cancelling scheduled maintenance:', error);
+      res.status(500).json({ error: 'Failed to cancel scheduled maintenance' });
+    }
+  }
+
+  // Get scheduled maintenance details for a machine
+  async getScheduledMaintenance(req, res) {
+    try {
+      const { machineId } = req.params;
+
+      const result = await pool.query(
+        `SELECT
+          m.machine_id,
+          m.name,
+          m.model,
+          m.location,
+          m.machine_type,
+          m.next_maintenance_date,
+          m.last_maintenance_date,
+          m.scheduled_technician,
+          m.scheduled_checklist_id,
+          m.maintenance_status,
+          c.name as checklist_name,
+          c.description as checklist_description
+        FROM machines m
+        LEFT JOIN pm_checklists c ON m.scheduled_checklist_id = c.checklist_id
+        WHERE m.machine_id = $1`,
+        [machineId]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Machine not found' });
+      }
+
+      res.json(result.rows[0]);
+    } catch (error) {
+      console.error('Error fetching scheduled maintenance:', error);
+      res.status(500).json({ error: 'Failed to fetch scheduled maintenance' });
     }
   }
 }

@@ -11,6 +11,9 @@ const ROLES = {
   ADMIN_ONLY: ['admin']
 };
 
+// PM Stats route
+router.get('/stats', authMiddleware, roleAuthorization(ROLES.ALL), PMController.getStats);
+
 // PM Intervals routes
 router.get('/intervals', authMiddleware, roleAuthorization(ROLES.ALL), PMController.getIntervals);
 router.get('/intervals/:machineType', authMiddleware, roleAuthorization(ROLES.ALL), PMController.getIntervalByMachineType);
@@ -39,5 +42,8 @@ router.put('/sessions/:sessionId/tasks/:taskId', authMiddleware, roleAuthorizati
 
 // PM Scheduling routes
 router.post('/schedule', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), PMController.scheduleMaintenance);
+router.get('/schedule/:machineId', authMiddleware, roleAuthorization(ROLES.ALL), PMController.getScheduledMaintenance);
+router.put('/schedule/:machineId', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), PMController.updateScheduledMaintenance);
+router.delete('/schedule/:machineId', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), PMController.cancelScheduledMaintenance);
 
 module.exports = router; 

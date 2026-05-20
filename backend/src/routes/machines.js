@@ -220,7 +220,7 @@ router.get('/:id/usage-timeline', authMiddleware, roleAuthorization(ROLES.ADMIN_
 router.get('/pm-schedule', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), async (req, res) => {
   try {
     console.log('Fetching PM schedule data...');
-    
+
     // First check if maintenance_status column exists
     const columnCheck = await pool.query(`
       SELECT EXISTS (
@@ -229,22 +229,12 @@ router.get('/pm-schedule', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), 
         AND column_name = 'maintenance_status'
       );
     `);
-    
-    // Add scheduled_technician column if it doesn't exist
-    try {
-      await pool.query(`
-        ALTER TABLE machines 
-        ADD COLUMN IF NOT EXISTS scheduled_technician VARCHAR(255)
-      `);
-    } catch (alterError) {
-      console.warn('Could not add scheduled_technician column:', alterError.message);
-    }
-    
-    // Construct query based on whether maintenance_status column exists
+
+    // Construct query - now includes ALL machines, not just those with next_maintenance_date
     let query;
     if (columnCheck.rows[0].exists) {
       query = `
-        SELECT 
+        SELECT
           m.machine_id as id,
           m.name,
           m.model,
@@ -258,19 +248,28 @@ router.get('/pm-schedule', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), 
           ps.started_at as session_started_at,
           CASE
             WHEN m.maintenance_status = 'in_progress' THEN 'in_progress'
+            WHEN m.next_maintenance_date IS NULL THEN 'not_scheduled'
             WHEN m.next_maintenance_date < CURRENT_DATE THEN 'overdue'
             WHEN m.next_maintenance_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'due'
             ELSE 'scheduled'
           END as status
         FROM machines m
         LEFT JOIN pm_sessions ps ON m.machine_id = ps.machine_id AND ps.status = 'in_progress'
-        WHERE m.next_maintenance_date IS NOT NULL
-        AND (m.maintenance_status IS NULL OR m.maintenance_status != 'completed')
-        ORDER BY m.next_maintenance_date ASC
+        WHERE (m.maintenance_status IS NULL OR m.maintenance_status != 'completed')
+        ORDER BY
+          CASE
+            WHEN m.maintenance_status = 'in_progress' THEN 1
+            WHEN m.next_maintenance_date IS NULL THEN 5
+            WHEN m.next_maintenance_date < CURRENT_DATE THEN 2
+            WHEN m.next_maintenance_date <= CURRENT_DATE + INTERVAL '7 days' THEN 3
+            ELSE 4
+          END,
+          m.next_maintenance_date ASC NULLS LAST,
+          m.name ASC
       `;
     } else {
       query = `
-        SELECT 
+        SELECT
           m.machine_id as id,
           m.name,
           m.model,
@@ -282,62 +281,74 @@ router.get('/pm-schedule', authMiddleware, roleAuthorization(ROLES.ADMIN_TECH), 
           COALESCE(ps.technician_name, m.scheduled_technician) as technician_name,
           ps.started_at as session_started_at,
           CASE
+            WHEN m.next_maintenance_date IS NULL THEN 'not_scheduled'
             WHEN m.next_maintenance_date < CURRENT_DATE THEN 'overdue'
             WHEN m.next_maintenance_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'due'
             ELSE 'scheduled'
           END as status
         FROM machines m
         LEFT JOIN pm_sessions ps ON m.machine_id = ps.machine_id AND ps.status = 'in_progress'
-        WHERE m.next_maintenance_date IS NOT NULL
-        ORDER BY m.next_maintenance_date ASC
+        ORDER BY
+          CASE
+            WHEN m.next_maintenance_date IS NULL THEN 5
+            WHEN m.next_maintenance_date < CURRENT_DATE THEN 2
+            WHEN m.next_maintenance_date <= CURRENT_DATE + INTERVAL '7 days' THEN 3
+            ELSE 4
+          END,
+          m.next_maintenance_date ASC NULLS LAST,
+          m.name ASC
       `;
     }
     
     const result = await pool.query(query);
     
-    console.log(`Found ${result.rows.length} machines with maintenance dates`);
-    
+    console.log(`Found ${result.rows.length} machines total`);
+
     // Count status types for debugging
     const overdueCount = result.rows.filter(m => m.status === 'overdue').length;
     const dueCount = result.rows.filter(m => m.status === 'due').length;
     const scheduledCount = result.rows.filter(m => m.status === 'scheduled').length;
     const inProgressCount = result.rows.filter(m => m.status === 'in_progress').length;
-    
-    console.log(`Status counts - Overdue: ${overdueCount}, Due: ${dueCount}, Scheduled: ${scheduledCount}, In Progress: ${inProgressCount}`);
+    const notScheduledCount = result.rows.filter(m => m.status === 'not_scheduled').length;
+
+    console.log(`Status counts - Overdue: ${overdueCount}, Due: ${dueCount}, Scheduled: ${scheduledCount}, In Progress: ${inProgressCount}, Not Scheduled: ${notScheduledCount}`);
     
     // Format the data for the calendar
     const events = result.rows.map(machine => {
       // Ensure id is a valid number
       const id = typeof machine.id === 'number' ? machine.id : parseInt(machine.id, 10);
-      
-      // Skip invalid entries
-      if (isNaN(id) || !machine.next_maintenance_date) {
-        console.warn('Skipping invalid machine data:', machine);
+
+      // Skip invalid entries (only skip if ID is invalid)
+      if (isNaN(id)) {
+        console.warn('Skipping invalid machine data (bad ID):', machine);
         return null;
       }
-      
+
+      // For machines without next_maintenance_date, use a placeholder date (today)
+      const displayDate = machine.next_maintenance_date || new Date().toISOString();
+
       const event = {
         id,
         title: `${machine.name || 'Unknown'} ${machine.model ? `(${machine.model})` : ''}`,
-        start: machine.next_maintenance_date,
-        end: machine.next_maintenance_date,
+        start: displayDate,
+        end: displayDate,
         allDay: true,
         machine_type: machine.machine_type || 'Default',
         technician_name: machine.technician_name || null,
         session_started_at: machine.session_started_at || null,
         resource: {
           location: machine.location || 'Unknown',
-          status: machine.status || 'scheduled',
+          status: machine.status || 'not_scheduled',
           lastMaintenance: machine.last_maintenance_date,
           technicianName: machine.technician_name || null
         }
       };
-      
-      // Debug log for overdue events
-      if (machine.status === 'overdue') {
-        console.log('Created overdue event:', event);
+
+      // Debug log for different status types
+      if (machine.status === 'overdue' || machine.status === 'not_scheduled') {
+        console.log(`Created ${machine.status} event:`, event.title);
       }
-      
+
       return event;
     }).filter(event => event !== null); // Remove any null entries
     
@@ -592,9 +603,9 @@ router.delete('/:id/scheduled-maintenance', authMiddleware, roleAuthorization(RO
 
     console.log('Machine found:', checkResult.rows[0]);
 
-    // Clear the next_maintenance_date to cancel scheduled maintenance
+    // Clear the next_maintenance_date, scheduled_technician, and scheduled_checklist_id to cancel scheduled maintenance
     const result = await pool.query(
-      'UPDATE machines SET next_maintenance_date = NULL WHERE machine_id = $1 RETURNING *',
+      'UPDATE machines SET next_maintenance_date = NULL, scheduled_technician = NULL, scheduled_checklist_id = NULL, maintenance_status = NULL WHERE machine_id = $1 RETURNING *',
       [machineId]
     );
 
@@ -659,121 +670,41 @@ router.post('/:id/maintenance-status', authMiddleware, roleAuthorization(ROLES.A
         const lastMaintenanceDate = maintenanceDate ? new Date(maintenanceDate) : currentDate;
         const nextMaintenanceDate = new Date(lastMaintenanceDate);
         nextMaintenanceDate.setMonth(nextMaintenanceDate.getMonth() + 3); // Schedule next maintenance 3 months from now
-        
-        // Make sure the maintenance_status column exists
-        try {
-          const columnCheck = await client.query(`
-            SELECT EXISTS (
-              SELECT FROM information_schema.columns
-              WHERE table_name = 'machines'
-              AND column_name = 'maintenance_status'
-            );
-          `);
-          
-          if (!columnCheck.rows[0].exists) {
-            // Add maintenance_status column if it doesn't exist
-            await client.query(`
-              ALTER TABLE machines 
-              ADD COLUMN IF NOT EXISTS maintenance_status VARCHAR(20) DEFAULT 'none'
-            `);
-            console.log('Added maintenance_status column to machines table');
-          }
-        } catch (columnErr) {
-          console.warn('Error checking/adding maintenance_status column:', columnErr.message);
-        }
-        
+
         await client.query(
-          `UPDATE machines 
-           SET last_maintenance_date = $1, 
+          `UPDATE machines
+           SET last_maintenance_date = $1,
                next_maintenance_date = $2,
-               maintenance_status = $3
-           WHERE machine_id = $4`,
-          [lastMaintenanceDate, nextMaintenanceDate, null, machineId]
+               maintenance_status = NULL,
+               scheduled_technician = NULL,
+               scheduled_checklist_id = NULL
+           WHERE machine_id = $3`,
+          [lastMaintenanceDate, nextMaintenanceDate, machineId]
         );
-        
+
         console.log(`Maintenance completed for machine ${machineId}. Next maintenance scheduled for ${nextMaintenanceDate.toISOString()}`);
-        
-        // Fetch the updated machine data to return to the client
-        const updatedMachineData = await client.query(
-          `SELECT 
-            machine_id as id,
-            name,
-            model,
-            location,
-            last_maintenance_date,
-            next_maintenance_date,
-            maintenance_status,
-            CASE
-              WHEN maintenance_status = 'in_progress' THEN 'in_progress'
-              WHEN maintenance_status = 'completed' THEN 'completed'
-              WHEN next_maintenance_date < CURRENT_DATE THEN 'overdue'
-              WHEN next_maintenance_date <= CURRENT_DATE + INTERVAL '7 days' THEN 'due'
-              ELSE 'scheduled'
-            END as status
-          FROM machines
-          WHERE machine_id = $1`,
-          [machineId]
-        );
-        
-        // Try to log it, but don't fail if table doesn't exist
+
+        // Try to log it
         try {
-          // Check if maintenance_logs table exists
-          const tableCheck = await client.query(`
-            SELECT EXISTS (
-              SELECT FROM information_schema.tables 
-              WHERE table_schema = 'public' 
-              AND table_name = 'maintenance_logs'
-            );
-          `);
-          
-          if (tableCheck.rows[0].exists) {
-            await client.query(
-              `INSERT INTO maintenance_logs 
-               (machine_id, status, log_date, completion_date, notes)
-               VALUES ($1, $2, $3, $4, $5)`,
-              [machineId, 'completed', currentDate, lastMaintenanceDate, 'Maintenance completed']
-            );
-          } else {
-            console.log('Maintenance_logs table does not exist, skipping log entry');
-          }
+          await client.query(
+            `INSERT INTO maintenance_logs
+             (machine_id, status, log_date, completion_date, notes)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [machineId, 'completed', currentDate, lastMaintenanceDate, 'Maintenance completed']
+          );
         } catch (logErr) {
-          console.warn('Could not log maintenance completion to maintenance_logs table:', logErr.message);
-          // Continue processing even if logging fails
+          console.warn('Could not log maintenance completion:', logErr.message);
         }
       } else if (status === 'in_progress') {
         // For in_progress, update the machine to reflect the status
         console.log(`Maintenance marked as in progress for machine ${machineId}`);
-        
-        // Add a status field to the machines table if it doesn't exist
-        try {
-          // Check if status column exists in machines table
-          const columnCheck = await client.query(`
-            SELECT EXISTS (
-              SELECT FROM information_schema.columns
-              WHERE table_name = 'machines'
-              AND column_name = 'maintenance_status'
-            );
-          `);
-          
-          if (!columnCheck.rows[0].exists) {
-            // Add maintenance_status column if it doesn't exist
-            await client.query(`
-              ALTER TABLE machines 
-              ADD COLUMN IF NOT EXISTS maintenance_status VARCHAR(20) DEFAULT 'none'
-            `);
-            console.log('Added maintenance_status column to machines table');
-          }
-          
-          // Update the machine's maintenance status
-          await client.query(
-            `UPDATE machines 
-             SET maintenance_status = $1
-             WHERE machine_id = $2`,
-            ['in_progress', machineId]
-          );
-        } catch (columnErr) {
-          console.warn('Error adding or updating maintenance_status column:', columnErr.message);
-        }
+
+        await client.query(
+          `UPDATE machines
+           SET maintenance_status = $1
+           WHERE machine_id = $2`,
+          ['in_progress', machineId]
+        );
       }
       
       // Fetch the updated machine data within the transaction to ensure consistency
