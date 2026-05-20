@@ -144,7 +144,7 @@ function CallsTab() {
               { label: 'Avg Response',    value: `${metrics.overall.avg_response_minutes ?? '—'} min` },
               { label: 'Avg Repair',      value: `${metrics.overall.avg_repair_minutes ?? '—'} min` },
               { label: 'Avg Downtime',    value: `${metrics.overall.avg_downtime_minutes ?? '—'} min` },
-              { label: 'Total Downtime',  value: `${metrics.overall.total_downtime_minutes ?? '—'} min` },
+              { label: 'Total Downtime',  value: `${metrics.overall.total_downtime_hours ?? '—'} hrs` },
             ].map(({ label, value }) => (
               <Grid item xs={6} md={2.4} key={label}>
                 <Card>
