@@ -64,4 +64,13 @@ frontend/dist/
 # Temporary files
 tmp/
 temp/
-1 
+
+# Windows null-device accident (e.g. `cmd > nul`)
+nul
+
+# Playwright MCP scratch dir
+.playwright-mcp/
+
+# Misplaced sibling project (kept outside the repo)
+UsersFiserCQM/
+ 
