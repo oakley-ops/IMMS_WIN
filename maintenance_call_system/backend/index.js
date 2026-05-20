@@ -11,7 +11,6 @@ const { Server } = require('socket.io');
 const logger = require('./src/lib/logger');
 const maintenanceCallsRouter = require('./src/routes/maintenanceCalls');
 const callBoardLayoutsRouter = require('./src/routes/callBoardLayouts');
-const authRouter = require('./src/routes/auth');
 
 const app = express();
 const server = http.createServer(app);
@@ -80,7 +79,8 @@ app.use(rateLimit({
 
 app.get('/health', (req, res) => res.json({ status: 'healthy', service: 'MCS', timestamp: new Date().toISOString() }));
 
-app.use('/api/v1/auth', authRouter);
+// Auth is owned by IMMS. MCS validates the JWT it issues but never logs users
+// in directly. See maintenance_call_system/SCHEMA_CONTRACT.md.
 app.use('/api/v1/maintenance-calls', maintenanceCallsRouter);
 app.use('/api/v1/call-board-layouts', callBoardLayoutsRouter);
 

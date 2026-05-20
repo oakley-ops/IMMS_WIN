@@ -12,7 +12,7 @@ interface User {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (username: string, password: string, rememberMe?: boolean) => Promise<void>;
+  login: (username: string, password: string, rememberMe?: boolean) => Promise<{ token: string; user: User }>;
   logout: () => void;
   loading: boolean;
   changePassword: (currentPassword: string, newPassword: string) => Promise<void>;
@@ -83,6 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(user);
       setIsAuthenticated(true);
+      return { token, user };
     } catch (error: any) {
       console.error('Login error:', error);
       throw new Error(error.response?.data?.message || 'Login failed');

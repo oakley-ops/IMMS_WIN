@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import {
   Container,
   Paper,
@@ -15,6 +15,27 @@ import {
 import { useAuth } from '../contexts/AuthContext';
 import { theme, commonStyles } from '../theme';
 
+// Allowlist of origins permitted as ?returnTo= targets. Without this the
+// login page could be turned into an open redirect by attackers who craft a
+// link to a phishing site. The list comes from REACT_APP_RETURN_TO_ALLOWLIST
+// (comma-separated), with MCS dev defaults baked in so local kiosks work.
+const allowedOrigins = new Set(
+  (process.env.REACT_APP_RETURN_TO_ALLOWLIST ?? 'http://localhost:3003')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+);
+
+const resolveReturnTo = (raw: string | null): string | null => {
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    return allowedOrigins.has(url.origin) ? url.toString() : null;
+  } catch {
+    return null;
+  }
+};
+
 const Login: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -25,6 +46,8 @@ const Login: React.FC = () => {
   const [error, setError] = useState('');
   const { login, isAuthenticated, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const returnTo = resolveReturnTo(searchParams.get('returnTo'));
 
   if (loading) {
     return (
@@ -34,14 +57,19 @@ const Login: React.FC = () => {
     );
   }
 
-  if (isAuthenticated) {
+  if (isAuthenticated && !returnTo) {
     return <Navigate to="/" />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await login(username, password, rememberMe);
+      const { token, user } = await login(username, password, rememberMe);
+      if (returnTo) {
+        const frag = `token=${encodeURIComponent(token)}&user=${encodeURIComponent(btoa(JSON.stringify(user)))}`;
+        window.location.replace(`${returnTo}#${frag}`);
+        return;
+      }
       navigate('/');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to login');

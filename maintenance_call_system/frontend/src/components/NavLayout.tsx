@@ -1,7 +1,6 @@
 'use client';
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import {
   Box, AppBar, Toolbar, Typography, Button, Drawer,
   List, ListItem, ListItemIcon, ListItemText, Divider, IconButton,
@@ -13,8 +12,7 @@ import { MCS_ORANGE, DARK_BG } from '../theme';
 const DRAWER_WIDTH = 220;
 
 export default function NavLayout({ children }: { children: React.ReactNode }) {
-  const { user, logout } = useAuth();
-  const router = useRouter();
+  const { user, logout, redirectToLogin } = useAuth();
   const [open, setOpen] = React.useState(false);
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME;
 
@@ -40,7 +38,7 @@ export default function NavLayout({ children }: { children: React.ReactNode }) {
             color="inherit"
             startIcon={<Logout />}
             size="small"
-            onClick={() => { logout(); router.replace('/login'); }}
+            onClick={() => { logout(); redirectToLogin(); }}
           >
             Sign Out
           </Button>

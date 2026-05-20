@@ -52,15 +52,15 @@ echo.
 echo  ================================================
 echo    READY!
 echo.
-echo    Login Page : http://localhost:3003/login
-echo    Admin Page : http://localhost:3003/calls
 echo    Call Board : http://localhost:3003/board
+echo    Admin Page : http://localhost:3003/calls   (redirects to IMMS login)
 echo    Kiosk 701  : http://localhost:3003/station?reader=die-press-701
 echo  ================================================
 echo.
 
-:: Open Chrome to the login page
-start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" "http://localhost:3003/login"
+:: Open Chrome to the call board (no-auth kiosk URL). The admin pages now
+:: redirect unauthenticated users to IMMS for login.
+start "" "C:\Program Files\Google\Chrome\Application\chrome.exe" "http://localhost:3003/board"
 
 echo  [*] Browser opened. This window will close in 5 seconds.
 timeout /t 5 /nobreak >nul

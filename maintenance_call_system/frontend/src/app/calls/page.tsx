@@ -1,6 +1,5 @@
 'use client';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import { Box, CircularProgress } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import NavLayout from '../../components/NavLayout';
@@ -8,14 +7,13 @@ import MaintenanceCalls from '../../components/MaintenanceCalls';
 import { MCS_ORANGE } from '../../theme';
 
 export default function CallsPage() {
-  const { isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
+  const { isAuthenticated, isLoading, redirectToLogin } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
-      router.replace('/login');
+      redirectToLogin();
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, redirectToLogin]);
 
   if (isLoading) {
     return (
