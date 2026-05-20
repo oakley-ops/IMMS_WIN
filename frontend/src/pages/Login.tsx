@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Navigate, useSearchParams } from 'react-router-dom';
 import {
   Container,
@@ -44,10 +44,20 @@ const Login: React.FC = () => {
     return localStorage.getItem('rememberMe') === 'true';
   });
   const [error, setError] = useState('');
-  const { login, isAuthenticated, loading } = useAuth();
+  const { login, isAuthenticated, loading, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const returnTo = resolveReturnTo(searchParams.get('returnTo'));
+
+  // Already-authenticated user with a valid returnTo: forward immediately
+  // using the existing token instead of asking them to log in again.
+  useEffect(() => {
+    if (loading || !isAuthenticated || !returnTo || !user) return;
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const frag = `token=${encodeURIComponent(token)}&user=${encodeURIComponent(btoa(JSON.stringify(user)))}`;
+    window.location.replace(`${returnTo}#${frag}`);
+  }, [loading, isAuthenticated, returnTo, user]);
 
   if (loading) {
     return (
@@ -59,6 +69,14 @@ const Login: React.FC = () => {
 
   if (isAuthenticated && !returnTo) {
     return <Navigate to="/" />;
+  }
+
+  if (isAuthenticated && returnTo) {
+    return (
+      <Container maxWidth="sm" sx={{ mt: 8, display: 'flex', justifyContent: 'center' }}>
+        <Typography>Redirecting...</Typography>
+      </Container>
+    );
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
