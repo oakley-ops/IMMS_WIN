@@ -18,10 +18,10 @@ CREATE INDEX IF NOT EXISTS idx_maintenance_calls_reason ON maintenance_calls(rea
 CREATE INDEX IF NOT EXISTS idx_maintenance_calls_resolved_at ON maintenance_calls(resolved_at DESC);
 CREATE INDEX IF NOT EXISTS idx_maintenance_calls_reopened_from ON maintenance_calls(reopened_from_call_id);
 
--- 2. machines: cost and scheduling for downtime $ and OEE contribution
-ALTER TABLE machines
-  ADD COLUMN IF NOT EXISTS cost_per_hour NUMERIC(10, 2),
-  ADD COLUMN IF NOT EXISTS scheduled_hours_per_week NUMERIC(5, 2);
+-- 2. machines: cost and scheduling fields needed by the enriched view
+--    (cost_per_hour, scheduled_hours_per_week) are owned by IMMS, which is
+--    the system of record for the machines table. See the corresponding IMMS
+--    migration `20260520_add_machine_cost_fields.sql`. MCS only reads these.
 
 -- 3. maintenance_call_parts table — owned by the prior MCS migration; do not
 --    re-create here. Mentioned only so readers know the analytics view does
