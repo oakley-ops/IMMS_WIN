@@ -1,5 +1,5 @@
 // src/components/EditPartForm.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axios';
 import { useDispatch } from 'react-redux';
@@ -7,6 +7,12 @@ import { AppDispatch } from '../store/store';
 import { fetchParts } from '../store/partsSlice';
 import ManagePartSuppliers from './ManagePartSuppliers';
 import Button from '@mui/material/Button';
+
+interface BinLocation {
+  location_id: number;
+  name: string;
+  part_count: number;
+}
 
 interface Machine {
   id: number;
@@ -58,6 +64,9 @@ const EditPartForm: React.FC = () => {
   });
   const [machines, setMachines] = useState<Machine[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [binLocations, setBinLocations] = useState<BinLocation[]>([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const locationRef = useRef<HTMLDivElement>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
@@ -67,10 +76,11 @@ const EditPartForm: React.FC = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [partResponse, machinesResponse, suppliersResponse] = await Promise.all([
+        const [partResponse, machinesResponse, suppliersResponse, locationsResponse] = await Promise.all([
           id ? axiosInstance.get(`/api/v1/parts/${id}`) : Promise.resolve({ data: formData }),
           axiosInstance.get('/api/v1/machines'),
-          axiosInstance.get('/api/v1/suppliers')
+          axiosInstance.get('/api/v1/suppliers'),
+          axiosInstance.get('/api/v1/parts/locations')
         ]);
         
         // Format the data
@@ -92,6 +102,7 @@ const EditPartForm: React.FC = () => {
         
         setMachines(machinesResponse.data);
         setSuppliers(suppliersResponse.data);
+        setBinLocations(locationsResponse.data);
       } catch (error) {
         console.error('Error fetching data:', error);
         setError('Failed to load data. Please try again.');
@@ -102,6 +113,16 @@ const EditPartForm: React.FC = () => {
 
     fetchData();
   }, [id]);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationRef.current && !locationRef.current.contains(e.target as Node)) {
+        setShowLocationDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleChange = (
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -264,16 +285,60 @@ const EditPartForm: React.FC = () => {
                   />
                 </div>
                 
-                <div className="mb-3">
+                <div className="mb-3" ref={locationRef} style={{ position: 'relative' }}>
                   <label htmlFor="location" className="form-label">Storage Location</label>
                   <input
                     type="text"
                     className="form-control"
                     id="location"
                     name="location"
-                    value={formData.location}
-                    onChange={handleChange}
+                    autoComplete="off"
+                    placeholder="Type or select a bin..."
+                    value={formData.location || ''}
+                    onChange={(e) => { handleChange(e); setShowLocationDropdown(true); }}
+                    onFocus={() => setShowLocationDropdown(true)}
                   />
+                  {showLocationDropdown && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
+                      maxHeight: '200px', overflowY: 'auto',
+                      border: '1px solid #dee2e6', borderRadius: '0 0 4px 4px',
+                      backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      {binLocations
+                        .filter(loc => loc.name.toLowerCase().includes((formData.location || '').toLowerCase()))
+                        .map(loc => (
+                          <div
+                            key={loc.location_id}
+                            onMouseDown={() => {
+                              setFormData(prev => ({ ...prev, location: loc.name }));
+                              setShowLocationDropdown(false);
+                            }}
+                            style={{
+                              padding: '8px 12px', cursor: 'pointer',
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                              borderBottom: '1px solid #f0f0f0'
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#fff')}
+                          >
+                            <span>{loc.name}</span>
+                            <span style={{
+                              fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '12px',
+                              backgroundColor: loc.part_count > 0 ? '#fff3cd' : '#d1e7dd',
+                              color: loc.part_count > 0 ? '#856404' : '#0a3622'
+                            }}>
+                              {loc.part_count > 0 ? `${loc.part_count} part${loc.part_count !== 1 ? 's' : ''}` : 'Available'}
+                            </span>
+                          </div>
+                        ))}
+                      {binLocations.filter(loc => loc.name.toLowerCase().includes((formData.location || '').toLowerCase())).length === 0 && formData.location && (
+                        <div style={{ padding: '8px 12px', color: '#6c757d', fontSize: '0.875rem' }}>
+                          New location: <strong>"{formData.location}"</strong> will be created
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
                 
                 <div className="mb-3">

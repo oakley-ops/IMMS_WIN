@@ -154,7 +154,7 @@ router.get('/:id', auth, async (req, res) => {
         SELECT 
           wop.*,
           p.part_name,
-          p.crc_part_number as part_number
+          p.manufacturer_part_number as part_number
         FROM work_order_parts wop
         LEFT JOIN parts p ON wop.part_id = p.id
         WHERE wop.work_order_id = $1
@@ -167,7 +167,7 @@ router.get('/:id', auth, async (req, res) => {
           SELECT 
             wop.*,
             p.part_name,
-            p.crc_part_number as part_number
+            p.manufacturer_part_number as part_number
           FROM work_order_parts wop
           LEFT JOIN parts p ON wop.part_id = p.part_id
           WHERE wop.work_order_id = $1
@@ -494,7 +494,7 @@ router.get('/:id/pdf', auth, async (req, res) => {
         SELECT 
           wop.*,
           p.part_name,
-          p.crc_part_number as part_number
+          p.manufacturer_part_number as part_number
         FROM work_order_parts wop
         LEFT JOIN parts p ON wop.part_id = p.id
         WHERE wop.work_order_id = $1
@@ -507,7 +507,7 @@ router.get('/:id/pdf', auth, async (req, res) => {
           SELECT 
             wop.*,
             p.part_name,
-            p.crc_part_number as part_number
+            p.manufacturer_part_number as part_number
           FROM work_order_parts wop
           LEFT JOIN parts p ON wop.part_id = p.part_id
           WHERE wop.work_order_id = $1

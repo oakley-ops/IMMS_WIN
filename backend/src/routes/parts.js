@@ -125,7 +125,6 @@ router.get('/', authenticateToken, roleAuthorization(ROLES.ALL), async (req, res
         p.name ILIKE $${paramCount} OR
         p.description ILIKE $${paramCount} OR
         p.manufacturer_part_number ILIKE $${paramCount} OR
-        p.crc_part_number ILIKE $${paramCount} OR
         p.supplier ILIKE $${paramCount} OR
         pl.name ILIKE $${paramCount}
       )`);
@@ -135,8 +134,7 @@ router.get('/', authenticateToken, roleAuthorization(ROLES.ALL), async (req, res
 
     if (partNumber) {
       whereConditions.push(`(
-        p.manufacturer_part_number ILIKE $${paramCount} OR
-        p.crc_part_number ILIKE $${paramCount}
+        p.manufacturer_part_number ILIKE $${paramCount}
       )`);
       queryParams.push(`%${partNumber}%`);
       paramCount++;
@@ -189,9 +187,8 @@ router.get('/', authenticateToken, roleAuthorization(ROLES.ALL), async (req, res
         p.part_id, 
         p.name, 
         p.description, 
-        p.manufacturer_part_number, 
-        p.crc_part_number, 
-        p.quantity::integer, 
+        p.manufacturer_part_number,
+        p.quantity::integer,
         p.minimum_quantity::integer, 
         pl.name as location, 
         CAST(p.unit_cost AS NUMERIC) as unit_cost, 
@@ -253,7 +250,6 @@ router.get('/low-stock', authenticateToken, roleAuthorization(ROLES.VIEW_LOW_STO
         p.name,
         p.description,
         p.manufacturer_part_number,
-        p.crc_part_number,
         p.quantity,
         p.minimum_quantity,
         p.unit_cost as cost,
@@ -339,6 +335,24 @@ router.get('/order-status', authenticateToken, roleAuthorization(ROLES.VIEW_LOW_
   }
 });
 
+// Get all bin locations with occupancy count
+router.get('/locations', authenticateToken, roleAuthorization(ROLES.ALL), async (req, res) => {
+  try {
+    const result = await executeWithRetry(
+      `SELECT pl.location_id, pl.name, COUNT(p.part_id)::int AS part_count
+       FROM part_locations pl
+       LEFT JOIN parts p ON p.location_id = pl.location_id AND p.status != 'inactive'
+       GROUP BY pl.location_id, pl.name
+       ORDER BY pl.name`,
+      []
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching locations:', err);
+    res.status(500).json({ error: 'Failed to fetch locations' });
+  }
+});
+
 // Get a specific part - accessible to all authenticated users
 router.get('/:id', authenticateToken, roleAuthorization(ROLES.ALL), async (req, res) => {
   try {
@@ -351,7 +365,6 @@ router.get('/:id', authenticateToken, roleAuthorization(ROLES.ALL), async (req, 
         p.name,
         p.description,
         p.manufacturer_part_number,
-        p.crc_part_number,
         p.quantity,
         p.minimum_quantity,
         p.supplier,
@@ -400,7 +413,6 @@ router.post('/', authenticateToken, roleAuthorization(ROLES.MODIFY_PARTS), async
       name,
       description,
       manufacturer_part_number,
-      crc_part_number,
       quantity,
       minimum_quantity,
       manufacturer,
@@ -408,7 +420,7 @@ router.post('/', authenticateToken, roleAuthorization(ROLES.MODIFY_PARTS), async
       location,
       notes
     } = req.body;
-    
+
     if (!name || quantity === undefined || quantity === null || minimum_quantity === undefined || minimum_quantity === null) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
@@ -440,7 +452,6 @@ router.post('/', authenticateToken, roleAuthorization(ROLES.MODIFY_PARTS), async
         name,
         description,
         manufacturer_part_number,
-        crc_part_number,
         quantity,
         minimum_quantity,
         supplier,
@@ -448,13 +459,12 @@ router.post('/', authenticateToken, roleAuthorization(ROLES.MODIFY_PARTS), async
         location_id,
         notes,
         status
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING *`,
       [
         name,
         description,
         manufacturer_part_number,
-        crc_part_number,
         quantity,
         minimum_quantity,
         manufacturer,
@@ -485,7 +495,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
       name,
       description,
       manufacturer_part_number,
-      crc_part_number,
       quantity,
       minimum_quantity,
       supplier,
@@ -496,32 +505,26 @@ router.put('/:id', authenticateToken, async (req, res) => {
       vendor_id,
       supplier_id
     } = req.body;
-    
+
     console.log('Extracted unit_cost:', unit_cost, 'Type:', typeof unit_cost);
     console.log('Extracted name:', name, 'Type:', typeof name);
     console.log('Extracted quantity:', quantity, 'Type:', typeof quantity);
     console.log('Extracted minimum_quantity:', minimum_quantity, 'Type:', typeof minimum_quantity);
-    console.log('Extracted crc_part_number:', crc_part_number, 'Type:', typeof crc_part_number);
-    
+
     // Validate required fields - allowing quantity to be 0
     if (!name || name.trim() === '') {
       console.log('VALIDATION FAILED: Missing name');
       return res.status(400).json({ error: 'Missing required field: name' });
     }
-    
+
     if (quantity === undefined || quantity === null) {
       console.log('VALIDATION FAILED: Missing quantity');
       return res.status(400).json({ error: 'Missing required field: quantity' });
     }
-    
+
     if (minimum_quantity === undefined || minimum_quantity === null) {
       console.log('VALIDATION FAILED: Missing minimum_quantity');
       return res.status(400).json({ error: 'Missing required field: minimum_quantity' });
-    }
-
-    if (!crc_part_number || crc_part_number.trim() === '') {
-      console.log('VALIDATION FAILED: Missing CRC part number');
-      return res.status(400).json({ error: 'Missing required field: crc_part_number' });
     }
 
     // Start transaction
@@ -559,7 +562,6 @@ router.put('/:id', authenticateToken, async (req, res) => {
       name,
       description,
       manufacturer_part_number,
-      crc_part_number,
       parsedQuantity,
       parsedMinQuantity,
       supplier,
@@ -577,17 +579,16 @@ router.put('/:id', authenticateToken, async (req, res) => {
         name = $1,
         description = $2,
         manufacturer_part_number = $3,
-        crc_part_number = $4,
-        quantity = $5,
-        minimum_quantity = $6,
-        supplier = $7,
-        unit_cost = $8,
-        location_id = $9,
-        notes = $10,
-        status = $11,
-        supplier_id = $12,
+        quantity = $4,
+        minimum_quantity = $5,
+        supplier = $6,
+        unit_cost = $7,
+        location_id = $8,
+        notes = $9,
+        status = $10,
+        supplier_id = $11,
         updated_at = CURRENT_TIMESTAMP
-      WHERE part_id = $13
+      WHERE part_id = $12
       RETURNING *`,
       updateValues
     );
@@ -635,7 +636,6 @@ router.post('/', async (req, res) => {
     name,
     description,
     manufacturer_part_number,
-        crc_part_number,
     quantity,
     minimum_quantity,
     manufacturer,
@@ -677,16 +677,6 @@ router.post('/', async (req, res) => {
     const parsedMinQuantity = Number(minimum_quantity);
     const parsedUnitCost = Number(unit_cost || 0);
 
-    // Handle TBD crc_part_number
-    let finalCrcPartNumber = crc_part_number;
-    if (crc_part_number && crc_part_number.trim().toUpperCase() === 'TBD') {
-      // Generate a unique identifier for TBD values
-      const timestamp = Date.now();
-      const random = Math.floor(Math.random() * 10000);
-      finalCrcPartNumber = `CRC-${timestamp}-${random}`;
-      console.log('Generated unique CRC identifier:', finalCrcPartNumber);
-    }
-
     // Then create the part
     console.log('Creating new part...');
     const result = await executeWithRetry(
@@ -694,19 +684,17 @@ router.post('/', async (req, res) => {
         name,
         description,
         manufacturer_part_number,
-        crc_part_number,
         quantity,
         minimum_quantity,
         supplier,
         unit_cost,
         location_id,
         notes
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING *`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *`,
       [
         name,
         description || null,
         manufacturer_part_number || null,
-        finalCrcPartNumber,
         parsedQuantity,
         parsedMinQuantity,
         manufacturer || null,
@@ -752,28 +740,18 @@ router.post('/bulk', async (req, res) => {
         console.log('Processing part:', JSON.stringify(part, null, 2));
         
         // Validate required fields
-        if (!part.name || !part.crc_part_number) {
-          throw new Error('Name and CRC part number are required');
+        if (!part.name) {
+          throw new Error('Part name is required');
         }
 
-        // Handle TBD crc_part_number
-        let finalCrcPartNumber = part.crc_part_number;
-        if (part.crc_part_number && part.crc_part_number.trim().toUpperCase() === 'TBD') {
-          // Generate a unique identifier for TBD values
-          const timestamp = Date.now();
-          const random = Math.floor(Math.random() * 10000);
-          finalCrcPartNumber = `CRC-${timestamp}-${random}`;
-          console.log('Generated unique CRC identifier:', finalCrcPartNumber);
-        }
-
-        // Check if the part already exists (using the original part number for lookup)
+        // Check if the part already exists (using manufacturer_part_number for lookup)
         const existingPartResult = await client.query(
-          'SELECT part_id FROM parts WHERE crc_part_number = $1',
-          [part.crc_part_number]
+          'SELECT part_id FROM parts WHERE manufacturer_part_number = $1',
+          [part.manufacturer_part_number]
         );
 
         if (existingPartResult.rows.length > 0) {
-          console.log('Updating existing part:', part.crc_part_number);
+          console.log('Updating existing part:', part.manufacturer_part_number);
           
           // Get the existing part ID
           const partId = existingPartResult.rows[0].part_id;
@@ -832,11 +810,11 @@ router.post('/bulk', async (req, res) => {
           results.push({
             part_id: partId,
             name: part.name,
-            crc_part_number: part.crc_part_number,
+            manufacturer_part_number: part.manufacturer_part_number,
             status: 'updated'
           });
         } else {
-          console.log('Inserting new part:', finalCrcPartNumber);
+          console.log('Inserting new part:', part.manufacturer_part_number);
           
           // Get or create location_id if location is provided
           let locationId = null;
@@ -866,24 +844,22 @@ router.post('/bulk', async (req, res) => {
           // Insert the new part
           const result = await client.query(
             `INSERT INTO parts (
-              name, 
-              description, 
-              manufacturer_part_number, 
-              crc_part_number, 
-              supplier, 
-              unit_cost, 
-              quantity, 
+              name,
+              description,
+              manufacturer_part_number,
+              supplier,
+              unit_cost,
+              quantity,
               minimum_quantity,
               location_id,
               status,
               created_at,
               updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()) RETURNING part_id`,
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()) RETURNING part_id`,
             [
               part.name,
               part.description || '',
               part.manufacturer_part_number || '',
-              finalCrcPartNumber,
               part.supplier || '',
               parsedUnitCost,
               parsedQuantity,
@@ -896,12 +872,12 @@ router.post('/bulk', async (req, res) => {
           results.push({
             part_id: result.rows[0].part_id,
             name: part.name,
-            crc_part_number: finalCrcPartNumber,
+            manufacturer_part_number: part.manufacturer_part_number,
             status: 'created'
           });
         }
       } catch (partError) {
-        const errorMessage = `Error processing part ${part.crc_part_number || 'unknown'}: ${partError.message}`;
+        const errorMessage = `Error processing part ${part.manufacturer_part_number || part.name || 'unknown'}: ${partError.message}`;
         console.error('Error details:', {
           message: partError.message,
           stack: partError.stack,
@@ -1230,7 +1206,6 @@ router.get('/usage/history', async (req, res) => {
         t.part_id,
         p.name as part_name,
         p.manufacturer_part_number,
-        p.crc_part_number,
         t.quantity,
         t.created_at as usage_date,
         t.notes as reason,

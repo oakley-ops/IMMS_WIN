@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Container,
   Typography,
@@ -77,6 +77,12 @@ const StyledDataGrid = styled(DataGrid, {
   ].includes(prop.toString()),
 })({});
 
+interface BinLocation {
+  location_id: number;
+  name: string;
+  part_count: number;
+}
+
 // PartsList specific interface - keeping it separate to avoid type conflicts
 interface PartListItem {
   part_id: number;
@@ -84,7 +90,6 @@ interface PartListItem {
   description?: string;
   manufacturer?: string;
   manufacturer_part_number?: string;
-  crc_part_number?: string;
   quantity: number;
   minimum_quantity: number;
   location?: string;
@@ -106,7 +111,6 @@ interface PartFormData {
   description: string;
   manufacturer: string;
   manufacturer_part_number: string;
-  crc_part_number: string;
   quantity: number | '';
   minimum_quantity: number | '';
   location: string;
@@ -122,7 +126,6 @@ const convertToPartInterface = (partListItem: PartListItem): Part => ({
   description: partListItem.description,
   manufacturer: partListItem.manufacturer,
   manufacturer_part_number: partListItem.manufacturer_part_number,
-  crc_part_number: partListItem.crc_part_number,
   quantity: partListItem.quantity,
   minimum_quantity: partListItem.minimum_quantity,
   location: partListItem.location,
@@ -137,7 +140,6 @@ const initialFormData: PartFormData = {
   description: '',
   manufacturer: '',
   manufacturer_part_number: '',
-  crc_part_number: '',
   quantity: '',
   minimum_quantity: '',
   location: '',
@@ -298,6 +300,9 @@ const PartsList: React.FC = () => {
 
   // Add new state variables
   const [locations, setLocations] = useState<string[]>([]);
+  const [binLocations, setBinLocations] = useState<BinLocation[]>([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const locationRef = useRef<HTMLDivElement>(null);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<string>('');
   const [exportLoading, setExportLoading] = useState(false);
@@ -419,15 +424,6 @@ const PartsList: React.FC = () => {
     { field: 'name', headerName: 'Name', flex: 1 },
     { field: 'description', headerName: 'Description', flex: 1.5 },
     { field: 'manufacturer_part_number', headerName: 'Manufacturer Part #', flex: 1 },
-    { 
-      field: 'crc_part_number', 
-      headerName: 'CRC Part #', 
-      flex: 1,
-      renderCell: (params) => {
-        console.log('Rendering CRC part #:', params.row);
-        return <span>{params.row.crc_part_number || ''}</span>;
-      }
-    },
     { field: 'location', headerName: 'Location', flex: 0.7 },
     { field: 'quantity', headerName: 'Quantity', type: 'number', flex: 0.5 },
     { field: 'minimum_quantity', headerName: 'Min Quantity', type: 'number', flex: 0.5 },
@@ -536,7 +532,6 @@ const PartsList: React.FC = () => {
           description: part.description || '',
           manufacturer: part.manufacturer || '',
           manufacturer_part_number: part.manufacturer_part_number || '',
-          crc_part_number: part.crc_part_number || '',
           quantity: Number(part.quantity) || 0,
           minimum_quantity: Number(part.minimum_quantity) || 0,
           location: part.location !== null && part.location !== undefined ? String(part.location) : '',
@@ -661,7 +656,6 @@ const PartsList: React.FC = () => {
       description: part.description || '',
       manufacturer: part.manufacturer || '',
       manufacturer_part_number: part.manufacturer_part_number || '',
-      crc_part_number: part.crc_part_number || '',
       quantity: part.quantity,
       minimum_quantity: part.minimum_quantity,
       location: part.location || '',
@@ -716,8 +710,7 @@ const PartsList: React.FC = () => {
       
       // Check required part fields
       if (!formData.name) requiredFieldErrors.push('Part name is required');
-      if (!formData.crc_part_number) requiredFieldErrors.push('CRC part number is required');
-      
+
       // Make sure quantity and minimum_quantity have valid values (backend requires these)
       if (formData.quantity === undefined || formData.quantity === null || formData.quantity === '') {
         requiredFieldErrors.push('Quantity is required');
@@ -754,7 +747,6 @@ const PartsList: React.FC = () => {
         description: formData.description || '',
         supplier: formData.manufacturer || '', // Backend expects "supplier" not "manufacturer"
         manufacturer_part_number: formData.manufacturer_part_number || '',
-        crc_part_number: formData.crc_part_number.trim(),
         quantity: isNaN(Number(formData.quantity)) ? 0 : Number(formData.quantity),
         minimum_quantity: isNaN(Number(formData.minimum_quantity)) ? 0 : Number(formData.minimum_quantity),
         location: formData.location || '',
@@ -763,19 +755,6 @@ const PartsList: React.FC = () => {
         status: formData.status || 'active',
         supplier_id: Number(preferredSupplier?.supplier_id) || null
       };
-
-      // Check if crc_part_number is TBD and generate a unique value
-      // Only generate unique CRC for new parts, or when explicitly changing to TBD
-      if (isTBDValue(partData.crc_part_number)) {
-        if (!isEditing || (isEditing && selectedPart?.crc_part_number !== 'TBD')) {
-          const uniqueCRC = generateUniqueTBD().replace('TBD-', 'CRC-');
-          console.log(`Converting "TBD" to unique identifier: ${uniqueCRC}`);
-          partData.crc_part_number = uniqueCRC;
-        } else {
-          // If editing and the part already had TBD, keep the original CRC identifier
-          partData.crc_part_number = selectedPart?.crc_part_number || generateUniqueTBD().replace('TBD-', 'CRC-');
-        }
-      }
 
       console.log('Submitting part data:', JSON.stringify(partData, null, 2));
 
@@ -942,23 +921,9 @@ const PartsList: React.FC = () => {
           console.error('Error response data:', error.response?.data);
           
           // Special handling for unique constraint violations
-          if (error.response?.data?.error?.includes('unique_crc_part_number') ||
-              error.response?.data?.error?.includes('duplicate key value') ||
-              error.response?.data?.error?.includes('Key (crc_part_number)')) {
-            
-            // If this was a TBD value, update with a new unique one and try again
-            if (isTBDValue(formData.crc_part_number)) {
-              const newUniqueCRC = generateUniqueTBD().replace('TBD-', 'CRC-');
-              setError(`We're generating a new unique ID for "TBD": ${newUniqueCRC}. Please try submitting again.`);
-              
-              // Update the form data with the new unique TBD
-              setFormData({
-                ...formData,
-                crc_part_number: newUniqueCRC
-              });
-            } else {
-              setError('A part with this CRC part number already exists. Please use a different value.');
-            }
+          if (error.response?.data?.error?.includes('duplicate key value') ||
+              error.response?.data?.error?.includes('unique')) {
+            setError('A part with this manufacturer part number already exists. Please use a different value.');
           } else {
             setError(`Error saving part: ${error.response?.data?.error || error.message || 'Unknown error'}`);
           }
@@ -1075,17 +1040,13 @@ const PartsList: React.FC = () => {
     return cleanProps;
   };
 
-  // Add function to fetch unique locations
+  // Fetch bin locations with occupancy counts
   const fetchLocations = async () => {
     try {
-      const response = await axiosInstance.get('/api/v1/parts');
-      const parts = response.data.items || response.data;
-      
-      const uniqueLocations = Array.from(
-        new Set(parts.map((part: Part) => part.location).filter(Boolean))
-      ).filter((loc): loc is string => typeof loc === 'string');
-      
-      setLocations(uniqueLocations);
+      const response = await axiosInstance.get('/api/v1/parts/locations');
+      const bins: BinLocation[] = response.data;
+      setBinLocations(bins);
+      setLocations(bins.map(b => b.name));
     } catch (error: any) {
       console.error('Error fetching locations:', error);
     }
@@ -1093,6 +1054,16 @@ const PartsList: React.FC = () => {
 
   useEffect(() => {
     fetchLocations();
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationRef.current && !locationRef.current.contains(e.target as Node)) {
+        setShowLocationDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // Add export function
@@ -1125,7 +1096,6 @@ const PartsList: React.FC = () => {
       // Transform data for export
       const exportData = parts.map((part: PartListItem) => ({
         'Name': part.name,
-        'CRC Part #': part.crc_part_number,
         'Manufacturer Part #': part.manufacturer_part_number,
         'Manufacturer': part.manufacturer,
         'Location': part.location,
@@ -1144,7 +1114,6 @@ const PartsList: React.FC = () => {
       // Set column widths
       const columnWidths = [
         { wch: 30 }, // Name
-        { wch: 15 }, // CRC Part #
         { wch: 20 }, // Manufacturer Part #
         { wch: 20 }, // Manufacturer
         { wch: 15 }, // Location
@@ -1628,7 +1597,7 @@ const PartsList: React.FC = () => {
                   return `part-${row.id}`;
                 }
                 // Fallback: use a combination of name and other fields to create a stable ID
-                const fallbackId = `fallback-${row.name || 'unknown'}-${row.crc_part_number || 'no-part-num'}-${Date.now()}`;
+                const fallbackId = `fallback-${row.name || 'unknown'}-${row.manufacturer_part_number || 'no-part-num'}-${Date.now()}`;
                 console.warn('Using fallback row ID:', fallbackId, 'for row:', row);
                 return fallbackId;
               }}
@@ -1789,10 +1758,6 @@ const PartsList: React.FC = () => {
                       <div className="info-value">{selectedPart.manufacturer_part_number || 'N/A'}</div>
                     </div>
                     <div className="mb-3">
-                      <div className="info-text">CRC Part #</div>
-                      <div className="info-value">{selectedPart.crc_part_number}</div>
-                    </div>
-                    <div className="mb-3">
                       <div className="info-text">Status</div>
                       <div>
                         <span className={`status-badge ${selectedPart.status === 'active' ? 'status-success' : 'status-danger'}`}>
@@ -1905,28 +1870,6 @@ const PartsList: React.FC = () => {
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">CRC Part # *</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      name="crc_part_number"
-                      value={formData.crc_part_number}
-                      onChange={handleInputChange}
-                      required
-                    />
-                    <small className="text-muted">
-                      If you don't have the CRC part number yet, enter "TBD". A unique identifier will be generated.
-                    </small>
-                    {isTBDValue(formData.crc_part_number) && (
-                      <div className="alert alert-info mt-2 p-2" role="alert">
-                        <small>
-                          <strong>TBD Detected</strong>: A unique ID will be generated when you submit.
-                        </small>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="form-group">
                     <label className="form-label">Manufacturer</label>
                     <input
                       type="text"
@@ -1976,15 +1919,59 @@ const PartsList: React.FC = () => {
 
                   
 
-                  <div className="form-group">
+                  <div className="form-group" ref={locationRef} style={{ position: 'relative' }}>
                     <label className="form-label">Location</label>
                     <input
                       type="text"
                       className="form-control"
                       name="location"
+                      autoComplete="off"
+                      placeholder="Type or select a bin..."
                       value={formData.location}
-                      onChange={handleInputChange}
+                      onChange={(e) => { handleInputChange(e); setShowLocationDropdown(true); }}
+                      onFocus={() => setShowLocationDropdown(true)}
                     />
+                    {showLocationDropdown && (
+                      <div style={{
+                        position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
+                        maxHeight: '200px', overflowY: 'auto',
+                        border: '1px solid #dee2e6', borderRadius: '0 0 4px 4px',
+                        backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                      }}>
+                        {binLocations
+                          .filter(loc => loc.name.toLowerCase().includes(formData.location.toLowerCase()))
+                          .map(loc => (
+                            <div
+                              key={loc.location_id}
+                              onMouseDown={() => {
+                                handleInputChange({ target: { name: 'location', value: loc.name } } as any);
+                                setShowLocationDropdown(false);
+                              }}
+                              style={{
+                                padding: '8px 12px', cursor: 'pointer',
+                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                                borderBottom: '1px solid #f0f0f0'
+                              }}
+                              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#fff')}
+                            >
+                              <span>{loc.name}</span>
+                              <span style={{
+                                fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '12px',
+                                backgroundColor: loc.part_count > 0 ? '#fff3cd' : '#d1e7dd',
+                                color: loc.part_count > 0 ? '#856404' : '#0a3622'
+                              }}>
+                                {loc.part_count > 0 ? `${loc.part_count} part${loc.part_count !== 1 ? 's' : ''}` : 'Available'}
+                              </span>
+                            </div>
+                          ))}
+                        {binLocations.filter(loc => loc.name.toLowerCase().includes(formData.location.toLowerCase())).length === 0 && formData.location && (
+                          <div style={{ padding: '8px 12px', color: '#6c757d', fontSize: '0.875rem' }}>
+                            New location: <strong>"{formData.location}"</strong> will be created
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -2283,7 +2270,6 @@ const PartsList: React.FC = () => {
           description: selectedPart.description,
           manufacturer: selectedPart.manufacturer,
           manufacturer_part_number: selectedPart.manufacturer_part_number,
-          crc_part_number: selectedPart.crc_part_number || '',
           quantity: selectedPart.quantity,
           minimum_quantity: selectedPart.minimum_quantity,
           location: selectedPart.location,
@@ -2415,7 +2401,7 @@ const PartsList: React.FC = () => {
               <div className="card mb-3 border-primary">
                 <div className="card-body">
                   <h6 className="card-title">Selected Part: {selectedPart?.name}</h6>
-                  <p className="card-text">Part #: {selectedPart?.crc_part_number}</p>
+                  <p className="card-text">Mfg Part #: {selectedPart?.manufacturer_part_number || 'N/A'}</p>
                   <div className="d-flex justify-content-between align-items-center mt-2">
                     <span className="text-muted">Current Stock: {selectedPart?.quantity}</span>
                     <span className={`badge ${(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'bg-warning' : 'bg-success'}`}>

@@ -1,9 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../store/store';
 import { addPart } from '../store/partsSlice';
 import { Part } from '../store/partsSlice';
+import axiosInstance from '../utils/axios';
 import '../styles/Dialog.css';
+
+interface BinLocation {
+  location_id: number;
+  name: string;
+  part_count: number;
+}
 
 // Add app color constants
 const IMMS_BLUE = '#0066A1';
@@ -34,6 +41,9 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
   const [manufacturerPartNumber, setManufacturerPartNumber] = useState('');
   const [internalPartNumber, setInternalPartNumber] = useState('');
   const [location, setLocation] = useState('');
+  const [binLocations, setBinLocations] = useState<BinLocation[]>([]);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const locationRef = useRef<HTMLDivElement>(null);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   
   // New multi-supplier state
@@ -48,14 +58,12 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch suppliers on component mount
+  // Fetch suppliers and bin locations on open
   useEffect(() => {
     const fetchSuppliers = async () => {
       try {
         const response = await fetch('/api/suppliers');
-        if (!response.ok) {
-          throw new Error('Failed to fetch suppliers');
-        }
+        if (!response.ok) throw new Error('Failed to fetch suppliers');
         const data = await response.json();
         setSuppliers(data);
       } catch (err) {
@@ -64,10 +72,31 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
       }
     };
 
+    const fetchLocations = async () => {
+      try {
+        const { data } = await axiosInstance.get('/api/v1/parts/locations');
+        setBinLocations(data);
+      } catch (err) {
+        console.error('Error fetching locations:', err);
+      }
+    };
+
     if (show) {
       fetchSuppliers();
+      fetchLocations();
     }
   }, [show]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (locationRef.current && !locationRef.current.contains(e.target as Node)) {
+        setShowLocationDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const resetForm = () => {
     setName('');
@@ -76,6 +105,7 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
     setManufacturerPartNumber('');
     setInternalPartNumber('');
     setLocation('');
+    setShowLocationDropdown(false);
     setSelectedSuppliers([]);
     setCurrentSupplierId('');
     setCurrentUnitCost('');
@@ -252,15 +282,56 @@ const AddPart: React.FC<{ show: boolean; handleClose: () => void }> = ({ show, h
                   />
                 </div>
 
-                <div className="form-group">
+                <div className="form-group" ref={locationRef} style={{ position: 'relative' }}>
                   <label className="form-label">Location</label>
                   <input
                     type="text"
                     className="form-control"
                     name="location"
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
+                    autoComplete="off"
+                    placeholder="Type or select a bin..."
+                    onChange={(e) => { setLocation(e.target.value); setShowLocationDropdown(true); }}
+                    onFocus={() => setShowLocationDropdown(true)}
                   />
+                  {showLocationDropdown && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
+                      maxHeight: '200px', overflowY: 'auto',
+                      border: '1px solid #dee2e6', borderRadius: '0 0 4px 4px',
+                      backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                    }}>
+                      {binLocations
+                        .filter(loc => loc.name.toLowerCase().includes(location.toLowerCase()))
+                        .map(loc => (
+                          <div
+                            key={loc.location_id}
+                            onMouseDown={() => { setLocation(loc.name); setShowLocationDropdown(false); }}
+                            style={{
+                              padding: '8px 12px', cursor: 'pointer',
+                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                              borderBottom: '1px solid #f0f0f0'
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#fff')}
+                          >
+                            <span>{loc.name}</span>
+                            <span style={{
+                              fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '12px',
+                              backgroundColor: loc.part_count > 0 ? '#fff3cd' : '#d1e7dd',
+                              color: loc.part_count > 0 ? '#856404' : '#0a3622'
+                            }}>
+                              {loc.part_count > 0 ? `${loc.part_count} part${loc.part_count !== 1 ? 's' : ''}` : 'Available'}
+                            </span>
+                          </div>
+                        ))}
+                      {binLocations.filter(loc => loc.name.toLowerCase().includes(location.toLowerCase())).length === 0 && location && (
+                        <div style={{ padding: '8px 12px', color: '#6c757d', fontSize: '0.875rem' }}>
+                          New location: <strong>"{location}"</strong> will be created
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

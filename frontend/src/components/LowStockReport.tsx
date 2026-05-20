@@ -151,7 +151,6 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef })
         return {
           'Part Name': part.name,
           'Manufacturer Part #': part.manufacturer_part_number || 'N/A',
-          'CRC Part #': part.crc_part_number || 'N/A',
           'Location': part.location || part.machine_name || 'N/A',
           'Current Quantity': part.quantity,
           'Minimum Quantity': part.minimum_quantity,
@@ -169,7 +168,6 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef })
       const columnWidths = [
         { wch: 30 }, // Part Name
         { wch: 20 }, // Manufacturer Part #
-        { wch: 20 }, // CRC Part #
         { wch: 15 }, // Location
         { wch: 12 }, // Current Quantity
         { wch: 12 }, // Minimum Quantity
@@ -218,7 +216,7 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef })
     const part = data.find(p => p.part_id === partId);
     if (part) {
       // Use manufacturer part number for exact match, fall back to name if not available
-      const searchTerm = part.manufacturer_part_number || part.crc_part_number || part.name;
+      const searchTerm = part.manufacturer_part_number || part.name;
       navigate(`/parts?search=${encodeURIComponent(searchTerm)}`);
     } else {
       // Fallback to general parts page

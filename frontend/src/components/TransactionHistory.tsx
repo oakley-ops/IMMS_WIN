@@ -27,7 +27,6 @@ interface Transaction {
   transaction_id: number;
   part_name: string;
   manufacturer_part_number: string;
-  crc_part_number: string;
   machine_name: string | null;
   quantity: number;
   usage_date: string;
@@ -91,9 +90,9 @@ const TransactionHistory: React.FC = () => {
       const worksheet = workbook.addWorksheet('Parts Usage History');
 
       // Add and style title row with new merging
-      const titleRow = worksheet.addRow(['Parts Usage History Report', '', '', '', '', '', '']);
+      const titleRow = worksheet.addRow(['Parts Usage History Report', '', '', '', '', '']);
       worksheet.mergeCells(1, 1, 1, 2); // Merge A-B for title
-      worksheet.mergeCells(1, 3, 1, 7); // Merge C-G for date
+      worksheet.mergeCells(1, 3, 1, 6); // Merge C-F for date
       
       // Style title row
       titleRow.height = 30;
@@ -109,7 +108,7 @@ const TransactionHistory: React.FC = () => {
         return sum + (isNaN(cost) ? 0 : cost * Math.abs(record.quantity));
       }, 0);
 
-      const summaryRow = worksheet.addRow(['Summary', '', '', '', '', `Total Items: ${Math.abs(totalQuantity)}`, `Total Cost: $${totalCost.toFixed(2)}`]);
+      const summaryRow = worksheet.addRow(['Summary', '', '', '', `Total Items: ${Math.abs(totalQuantity)}`, `Total Cost: $${totalCost.toFixed(2)}`]);
       
       // Style summary row
       summaryRow.font = { bold: true };
@@ -127,11 +126,11 @@ const TransactionHistory: React.FC = () => {
           right: { style: 'thin' }
         };
       });
-      summaryRow.getCell(6).alignment = { vertical: 'middle', horizontal: 'center' };
-      summaryRow.getCell(7).alignment = { vertical: 'middle', horizontal: 'right' };
+      summaryRow.getCell(5).alignment = { vertical: 'middle', horizontal: 'center' };
+      summaryRow.getCell(6).alignment = { vertical: 'middle', horizontal: 'right' };
 
       // Define headers
-      const headers = ['Date', 'Part Name', 'Mfg Part #', 'CRC Part #', 'Machine', 'Quantity', 'Unit Cost'];
+      const headers = ['Date', 'Part Name', 'Mfg Part #', 'Machine', 'Quantity', 'Unit Cost'];
       const headerRow = worksheet.addRow(headers);
 
       // Style headers
@@ -155,7 +154,6 @@ const TransactionHistory: React.FC = () => {
           dayjs(record.usage_date).format('MM/DD/YYYY'),
           record.part_name,
           record.manufacturer_part_number || 'N/A',
-          record.crc_part_number,
           record.machine_name || 'N/A',
           record.quantity,
           isNaN(unitCost) ? 'N/A' : `$${unitCost.toFixed(2)}`
@@ -219,7 +217,7 @@ const TransactionHistory: React.FC = () => {
           case 2: // Part Name
             column.width = 27.57;
             break;
-          case 3: // CRC Part #
+          case 3: // Mfg Part #
             column.width = 25.86;
             break;
           case 4: // Machine
@@ -359,7 +357,6 @@ const TransactionHistory: React.FC = () => {
                   <TableCell>Date</TableCell>
                   <TableCell>Part Name</TableCell>
                   <TableCell>Mfg Part #</TableCell>
-                  <TableCell>CRC Part #</TableCell>
                   <TableCell>Machine</TableCell>
                   <TableCell align="center">Quantity</TableCell>
                   <TableCell align="right">Unit Cost</TableCell>
@@ -371,7 +368,6 @@ const TransactionHistory: React.FC = () => {
                     <TableCell>{dayjs(transaction.usage_date).format('MMM D, YYYY h:mm A')}</TableCell>
                     <TableCell>{transaction.part_name}</TableCell>
                     <TableCell>{transaction.manufacturer_part_number || '-'}</TableCell>
-                    <TableCell>{transaction.crc_part_number}</TableCell>
                     <TableCell>{transaction.machine_name || '-'}</TableCell>
                     <TableCell align="center">
                       {getQuantityDisplay(transaction.quantity, transaction.reason, transaction.transaction_type)}
@@ -383,7 +379,7 @@ const TransactionHistory: React.FC = () => {
                 ))}
                 {transactions.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">
+                    <TableCell colSpan={6} align="center">
                       {startDate && endDate ? 'No transactions found' : 'Select a date range to view transactions'}
                     </TableCell>
                   </TableRow>

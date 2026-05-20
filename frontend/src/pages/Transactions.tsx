@@ -37,7 +37,6 @@ interface Transaction {
   part_id: number;
   part_name: string;
   manufacturer_part_number: string;
-  crc_part_number: string;
   machine_name: string;
   type: string;
   quantity: number;
@@ -153,7 +152,6 @@ const Transactions = () => {
     } else {
       const filtered = transactions.filter(transaction =>
         transaction.part_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.crc_part_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.manufacturer_part_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.machine_name?.toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -212,42 +210,41 @@ const Transactions = () => {
       // Set column widths
       worksheet.columns = [
         { width: 15 }, // Date
-        { width: 35 }, // Part Name  
-        { width: 25 }, // CRC Part #
+        { width: 35 }, // Part Name
+        { width: 25 }, // Mfg Part #
         { width: 25 }, // Machine
         { width: 12 }, // Quantity
         { width: 15 }, // Unit Cost
-        { width: 15 }, // Extra column for better layout
       ];
 
       // Add title row
-      const titleRow = worksheet.addRow(['Parts Usage History Report', '', '', '', '', '', '']);
+      const titleRow = worksheet.addRow(['Parts Usage History Report', '', '', '', '', '']);
       titleRow.height = 25;
-      
+
       // Style title row
-      worksheet.mergeCells('A1:G1');
+      worksheet.mergeCells('A1:F1');
       titleRow.getCell(1).font = { bold: true, size: 14 };
       titleRow.getCell(1).alignment = { horizontal: 'center', vertical: 'middle' };
 
       // Add summary row
-      const summaryRow = worksheet.addRow(['Summary', '', '', `Total Items: ${totalItems}`, '', `Total Cost: $${totalCost.toFixed(2)}`, '']);
+      const summaryRow = worksheet.addRow(['Summary', '', `Total Items: ${totalItems}`, '', `Total Cost: $${totalCost.toFixed(2)}`, '']);
       summaryRow.height = 20;
-      
+
       // Style summary row
-      worksheet.mergeCells('A2:C2');
-      worksheet.mergeCells('F2:G2');
+      worksheet.mergeCells('A2:B2');
+      worksheet.mergeCells('E2:F2');
       summaryRow.getCell(1).font = { bold: true, size: 11 };
       summaryRow.getCell(4).font = { bold: true };
       summaryRow.getCell(6).font = { bold: true };
       summaryRow.getCell(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE6E6FA' } };
-      summaryRow.getCell(4).alignment = { horizontal: 'center' };
-      summaryRow.getCell(6).alignment = { horizontal: 'center' };
+      summaryRow.getCell(3).alignment = { horizontal: 'center' };
+      summaryRow.getCell(5).alignment = { horizontal: 'center' };
 
       // Add empty row
       worksheet.addRow([]);
 
       // Add header row
-      const headerRow = worksheet.addRow(['Date', 'Part Name', 'CRC Part #', 'Machine', 'Quantity', 'Unit Cost']);
+      const headerRow = worksheet.addRow(['Date', 'Part Name', 'Mfg Part #', 'Machine', 'Quantity', 'Unit Cost']);
       headerRow.height = 20;
       
       // Style header row
@@ -268,7 +265,7 @@ const Transactions = () => {
         const row = worksheet.addRow([
           formatDateShort(transaction.date),
           transaction.part_name,
-          transaction.crc_part_number,
+          transaction.manufacturer_part_number || 'N/A',
           transaction.machine_name || 'N/A',
           transaction.quantity,
           Number(transaction.unit_cost) || 0
@@ -333,8 +330,7 @@ const Transactions = () => {
       renderCell: (params: GridRenderCellParams) => formatDateShort(params.value)
     },
     { field: 'part_name', headerName: 'Part Name', flex: 2 },
-    { field: 'crc_part_number', headerName: 'CRC Part #', flex: 1.2 },
-    { field: 'manufacturer_part_number', headerName: 'Mfg Part #', flex: 1.2 },
+    { field: 'manufacturer_part_number', headerName: 'Mfg Part #', flex: 1.5 },
     { field: 'machine_name', headerName: 'Machine', flex: 1.5 },
     { 
       field: 'quantity', 

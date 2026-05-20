@@ -271,8 +271,7 @@ router.get('/cost-analysis', auth, async (req, res) => {
         p.quantity,
         COALESCE(p.unit_cost, 0) as unit_cost,
         (p.quantity * COALESCE(p.unit_cost, 0)) as total_value,
-        p.manufacturer_part_number,
-        p.crc_part_number
+        p.manufacturer_part_number
       FROM parts p
       WHERE p.status = 'active'
         AND p.unit_cost > 0
@@ -325,8 +324,7 @@ router.get('/cost-analysis', auth, async (req, res) => {
         total_value: parseFloat(part.total_value).toFixed(2),
         quantity: part.quantity,
         unit_cost: parseFloat(part.unit_cost).toFixed(2),
-        manufacturer_part_number: part.manufacturer_part_number,
-        crc_part_number: part.crc_part_number
+        manufacturer_part_number: part.manufacturer_part_number
       })),
       cost_trends: costTrends.rows.map(trend => ({
         month: trend.month,

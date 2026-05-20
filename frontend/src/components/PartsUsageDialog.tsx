@@ -7,7 +7,6 @@ interface Part {
   id?: number;
   part_id: string;
   name: string;
-  crc_part_number?: string;
   manufacturer_part_number?: string;
   quantity: number;
   minimum_quantity: number;
@@ -61,7 +60,6 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
         id: typeof preSelectedPart.part_id === 'string' ? parseInt(preSelectedPart.part_id) : preSelectedPart.part_id || preSelectedPart.id,
         part_id: preSelectedPart.part_id?.toString() || preSelectedPart.id?.toString() || '0',
         name: preSelectedPart.name,
-        crc_part_number: preSelectedPart.crc_part_number,
         manufacturer_part_number: preSelectedPart.manufacturer_part_number,
         quantity: preSelectedPart.quantity,
         minimum_quantity: preSelectedPart.minimum_quantity
@@ -289,7 +287,6 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
                           <div>
                             <div className="fw-bold">{part.name}</div>
                             <div className="info-text">
-                              CRC: {part.crc_part_number || 'N/A'} | 
                               Mfr: {part.manufacturer_part_number || 'N/A'}
                             </div>
                           </div>
@@ -313,7 +310,6 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
                       <div>
                         <div className="fw-bold">{selectedPart.name}</div>
                         <div className="info-text">
-                          CRC: {selectedPart.crc_part_number || 'N/A'}<br />
                           Mfr: {selectedPart.manufacturer_part_number || 'N/A'}
                         </div>
                       </div>

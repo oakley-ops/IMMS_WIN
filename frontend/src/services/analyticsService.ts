@@ -42,7 +42,6 @@ export interface CostAnalysis {
     quantity: number;
     unit_cost: number;
     manufacturer_part_number?: string;
-    crc_part_number?: string;
   }>;
   cost_trends?: Array<{
     month: string;

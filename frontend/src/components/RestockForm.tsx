@@ -7,7 +7,6 @@ import ModalPortal from './ModalPortal';
 interface Part {
   part_id: string;
   name: string;
-  crc_part_number?: string;
   manufacturer_part_number?: string;
   quantity: number;
   minimum_quantity: number;
@@ -38,7 +37,6 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, pre
         part_id: preSelectedPart.part_id?.toString() || preSelectedPart.id?.toString() || '0',
         id: typeof preSelectedPart.part_id === 'string' ? parseInt(preSelectedPart.part_id) : preSelectedPart.part_id || preSelectedPart.id || 0,
         name: preSelectedPart.name,
-        crc_part_number: preSelectedPart.crc_part_number,
         manufacturer_part_number: preSelectedPart.manufacturer_part_number,
         quantity: preSelectedPart.quantity,
         minimum_quantity: preSelectedPart.minimum_quantity
@@ -179,7 +177,7 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, pre
                           <div>
                             <div>{part.name}</div>
                             <div className="part-info">
-                              CRC: {part.crc_part_number || 'N/A'} | Mfr: {part.manufacturer_part_number || 'N/A'}
+                              Mfr: {part.manufacturer_part_number || 'N/A'}
                             </div>
                           </div>
                           <div className="text-end">
@@ -201,7 +199,7 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, pre
                       {getStockStatus(selectedPart)}
                     </div>
                     <div className="part-info mb-2">
-                      CRC: {selectedPart.crc_part_number || 'N/A'} | Mfr: {selectedPart.manufacturer_part_number || 'N/A'}
+                      Mfr: {selectedPart.manufacturer_part_number || 'N/A'}
                     </div>
                     <div className="quantity-info">
                       Current Stock: {selectedPart.quantity} | Minimum Required: {selectedPart.minimum_quantity}
