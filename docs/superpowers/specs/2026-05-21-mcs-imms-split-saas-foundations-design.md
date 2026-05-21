@@ -182,6 +182,31 @@ fiservinventory
 
 The auth service has its own connection pool and only `SET search_path = auth`. If extracted to its own DB host later, it's a `pg_dump` of one schema.
 
+## Shared reference data (machines, parts, technicians)
+
+MCS depends on data that IMMS owns — most importantly `machines` (referenced via FK from `badge_readers.machine_id`, joined in every call-board / metrics / history query) and `parts` (autocomplete on call-resolution). It also touches `technicians` lightly.
+
+**Decision: keep direct Postgres reads from MCS to IMMS-owned tables (status quo, made explicit).**
+
+Considered and rejected:
+- *HTTP fetch from IMMS API* — breaks the resilience requirement. If the IMMS app is down (the user's original concern), the MCS call board can't render any row because every row needs a machine name.
+- *Replicate machines into MCS's schema* — highest effort, two copies of the truth, no clear payoff while both apps share the same Postgres instance.
+
+Rules that make the status quo "best practice" rather than accidental coupling:
+
+1. **Treat `public.machines`, `public.parts`, `public.technicians` as read-only contracts for MCS.** IMMS owns the write path; MCS only `SELECT`s.
+2. **Grant MCS's Postgres role exactly `SELECT` on those tables** — no `UPDATE` / `INSERT` / `DELETE` permissions, enforced by the DB, not by convention.
+3. **Document the columns MCS depends on** in this spec (and in a comment at the top of each affected table's migration) so IMMS can't rename them without a coordinated change.
+4. **Tenant_id applies uniformly.** `machines` and `parts` get `tenant_id` columns same as every other domain table; MCS's WHERE clauses already include it.
+
+Columns MCS reads today (the contract surface):
+
+- `machines`: `machine_id`, `machine_name` (or equivalent display name), `tenant_id` (new)
+- `parts`: `part_id`, `name`, `manufacturer_part_number`, `quantity`, `tenant_id` (new) — used for autocomplete only
+- `technicians`: light usage; specifics to be enumerated in the implementation plan
+
+If a future requirement breaks this model (e.g., a customer who buys MCS but not IMMS), revisit Option C (replicate machines into MCS's schema). Not before.
+
 ## Frontend: MCS standalone UI
 
 ### Top nav
