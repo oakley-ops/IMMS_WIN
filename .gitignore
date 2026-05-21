@@ -77,4 +77,10 @@ nul
 
 # Misplaced sibling project (kept outside the repo)
 UsersFiserCQM/
- 
+
+# Build/deploy artifacts
+*.zip
+
+# Excel outputs from ad-hoc analysis (regenerate via scripts/inventory-matching)
+*.xlsx
+*.xls
