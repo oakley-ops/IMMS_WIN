@@ -27,10 +27,11 @@ We want a DR plan that reduces RTO and RPO without requiring cloud spend or new 
 - Pi (`10.1.10.50`) is on the same LAN as a client only — it does not run Postgres today.
 
 ### Backend DB layer
-- `pg` Pool with `max=20`, `idleTimeoutMillis=30000`, `connectionTimeoutMillis=2000`.
-- Startup retry loop (5 attempts, 5 s apart) in `backend/db/index.js`.
-- `executeWithRetry` in `backend/db.js` retries transient connection errors (SQLSTATE `08*` / `57*`) with exponential backoff.
-- **Tech debt:** three duplicate db modules exist — `backend/db.js`, `backend/db/index.js`, `backend/src/database/db.js`. Consolidate before wiring in failover logic so there is one place to change the connection target.
+- Single `pg` Pool in `backend/db.js` with `max=20`, `idleTimeoutMillis=30000`, `connectionTimeoutMillis=2000`.
+- `executeWithRetry` retries transient connection errors (SQLSTATE `08*` / `57*`) with exponential backoff.
+- Exports: `pool`, `query`, `getClient`, `getClientWithTimeout`, `executeWithRetry`, `executeTransaction`, `checkDatabaseHealth`.
+- ~20 consumers across `backend/src/`, `backend/scripts/`, `backend/utils/`, `backend/config/`, and `backend/migrations/` all resolve to this one module.
+- **Resolved 2026-05-21 (commit `a19e0073`):** previously three independent db modules existed (`backend/db.js`, `backend/db/index.js`, `backend/src/database/db.js`), each opening its own pool. Consolidated to a single pool so there is one place to repoint at the standby during failover.
 
 ### Backup tooling (already in place — do not rebuild)
 - `backend/scripts/backup-database.ps1` — nightly `pg_dump` (custom + plain SQL), gzip, integrity verify via `pg_restore --list`, 30-day retention, USB sync, logs to `C:\DatabaseBackups\backup.log`.
@@ -113,8 +114,8 @@ Each phase is independently shippable. Do not start a phase until its prerequisi
 **Phase 0 — Prep (no DB changes)**
 - Confirm Pi hardware (Question 1 + 2).
 - Confirm Postgres version on PC; install same major version on Pi.
-- Consolidate the three duplicate `db.js` modules in the backend into one.
-- Make `DATABASE_URL` the single source of truth for connection target (so failover is one env var change).
+- ~~Consolidate the three duplicate `db.js` modules in the backend into one.~~ **Done 2026-05-21 (commit `a19e0073`).**
+- Make `DATABASE_URL` the single source of truth for connection target (so failover is one env var change). *(Partly done: the consolidated `backend/db.js` already reads `process.env.DATABASE_URL`. Still need to audit `backend/config/database.js` and `.env` files to ensure no code path constructs a connection string from separate `DB_HOST`/`DB_USER`/etc. vars.)*
 
 **Phase 1 — WAL archiving on primary (improves RPO immediately, no standby needed yet)**
 - Enable `archive_mode=on` + `archive_command` writing WALs to `C:\DatabaseBackups\wal\` (and into USB / cloud sync).
@@ -141,7 +142,7 @@ Each phase is independently shippable. Do not start a phase until its prerequisi
 ## 7. References
 
 - Existing scripts: `backend/scripts/backup-database.ps1`, `backend/scripts/disaster-recovery.ps1`, `backend/scripts/backup-control-panel.bat`.
-- Backend DB modules to consolidate: `backend/db.js`, `backend/db/index.js`, `backend/src/database/db.js`.
+- Single consolidated backend DB module: `backend/db.js`.
 - Postgres docs (when implementing): "Continuous Archiving and Point-in-Time Recovery", "Streaming Replication", "Hot Standby".
 
 ---
