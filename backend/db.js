@@ -172,8 +172,10 @@ const checkDatabaseHealth = async () => {
 
 module.exports = {
   pool,
+  query: (text, params) => pool.query(text, params),
+  getClient: () => pool.connect(),
   getClientWithTimeout,
   executeWithRetry,
   executeTransaction,
   checkDatabaseHealth
-}; 
+};

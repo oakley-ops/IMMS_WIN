@@ -33,7 +33,7 @@ const { Server } = require('socket.io');
 const app = require('./src/app');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const db = require('./src/database/db');
+const db = require('./db');
 
 const server = http.createServer(app);
 const io = new Server(server, {
