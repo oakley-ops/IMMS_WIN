@@ -1,10 +1,15 @@
 const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
-const dbConfig = require('../config/database')[process.env.NODE_ENV || 'development'];
+require('dotenv').config();
+
+if (!process.env.DATABASE_URL) {
+  console.error('ERROR: DATABASE_URL environment variable is not set');
+  process.exit(1);
+}
 
 async function runMigrations() {
-  const pool = new Pool(dbConfig);
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
   
   try {
     // Create migrations table if it doesn't exist

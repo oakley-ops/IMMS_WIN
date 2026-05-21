@@ -2,14 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 
-// Load database configuration
 require('dotenv').config();
 const dbConfig = {
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT
+  connectionString: process.env.DATABASE_URL
 };
 
 async function runMigration() {
