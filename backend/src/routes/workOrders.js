@@ -1,6 +1,6 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
-const db = require('../database/db');
+const db = require('../../db');
 const auth = require('../middleware/auth');
 const { generateWorkOrderPDF } = require('../utils/workOrderPdfGenerator');
 
@@ -44,7 +44,7 @@ async function generateTechnicianWorkOrderNumber(technicianName) {
     const sequence = parseInt(countResult.rows[0].count) + 1;
     const workOrderNumber = `${prefix}${String(sequence).padStart(3, '0')}`;
     
-    console.log(`📋 Generated work order number: ${workOrderNumber} for ${technicianName || 'Unassigned'}`);
+    console.log(`ðŸ“‹ Generated work order number: ${workOrderNumber} for ${technicianName || 'Unassigned'}`);
     
     return workOrderNumber;
   } catch (error) {
@@ -317,7 +317,7 @@ router.put('/:id', auth, async (req, res) => {
         technician_name !== currentWorkOrder.rows[0].technician_name) {
       // Technician is being reassigned, generate new work order number
       newWorkOrderNumber = await generateTechnicianWorkOrderNumber(technician_name);
-      console.log(`🔄 Reassigning work order from ${currentWorkOrder.rows[0].technician_name} to ${technician_name}`);
+      console.log(`ðŸ”„ Reassigning work order from ${currentWorkOrder.rows[0].technician_name} to ${technician_name}`);
       console.log(`   Old WO#: ${currentWorkOrder.rows[0].work_order_number} -> New WO#: ${newWorkOrderNumber}`);
     }
 
@@ -474,7 +474,7 @@ router.post('/:workOrderId/comments', auth, async (req, res) => {
 router.get('/:id/pdf', auth, async (req, res) => {
   try {
     const { id } = req.params;
-    console.log(`📄 Generating PDF for Work Order ${id}...`);
+    console.log(`ðŸ“„ Generating PDF for Work Order ${id}...`);
 
     // Get complete work order data
     const woResult = await db.query(`
@@ -550,7 +550,7 @@ router.get('/:id/pdf', auth, async (req, res) => {
     // Send PDF as binary
     res.end(pdfBuffer, 'binary');
 
-    console.log(`✅ PDF generated for Work Order ${workOrder.work_order_number}`);
+    console.log(`âœ… PDF generated for Work Order ${workOrder.work_order_number}`);
   } catch (error) {
     console.error('Error generating work order PDF:', error);
     res.status(500).json({ 

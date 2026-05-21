@@ -1,8 +1,8 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
 const UserController = require('../controllers/UserController.js');
 const authMiddleware = require('../middleware/authMiddleware');
-const { pool } = require('../config/db');
+const { pool } = require('../../db');
 const roleAuthorization = require('../middleware/roleMiddleware');
 const bcrypt = require('bcrypt');
 

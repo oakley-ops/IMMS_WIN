@@ -1,6 +1,6 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
-const db = require('../database/db');
+const db = require('../../db');
 const auth = require('../middleware/auth');
 const { generateAnalyticsReportPDF } = require('../utils/analyticsReportGenerator');
 const { generatePuppeteerAnalyticsPDF } = require('../utils/puppeteerPdfGenerator');
@@ -927,7 +927,7 @@ router.get('/export/pdf-puppeteer', auth, async (req, res) => {
     // Send PDF as binary buffer
     res.end(pdfBuffer, 'binary');
 
-    console.log('✅ Puppeteer PDF analytics report generated successfully');
+    console.log('âœ… Puppeteer PDF analytics report generated successfully');
   } catch (error) {
     console.error('Error generating Puppeteer PDF:', error);
     res.status(500).json({ 

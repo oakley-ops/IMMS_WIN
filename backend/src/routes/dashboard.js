@@ -1,10 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const { Pool } = require('pg');
-const config = require('../config/database');
+const { pool } = require('../../db');
 const authMiddleware = require('../middleware/authMiddleware');
-
-const pool = new Pool(process.env.NODE_ENV === 'production' ? config.production : config.development);
 
 // Helper function to check if user has permission to manage purchase orders
 const canManagePurchaseOrders = (userRole) => {

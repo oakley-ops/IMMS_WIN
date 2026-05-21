@@ -1,10 +1,10 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
-const db = require('../database/db');
+const db = require('../../db');
 const auth = require('../middleware/auth');
 const { getShiftName } = require('../config/shifts');
 
-// ─── Badge Swipe (core endpoint, no auth — called from kiosk) ───────────────
+// â”€â”€â”€ Badge Swipe (core endpoint, no auth â€” called from kiosk) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 router.post('/badge-swipe', async (req, res) => {
   const { badge_id, reader_key } = req.body;
@@ -106,7 +106,7 @@ router.post('/badge-swipe', async (req, res) => {
   }
 });
 
-// ─── Active calls for the call board (no auth — public TV display) ───────────
+// â”€â”€â”€ Active calls for the call board (no auth â€” public TV display) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 router.get('/active', async (req, res) => {
   try {
@@ -124,7 +124,7 @@ router.get('/active', async (req, res) => {
   }
 });
 
-// ─── Reader info for station page (no auth — kiosk) ─────────────────────────
+// â”€â”€â”€ Reader info for station page (no auth â€” kiosk) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 router.get('/reader/:reader_key', async (req, res) => {
   try {
@@ -145,7 +145,7 @@ router.get('/reader/:reader_key', async (req, res) => {
   }
 });
 
-// ─── All calls (auth required) ───────────────────────────────────────────────
+// â”€â”€â”€ All calls (auth required) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 router.get('/', auth, async (req, res) => {
   try {
@@ -178,7 +178,7 @@ router.get('/', auth, async (req, res) => {
   }
 });
 
-// ─── Single call ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Single call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 router.get('/:id', auth, async (req, res) => {
   try {
@@ -195,7 +195,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 });
 
-// ─── Resolve a call ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Resolve a call â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 router.put('/:id/resolve', auth, async (req, res) => {
   const { reason_category, resolution_notes, problem_description } = req.body;
@@ -232,7 +232,7 @@ router.put('/:id/resolve', auth, async (req, res) => {
   }
 });
 
-// ─── Metrics ─────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Metrics â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 // Every query reads v_maintenance_calls_enriched. Filters: from, to, machine_id,
 // shift, reason. "Resolved-only" dimensions exclude open calls; KPI cards
 // include an open_calls count from the unfiltered (status-wise) base.
@@ -365,7 +365,7 @@ router.get('/stats/metrics', auth, async (req, res) => {
   }
 });
 
-// ─── Badge admin ──────────────────────────────────────────────────────────────
+// â”€â”€â”€ Badge admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 router.get('/admin/badges', auth, async (req, res) => {
   try {
@@ -425,7 +425,7 @@ router.put('/admin/badges/:badge_id', auth, async (req, res) => {
   }
 });
 
-// ─── Reader admin ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ Reader admin â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 router.get('/admin/readers', auth, async (req, res) => {
   try {

@@ -1,6 +1,6 @@
-const express = require('express');
+﻿const express = require('express');
 const router = express.Router();
-const db = require('../database/db');
+const db = require('../../db');
 const auth = require('../middleware/auth');
 
 // Create Task
