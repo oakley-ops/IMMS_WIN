@@ -114,8 +114,8 @@ Each phase is independently shippable. Do not start a phase until its prerequisi
 **Phase 0 — Prep (no DB changes)**
 - Confirm Pi hardware (Question 1 + 2).
 - Confirm Postgres version on PC; install same major version on Pi.
-- ~~Consolidate the three duplicate `db.js` modules in the backend into one.~~ **Done 2026-05-21 (commit `a19e0073`).**
-- Make `DATABASE_URL` the single source of truth for connection target (so failover is one env var change). *(Partly done: the consolidated `backend/db.js` already reads `process.env.DATABASE_URL`. Still need to audit `backend/config/database.js` and `.env` files to ensure no code path constructs a connection string from separate `DB_HOST`/`DB_USER`/etc. vars.)*
+- ~~Consolidate the three duplicate `db.js` modules in the backend into one.~~ **Done 2026-05-21 (commits `a19e0073` + `2375e244`).** Single pool in `backend/db.js`; 16 missed-import follow-ups also repointed.
+- ~~Make `DATABASE_URL` the single source of truth for connection target (so failover is one env var change).~~ **Done 2026-05-21 (commits `a5085418` + `36c8b753`).** Live app, `npm run migrate` runner, and all migration scripts read `DATABASE_URL` directly. Dead `validateEnv.js` and `src/config/database.js` removed. Cargo-cult `PG*` env vars stripped from `start-app.bat` and Pi docs. `.env.example` marks `DATABASE_URL` as canonical. Failover is now one `.env` edit + backend restart.
 
 **Phase 1 — WAL archiving on primary (improves RPO immediately, no standby needed yet)**
 - Enable `archive_mode=on` + `archive_command` writing WALs to `C:\DatabaseBackups\wal\` (and into USB / cloud sync).
