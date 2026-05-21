@@ -47,7 +47,7 @@ taskkill /F /IM node.exe >nul 2>&1
 
 :: Start the backend server with email monitoring in a minimized window
 echo Starting Backend Server with Email Monitoring (http://0.0.0.0:4000)...
-start /min cmd /k "cd backend && set PORT=4000 && set PGHOST=localhost && set PGUSER=postgres && set PGDATABASE=imms_inventory && set HOST=0.0.0.0 && npm run start:all"
+start /min cmd /k "cd backend && set PORT=4000 && set HOST=0.0.0.0 && npm run start:all"
 
 :: Wait for a moment to let backend initialize
 timeout /t 8

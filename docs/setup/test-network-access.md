@@ -15,8 +15,10 @@ All the necessary configuration changes have been made:
 ### 1. Start Backend (Terminal 1)
 ```powershell
 cd backend
-$env:PGHOST="localhost"; $env:PGUSER="postgres"; $env:PGDATABASE="imms_inventory"; node index.js
+node index.js
 ```
+
+Backend reads `DATABASE_URL` from `backend/.env` — no need to set `PG*` vars.
 
 ### 2. Start Frontend (Terminal 2) 
 ```powershell
