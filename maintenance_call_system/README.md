@@ -2,6 +2,16 @@
 
 A factory-floor maintenance call system. Operators tap a badge at a machine-side reader to summon a technician; technicians tap to acknowledge, suspend, or resolve the call. Live call board, real-time updates, and per-shift metrics.
 
+## Multi-tenancy status (Step 2a complete)
+
+Every domain table has a `tenant_id INT NOT NULL DEFAULT 1` column with a FK to `auth.tenants(tenant_id)` and an index on `tenant_id`. The seeded `fiserv` tenant has `tenant_id = 1`, so every existing row is correctly scoped.
+
+**What works today:** schema is multi-tenant-ready; one tenant in operation.
+
+**What is NOT yet done (Step 2b — deferred):** existing SQL queries do not filter by `tenant_id`. The `currentTenantId(req)` helper at `src/middleware/tenantScope.js` returns `1` for every call. Until query sites are rewritten, do not onboard a second tenant — cross-tenant data leakage would result.
+
+See `docs/superpowers/specs/2026-05-21-mcs-imms-split-saas-foundations-design.md` and `docs/superpowers/plans/2026-05-22-tenant-id-schema-rollout.md`.
+
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌──────────────┐
 │  Call Station   │    │   Call Board     │    │   Admin UI   │
