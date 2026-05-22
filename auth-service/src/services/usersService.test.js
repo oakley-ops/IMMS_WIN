@@ -68,4 +68,30 @@ describe('usersService.update', () => {
     await expect(usersService.update(db, 1, 99, { status: 'disabled' }))
       .rejects.toMatchObject({ code: 'not_found' });
   });
+
+  it('hashes the password and calls updatePassword when patch.password is provided', async () => {
+    const findById = vi.spyOn(usersRepo, 'findById')
+      .mockResolvedValueOnce({ user_id: 7, tenant_id: 1, email: 'a@b', status: 'active' })  // initial check
+      .mockResolvedValueOnce({ user_id: 7, tenant_id: 1, email: 'a@b', status: 'active' }); // get() at end
+    const hashSpy = vi.spyOn(password, 'hash').mockImplementation(async (p) => `hashed:${p}`);
+    const updatePwd = vi.spyOn(usersRepo, 'updatePassword').mockResolvedValue(true);
+    vi.spyOn(rolesRepo, 'findKeysForUser').mockResolvedValue([]);
+
+    await usersService.update(db, 1, 7, { password: 'new-strong-pw' });
+
+    expect(hashSpy).toHaveBeenCalledWith('new-strong-pw');
+    expect(updatePwd).toHaveBeenCalledWith(db, 1, 7, 'hashed:new-strong-pw');
+  });
+
+  it('calls setRolesForUser when patch.roles is provided', async () => {
+    vi.spyOn(usersRepo, 'findById')
+      .mockResolvedValueOnce({ user_id: 7, tenant_id: 1, email: 'a@b', status: 'active' })
+      .mockResolvedValueOnce({ user_id: 7, tenant_id: 1, email: 'a@b', status: 'active' });
+    const setRoles = vi.spyOn(rolesRepo, 'setRolesForUser').mockResolvedValue(['mcs.tech']);
+    vi.spyOn(rolesRepo, 'findKeysForUser').mockResolvedValue(['mcs.tech']);
+
+    await usersService.update(db, 1, 7, { roles: ['mcs.tech'] });
+
+    expect(setRoles).toHaveBeenCalledWith(db, 7, ['mcs.tech']);
+  });
 });
