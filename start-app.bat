@@ -17,6 +17,18 @@ start /min cmd /k "cd backend && set PORT=4000 && set HOST=0.0.0.0 && npm start"
 :: Wait for a moment to let backend initialize
 timeout /t 8
 
+:: Start MCS Backend
+echo Starting MCS Backend (http://0.0.0.0:4001)...
+start /min cmd /k "cd maintenance_call_system\backend && npm start"
+
+timeout /t 3
+
+:: Start MCS Frontend
+echo Starting MCS Frontend (http://localhost:3003)...
+start /min cmd /k "cd maintenance_call_system\frontend && npm run dev"
+
+timeout /t 3
+
 :: Start the frontend server for localhost (camera enabled)
 echo Starting Frontend Server - Localhost (http://localhost:3002)...
 start /min cmd /k "cd frontend && npm run start:localhost-3002"
@@ -30,6 +42,7 @@ start /min cmd /k "cd frontend && npm run start:network-pi"
 
 echo.
 echo PC ACCESS: http://localhost:3002 (Camera enabled - Main interface)
+echo MCS ACCESS: http://localhost:3003 (Maintenance Call System)
 echo.
 echo NETWORK ACCESS OPTIONS:
 echo   - http://10.1.10.50:3001 (Ethernet - For Raspberry Pi and network devices)

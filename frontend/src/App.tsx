@@ -30,10 +30,6 @@ import WorkOrderDetail from './pages/WorkOrderDetail';
 import DieTracker from './pages/DieTracker';
 import DieDetail from './pages/DieDetail';
 import DieReports from './pages/DieReports';
-import CallBoard from './components/CallBoard';
-import CallStation from './components/CallStation';
-import MaintenanceCalls from './pages/MaintenanceCalls';
-import BadgeAdmin from './components/BadgeAdmin';
 
 const App: React.FC = () => {
   return (
@@ -292,36 +288,6 @@ const App: React.FC = () => {
               <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
                 <Navigation>
                   <WorkOrderForm />
-                </Navigation>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Maintenance Call Board — public, no auth (TV display) */}
-          <Route path="/maintenance-board" element={<CallBoard />} />
-
-          {/* Maintenance Call Station — public, no auth (kiosk at machine) */}
-          <Route path="/maintenance-call/station" element={<CallStation />} />
-
-          {/* Maintenance Calls management */}
-          <Route
-            path="/maintenance-calls"
-            element={
-              <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
-                <Navigation>
-                  <MaintenanceCalls />
-                </Navigation>
-              </ProtectedRoute>
-            }
-          />
-
-          {/* Badge & Reader Admin */}
-          <Route
-            path="/maintenance-calls/admin"
-            element={
-              <ProtectedRoute requiredPermission="CAN_MANAGE_USERS">
-                <Navigation>
-                  <BadgeAdmin />
                 </Navigation>
               </ProtectedRoute>
             }

@@ -3,23 +3,33 @@ import React from 'react';
 import Link from 'next/link';
 import {
   Box, AppBar, Toolbar, Typography, Button, Drawer,
-  List, ListItem, ListItemIcon, ListItemText, Divider, IconButton,
+  List, ListItem, ListItemIcon, ListItemText, IconButton,
 } from '@mui/material';
-import { Dashboard, History, Logout, Menu as MenuIcon, Campaign, Insights } from '@mui/icons-material';
+import { Dashboard, History, Logout, Menu as MenuIcon, Campaign, Insights, Settings } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { MCS_ORANGE, DARK_BG } from '../theme';
 
 const DRAWER_WIDTH = 220;
+
+interface NavItem {
+  label: string;
+  href: string;
+  icon: React.ReactNode;
+  newTab?: boolean;
+}
 
 export default function NavLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, redirectToLogin } = useAuth();
   const [open, setOpen] = React.useState(false);
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME;
 
-  const navItems = [
+  const navItems: NavItem[] = [
     { label: 'Call History', href: '/calls',     icon: <History /> },
-    { label: 'Live Board',   href: '/board',     icon: <Dashboard /> },
+    { label: 'Live Board',   href: '/board',     icon: <Dashboard />, newTab: true },
     { label: 'Analytics',    href: '/analytics', icon: <Insights /> },
+    ...(user?.role === 'admin'
+      ? [{ label: 'Admin', href: '/admin', icon: <Settings /> } satisfies NavItem]
+      : [] as NavItem[]),
   ];
 
   return (
@@ -48,6 +58,7 @@ export default function NavLayout({ children }: { children: React.ReactNode }) {
       <Drawer
         open={open}
         onClose={() => setOpen(false)}
+        keepMounted // keeps nav items in DOM: required for tests and smoother open animation
         sx={{ '& .MuiDrawer-paper': { width: DRAWER_WIDTH, bgcolor: '#1E1E1E', color: 'white', mt: '64px' } }}
       >
         <List>
@@ -56,6 +67,7 @@ export default function NavLayout({ children }: { children: React.ReactNode }) {
               key={item.href}
               component={Link}
               href={item.href}
+              {...(item.newTab ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               onClick={() => setOpen(false)}
               sx={{ color: 'white', '&:hover': { bgcolor: 'rgba(255,107,53,0.1)' } }}
             >
@@ -63,16 +75,6 @@ export default function NavLayout({ children }: { children: React.ReactNode }) {
               <ListItemText primary={item.label} />
             </ListItem>
           ))}
-          <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)', my: 1 }} />
-          <ListItem
-            component={Link}
-            href="/board"
-            target="_blank"
-            onClick={() => setOpen(false)}
-            sx={{ color: 'grey.500', '&:hover': { color: 'white' } }}
-          >
-            <ListItemText primary="Open Board in New Tab" primaryTypographyProps={{ variant: 'body2' }} />
-          </ListItem>
         </List>
       </Drawer>
 

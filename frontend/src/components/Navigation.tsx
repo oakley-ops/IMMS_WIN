@@ -20,19 +20,17 @@ import {
   Dashboard,
   Inventory,
   Build,
-  SwapHoriz,
   ShoppingCart,
   People,
   Assignment,
   BarChart,
-  MonetizationOn,
   ReceiptLong,
-  PrecisionManufacturing,
   Engineering,
   PlaylistAddCheck,
   Contacts as ContactsIcon,
   Category,
   Campaign,
+  OpenInNew,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { theme, IMMS_ORANGE } from '../theme';
@@ -45,7 +43,9 @@ interface NavigationProps {
 }
 
 interface NavigationItem {
-  path: string;
+  path?: string;
+  href?: string;
+  external?: boolean;
   label: string;
   icon: React.ReactNode;
   requiredPermission?: string;
@@ -55,7 +55,19 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user, hasPermission } = useAuth();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const MCS_BASE = process.env.REACT_APP_MCS_URL || 'http://localhost:3003';
+  const buildMCSUrl = (): string => {
+    const token = localStorage.getItem('token') || '';
+    // Use encodeURIComponent-safe btoa to handle non-ASCII usernames/roles
+    const userEncoded = btoa(unescape(encodeURIComponent(JSON.stringify({
+      id: user?.id,
+      username: user?.username,
+      role: user?.role,
+    }))));
+    return `${MCS_BASE}#token=${token}&user=${userEncoded}`;
+  };
+
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const navigationItems: NavigationItem[] = [
@@ -70,7 +82,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
     { path: '/die-tracker', label: 'DIE MANAGEMENT', icon: <Category />, requiredPermission: 'CAN_VIEW_MACHINES' },
     { path: '/contacts', label: 'CONTACTS', icon: <ContactsIcon />, requiredPermission: 'CAN_VIEW_CONTACTS' },
     { path: '/technicians', label: 'TECHNICIANS', icon: <People />, requiredPermission: 'CAN_MANAGE_USERS' },
-    { path: '/maintenance-calls', label: 'MAINTENANCE CALLS', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' },
+    { href: buildMCSUrl(), external: true, label: 'MAINTENANCE SYSTEM', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' },
   ];
 
   if (hasPermission('CAN_VIEW_ALL')) {
@@ -133,20 +145,23 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
       </Box>
       <Divider sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)' }} />
       <List sx={{ flexGrow: 1, pt: 1 }}>
-        {filteredNavigationItems.map(({ path, label, icon }) => (
+        {filteredNavigationItems.map(({ path, href, external, label, icon }) => (
           <ListItem
             button
-            key={path}
-            component={Link}
-            to={path}
-            selected={location.pathname === path}
+            key={label}
+            component={external ? 'a' : Link}
+            {...(external
+              ? { href, target: '_blank', rel: 'noopener noreferrer' }
+              : { to: path ?? '/' }
+            )}
+            selected={!external && location.pathname === path}
             onClick={() => setDrawerOpen(false)}
             sx={{
               py: 1.5,
-              bgcolor: location.pathname === path ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
-              '&:hover': {
-                bgcolor: 'rgba(255, 255, 255, 0.1)',
-              }
+              bgcolor: !external && location.pathname === path
+                ? 'rgba(255, 255, 255, 0.2)'
+                : 'transparent',
+              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.1)' },
             }}
           >
             <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>{icon}</ListItemIcon>
@@ -155,10 +170,11 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
               sx={{
                 '& .MuiListItemText-primary': {
                   fontSize: '0.9rem',
-                  fontWeight: location.pathname === path ? 'bold' : 'normal'
-                }
+                  fontWeight: !external && location.pathname === path ? 'bold' : 'normal',
+                },
               }}
             />
+            {external && <OpenInNew sx={{ fontSize: 14, opacity: 0.6, color: 'white' }} />}
           </ListItem>
         ))}
       </List>

@@ -1,16 +1,20 @@
+'use client';
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   Box, Typography, Tabs, Tab, Paper, Table, TableHead, TableRow,
   TableCell, TableBody, Button, Dialog, DialogTitle, DialogContent,
   DialogActions, TextField, MenuItem, Select, FormControl, InputLabel,
-  Chip, IconButton, Tooltip, CircularProgress, Alert
+  Chip, IconButton, Tooltip, CircularProgress, Alert,
 } from '@mui/material';
 import { Add, Edit, Badge, Router } from '@mui/icons-material';
-import maintenanceCallService, { BadgeRegistration, BadgeReader } from '../services/maintenanceCallService';
+import svc from '../services/maintenanceCallService';
+import type { BadgeRegistration, BadgeReader } from '../services/maintenanceCallService';
 
 interface Machine { machine_id: number; name: string; }
 
-const BadgeAdmin: React.FC = () => {
+const MCS_BASE = process.env.NEXT_PUBLIC_MCS_URL || 'http://localhost:3003';
+
+export default function BadgeAdmin() {
   const [tab, setTab] = useState(0);
   const [badges, setBadges] = useState<BadgeRegistration[]>([]);
   const [readers, setReaders] = useState<BadgeReader[]>([]);
@@ -22,14 +26,16 @@ const BadgeAdmin: React.FC = () => {
   // Badge dialog
   const [badgeDialog, setBadgeDialog] = useState(false);
   const [editBadge, setEditBadge] = useState<BadgeRegistration | null>(null);
-  const [badgeForm, setBadgeForm] = useState({ badge_id: '', person_name: '', role: 'operator' as 'operator' | 'technician', technician_id: '' });
+  const [badgeForm, setBadgeForm] = useState({
+    badge_id: '', person_name: '', role: 'operator' as 'operator' | 'technician', technician_id: '',
+  });
 
   // Reader dialog
   const [readerDialog, setReaderDialog] = useState(false);
   const [editReader, setEditReader] = useState<BadgeReader | null>(null);
   const [readerForm, setReaderForm] = useState({ reader_key: '', machine_id: '', location_label: '' });
 
-  // Badge capture mode for new badge
+  // HID badge capture
   const [capturingBadge, setCapturingBadge] = useState(false);
   const bufferRef = React.useRef('');
   const lastKeyRef = React.useRef(0);
@@ -38,15 +44,13 @@ const BadgeAdmin: React.FC = () => {
     setLoading(true);
     try {
       const [b, r, m] = await Promise.all([
-        maintenanceCallService.getBadges(),
-        maintenanceCallService.getReaders(),
-        fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:4000/api/v1'}/machines`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
-        }).then(r => r.json())
+        svc.getBadges(),
+        svc.getReaders(),
+        svc.getMachines(),
       ]);
       setBadges(b);
       setReaders(r);
-      setMachines(Array.isArray(m) ? m : []);
+      setMachines(m);
     } catch {
       setError('Failed to load data');
     } finally {
@@ -56,15 +60,13 @@ const BadgeAdmin: React.FC = () => {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // HID capture for badge registration
+  // HID keyboard capture for badge registration
   useEffect(() => {
     if (!capturingBadge) return;
-
     const onKeyDown = (e: KeyboardEvent) => {
       const now = Date.now();
       if (now - lastKeyRef.current > 500) bufferRef.current = '';
       lastKeyRef.current = now;
-
       if (e.key === 'Enter') {
         const badge = bufferRef.current.trim();
         bufferRef.current = '';
@@ -76,7 +78,6 @@ const BadgeAdmin: React.FC = () => {
       }
       if (e.key.length === 1) bufferRef.current += e.key;
     };
-
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [capturingBadge]);
@@ -103,15 +104,17 @@ const BadgeAdmin: React.FC = () => {
         technician_id: badgeForm.technician_id ? parseInt(badgeForm.technician_id) : undefined,
       };
       if (editBadge) {
-        await maintenanceCallService.updateBadge(editBadge.badge_id, payload);
+        await svc.updateBadge(editBadge.badge_id, payload);
       } else {
-        await maintenanceCallService.registerBadge(payload);
+        await svc.registerBadge(payload);
       }
       setSuccess('Badge saved');
       setBadgeDialog(false);
       fetchAll();
-    } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to save badge');
+    } catch (err: unknown) {
+      console.error('saveBadge error:', err);
+      const e = err as { response?: { data?: { error?: string } } };
+      setError(e?.response?.data?.error || 'Failed to save badge');
     }
   };
 
@@ -130,27 +133,34 @@ const BadgeAdmin: React.FC = () => {
   const saveReader = async () => {
     setError('');
     try {
+      const parsedMachineId = parseInt(readerForm.machine_id, 10);
+      if (!readerForm.machine_id || isNaN(parsedMachineId)) {
+        setError('Please select a machine');
+        return;
+      }
       const payload = {
         reader_key: readerForm.reader_key,
-        machine_id: parseInt(readerForm.machine_id),
+        machine_id: parsedMachineId,
         location_label: readerForm.location_label,
       };
       if (editReader) {
-        await maintenanceCallService.updateReader(editReader.reader_id, payload);
+        await svc.updateReader(editReader.reader_id, payload);
       } else {
-        await maintenanceCallService.registerReader(payload);
+        await svc.registerReader(payload);
       }
       setSuccess('Reader saved');
       setReaderDialog(false);
       fetchAll();
-    } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to save reader');
+    } catch (err: unknown) {
+      console.error('saveReader error:', err);
+      const e = err as { response?: { data?: { error?: string } } };
+      setError(e?.response?.data?.error || 'Failed to save reader');
     }
   };
 
   return (
     <Box p={3}>
-      <Typography variant="h4" fontWeight="bold" mb={3}>Badge & Reader Admin</Typography>
+      <Typography variant="h4" fontWeight="bold" mb={3}>Badge &amp; Reader Admin</Typography>
 
       {error && <Alert severity="error" onClose={() => setError('')} sx={{ mb: 2 }}>{error}</Alert>}
       {success && <Alert severity="success" onClose={() => setSuccess('')} sx={{ mb: 2 }}>{success}</Alert>}
@@ -163,12 +173,11 @@ const BadgeAdmin: React.FC = () => {
       {loading ? (
         <Box display="flex" justifyContent="center" p={4}><CircularProgress /></Box>
       ) : tab === 0 ? (
+
         /* ── Badges tab ── */
         <Box>
           <Box display="flex" justifyContent="flex-end" mb={2}>
-            <Button variant="contained" startIcon={<Add />} onClick={openNewBadge}>
-              Register Badge
-            </Button>
+            <Button variant="contained" startIcon={<Add />} onClick={openNewBadge}>Register Badge</Button>
           </Box>
           <Paper>
             <Table size="small">
@@ -193,18 +202,10 @@ const BadgeAdmin: React.FC = () => {
                     <TableCell><code>{b.badge_id}</code></TableCell>
                     <TableCell>{b.person_name}</TableCell>
                     <TableCell>
-                      <Chip
-                        label={b.role}
-                        size="small"
-                        color={b.role === 'technician' ? 'primary' : 'default'}
-                      />
+                      <Chip label={b.role} size="small" color={b.role === 'technician' ? 'primary' : 'default'} />
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={b.active ? 'Active' : 'Inactive'}
-                        size="small"
-                        color={b.active ? 'success' : 'default'}
-                      />
+                      <Chip label={b.active ? 'Active' : 'Inactive'} size="small" color={b.active ? 'success' : 'default'} />
                     </TableCell>
                     <TableCell>
                       <Tooltip title="Edit">
@@ -217,13 +218,13 @@ const BadgeAdmin: React.FC = () => {
             </Table>
           </Paper>
         </Box>
+
       ) : (
+
         /* ── Readers tab ── */
         <Box>
           <Box display="flex" justifyContent="flex-end" mb={2}>
-            <Button variant="contained" startIcon={<Add />} onClick={openNewReader}>
-              Register Reader
-            </Button>
+            <Button variant="contained" startIcon={<Add />} onClick={openNewReader}>Register Reader</Button>
           </Box>
           <Paper>
             <Table size="small">
@@ -251,7 +252,7 @@ const BadgeAdmin: React.FC = () => {
                     <TableCell>{r.location_label}</TableCell>
                     <TableCell>
                       <Typography variant="caption" color="primary" sx={{ fontFamily: 'monospace' }}>
-                        /maintenance-call/station?reader={r.reader_key}
+                        {MCS_BASE}/station?reader={r.reader_key}
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -317,11 +318,7 @@ const BadgeAdmin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setBadgeDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={saveBadge}
-            disabled={!badgeForm.badge_id || !badgeForm.person_name}
-          >
+          <Button variant="contained" onClick={saveBadge} disabled={!badgeForm.badge_id || !badgeForm.person_name}>
             Save
           </Button>
         </DialogActions>
@@ -348,7 +345,7 @@ const BadgeAdmin: React.FC = () => {
                 onChange={e => setReaderForm(f => ({ ...f, machine_id: e.target.value }))}
               >
                 <MenuItem value="">— Select Machine —</MenuItem>
-                {machines.map((m: Machine) => (
+                {machines.map(m => (
                   <MenuItem key={m.machine_id} value={m.machine_id.toString()}>{m.name}</MenuItem>
                 ))}
               </Select>
@@ -364,17 +361,11 @@ const BadgeAdmin: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setReaderDialog(false)}>Cancel</Button>
-          <Button
-            variant="contained"
-            onClick={saveReader}
-            disabled={!readerForm.reader_key || !readerForm.machine_id}
-          >
+          <Button variant="contained" onClick={saveReader} disabled={!readerForm.reader_key || !readerForm.machine_id}>
             Save
           </Button>
         </DialogActions>
       </Dialog>
     </Box>
   );
-};
-
-export default BadgeAdmin;
+}
