@@ -36,7 +36,7 @@ export default function NavLayout({ children }: { children: React.ReactNode }) {
     <Box display="flex" minHeight="100vh">
       <AppBar position="fixed" sx={{ bgcolor: DARK_BG, zIndex: t => t.zIndex.drawer + 1 }}>
         <Toolbar>
-          <IconButton color="inherit" edge="start" onClick={() => setOpen(o => !o)} sx={{ mr: 2 }}>
+          <IconButton color="inherit" edge="start" aria-label="menu" onClick={() => setOpen(o => !o)} sx={{ mr: 2 }}>
             <MenuIcon />
           </IconButton>
           <Campaign sx={{ color: MCS_ORANGE, mr: 1 }} />
@@ -58,7 +58,6 @@ export default function NavLayout({ children }: { children: React.ReactNode }) {
       <Drawer
         open={open}
         onClose={() => setOpen(false)}
-        keepMounted // keeps nav items in DOM: required for tests and smoother open animation
         sx={{ '& .MuiDrawer-paper': { width: DRAWER_WIDTH, bgcolor: '#1E1E1E', color: 'white', mt: '64px' } }}
       >
         <List>

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 // Mock Next.js Link so it renders as a plain <a> in tests
@@ -28,26 +29,34 @@ describe('NavLayout', () => {
     mockUseAuth.mockReturnValue(techUser);
   });
 
-  it('Live Board link has target="_blank"', () => {
+  it('Live Board link has target="_blank"', async () => {
+    const user = userEvent.setup();
     render(<NavLayout><div /></NavLayout>);
+    await user.click(screen.getByRole('button', { name: /menu/i }));
     const link = screen.getByText('Live Board').closest('a');
     expect(link).toHaveAttribute('target', '_blank');
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  it('Admin nav item is visible for admin role', () => {
+  it('Admin nav item is visible for admin role', async () => {
+    const user = userEvent.setup();
     mockUseAuth.mockReturnValue(adminUser);
     render(<NavLayout><div /></NavLayout>);
+    await user.click(screen.getByRole('button', { name: /menu/i }));
     expect(screen.getByText('Admin')).toBeInTheDocument();
   });
 
-  it('Admin nav item is hidden for non-admin roles', () => {
+  it('Admin nav item is hidden for non-admin roles', async () => {
+    const user = userEvent.setup();
     render(<NavLayout><div /></NavLayout>);
+    await user.click(screen.getByRole('button', { name: /menu/i }));
     expect(screen.queryByText('Admin')).not.toBeInTheDocument();
   });
 
-  it('does not render "Open Board in New Tab" footer link', () => {
+  it('does not render "Open Board in New Tab" footer link', async () => {
+    const user = userEvent.setup();
     render(<NavLayout><div /></NavLayout>);
+    await user.click(screen.getByRole('button', { name: /menu/i }));
     expect(screen.queryByText(/Open Board in New Tab/i)).not.toBeInTheDocument();
   });
 });
