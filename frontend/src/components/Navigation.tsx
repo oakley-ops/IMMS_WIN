@@ -20,14 +20,11 @@ import {
   Dashboard,
   Inventory,
   Build,
-  SwapHoriz,
   ShoppingCart,
   People,
   Assignment,
   BarChart,
-  MonetizationOn,
   ReceiptLong,
-  PrecisionManufacturing,
   Engineering,
   PlaylistAddCheck,
   Contacts as ContactsIcon,
@@ -62,30 +59,30 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
   const MCS_BASE = process.env.REACT_APP_MCS_URL || 'http://localhost:3003';
   const buildMCSUrl = (): string => {
     const token = localStorage.getItem('token') || '';
-    const userEncoded = btoa(JSON.stringify({
+    // Use encodeURIComponent-safe btoa to handle non-ASCII usernames/roles
+    const userEncoded = btoa(unescape(encodeURIComponent(JSON.stringify({
       id: user?.id,
       username: user?.username,
       role: user?.role,
-    }));
+    }))));
     return `${MCS_BASE}#token=${token}&user=${userEncoded}`;
   };
 
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const navigationItems: NavigationItem[] = [
     { path: '/', label: 'DASHBOARD', icon: <Dashboard /> },
     { path: '/parts', label: 'PARTS', icon: <Inventory /> },
     { path: '/purchase-orders', label: 'PURCHASE ORDERS', icon: <ShoppingCart />, requiredPermission: 'CAN_MANAGE_PURCHASE_ORDERS' },
-    { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong /> },
-    { path: '/machines', label: 'MACHINES', icon: <Build /> },
+    { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
+    { path: '/machines', label: 'MACHINES', icon: <Build />, requiredPermission: 'CAN_VIEW_MACHINES' },
     { path: '/work-orders', label: 'WORK ORDERS', icon: <Engineering />, requiredPermission: 'CAN_VIEW_MACHINES' },
     { path: '/pm-checklists', label: 'PM MANAGEMENT', icon: <PlaylistAddCheck />, requiredPermission: 'CAN_MANAGE_PM_CHECKLISTS' },
     { path: '/projects', label: 'PROJECTS', icon: <Assignment />, requiredPermission: 'CAN_MANAGE_PROJECTS' },
     { path: '/die-tracker', label: 'DIE MANAGEMENT', icon: <Category />, requiredPermission: 'CAN_VIEW_MACHINES' },
     { path: '/contacts', label: 'CONTACTS', icon: <ContactsIcon />, requiredPermission: 'CAN_VIEW_CONTACTS' },
     { path: '/technicians', label: 'TECHNICIANS', icon: <People />, requiredPermission: 'CAN_MANAGE_USERS' },
-    { href: buildMCSUrl(), external: true, label: 'MAINTENANCE SYSTEM', icon: <Campaign /> },
+    { href: buildMCSUrl(), external: true, label: 'MAINTENANCE SYSTEM', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' },
   ];
 
   if (hasPermission('CAN_VIEW_ALL')) {
@@ -155,7 +152,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
             component={external ? 'a' : Link}
             {...(external
               ? { href, target: '_blank', rel: 'noopener noreferrer' }
-              : { to: path! }
+              : { to: path ?? '/' }
             )}
             selected={!external && location.pathname === path}
             onClick={() => setDrawerOpen(false)}
