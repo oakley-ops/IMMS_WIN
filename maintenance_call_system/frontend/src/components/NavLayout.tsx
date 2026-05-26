@@ -28,8 +28,8 @@ export default function NavLayout({ children }: { children: React.ReactNode }) {
     { label: 'Live Board',   href: '/board',     icon: <Dashboard />, newTab: true },
     { label: 'Analytics',    href: '/analytics', icon: <Insights /> },
     ...(user?.role === 'admin'
-      ? [{ label: 'Admin', href: '/admin', icon: <Settings /> }]
-      : []),
+      ? [{ label: 'Admin', href: '/admin', icon: <Settings /> } satisfies NavItem]
+      : [] as NavItem[]),
   ];
 
   return (
@@ -58,7 +58,7 @@ export default function NavLayout({ children }: { children: React.ReactNode }) {
       <Drawer
         open={open}
         onClose={() => setOpen(false)}
-        keepMounted
+        keepMounted // keeps nav items in DOM: required for tests and smoother open animation
         sx={{ '& .MuiDrawer-paper': { width: DRAWER_WIDTH, bgcolor: '#1E1E1E', color: 'white', mt: '64px' } }}
       >
         <List>

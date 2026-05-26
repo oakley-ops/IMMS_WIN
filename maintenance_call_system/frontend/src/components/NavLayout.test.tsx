@@ -17,13 +17,14 @@ vi.mock('../contexts/AuthContext', () => ({
 import NavLayout from './NavLayout';
 import { useAuth } from '../contexts/AuthContext';
 
-const mockUseAuth = useAuth as ReturnType<typeof vi.fn>;
+const mockUseAuth = vi.mocked(useAuth);
 
 const techUser = { user: { id: 1, username: 'tech', role: 'tech' }, token: 'tok', isLoading: false, isAuthenticated: true, logout: vi.fn(), redirectToLogin: vi.fn() };
 const adminUser = { user: { id: 2, username: 'admin', role: 'admin' }, token: 'tok', isLoading: false, isAuthenticated: true, logout: vi.fn(), redirectToLogin: vi.fn() };
 
 describe('NavLayout', () => {
   beforeEach(() => {
+    vi.clearAllMocks();
     mockUseAuth.mockReturnValue(techUser);
   });
 
