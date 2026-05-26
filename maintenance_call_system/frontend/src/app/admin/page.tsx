@@ -1,10 +1,14 @@
 'use client';
 import { useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Box, CircularProgress } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import NavLayout from '../../components/NavLayout';
-import BadgeAdmin from '../../components/BadgeAdmin';
 import { MCS_ORANGE } from '../../theme';
+
+// BadgeAdmin relies on client-only APIs (localStorage via Axios interceptor).
+// Disable SSR to prevent hydration mismatches.
+const BadgeAdmin = dynamic(() => import('../../components/BadgeAdmin'), { ssr: false });
 
 export default function AdminPage() {
   const { isAuthenticated, isLoading, redirectToLogin } = useAuth();
