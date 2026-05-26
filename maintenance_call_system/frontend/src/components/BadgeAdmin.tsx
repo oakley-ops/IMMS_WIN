@@ -112,6 +112,7 @@ export default function BadgeAdmin() {
       setBadgeDialog(false);
       fetchAll();
     } catch (err: unknown) {
+      console.error('saveBadge error:', err);
       const e = err as { response?: { data?: { error?: string } } };
       setError(e?.response?.data?.error || 'Failed to save badge');
     }
@@ -132,9 +133,14 @@ export default function BadgeAdmin() {
   const saveReader = async () => {
     setError('');
     try {
+      const parsedMachineId = parseInt(readerForm.machine_id, 10);
+      if (!readerForm.machine_id || isNaN(parsedMachineId)) {
+        setError('Please select a machine');
+        return;
+      }
       const payload = {
         reader_key: readerForm.reader_key,
-        machine_id: parseInt(readerForm.machine_id),
+        machine_id: parsedMachineId,
         location_label: readerForm.location_label,
       };
       if (editReader) {
@@ -146,6 +152,7 @@ export default function BadgeAdmin() {
       setReaderDialog(false);
       fetchAll();
     } catch (err: unknown) {
+      console.error('saveReader error:', err);
       const e = err as { response?: { data?: { error?: string } } };
       setError(e?.response?.data?.error || 'Failed to save reader');
     }

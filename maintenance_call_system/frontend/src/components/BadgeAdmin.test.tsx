@@ -3,14 +3,18 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 
-const { getBadges, getReaders, getMachines } = vi.hoisted(() => ({
+const { getBadges, getReaders, getMachines, registerBadge, updateBadge, registerReader, updateReader } = vi.hoisted(() => ({
   getBadges: vi.fn(),
   getReaders: vi.fn(),
   getMachines: vi.fn(),
+  registerBadge: vi.fn(),
+  updateBadge: vi.fn(),
+  registerReader: vi.fn(),
+  updateReader: vi.fn(),
 }));
 
 vi.mock('../services/maintenanceCallService', () => ({
-  default: { getBadges, getReaders, getMachines },
+  default: { getBadges, getReaders, getMachines, registerBadge, updateBadge, registerReader, updateReader },
 }));
 
 import BadgeAdmin from './BadgeAdmin';
