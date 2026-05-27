@@ -280,7 +280,8 @@ const svc = {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       responseType: 'blob',
     });
-    return response.data as Blob;
+    // Explicitly set MIME type — Axios doesn't always preserve Content-Type on blobs.
+    return new Blob([response.data], { type: 'application/pdf' });
   },
 };
 

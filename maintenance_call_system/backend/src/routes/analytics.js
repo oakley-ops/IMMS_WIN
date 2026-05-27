@@ -66,11 +66,14 @@ router.get(
       const page = await browser.newPage();
       await page.setContent(html, { waitUntil: 'networkidle0' });
 
-      const pdf = await page.pdf({
+      const pdfRaw = await page.pdf({
         format: 'A4',
         printBackground: true,
         margin: { top: '15mm', right: '12mm', bottom: '15mm', left: '12mm' },
       });
+
+      // Puppeteer v21+ returns Uint8Array; convert to Buffer for Express.
+      const pdfBuffer = Buffer.from(pdfRaw);
 
       // Build a descriptive filename from the filter range.
       const fromStr = filters.from ? filters.from.slice(0, 10) : 'all';
@@ -80,9 +83,9 @@ router.get(
       res.set({
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${filename}"`,
-        'Content-Length': pdf.length,
+        'Content-Length': pdfBuffer.length,
       });
-      res.send(pdf);
+      res.send(pdfBuffer);
     } catch (err) {
       log.error({ err }, 'analytics PDF generation failed');
       res.status(500).json({ error: 'pdf_generation_failed', message: 'Failed to generate PDF' });
