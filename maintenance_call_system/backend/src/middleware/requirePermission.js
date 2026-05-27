@@ -1,5 +1,6 @@
 const db = require('../database/db');
 const { errors } = require('./errors');
+const { ROLE_DEFAULTS } = require('../repositories/permissionsRepo');
 
 // Keys that can be checked — validates at factory time to catch typos.
 const VALID_KEYS = new Set([
@@ -9,11 +10,6 @@ const VALID_KEYS = new Set([
   'analytics_view',
   'skilled_operator',
 ]);
-
-// Which keys each non-admin role gets for free (no DB lookup needed).
-const ROLE_DEFAULTS = {
-  tech: new Set(['calls_manage', 'analytics_view']),
-};
 
 /**
  * Returns Express middleware that enforces a single MCS permission.
@@ -33,19 +29,20 @@ const requirePermission = (key) => {
   return async (req, res, next) => {
     try {
       const user = req.user;
-      if (!user) return errors.unauthorized(res, 'Authentication required');
+      if (!user?.id) return errors.unauthorized(res, 'Authentication required');
 
       // Admin bypasses all checks.
       if (user.role === 'admin') return next();
 
       // Role default bypasses DB lookup.
       const roleDefaults = ROLE_DEFAULTS[user.role];
-      if (roleDefaults && roleDefaults.has(key)) return next();
+      if (roleDefaults && roleDefaults[key]) return next();
 
       // Check explicit grant in DB.
       // NOTE: req.user.id maps to users.user_id in the DB (JWT uses 'id' field name).
       const result = await db.query(
-        `SELECT ${key} FROM mcs_user_permissions WHERE user_id = $1`,
+        `SELECT badges_add, readers_manage, calls_manage, analytics_view, skilled_operator
+           FROM mcs_user_permissions WHERE user_id = $1`,
         [user.id]
       );
       const row = result.rows[0];

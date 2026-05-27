@@ -114,4 +114,4 @@ const listUsersWithPermissions = async (db) => {
   });
 };
 
-module.exports = { getPermissions, upsertPermissions, listUsersWithPermissions, mergeRoleDefaults, defaultPerms, adminPerms };
+module.exports = { getPermissions, upsertPermissions, listUsersWithPermissions, mergeRoleDefaults, defaultPerms, adminPerms, ROLE_DEFAULTS };

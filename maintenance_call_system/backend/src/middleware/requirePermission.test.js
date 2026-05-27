@@ -99,6 +99,16 @@ describe('requirePermission', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
+  it('returns 401 when req.user has no id field', async () => {
+    const mw = requirePermission('badges_add');
+    const req = { user: { role: 'tech' } }; // missing id
+    const res = mockRes();
+    const next = vi.fn();
+    await mw(req, res, next);
+    expect(res.status).toHaveBeenCalledWith(401);
+    expect(next).not.toHaveBeenCalled();
+  });
+
   it('returns 500 when db query throws', async () => {
     db.query.mockRejectedValueOnce(new Error('db down'));
     const mw = requirePermission('badges_add');
