@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  TextField,
+  Grid,
+  CircularProgress,
+} from '@mui/material';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../store/store';
-// Import the fetchMachines action from your machinesSlice
-import { fetchMachines } from '../store/machinesSlice'; 
+import { fetchMachines } from '../store/machinesSlice';
 
 interface MachineFormData {
   name: string;
@@ -54,7 +63,6 @@ const EditMachineForm: React.FC = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    // Basic input validation
     if (!formData.name || !formData.model_number || !formData.serial_number) {
       alert('Please fill in all required fields.');
       return;
@@ -62,86 +70,90 @@ const EditMachineForm: React.FC = () => {
 
     try {
       await axios.put(`/api/v1/machines/${id}`, formData);
-      // Dispatch the fetchMachines action to update the machines list
-      dispatch(fetchMachines()); 
+      dispatch(fetchMachines());
       navigate('/machines');
     } catch (error: any) {
       console.error('Error updating machine:', error);
-      // Handle errors, e.g., display a more specific error message to the user
-      alert(error.response?.data?.message || 'Failed to update machine.'); 
+      alert(error.response?.data?.message || 'Failed to update machine.');
     }
   };
 
   if (loading) {
-    return <div>Loading machine...</div>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   if (error) {
-    return <div>Error: {error}</div>;
+    return (
+      <Box sx={{ p: 4 }}>
+        <Typography color="error">Error: {error}</Typography>
+      </Box>
+    );
   }
 
   return (
-    <div className="container mt-4">
-      <div className="row">
-        <div className="col-md-8 offset-md-2">
-          <div className="card">
-            <div className="card-body">
-              <h2 className="card-title text-center mb-4">Edit Machine</h2>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-3">
-                  <label htmlFor="name" className="form-label">Machine Name</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="model_number" className="form-label">Model Number</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="model_number"
-                    name="model_number"
-                    value={formData.model_number}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="mb-3">
-                  <label htmlFor="serial_number" className="form-label">Serial Number</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="serial_number"
-                    name="serial_number"
-                    value={formData.serial_number}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                <div className="d-grid gap-2">
-                  <button type="submit" className="btn btn-primary">
+    <Box sx={{ mt: 4 }}>
+      <Grid container justifyContent="center">
+        <Grid item xs={12} md={8}>
+          <Card>
+            <CardContent>
+              <Typography variant="h5" align="center" sx={{ mb: 4 }}>
+                Edit Machine
+              </Typography>
+              <Box component="form" onSubmit={handleSubmit}>
+                <TextField
+                  fullWidth
+                  label="Machine Name"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                  sx={{ mb: 3 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Model Number"
+                  id="model_number"
+                  name="model_number"
+                  value={formData.model_number}
+                  onChange={handleChange}
+                  required
+                  sx={{ mb: 3 }}
+                />
+                <TextField
+                  fullWidth
+                  label="Serial Number"
+                  id="serial_number"
+                  name="serial_number"
+                  value={formData.serial_number}
+                  onChange={handleChange}
+                  required
+                  sx={{ mb: 3 }}
+                />
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Button type="submit" variant="contained" color="primary" fullWidth>
                     Update Machine
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn btn-secondary"
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outlined"
+                    color="inherit"
+                    fullWidth
                     onClick={() => navigate('/machines')}
                   >
                     Cancel
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+                  </Button>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 

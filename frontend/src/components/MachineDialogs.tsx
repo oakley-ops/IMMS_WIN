@@ -7,7 +7,6 @@ import {
   Tabs,
   Tab,
   Box,
-  Badge,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -20,7 +19,6 @@ import {
 import { Add as AddIcon, Edit as EditIcon, Description as DocumentIcon, Build as BuildIcon } from '@mui/icons-material';
 import MachineDocuments from './MachineDocuments';
 import { Machine as GlobalMachine } from '../types';
-import ModalPortal from './ModalPortal';
 
 // Update the Machine interface to match the one in types/index.ts
 interface Machine {
@@ -55,6 +53,31 @@ interface MachineDialogsProps {
   onDieTypeChange?: (dieType: string, checked: boolean, isEdit: boolean) => void;
 }
 
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+const TabPanel = (props: TabPanelProps) => {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`simple-tabpanel-${index}`}
+      aria-labelledby={`simple-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ p: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+};
+
 const MachineDialogs: React.FC<MachineDialogsProps> = ({
   open,
   editOpen,
@@ -74,37 +97,11 @@ const MachineDialogs: React.FC<MachineDialogsProps> = ({
     setEditTabValue(newValue);
   };
 
-  interface TabPanelProps {
-    children?: React.ReactNode;
-    index: number;
-    value: number;
-  }
-
-  const TabPanel = (props: TabPanelProps) => {
-    const { children, value, index, ...other } = props;
-
-    return (
-      <div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`simple-tabpanel-${index}`}
-        aria-labelledby={`simple-tab-${index}`}
-        {...other}
-      >
-        {value === index && (
-          <Box sx={{ p: 3 }}>
-            {children}
-          </Box>
-        )}
-      </div>
-    );
-  };
-
   return (
     <>
       {/* Add Machine Dialog */}
-      <Dialog 
-        open={open} 
+      <Dialog
+        open={open}
         onClose={onClose}
         maxWidth="md"
         fullWidth
@@ -116,296 +113,270 @@ const MachineDialogs: React.FC<MachineDialogsProps> = ({
           </Typography>
         </DialogTitle>
         <DialogContent sx={{ mt: 2 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12}>
-                  <TextField
-                    name="name"
-                    label="Machine Name"
-                    value={newMachine.name || ''}
-                    onChange={onInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="model"
-                    label="Model"
-                    value={newMachine.model || ''}
-                    onChange={onInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    name="manufacturer"
-                    label="Manufacturer"
-                    value={newMachine.manufacturer || ''}
-                    onChange={onInputChange}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    name="serial_number"
-                    label="Serial Number"
-                    value={newMachine.serial_number || ''}
-                    onChange={onInputChange}
-                    fullWidth
-                    required
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    name="location"
-                    label="Location"
-                    value={newMachine.location || ''}
-                    onChange={onInputChange}
-                    fullWidth
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    name="installation_date"
-                    label="Installation Date"
-                    type="date"
-                    value={newMachine.installation_date || ''}
-                    onChange={onInputChange}
-                    fullWidth
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <TextField
-                    name="notes"
-                    label="Notes"
-                    value={newMachine.notes || ''}
-                    onChange={onInputChange}
-                    fullWidth
-                    multiline
-                    rows={3}
-                  />
-                </Grid>
-                <Grid item xs={12}>
-                  <FormLabel component="legend" sx={{ mb: 1 }}>Compatible Die Types</FormLabel>
-                  <FormGroup row>
-                    {DIE_TYPE_OPTIONS.map((dieType) => (
-                      <FormControlLabel
-                        key={dieType}
-                        control={
-                          <Checkbox
-                            checked={newMachine.compatible_die_types?.includes(dieType) || false}
-                            onChange={(e) => onDieTypeChange?.(dieType, e.target.checked, false)}
-                          />
-                        }
-                        label={dieType}
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TextField
+                name="name"
+                label="Machine Name"
+                value={newMachine.name || ''}
+                onChange={onInputChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="model"
+                label="Model"
+                value={newMachine.model || ''}
+                onChange={onInputChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                name="manufacturer"
+                label="Manufacturer"
+                value={newMachine.manufacturer || ''}
+                onChange={onInputChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="serial_number"
+                label="Serial Number"
+                value={newMachine.serial_number || ''}
+                onChange={onInputChange}
+                fullWidth
+                required
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="location"
+                label="Location"
+                value={newMachine.location || ''}
+                onChange={onInputChange}
+                fullWidth
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="installation_date"
+                label="Installation Date"
+                type="date"
+                value={newMachine.installation_date || ''}
+                onChange={onInputChange}
+                fullWidth
+                InputLabelProps={{
+                  shrink: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <TextField
+                name="notes"
+                label="Notes"
+                value={newMachine.notes || ''}
+                onChange={onInputChange}
+                fullWidth
+                multiline
+                rows={3}
+              />
+            </Grid>
+            <Grid item xs={12}>
+              <FormLabel component="legend" sx={{ mb: 1 }}>Compatible Die Types</FormLabel>
+              <FormGroup row>
+                {DIE_TYPE_OPTIONS.map((dieType) => (
+                  <FormControlLabel
+                    key={dieType}
+                    control={
+                      <Checkbox
+                        checked={newMachine.compatible_die_types?.includes(dieType) || false}
+                        onChange={(e) => onDieTypeChange?.(dieType, e.target.checked, false)}
                       />
-                    ))}
-                  </FormGroup>
-                </Grid>
-              </Grid>
+                    }
+                    label={dieType}
+                  />
+                ))}
+              </FormGroup>
+            </Grid>
+          </Grid>
         </DialogContent>
         <DialogActions>
           <Button onClick={onClose} color="inherit">
             Cancel
           </Button>
-          <Button 
-            onClick={onAddMachine} 
-            variant="contained" 
+          <Button
+            onClick={onAddMachine}
+            variant="contained"
             color="primary"
             startIcon={<AddIcon />}
           >
             Add Machine
           </Button>
         </DialogActions>
-          </Dialog>
+      </Dialog>
 
       {/* Edit Machine Dialog */}
-      <ModalPortal open={editOpen}>
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content custom-dialog">
-            <div className="dialog-header">
-              <h5 className="dialog-title">Edit Machine</h5>
-            </div>
-            <div className="dialog-content">
-                      {selectedMachine && (
-              <div>
-                <div className="nav nav-tabs" role="tablist">
-                  <button
-                    className={`nav-link ${editTabValue === 0 ? 'active' : ''}`}
-                    onClick={() => setEditTabValue(0)}
-                    type="button"
-                    role="tab"
-                  >
-                    <BuildIcon style={{ marginRight: '8px', fontSize: '16px' }} />
-                    Machine Info
-                  </button>
-                  <button
-                    className={`nav-link ${editTabValue === 1 ? 'active' : ''}`}
-                    onClick={() => setEditTabValue(1)}
-                    type="button"
-                    role="tab"
-                  >
-                    <DocumentIcon style={{ marginRight: '8px', fontSize: '16px' }} />
-                    Documents
-                  </button>
-                </div>
-                
-                <div className="tab-content mt-3">
-                  {editTabValue === 0 && (
-                    <div className="tab-pane fade show active">
-                      <div className="row">
-                        <div className="col-12 mb-3">
-                          <label className="form-label">Machine Name *</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            name="name"
-                            value={selectedMachine.name || ''}
-                            onChange={onEditInputChange}
-                            required
-                          />
-                        </div>
-                        <div className="col-md-6 mb-3">
-                          <label className="form-label">Model *</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            name="model"
-                            value={selectedMachine.model || ''}
-                            onChange={onEditInputChange}
-                            required
-                          />
-                        </div>
-                        <div className="col-md-6 mb-3">
-                          <label className="form-label">Manufacturer</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            name="manufacturer"
-                            value={selectedMachine.manufacturer || ''}
-                            onChange={onEditInputChange}
-                          />
-                        </div>
-                        <div className="col-12 mb-3">
-                          <label className="form-label">Serial Number *</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            name="serial_number"
-                            value={selectedMachine.serial_number || ''}
-                            onChange={onEditInputChange}
-                            required
-                          />
-                        </div>
-                        <div className="col-12 mb-3">
-                          <label className="form-label">Location</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            name="location"
-                            value={selectedMachine.location || ''}
-                            onChange={onEditInputChange}
-                          />
-                        </div>
-                        <div className="col-md-6 mb-3">
-                          <label className="form-label">Installation Date</label>
-                          <input
-                            type="date"
-                            className="form-control"
-                            name="installation_date"
-                            value={selectedMachine.installation_date || ''}
-                            onChange={onEditInputChange}
-                          />
-                        </div>
-                        <div className="col-md-6 mb-3">
-                          <label className="form-label">Status</label>
-                          <input
-                            type="text"
-                            className="form-control"
-                            name="status"
-                            value={selectedMachine.status || ''}
-                            onChange={onEditInputChange}
-                          />
-                        </div>
-                        <div className="col-12 mb-3">
-                          <label className="form-label">Notes</label>
-                          <textarea
-                            className="form-control"
-                            name="notes"
-                            value={selectedMachine.notes || ''}
-                            onChange={onEditInputChange}
-                            rows={3}
-                          />
-                        </div>
-                        <div className="col-12 mb-3">
-                          <label className="form-label">Compatible Die Types</label>
-                          <div className="d-flex gap-3">
-                            {DIE_TYPE_OPTIONS.map((dieType) => (
-                              <div key={dieType} className="form-check">
-                                <input
-                                  type="checkbox"
-                                  className="form-check-input"
-                                  id={`edit-die-type-${dieType}`}
-                                  checked={selectedMachine.compatible_die_types?.includes(dieType) || false}
-                                  onChange={(e) => onDieTypeChange?.(dieType, e.target.checked, true)}
-                                />
-                                <label className="form-check-label" htmlFor={`edit-die-type-${dieType}`}>
-                                  {dieType}
-                                </label>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {editTabValue === 1 && (
-                    <div className="tab-pane fade show active">
-                      {(selectedMachine.id || selectedMachine.machine_id) && (
-                        <MachineDocuments 
-                          machineId={(selectedMachine.id || selectedMachine.machine_id) as number} 
-                          machineName={selectedMachine.name || 'Unknown Machine'} 
+      <Dialog
+        open={editOpen}
+        onClose={onEditClose}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h5" component="div" sx={{ fontWeight: 'bold' }}>
+            Edit Machine
+          </Typography>
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
+          {selectedMachine && (
+            <>
+              <Tabs value={editTabValue} onChange={handleTabChange} sx={{ borderBottom: 1, borderColor: 'divider', mb: 1 }}>
+                <Tab
+                  icon={<BuildIcon sx={{ fontSize: 16 }} />}
+                  iconPosition="start"
+                  label="Machine Info"
+                />
+                <Tab
+                  icon={<DocumentIcon sx={{ fontSize: 16 }} />}
+                  iconPosition="start"
+                  label="Documents"
+                />
+              </Tabs>
+
+              <TabPanel value={editTabValue} index={0}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Machine Name *"
+                      name="name"
+                      value={selectedMachine.name || ''}
+                      onChange={onEditInputChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Model *"
+                      name="model"
+                      value={selectedMachine.model || ''}
+                      onChange={onEditInputChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Manufacturer"
+                      name="manufacturer"
+                      value={selectedMachine.manufacturer || ''}
+                      onChange={onEditInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Serial Number *"
+                      name="serial_number"
+                      value={selectedMachine.serial_number || ''}
+                      onChange={onEditInputChange}
+                      required
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Location"
+                      name="location"
+                      value={selectedMachine.location || ''}
+                      onChange={onEditInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Installation Date"
+                      type="date"
+                      name="installation_date"
+                      value={selectedMachine.installation_date || ''}
+                      onChange={onEditInputChange}
+                      InputLabelProps={{ shrink: true }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      fullWidth
+                      label="Status"
+                      name="status"
+                      value={selectedMachine.status || ''}
+                      onChange={onEditInputChange}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      label="Notes"
+                      name="notes"
+                      value={selectedMachine.notes || ''}
+                      onChange={onEditInputChange}
+                      multiline
+                      rows={3}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormLabel component="legend" sx={{ mb: 1 }}>Compatible Die Types</FormLabel>
+                    <FormGroup row>
+                      {DIE_TYPE_OPTIONS.map((dieType) => (
+                        <FormControlLabel
+                          key={dieType}
+                          control={
+                            <Checkbox
+                              id={`edit-die-type-${dieType}`}
+                              checked={selectedMachine.compatible_die_types?.includes(dieType) || false}
+                              onChange={(e) => onDieTypeChange?.(dieType, e.target.checked, true)}
+                            />
+                          }
+                          label={dieType}
                         />
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-            </div>
-            <div className="dialog-footer">
-              <div className="d-flex gap-2 justify-content-end">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={onEditClose}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={onUpdateMachine}
-                  style={{ 
-                    backgroundColor: '#FF6600', 
-                    borderColor: '#FF6600' 
-                  }}
-                >
-                  <EditIcon style={{ marginRight: '8px', fontSize: '16px' }} />
-                  Update Machine
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ModalPortal>
+                      ))}
+                    </FormGroup>
+                  </Grid>
+                </Grid>
+              </TabPanel>
+
+              <TabPanel value={editTabValue} index={1}>
+                {(selectedMachine.id || selectedMachine.machine_id) && (
+                  <MachineDocuments
+                    machineId={(selectedMachine.id || selectedMachine.machine_id) as number}
+                    machineName={selectedMachine.name || 'Unknown Machine'}
+                  />
+                )}
+              </TabPanel>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onEditClose} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={onUpdateMachine}
+            variant="contained"
+            color="primary"
+            startIcon={<EditIcon />}
+          >
+            Update Machine
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
 
-export default MachineDialogs; 
+export default MachineDialogs;

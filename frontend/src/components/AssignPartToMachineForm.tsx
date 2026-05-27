@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Alert, Spinner } from 'react-bootstrap';
+import {
+  Box,
+  Button,
+  Alert,
+  CircularProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  TextField,
+  Typography,
+} from '@mui/material';
 import axiosInstance from '../utils/axios';
 import { AxiosError } from 'axios';
 import { ApiErrorResponse } from '../types/api';
@@ -84,80 +95,76 @@ const AssignPartToMachineForm: React.FC = () => {
 
   if (loading && !parts.length) {
     return (
-      <div className="text-center">
-        <Spinner animation="border" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </Spinner>
-      </div>
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   return (
-    <Form onSubmit={handleSubmit}>
-      {error && <Alert variant="danger">{error}</Alert>}
-      {success && <Alert variant="success">{success}</Alert>}
+    <Box component="form" onSubmit={handleSubmit}>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-      <Form.Group className="mb-3">
-        <Form.Label>Select Part</Form.Label>
-        <Form.Select
+      <FormControl fullWidth sx={{ mb: 3 }} required>
+        <InputLabel id="select-part-label">Select Part</InputLabel>
+        <Select
+          labelId="select-part-label"
           value={selectedPart}
+          label="Select Part"
           onChange={(e) => setSelectedPart(e.target.value)}
-          required
         >
-          <option value="">Choose a part...</option>
+          <MenuItem value="">
+            <em>Choose a part...</em>
+          </MenuItem>
           {parts.map((part) => (
-            <option key={part.part_id} value={part.part_id}>
+            <MenuItem key={part.part_id} value={String(part.part_id)}>
               {part.name} (Available: {part.quantity})
-            </option>
+            </MenuItem>
           ))}
-        </Form.Select>
-      </Form.Group>
+        </Select>
+      </FormControl>
 
-      <Form.Group className="mb-3">
-        <Form.Label>Select Machine</Form.Label>
-        <Form.Select
+      <FormControl fullWidth sx={{ mb: 3 }} required>
+        <InputLabel id="select-machine-label">Select Machine</InputLabel>
+        <Select
+          labelId="select-machine-label"
           value={selectedMachine}
+          label="Select Machine"
           onChange={(e) => setSelectedMachine(e.target.value)}
-          required
         >
-          <option value="">Choose a machine...</option>
+          <MenuItem value="">
+            <em>Choose a machine...</em>
+          </MenuItem>
           {machines.map((machine) => (
-            <option key={machine.machine_id} value={machine.machine_id}>
+            <MenuItem key={machine.machine_id} value={String(machine.machine_id)}>
               {machine.name}
-            </option>
+            </MenuItem>
           ))}
-        </Form.Select>
-      </Form.Group>
+        </Select>
+      </FormControl>
 
-      <Form.Group className="mb-3">
-        <Form.Label>Quantity</Form.Label>
-        <Form.Control
-          type="number"
-          min="1"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-          required
-        />
-      </Form.Group>
+      <TextField
+        fullWidth
+        label="Quantity"
+        type="number"
+        inputProps={{ min: 1 }}
+        value={quantity}
+        onChange={(e) => setQuantity(e.target.value)}
+        required
+        sx={{ mb: 3 }}
+      />
 
-      <Button type="submit" disabled={loading}>
-        {loading ? (
-          <>
-            <Spinner
-              as="span"
-              animation="border"
-              size="sm"
-              role="status"
-              aria-hidden="true"
-              className="me-2"
-            />
-            Assigning...
-          </>
-        ) : (
-          'Assign Part'
-        )}
+      <Button
+        type="submit"
+        variant="contained"
+        color="primary"
+        disabled={loading}
+        startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+      >
+        {loading ? 'Assigning...' : 'Assign Part'}
       </Button>
-    </Form>
+    </Box>
   );
 };
 

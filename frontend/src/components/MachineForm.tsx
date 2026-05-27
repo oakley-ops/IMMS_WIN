@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Form, Button, Card, Alert, Spinner } from 'react-bootstrap';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Button,
+  Box,
+  TextField,
+  Grid,
+  Alert,
+  CircularProgress,
+} from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../utils/axios';
 import { useDispatch } from 'react-redux';
@@ -33,7 +43,7 @@ const MachineForm: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
-  
+
   const [formData, setFormData] = useState<MachineFormData>({
     name: '',
     model: '',
@@ -54,8 +64,6 @@ const MachineForm: React.FC = () => {
   const fetchMachine = async () => {
     try {
       setInitialLoading(true);
-      
-      // Use the real API call
       const response = await axiosInstance.get(`/api/v1/machines/${id}`);
       setFormData(response.data);
     } catch (error: any) {
@@ -68,15 +76,15 @@ const MachineForm: React.FC = () => {
 
   const validateForm = (): boolean => {
     const errors: ValidationErrors = {};
-    
+
     if (!formData.name.trim()) {
       errors.name = 'Machine name is required';
     }
-    
+
     if (!formData.model.trim()) {
       errors.model = 'Model number is required';
     }
-    
+
     if (!formData.serial_number.trim()) {
       errors.serial_number = 'Serial number is required';
     }
@@ -93,7 +101,7 @@ const MachineForm: React.FC = () => {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear validation error when field is edited
     if (validationErrors[name as keyof ValidationErrors]) {
       setValidationErrors(prev => ({
@@ -105,7 +113,7 @@ const MachineForm: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -114,7 +122,6 @@ const MachineForm: React.FC = () => {
     setError(null);
     setSuccess(null);
 
-    // Format the data for submission (ensuring types match)
     const submissionData: MachineFormData = {
       ...formData,
       installation_date: formData.installation_date || '',
@@ -128,18 +135,15 @@ const MachineForm: React.FC = () => {
 
     try {
       if (id) {
-        // Use real API for update
         await axiosInstance.put(`/api/v1/machines/${id}`, submissionData);
       } else {
-        // Use real API for create
         const response = await axiosInstance.post('/api/v1/machines', submissionData);
         console.log('Machine created:', response.data);
       }
-      
+
       dispatch(fetchMachines());
       setSuccess(id ? 'Machine updated successfully!' : 'Machine created successfully!');
-      
-      // Navigate back after a short delay
+
       setTimeout(() => {
         navigate('/machines');
       }, 1500);
@@ -153,163 +157,138 @@ const MachineForm: React.FC = () => {
 
   if (initialLoading) {
     return (
-      <div className="text-center p-5">
-        <Spinner animation="border" role="status" variant="primary">
-          <span className="visually-hidden">Loading machine details...</span>
-        </Spinner>
-        <p className="mt-3 text-muted">Loading machine details...</p>
-      </div>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', p: 5 }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 3 }} color="text.secondary">Loading machine details...</Typography>
+      </Box>
     );
   }
 
   return (
-    <Card className="shadow-sm">
-      <Card.Body>
-        <div className="d-flex justify-content-between align-items-center mb-4">
-          <h2 className="h4 mb-0">{id ? 'Edit Machine' : 'Add New Machine'}</h2>
+    <Card sx={{ boxShadow: 1 }}>
+      <CardContent>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
+          <Typography variant="h5" component="h2">{id ? 'Edit Machine' : 'Add New Machine'}</Typography>
           <Button
-            variant="outline-secondary"
-            size="sm"
+            variant="outlined"
+            color="inherit"
+            size="small"
             onClick={() => navigate('/machines')}
           >
             Back to Machines
           </Button>
-        </div>
+        </Box>
 
         {error && (
-          <Alert variant="danger" className="mb-4">
+          <Alert severity="error" sx={{ mb: 4 }}>
             {error}
           </Alert>
         )}
 
         {success && (
-          <Alert variant="success" className="mb-4">
+          <Alert severity="success" sx={{ mb: 4 }}>
             {success}
           </Alert>
         )}
 
-        <Form onSubmit={handleSubmit}>
-          <div className="row">
-            <div className="col-md-6">
-              <Form.Group className="mb-4">
-                <Form.Label>Machine Name*</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  isInvalid={!!validationErrors.name}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {validationErrors.name}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </div>
+        <Box component="form" onSubmit={handleSubmit}>
+          <Grid container spacing={3}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Machine Name *"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                error={!!validationErrors.name}
+                helperText={validationErrors.name}
+              />
+            </Grid>
 
-            <div className="col-md-6">
-              <Form.Group className="mb-4">
-                <Form.Label>Model Number*</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="model"
-                  value={formData.model}
-                  onChange={handleChange}
-                  isInvalid={!!validationErrors.model}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {validationErrors.model}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </div>
-          </div>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Model Number *"
+                name="model"
+                value={formData.model}
+                onChange={handleChange}
+                error={!!validationErrors.model}
+                helperText={validationErrors.model}
+              />
+            </Grid>
 
-          <div className="row">
-            <div className="col-md-6">
-              <Form.Group className="mb-4">
-                <Form.Label>Serial Number*</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="serial_number"
-                  value={formData.serial_number}
-                  onChange={handleChange}
-                  isInvalid={!!validationErrors.serial_number}
-                />
-                <Form.Control.Feedback type="invalid">
-                  {validationErrors.serial_number}
-                </Form.Control.Feedback>
-              </Form.Group>
-            </div>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Serial Number *"
+                name="serial_number"
+                value={formData.serial_number}
+                onChange={handleChange}
+                error={!!validationErrors.serial_number}
+                helperText={validationErrors.serial_number}
+              />
+            </Grid>
 
-            <div className="col-md-6">
-              <Form.Group className="mb-4">
-                <Form.Label>Manufacturer</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="manufacturer"
-                  value={formData.manufacturer}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
-          </div>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Manufacturer"
+                name="manufacturer"
+                value={formData.manufacturer}
+                onChange={handleChange}
+              />
+            </Grid>
 
-          <div className="row">
-            <div className="col-md-6">
-              <Form.Group className="mb-4">
-                <Form.Label>Location</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Location"
+                name="location"
+                value={formData.location}
+                onChange={handleChange}
+              />
+            </Grid>
 
-            <div className="col-md-6">
-              <Form.Group className="mb-4">
-                <Form.Label>Status</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
-          </div>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Status"
+                name="status"
+                value={formData.status}
+                onChange={handleChange}
+              />
+            </Grid>
 
-          <div className="row">
-            <div className="col-md-6">
-              <Form.Group className="mb-4">
-                <Form.Label>Installation Date</Form.Label>
-                <Form.Control
-                  type="date"
-                  name="installation_date"
-                  value={formData.installation_date}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </div>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Installation Date"
+                type="date"
+                name="installation_date"
+                value={formData.installation_date}
+                onChange={handleChange}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
 
-            <div className="col-md-6">
-              <Form.Group className="mb-4">
-                <Form.Label>Notes</Form.Label>
-                <Form.Control
-                  as="textarea"
-                  rows={3}
-                  name="notes"
-                  value={formData.notes}
-                  onChange={handleChange}
-                  placeholder="Add any maintenance notes or special instructions..."
-                />
-              </Form.Group>
-            </div>
-          </div>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                label="Notes"
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                multiline
+                rows={3}
+                placeholder="Add any maintenance notes or special instructions..."
+              />
+            </Grid>
+          </Grid>
 
-          <div className="d-flex justify-content-end gap-2">
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 4 }}>
             <Button
-              variant="outline-secondary"
+              variant="outlined"
+              color="inherit"
               onClick={() => navigate('/machines')}
               disabled={loading}
             >
@@ -317,28 +296,16 @@ const MachineForm: React.FC = () => {
             </Button>
             <Button
               type="submit"
-              variant="primary"
+              variant="contained"
+              color="primary"
               disabled={loading}
+              startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
             >
-              {loading ? (
-                <>
-                  <Spinner
-                    as="span"
-                    animation="border"
-                    size="sm"
-                    role="status"
-                    aria-hidden="true"
-                    className="me-2"
-                  />
-                  Saving...
-                </>
-              ) : (
-                'Save Machine'
-              )}
+              {loading ? 'Saving...' : 'Save Machine'}
             </Button>
-          </div>
-        </Form>
-      </Card.Body>
+          </Box>
+        </Box>
+      </CardContent>
     </Card>
   );
 };
