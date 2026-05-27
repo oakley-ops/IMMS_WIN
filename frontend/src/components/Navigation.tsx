@@ -7,16 +7,17 @@ import {
   Drawer,
   List,
   ListItem,
-  ListItemText,
   ListItemIcon,
+  ListItemText,
   Divider,
-  IconButton,
+  AppBar,
+  Toolbar,
+  Button,
   CssBaseline,
+  Tooltip,
 } from '@mui/material';
 import {
-  AccountCircle,
   Logout,
-  Menu as MenuIcon,
   Dashboard,
   Inventory,
   Build,
@@ -31,18 +32,25 @@ import {
   Category,
   Campaign,
   OpenInNew,
+  Inventory2,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
-import { theme, IMMS_ORANGE } from '../theme';
+import { theme, DARK_BG, DARK_SURFACE, PRIMARY_ORANGE } from '../theme';
 
-const IMMS_BLUE = '#0066A1';
-const DRAWER_WIDTH = 240;
+const MINI_WIDTH = 64;
+const FULL_WIDTH = 240;
+const APPBAR_HEIGHT = 56;
 
 interface NavigationProps {
   children: React.ReactNode;
 }
 
-interface NavigationItem {
+interface NavSection {
+  label: string;
+  items: NavItem[];
+}
+
+interface NavItem {
   path?: string;
   href?: string;
   external?: boolean;
@@ -55,11 +63,11 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout, user, hasPermission } = useAuth();
+  const [expanded, setExpanded] = useState(false);
 
   const MCS_BASE = process.env.REACT_APP_MCS_URL || 'http://localhost:3003';
   const buildMCSUrl = (): string => {
     const token = localStorage.getItem('token') || '';
-    // Use encodeURIComponent-safe btoa to handle non-ASCII usernames/roles
     const userEncoded = btoa(unescape(encodeURIComponent(JSON.stringify({
       id: user?.id,
       username: user?.username,
@@ -68,191 +76,225 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
     return `${MCS_BASE}#token=${token}&user=${userEncoded}`;
   };
 
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  const navigationItems: NavigationItem[] = [
-    { path: '/', label: 'DASHBOARD', icon: <Dashboard /> },
-    { path: '/parts', label: 'PARTS', icon: <Inventory /> },
-    { path: '/purchase-orders', label: 'PURCHASE ORDERS', icon: <ShoppingCart />, requiredPermission: 'CAN_MANAGE_PURCHASE_ORDERS' },
-    { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
-    { path: '/machines', label: 'MACHINES', icon: <Build />, requiredPermission: 'CAN_VIEW_MACHINES' },
-    { path: '/work-orders', label: 'WORK ORDERS', icon: <Engineering />, requiredPermission: 'CAN_VIEW_MACHINES' },
-    { path: '/pm-checklists', label: 'PM MANAGEMENT', icon: <PlaylistAddCheck />, requiredPermission: 'CAN_MANAGE_PM_CHECKLISTS' },
-    { path: '/projects', label: 'PROJECTS', icon: <Assignment />, requiredPermission: 'CAN_MANAGE_PROJECTS' },
-    { path: '/die-tracker', label: 'DIE MANAGEMENT', icon: <Category />, requiredPermission: 'CAN_VIEW_MACHINES' },
-    { path: '/contacts', label: 'CONTACTS', icon: <ContactsIcon />, requiredPermission: 'CAN_VIEW_CONTACTS' },
-    { path: '/technicians', label: 'TECHNICIANS', icon: <People />, requiredPermission: 'CAN_MANAGE_USERS' },
-    { href: buildMCSUrl(), external: true, label: 'MAINTENANCE SYSTEM', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' },
-  ];
-
-  if (hasPermission('CAN_VIEW_ALL')) {
-    navigationItems.push({ 
-      path: '/kpi-dashboard', 
-      label: 'KPI DASHBOARD', 
-      icon: <BarChart />, 
-      requiredPermission: 'CAN_VIEW_ALL' 
-    });
-  }
-
-  const filteredNavigationItems = navigationItems.filter(item => {
-    if (!item.requiredPermission) return true;
-    return hasPermission(item.requiredPermission);
-  });
-
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const handleDrawerToggle = () => {
-    setDrawerOpen(!drawerOpen);
-  };
+  const navSections: NavSection[] = [
+    {
+      label: 'Inventory',
+      items: [
+        { path: '/dashboard', label: 'DASHBOARD', icon: <Dashboard /> },
+        { path: '/parts', label: 'PARTS', icon: <Inventory /> },
+        { path: '/purchase-orders', label: 'PURCHASE ORDERS', icon: <ShoppingCart />, requiredPermission: 'CAN_MANAGE_PURCHASE_ORDERS' },
+        { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
+      ],
+    },
+    {
+      label: 'Equipment',
+      items: [
+        { path: '/machines', label: 'MACHINES', icon: <Build />, requiredPermission: 'CAN_VIEW_MACHINES' },
+        { path: '/work-orders', label: 'WORK ORDERS', icon: <Engineering />, requiredPermission: 'CAN_VIEW_MACHINES' },
+        { path: '/pm-checklists', label: 'PM MANAGEMENT', icon: <PlaylistAddCheck />, requiredPermission: 'CAN_MANAGE_PM_CHECKLISTS' },
+        { path: '/die-tracker', label: 'DIE MANAGEMENT', icon: <Category />, requiredPermission: 'CAN_VIEW_MACHINES' },
+      ],
+    },
+    {
+      label: 'Management',
+      items: [
+        { path: '/projects', label: 'PROJECTS', icon: <Assignment />, requiredPermission: 'CAN_MANAGE_PROJECTS' },
+        { path: '/contacts', label: 'CONTACTS', icon: <ContactsIcon />, requiredPermission: 'CAN_VIEW_CONTACTS' },
+        { path: '/technicians', label: 'TECHNICIANS', icon: <People />, requiredPermission: 'CAN_MANAGE_USERS' },
+      ],
+    },
+    {
+      label: 'External',
+      items: [
+        { href: buildMCSUrl(), external: true, label: 'MAINTENANCE SYSTEM', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' },
+      ],
+    },
+  ];
 
-  const drawer = (
-    <Box sx={{
-      width: DRAWER_WIDTH,
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-      bgcolor: IMMS_BLUE,
-      color: 'white'
-    }}>
-      <Box sx={{ p: 2, textAlign: 'left' }}>
-        <Typography
-          variant="h6"
-          sx={{
-            color: IMMS_ORANGE,
-            fontWeight: 'bold',
-            textDecoration: 'none',
-            fontSize: '1.3rem',
-            mb: 0.5,
-            display: 'flex',
-            alignItems: 'flex-bottom',
-            '&:hover': {
-              opacity: 0.9,
-              cursor: 'pointer'
-            }
-          }}
-          component={Link}
-          to="/"
-          onClick={() => setDrawerOpen(false)}
-        >
-          IMMS
-        </Typography>
-        <Typography variant="body2" sx={{ color: 'white', fontSize: '0.9rem' }}>
-          {user?.name} ({user?.role?.toUpperCase()})
-        </Typography>
-      </Box>
-      <Divider sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)' }} />
-      <List sx={{ flexGrow: 1, pt: 1 }}>
-        {filteredNavigationItems.map(({ path, href, external, label, icon }) => (
-          <ListItem
-            button
-            key={label}
-            component={external ? 'a' : Link}
-            {...(external
-              ? { href, target: '_blank', rel: 'noopener noreferrer' }
-              : { to: path ?? '/' }
-            )}
-            selected={!external && location.pathname === path}
-            onClick={() => setDrawerOpen(false)}
-            sx={{
-              py: 1.5,
-              bgcolor: !external && location.pathname === path
-                ? 'rgba(255, 255, 255, 0.2)'
-                : 'transparent',
-              '&:hover': { bgcolor: 'rgba(255, 255, 255, 0.1)' },
-            }}
-          >
-            <ListItemIcon sx={{ color: 'white', minWidth: 40 }}>{icon}</ListItemIcon>
-            <ListItemText
-              primary={label}
-              sx={{
-                '& .MuiListItemText-primary': {
-                  fontSize: '0.9rem',
-                  fontWeight: !external && location.pathname === path ? 'bold' : 'normal',
-                },
-              }}
-            />
-            {external && <OpenInNew sx={{ fontSize: 14, opacity: 0.6, color: 'white' }} />}
-          </ListItem>
-        ))}
-      </List>
-      <Divider sx={{ bgcolor: 'rgba(255, 255, 255, 0.2)' }} />
-      <List>
-        <ListItem button onClick={handleLogout}>
-          <ListItemIcon sx={{ color: 'white', minWidth: 40 }}><Logout /></ListItemIcon>
-          <ListItemText 
-            primary="Logout" 
-            sx={{ 
-              '& .MuiListItemText-primary': { 
-                fontSize: '0.9rem'
-              } 
-            }}
-          />
-        </ListItem>
-      </List>
-    </Box>
-  );
+  if (hasPermission('CAN_VIEW_ALL')) {
+    navSections.push({
+      label: 'Analytics',
+      items: [
+        { path: '/kpi-dashboard', label: 'KPI DASHBOARD', icon: <BarChart />, requiredPermission: 'CAN_VIEW_ALL' },
+      ],
+    });
+  }
+
+  const isActive = (item: NavItem) =>
+    !item.external && item.path === location.pathname;
+
+  const itemSx = (active: boolean) => ({
+    py: 1,
+    px: expanded ? 2 : 0,
+    mx: expanded ? 1 : 0,
+    borderRadius: expanded ? 1 : 0,
+    justifyContent: expanded ? 'flex-start' : 'center',
+    bgcolor: active ? 'rgba(255, 107, 53, 0.15)' : 'transparent',
+    '&:hover': { bgcolor: active ? 'rgba(255, 107, 53, 0.2)' : 'rgba(255, 107, 53, 0.08)' },
+    transition: 'all 0.15s ease',
+  });
+
+  const iconSx = (active: boolean) => ({
+    color: active ? PRIMARY_ORANGE : '#AAAAAA',
+    minWidth: expanded ? 36 : 0,
+    justifyContent: 'center',
+  });
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ display: 'flex', minHeight: '100vh', maxWidth: '100vw', overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
         <CssBaseline />
 
-        {/* Hamburger Menu Button - Always visible */}
-        <IconButton
-          color="inherit"
-          aria-label="open drawer"
-          edge="start"
-          onClick={handleDrawerToggle}
+        {/* ── Top AppBar ─────────────────────────────────────────────────── */}
+        <AppBar
+          position="fixed"
           sx={{
-            position: 'fixed',
-            left: 8,
-            top: 8,
-            zIndex: 1300,
-            bgcolor: IMMS_BLUE,
-            color: 'white',
-            width: 40,
-            height: 40,
-            '&:hover': {
-              bgcolor: 'rgba(0, 102, 161, 0.9)',
-            }
+            bgcolor: DARK_BG,
+            zIndex: (t) => t.zIndex.drawer + 1,
+            height: APPBAR_HEIGHT,
           }}
         >
-          <MenuIcon />
-        </IconButton>
+          <Toolbar variant="dense" sx={{ minHeight: APPBAR_HEIGHT }}>
+            <Inventory2 sx={{ color: PRIMARY_ORANGE, mr: 1 }} />
+            <Typography
+              variant="h6"
+              fontWeight="bold"
+              color={PRIMARY_ORANGE}
+              sx={{ flexGrow: 1 }}
+            >
+              IMMS
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'grey.400', mr: 2 }}>
+              {user?.username}
+            </Typography>
+            <Button
+              color="inherit"
+              startIcon={<Logout />}
+              size="small"
+              onClick={handleLogout}
+              sx={{ color: 'grey.300' }}
+            >
+              Sign Out
+            </Button>
+          </Toolbar>
+        </AppBar>
 
-        {/* Temporary Drawer - Opens on hamburger click */}
+        {/* ── Mini Sidebar ────────────────────────────────────────────────── */}
         <Drawer
-          variant="temporary"
-          open={drawerOpen}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true,
-          }}
+          variant="permanent"
+          onMouseEnter={() => setExpanded(true)}
+          onMouseLeave={() => setExpanded(false)}
           sx={{
+            width: expanded ? FULL_WIDTH : MINI_WIDTH,
+            flexShrink: 0,
             '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
-              width: DRAWER_WIDTH,
-              borderRight: 'none'
+              width: expanded ? FULL_WIDTH : MINI_WIDTH,
+              overflowX: 'hidden',
+              overflowY: 'auto',
+              transition: 'width 0.2s ease',
+              bgcolor: DARK_SURFACE,
+              color: 'white',
+              mt: `${APPBAR_HEIGHT}px`,
+              height: `calc(100vh - ${APPBAR_HEIGHT}px)`,
+              borderRight: 'none',
+              position: 'fixed',
+              zIndex: (t: any) => t.zIndex.drawer,
             },
           }}
         >
-          {drawer}
+          {navSections.map((section, si) => {
+            const visibleItems = section.items.filter(
+              (item) => !item.requiredPermission || hasPermission(item.requiredPermission)
+            );
+            if (visibleItems.length === 0) return null;
+
+            return (
+              <React.Fragment key={section.label}>
+                {si > 0 && (
+                  <Divider sx={{ bgcolor: '#333', mx: expanded ? 1 : 0, my: 0.5 }} />
+                )}
+                {expanded && (
+                  <Typography
+                    sx={{
+                      color: '#666',
+                      fontSize: '10px',
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      px: 2,
+                      pt: 1,
+                      pb: 0.25,
+                    }}
+                  >
+                    {section.label}
+                  </Typography>
+                )}
+                <List dense disablePadding>
+                  {visibleItems.map((item) => {
+                    const active = isActive(item);
+                    const listItem = (
+                      <ListItem
+                        key={item.label}
+                        component={item.external ? 'a' : Link}
+                        {...(item.external
+                          ? { href: item.href, target: '_blank', rel: 'noopener noreferrer' }
+                          : { to: item.path ?? '/' }
+                        )}
+                        sx={itemSx(active)}
+                        disablePadding={false}
+                      >
+                        <ListItemIcon sx={iconSx(active)}>
+                          {item.icon}
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={item.label}
+                          primaryTypographyProps={{
+                            fontSize: '13px',
+                            fontWeight: active ? 600 : 400,
+                            color: active ? PRIMARY_ORANGE : '#CCCCCC',
+                            noWrap: true,
+                          }}
+                          sx={{
+                            overflow: 'hidden',
+                            maxWidth: expanded ? 'none' : 0,
+                            opacity: expanded ? 1 : 0,
+                            transition: 'opacity 0.2s ease',
+                            whiteSpace: 'nowrap',
+                          }}
+                        />
+                        {item.external && (
+                          <OpenInNew sx={{ fontSize: 12, color: '#666', ml: 0.5, display: expanded ? 'block' : 'none' }} />
+                        )}
+                      </ListItem>
+                    );
+
+                    return expanded ? listItem : (
+                      <Tooltip key={item.label} title={item.label} placement="right">
+                        {listItem}
+                      </Tooltip>
+                    );
+                  })}
+                </List>
+              </React.Fragment>
+            );
+          })}
         </Drawer>
 
-        {/* Main Content */}
+        {/* ── Main Content ────────────────────────────────────────────────── */}
         <Box
           component="main"
           sx={{
             flexGrow: 1,
+            mt: `${APPBAR_HEIGHT}px`,
+            ml: `${MINI_WIDTH}px`,
+            bgcolor: 'background.default',
+            minHeight: `calc(100vh - ${APPBAR_HEIGHT}px)`,
+            overflow: 'auto',
             p: 2,
-            pt: 7,
-            width: '100%',
-            maxWidth: '100%',
-            bgcolor: '#f5f5f5',
-            overflow: 'auto'
           }}
         >
           {children}

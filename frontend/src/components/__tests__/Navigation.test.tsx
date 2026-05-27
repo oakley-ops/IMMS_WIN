@@ -1,9 +1,8 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Navigation from '../Navigation';
 
-// useAuth mock — override per test with mockUseAuth.mockReturnValue(...)
 const mockUseAuth = jest.fn();
 jest.mock('../../contexts/AuthContext', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -40,22 +39,17 @@ describe('Navigation Component', () => {
     mockUseAuth.mockReturnValue(adminAuthContext);
   });
 
+  test('renders AppBar with IMMS brand name', () => {
+    renderNav();
+    expect(screen.getAllByText('IMMS').length).toBeGreaterThanOrEqual(1);
+  });
+
   test('renders navigation links', () => {
     renderNav();
     expect(screen.getByText(/PARTS/i)).toBeInTheDocument();
     expect(screen.getByText(/TRANSACTIONS/i)).toBeInTheDocument();
     expect(screen.getByText(/MACHINES/i)).toBeInTheDocument();
     expect(screen.getByText('DASHBOARD')).toBeInTheDocument();
-  });
-
-  test('renders brand name', () => {
-    renderNav();
-    expect(screen.getByText('IMMS')).toBeInTheDocument();
-  });
-
-  test('"MAINTENANCE CALLS" internal route is no longer in the nav', () => {
-    renderNav();
-    expect(screen.queryByText(/^MAINTENANCE CALLS$/i)).not.toBeInTheDocument();
   });
 
   test('"MAINTENANCE SYSTEM" renders as an external anchor with target="_blank"', () => {
@@ -66,7 +60,7 @@ describe('Navigation Component', () => {
     expect(link).toHaveAttribute('rel', 'noopener noreferrer');
   });
 
-  test('"MAINTENANCE SYSTEM" href points to the MCS base URL', () => {
+  test('"MAINTENANCE SYSTEM" href points to MCS base URL with token fragment', () => {
     renderNav();
     const link = screen.getByText(/MAINTENANCE SYSTEM/i).closest('a');
     const href = link?.getAttribute('href') ?? '';
@@ -79,5 +73,15 @@ describe('Navigation Component', () => {
     mockUseAuth.mockReturnValue(unauthContext);
     renderNav();
     expect(screen.queryByText(/MAINTENANCE SYSTEM/i)).not.toBeInTheDocument();
+  });
+
+  test('"MAINTENANCE CALLS" internal route is not in the nav', () => {
+    renderNav();
+    expect(screen.queryByText(/^MAINTENANCE CALLS$/i)).not.toBeInTheDocument();
+  });
+
+  test('renders username in AppBar', () => {
+    renderNav();
+    expect(screen.getByText(/admin/i)).toBeInTheDocument();
   });
 });
