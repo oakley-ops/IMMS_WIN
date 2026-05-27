@@ -69,7 +69,7 @@ router.get(
       const pdfRaw = await page.pdf({
         format: 'A4',
         printBackground: true,
-        margin: { top: '15mm', right: '12mm', bottom: '15mm', left: '12mm' },
+        margin: { top: '8mm', right: '8mm', bottom: '8mm', left: '8mm' },
       });
 
       // Puppeteer v21+ returns Uint8Array; convert to Buffer for Express.

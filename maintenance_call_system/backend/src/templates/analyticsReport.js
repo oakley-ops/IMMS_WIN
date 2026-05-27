@@ -1,7 +1,5 @@
 'use strict';
 
-// ─── Formatting helpers ───────────────────────────────────────────────────────
-
 const num = (v) => {
   if (v == null) return 0;
   const n = typeof v === 'string' ? parseFloat(v) : Number(v);
@@ -23,324 +21,225 @@ const fmtMoney = (v) => {
 };
 
 const REASON_LABELS = {
-  mechanical: 'Mechanical',
-  electrical: 'Electrical',
-  tooling: 'Tooling',
-  material: 'Material',
-  operator_error: 'Operator Error',
-  other: 'Other',
-  unknown: 'Unknown',
+  mechanical: 'Mechanical', electrical: 'Electrical', tooling: 'Tooling',
+  material: 'Material', operator_error: 'Operator Err.', other: 'Other', unknown: 'Unknown',
 };
 const reasonLabel = (k) => REASON_LABELS[k] || k || 'Unknown';
 
-// ─── Reusable HTML chunks ─────────────────────────────────────────────────────
+const REASON_COLORS = {
+  mechanical: '#f57c00', electrical: '#1976d2', tooling: '#42a5f5',
+  material: '#9c27b0', operator_error: '#388e3c', other: '#9e9e9e', unknown: '#9e9e9e',
+};
 
-const kpi = (label, value, sub, color = '#FF6B35') => `
-  <div class="kpi-card" style="border-top: 4px solid ${color};">
-    <div class="kpi-label">${label}</div>
-    <div class="kpi-value">${value}</div>
-    ${sub ? `<div class="kpi-sub">${sub}</div>` : ''}
+const kpi = (label, value, color = '#FF6B35') => `
+  <div class="kpi" style="border-left:3px solid ${color};">
+    <div class="kpi-l">${label}</div>
+    <div class="kpi-v">${value}</div>
   </div>`;
 
 const hBar = (label, value, max, color = '#FF6B35') => {
   const pct = max > 0 ? Math.max(2, (value / max) * 100) : 0;
-  return `
-    <div class="hbar-row">
-      <div class="hbar-label">${label}</div>
-      <div class="hbar-track">
-        <div class="hbar-fill" style="width:${pct.toFixed(1)}%;background:${color};"></div>
-      </div>
-      <div class="hbar-val">${fmt(value)}</div>
-    </div>`;
+  return `<div class="hb"><span class="hb-l">${label}</span><span class="hb-t"><span class="hb-f" style="width:${pct.toFixed(1)}%;background:${color};"></span></span><span class="hb-v">${fmt(value)}</span></div>`;
 };
 
-const sectionHeader = (title) => `
-  <div class="section-header">
-    <span class="section-label">${title}</span>
-    <hr class="section-rule"/>
-  </div>`;
+const sec = (title) => `<div class="sec"><span>${title}</span></div>`;
 
-// ─── Template ─────────────────────────────────────────────────────────────────
-
-/**
- * Build the complete HTML string for the analytics report PDF.
- *
- * @param {object} opts
- * @param {object} opts.metrics      - result of callMetrics()
- * @param {object} opts.partsMetrics - result of partsMetrics()
- * @param {object} opts.filters      - { from, to, shift_name, machine_id_label, reason }
- * @param {string} opts.generatedAt  - human-readable timestamp
- * @returns {string} full HTML document
- */
 function buildAnalyticsReport({ metrics, partsMetrics, filters, generatedAt }) {
   const o = metrics.overall;
-
-  /* ── Filter summary line ── */
-  const filterParts = [
-    filters.shift_name  && `Shift: ${filters.shift_name}`,
-    filters.machine_id_label && `Machine: ${filters.machine_id_label}`,
-    filters.reason      && `Reason: ${reasonLabel(filters.reason)}`,
-  ].filter(Boolean);
-  const filterLine = filterParts.length
-    ? filterParts.join('  ·  ')
-    : 'All machines · All shifts · All reasons';
-
-  /* ── ① Production Health ── */
-  const prodHealth = `
-    ${sectionHeader('① PRODUCTION HEALTH')}
-    <div class="kpi-grid">
-      ${kpi('Downtime Cost',   fmtMoney(o.total_downtime_cost),    'in period',                         '#d32f2f')}
-      ${kpi('Total Downtime',  `${fmt(o.total_downtime_hours)} hr`, 'in period',                         '#f57c00')}
-      ${kpi('SLA %',           o.sla_pct == null ? '—' : `${fmt(o.sla_pct)}%`, 'acknowledged ≤ 10 min', '#388e3c')}
-      ${kpi('Open Calls',      fmt(o.open_calls, 0),               'right now',                         '#f57c00')}
-      ${kpi('Total Calls',     fmt(o.total_calls, 0),              'resolved in range')}
-      ${kpi('MTTA',            `${fmt(o.avg_response_minutes)} min`, 'mean time to acknowledge',         '#1976d2')}
-      ${kpi('MTTR',            `${fmt(o.avg_repair_minutes)} min`,   'mean time to repair',              '#1976d2')}
-      ${kpi('Critical Calls',  fmt(o.critical_calls, 0),           'priority = critical',               '#d32f2f')}
-    </div>`;
-
-  /* ── ② Parts Consumption ── */
   const pm = partsMetrics || {};
 
-  const topPartsRows = (pm.top_parts || []).map(p => `
-    <tr>
-      <td>${p.part_name || '—'}</td>
-      <td>${p.part_number || '—'}</td>
-      <td class="num">${fmt(p.total_qty, 0)}</td>
-      <td class="num">${fmt(p.call_count, 0)}</td>
-    </tr>`).join('') || '<tr><td colspan="4" class="empty">No data</td></tr>';
+  const filterParts = [
+    filters.shift_name && `Shift: ${filters.shift_name}`,
+    filters.machine_id_label && `Machine: ${filters.machine_id_label}`,
+    filters.reason && `Reason: ${reasonLabel(filters.reason)}`,
+  ].filter(Boolean);
+  const filterLine = filterParts.length ? filterParts.join(' · ') : 'All machines · All shifts · All reasons';
 
-  const byMachineRows = (pm.by_machine || []).map(m => `
-    <tr>
-      <td>${m.machine_name || `#${m.machine_id}`}</td>
-      <td class="num">${fmt(m.total_qty, 0)}</td>
-      <td class="num">${fmt(m.unique_parts, 0)}</td>
-    </tr>`).join('') || '<tr><td colspan="3" class="empty">No data</td></tr>';
-
-  const partsCons = `
-    ${sectionHeader('② PARTS CONSUMPTION')}
-    <div class="two-col">
-      <div>
-        <h3 class="subsection">Top Parts Used</h3>
-        <table>
-          <thead><tr><th>Part</th><th>Part #</th><th class="num">Qty</th><th class="num">Calls</th></tr></thead>
-          <tbody>${topPartsRows}</tbody>
-        </table>
-      </div>
-      <div>
-        <h3 class="subsection">Parts by Machine</h3>
-        <table>
-          <thead><tr><th>Machine</th><th class="num">Total Qty</th><th class="num">Unique Parts</th></tr></thead>
-          <tbody>${byMachineRows}</tbody>
-        </table>
-      </div>
+  // ── KPIs ──
+  const kpis = `
+    <div class="kpi-grid">
+      ${kpi('Downtime Cost', fmtMoney(o.total_downtime_cost), '#d32f2f')}
+      ${kpi('Total Downtime', `${fmt(o.total_downtime_hours)} hr`, '#f57c00')}
+      ${kpi('SLA %', o.sla_pct == null ? '—' : `${fmt(o.sla_pct)}%`, '#388e3c')}
+      ${kpi('Open Calls', fmt(o.open_calls, 0), '#f57c00')}
+      ${kpi('Total Calls', fmt(o.total_calls, 0))}
+      ${kpi('MTTA', `${fmt(o.avg_response_minutes)} min`, '#1976d2')}
+      ${kpi('MTTR', `${fmt(o.avg_repair_minutes)} min`, '#1976d2')}
+      ${kpi('Critical', fmt(o.critical_calls, 0), '#d32f2f')}
     </div>`;
 
-  /* ── ③ Equipment ── */
+  // ── Parts ──
+  const topPartsRows = (pm.top_parts || []).slice(0, 8).map(p =>
+    `<tr><td>${p.part_name || '—'}</td><td>${p.part_number || '—'}</td><td class="r">${fmt(p.total_qty, 0)}</td><td class="r">${fmt(p.call_count, 0)}</td></tr>`
+  ).join('') || '<tr><td colspan="4" class="e">No data</td></tr>';
+
+  const partsByMachineRows = (pm.by_machine || []).slice(0, 8).map(m =>
+    `<tr><td>${m.machine_name || `#${m.machine_id}`}</td><td class="r">${fmt(m.total_qty, 0)}</td><td class="r">${fmt(m.unique_parts, 0)}</td></tr>`
+  ).join('') || '<tr><td colspan="3" class="e">No data</td></tr>';
+
+  // ── Equipment ──
   const machineMax = Math.max(0, ...(metrics.by_machine || []).map(m => num(m.total_downtime_hours)));
   const machinesBars = (metrics.by_machine || []).length === 0
-    ? '<p class="empty">No data</p>'
-    : (metrics.by_machine || []).map(m =>
-        hBar(
-          `${m.machine_name || `#${m.machine_id}`} (${fmt(m.call_count, 0)} calls)`,
-          num(m.total_downtime_hours), machineMax, '#f57c00'
-        )
+    ? '<p class="e">No data</p>'
+    : (metrics.by_machine || []).slice(0, 8).map(m =>
+        hBar(`${m.machine_name || `#${m.machine_id}`} (${fmt(m.call_count, 0)})`, num(m.total_downtime_hours), machineMax, '#f57c00')
       ).join('');
 
-  const repeatRows = (metrics.repeat_failures || []).map(r => `
-    <tr>
-      <td>${r.machine_name || `#${r.machine_id}`}</td>
-      <td>${reasonLabel(r.reason_category)}</td>
-      <td class="num">${fmt(r.occurrences, 0)}</td>
-      <td class="num">${fmt(r.suspensions, 0)}</td>
-    </tr>`).join('') || '<tr><td colspan="4" class="empty">No repeat failures (3+)</td></tr>';
+  const repeatRows = (metrics.repeat_failures || []).slice(0, 8).map(r =>
+    `<tr><td>${r.machine_name || `#${r.machine_id}`}</td><td>${reasonLabel(r.reason_category)}</td><td class="r">${fmt(r.occurrences, 0)}</td><td class="r">${fmt(r.suspensions, 0)}</td></tr>`
+  ).join('') || '<tr><td colspan="4" class="e">No repeat failures</td></tr>';
 
-  const equipment = `
-    ${sectionHeader('③ EQUIPMENT')}
-    <div class="two-col">
-      <div>
-        <h3 class="subsection">Top Machines by Downtime (hours)</h3>
-        <div class="hbar-container">${machinesBars}</div>
-      </div>
-      <div>
-        <h3 class="subsection">Repeat Failures (3+ in range)</h3>
-        <table>
-          <thead><tr><th>Machine</th><th>Reason</th><th class="num">Count</th><th class="num">Suspended</th></tr></thead>
-          <tbody>${repeatRows}</tbody>
-        </table>
-      </div>
-    </div>`;
+  // ── Team ──
+  const techRows = (metrics.by_tech || []).slice(0, 10).map(t =>
+    `<tr><td>${t.technician_name || '—'}</td><td class="r">${fmt(t.call_count, 0)}</td><td class="r">${fmt(t.avg_response_minutes)}</td><td class="r">${fmt(t.avg_repair_minutes)}</td><td class="r">${t.sla_pct == null ? '—' : `${fmt(t.sla_pct)}%`}</td><td class="r">${fmt(t.suspensions, 0)}</td></tr>`
+  ).join('') || '<tr><td colspan="6" class="e">No data</td></tr>';
 
-  /* ── ④ Team Performance ── */
-  const techRows = (metrics.by_tech || []).map(t => `
-    <tr>
-      <td>${t.technician_name || '—'}</td>
-      <td class="num">${fmt(t.call_count, 0)}</td>
-      <td class="num">${fmt(t.avg_response_minutes)}</td>
-      <td class="num">${fmt(t.avg_repair_minutes)}</td>
-      <td class="num">${t.sla_pct == null ? '—' : `${fmt(t.sla_pct)}%`}</td>
-      <td class="num">${fmt(t.suspensions, 0)}</td>
-    </tr>`).join('') || '<tr><td colspan="6" class="empty">No data</td></tr>';
-
-  const shiftRows = (metrics.by_shift || []).map(s => `
-    <tr>
-      <td>${s.shift_name || 'Unknown'}</td>
-      <td class="num">${fmt(s.call_count, 0)}</td>
-      <td class="num">${fmt(s.avg_response_minutes)}</td>
-      <td class="num">${fmt(s.avg_downtime_minutes)}</td>
-    </tr>`).join('') || '<tr><td colspan="4" class="empty">No data</td></tr>';
+  const shiftRows = (metrics.by_shift || []).map(s =>
+    `<tr><td>${s.shift_name || 'Unknown'}</td><td class="r">${fmt(s.call_count, 0)}</td><td class="r">${fmt(s.avg_response_minutes)}</td><td class="r">${fmt(s.avg_downtime_minutes)}</td></tr>`
+  ).join('') || '<tr><td colspan="4" class="e">No data</td></tr>';
 
   const reasonMax = Math.max(0, ...(metrics.by_reason || []).map(r => num(r.count)));
-  const REASON_COLORS = {
-    mechanical: '#f57c00', electrical: '#1976d2', tooling: '#42a5f5',
-    material: '#9c27b0', operator_error: '#388e3c', other: '#9e9e9e', unknown: '#9e9e9e',
-  };
   const reasonBars = (metrics.by_reason || []).length === 0
-    ? '<p class="empty">No data</p>'
+    ? '<p class="e">No data</p>'
     : (metrics.by_reason || []).map(r =>
-        hBar(reasonLabel(r.reason_category), num(r.count), reasonMax,
-          REASON_COLORS[r.reason_category] || '#9e9e9e')
+        hBar(reasonLabel(r.reason_category), num(r.count), reasonMax, REASON_COLORS[r.reason_category] || '#9e9e9e')
       ).join('');
 
-  const trendRows = (metrics.trend_weekly || []).map(t => `
-    <tr>
-      <td>${new Date(t.week_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</td>
-      <td class="num">${fmt(t.call_count, 0)}</td>
-      <td class="num">${fmt(t.avg_mtta_minutes)}</td>
-      <td class="num">${fmt(t.avg_mttr_minutes)}</td>
-    </tr>`).join('') || '<tr><td colspan="4" class="empty">No data</td></tr>';
+  const trendRows = (metrics.trend_weekly || []).slice(0, 8).map(t =>
+    `<tr><td>${new Date(t.week_start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</td><td class="r">${fmt(t.call_count, 0)}</td><td class="r">${fmt(t.avg_mtta_minutes)}</td><td class="r">${fmt(t.avg_mttr_minutes)}</td></tr>`
+  ).join('') || '<tr><td colspan="4" class="e">No data</td></tr>';
 
-  const team = `
-    ${sectionHeader('④ TEAM PERFORMANCE')}
-    <h3 class="subsection">Technician Workload</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Technician</th><th class="num">Calls</th><th class="num">Avg MTTA (min)</th>
-          <th class="num">Avg MTTR (min)</th><th class="num">SLA %</th><th class="num">Suspensions</th>
-        </tr>
-      </thead>
-      <tbody>${techRows}</tbody>
-    </table>
-
-    <div class="two-col mt-lg">
-      <div>
-        <h3 class="subsection">By Shift</h3>
-        <table>
-          <thead><tr><th>Shift</th><th class="num">Calls</th><th class="num">Avg MTTA</th><th class="num">Avg Downtime</th></tr></thead>
-          <tbody>${shiftRows}</tbody>
-        </table>
-      </div>
-      <div>
-        <h3 class="subsection">Failure Reasons</h3>
-        <div class="hbar-container">${reasonBars}</div>
-      </div>
-    </div>
-
-    <h3 class="subsection mt-lg">Weekly Trend</h3>
-    <table>
-      <thead><tr><th>Week of</th><th class="num">Calls</th><th class="num">MTTA (min)</th><th class="num">MTTR (min)</th></tr></thead>
-      <tbody>${trendRows}</tbody>
-    </table>`;
-
-  /* ── Full document ── */
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <title>MCS Analytics Report</title>
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+<meta charset="UTF-8"/>
+<title>MCS Analytics Report</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:9px;color:#222;background:#fff;}
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
-      font-size: 12px;
-      color: #212121;
-      background: #fff;
-      padding: 28px 36px;
-      max-width: 1100px;
-    }
+/* Header */
+.hdr{display:flex;align-items:baseline;justify-content:space-between;border-bottom:2px solid #FF6B35;padding-bottom:6px;margin-bottom:8px;}
+.hdr h1{font-size:14px;font-weight:800;color:#1a1a1a;}
+.hdr h1 span{color:#FF6B35;font-size:9px;letter-spacing:2px;text-transform:uppercase;margin-right:8px;}
+.hdr .meta{font-size:8px;color:#888;text-align:right;line-height:1.4;}
 
-    /* ── Report header ── */
-    .report-header { margin-bottom: 24px; border-bottom: 3px solid #FF6B35; padding-bottom: 14px; }
-    .report-header .brand { font-size: 11px; font-weight: 700; color: #FF6B35; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
-    .report-header h1 { font-size: 22px; font-weight: 700; color: #1a1a1a; margin-bottom: 6px; }
-    .report-header .meta { font-size: 11px; color: #666; }
-    .report-header .meta span { margin-right: 16px; }
+/* Section headers */
+.sec{margin:10px 0 4px;font-size:8px;font-weight:800;color:#999;letter-spacing:2px;text-transform:uppercase;border-bottom:1px solid #e0e0e0;padding-bottom:2px;}
 
-    /* ── Section headers ── */
-    .section-header { margin: 24px 0 12px; }
-    .section-label { font-size: 10px; font-weight: 800; color: #888; letter-spacing: 3px; text-transform: uppercase; }
-    .section-rule { border: none; border-top: 1px solid #e0e0e0; margin-top: 4px; }
+/* KPIs */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:6px;}
+.kpi{background:#fafafa;border-radius:3px;padding:4px 6px;border-left:3px solid #FF6B35;}
+.kpi-l{font-size:7px;font-weight:700;color:#999;letter-spacing:.5px;text-transform:uppercase;}
+.kpi-v{font-size:14px;font-weight:800;color:#1a1a1a;line-height:1.2;}
 
-    /* ── KPI grid ── */
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 8px; }
-    .kpi-card { border-top: 4px solid #FF6B35; background: #fafafa; border-radius: 4px; padding: 10px 12px; }
-    .kpi-label { font-size: 9px; font-weight: 700; color: #888; letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 4px; }
-    .kpi-value { font-size: 22px; font-weight: 800; color: #1a1a1a; line-height: 1.1; }
-    .kpi-sub { font-size: 9px; color: #aaa; margin-top: 3px; }
+/* Two-col */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}
 
-    /* ── Two-column layout ── */
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 8px; }
+/* Tables */
+table{width:100%;border-collapse:collapse;font-size:8px;margin-bottom:2px;}
+th{background:#f5f5f5;font-weight:700;font-size:7.5px;letter-spacing:.3px;padding:3px 4px;text-align:left;border-bottom:1.5px solid #ddd;color:#666;text-transform:uppercase;}
+td{padding:2.5px 4px;border-bottom:1px solid #f0f0f0;color:#333;}
+td.r,th.r{text-align:right;}
+td.e{color:#aaa;font-style:italic;text-align:center;padding:6px;}
+.sub{font-size:9px;font-weight:700;color:#444;margin-bottom:3px;}
 
-    /* ── Tables ── */
-    table { width: 100%; border-collapse: collapse; font-size: 11px; margin-bottom: 4px; }
-    th { background: #f5f5f5; font-weight: 700; font-size: 10px; letter-spacing: 0.3px; padding: 6px 8px; text-align: left; border-bottom: 2px solid #e0e0e0; color: #555; text-transform: uppercase; }
-    td { padding: 5px 8px; border-bottom: 1px solid #f0f0f0; color: #333; }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #fafafa; }
-    td.num, th.num { text-align: right; }
-    td.empty { color: #aaa; font-style: italic; text-align: center; padding: 12px; }
+/* Bar charts */
+.hb{display:flex;align-items:center;gap:4px;margin-bottom:3px;}
+.hb-l{flex:0 0 140px;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#444;font-weight:500;}
+.hb-t{flex:1;height:7px;background:#eee;border-radius:1px;overflow:hidden;}
+.hb-f{height:100%;border-radius:1px;}
+.hb-v{flex:0 0 30px;font-size:7.5px;color:#888;text-align:right;}
 
-    /* ── Horizontal bar charts ── */
-    .hbar-container { margin-bottom: 4px; }
-    .hbar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .hbar-label { flex: 0 0 200px; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #444; font-weight: 500; }
-    .hbar-track { flex: 1; height: 9px; background: #eeeeee; border-radius: 2px; overflow: hidden; }
-    .hbar-fill { height: 100%; border-radius: 2px; }
-    .hbar-val { flex: 0 0 40px; font-size: 10px; color: #888; text-align: right; }
+/* Page 2 */
+.page2{page-break-before:always;}
 
-    /* ── Subsection titles ── */
-    .subsection { font-size: 12px; font-weight: 700; color: #333; margin-bottom: 8px; }
-    .mt-lg { margin-top: 20px; }
-
-    /* ── Page breaks ── */
-    .section-header.page-break { page-break-before: always; }
-
-    /* ── Print colour fix ── */
-    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-  </style>
+/* Print colours */
+*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+</style>
 </head>
 <body>
-  <div class="report-header">
-    <div class="brand">Maintenance Call System</div>
-    <h1>Analytics Report</h1>
-    <div class="meta">
-      <span>Period: <strong>${filters.from || 'all time'}</strong> to <strong>${filters.to || 'present'}</strong></span>
-      <span>${filterLine}</span>
-      <span style="float:right;color:#bbb;">Generated: ${generatedAt}</span>
-    </div>
-  </div>
 
-  ${prodHealth}
-
-  <div class="section-header page-break">
-    <span class="section-label">② PARTS CONSUMPTION</span>
-    <hr class="section-rule"/>
+<!-- ── HEADER ── -->
+<div class="hdr">
+  <h1><span>MCS</span> Analytics Report</h1>
+  <div class="meta">
+    ${filters.from || 'All time'} — ${filters.to || 'Present'} · ${filterLine}<br/>
+    Generated ${generatedAt}
   </div>
-  ${partsCons.replace(sectionHeader('② PARTS CONSUMPTION'), '')}
+</div>
 
-  <div class="section-header page-break">
-    <span class="section-label">③ EQUIPMENT</span>
-    <hr class="section-rule"/>
-  </div>
-  ${equipment.replace(sectionHeader('③ EQUIPMENT'), '')}
+<!-- ── PAGE 1 ── -->
 
-  <div class="section-header page-break">
-    <span class="section-label">④ TEAM PERFORMANCE</span>
-    <hr class="section-rule"/>
+${sec('① Production Health')}
+${kpis}
+
+${sec('② Parts Consumption')}
+<div class="two">
+  <div>
+    <div class="sub">Top Parts Used</div>
+    <table>
+      <thead><tr><th>Part</th><th>Part #</th><th class="r">Qty</th><th class="r">Calls</th></tr></thead>
+      <tbody>${topPartsRows}</tbody>
+    </table>
   </div>
-  ${team.replace(sectionHeader('④ TEAM PERFORMANCE'), '')}
+  <div>
+    <div class="sub">Parts by Machine</div>
+    <table>
+      <thead><tr><th>Machine</th><th class="r">Total Qty</th><th class="r">Unique</th></tr></thead>
+      <tbody>${partsByMachineRows}</tbody>
+    </table>
+  </div>
+</div>
+
+${sec('③ Equipment')}
+<div class="two">
+  <div>
+    <div class="sub">Top Machines by Downtime (hr)</div>
+    ${machinesBars}
+  </div>
+  <div>
+    <div class="sub">Repeat Failures (3+ in range)</div>
+    <table>
+      <thead><tr><th>Machine</th><th>Reason</th><th class="r">#</th><th class="r">Susp.</th></tr></thead>
+      <tbody>${repeatRows}</tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ── PAGE 2 ── -->
+<div class="page2">
+
+${sec('④ Team Performance')}
+<div class="sub">Technician Workload</div>
+<table>
+  <thead><tr><th>Technician</th><th class="r">Calls</th><th class="r">MTTA</th><th class="r">MTTR</th><th class="r">SLA%</th><th class="r">Susp.</th></tr></thead>
+  <tbody>${techRows}</tbody>
+</table>
+
+<div class="three" style="margin-top:8px;">
+  <div>
+    <div class="sub">By Shift</div>
+    <table>
+      <thead><tr><th>Shift</th><th class="r">Calls</th><th class="r">MTTA</th><th class="r">Down</th></tr></thead>
+      <tbody>${shiftRows}</tbody>
+    </table>
+  </div>
+  <div>
+    <div class="sub">Failure Reasons</div>
+    ${reasonBars}
+  </div>
+  <div>
+    <div class="sub">Weekly Trend</div>
+    <table>
+      <thead><tr><th>Week</th><th class="r">#</th><th class="r">MTTA</th><th class="r">MTTR</th></tr></thead>
+      <tbody>${trendRows}</tbody>
+    </table>
+  </div>
+</div>
+
+</div>
 </body>
 </html>`;
 }
