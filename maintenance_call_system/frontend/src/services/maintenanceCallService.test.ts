@@ -99,3 +99,15 @@ describe('maintenanceCallService', () => {
     });
   });
 });
+
+describe('getPartsMetrics', () => {
+  it('GETs /stats/parts-metrics and forwards filter params', async () => {
+    const parts = { top_parts: [], by_machine: [], by_tech: [] };
+    mockAxiosInstance.get.mockResolvedValueOnce({ data: parts });
+    const result = await svc.getPartsMetrics({ from: '2026-01-01', machine_id: 125 });
+    expect(mockAxiosInstance.get).toHaveBeenCalledWith('/stats/parts-metrics', {
+      params: { from: '2026-01-01', machine_id: 125 },
+    });
+    expect(result).toEqual(parts);
+  });
+});

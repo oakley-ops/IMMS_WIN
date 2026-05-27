@@ -132,6 +132,7 @@ export interface CallMetrics {
     total_downtime_hours: string | null;
     total_downtime_cost: string | null;
     sla_pct: string | null;
+    critical_calls: string | null;
   };
   by_machine: {
     machine_id: number;
@@ -159,6 +160,7 @@ export interface CallMetrics {
     avg_response_minutes: string | null;
     avg_repair_minutes: string | null;
     sla_pct: string | null;
+    suspensions: string | null;
   }[];
   trend_weekly: {
     week_start: string;
@@ -172,6 +174,7 @@ export interface CallMetrics {
     machine_name: string;
     reason_category: string | null;
     occurrences: string;
+    suspensions: string | null;
   }[];
 }
 
@@ -181,6 +184,29 @@ export interface MetricsFilters {
   shift_name?: string;
   machine_id?: number | string;
   reason?: ReasonCategory;
+}
+
+export interface PartsMetrics {
+  top_parts: {
+    part_id: number;
+    part_name: string;
+    part_number: string | null;
+    total_qty: number;
+    call_count: number;
+  }[];
+  by_machine: {
+    machine_id: number;
+    machine_name: string;
+    unique_parts: number;
+    total_qty: number;
+  }[];
+  by_tech: {
+    technician_id: number | null;
+    technician_name: string | null;
+    calls_with_parts: number;
+    unique_parts: number;
+    total_qty: number;
+  }[];
 }
 
 const svc = {
@@ -216,6 +242,9 @@ const svc = {
 
   getMetrics: (params?: MetricsFilters) =>
     api.get<CallMetrics>('/stats/metrics', { params }).then(r => r.data),
+
+  getPartsMetrics: (params?: MetricsFilters) =>
+    api.get<PartsMetrics>('/stats/parts-metrics', { params }).then(r => r.data),
 
   getBadges: () =>
     api.get<BadgeRegistration[]>('/admin/badges').then(r => r.data),
