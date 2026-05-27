@@ -29,6 +29,17 @@ const express = require('express');
   };
 }
 
+{
+  const rpPath = require.resolve('../middleware/requirePermission');
+  require.cache[rpPath] = {
+    id: rpPath,
+    filename: rpPath,
+    loaded: true,
+    // Factory that always produces a pass-through middleware.
+    exports: (_key) => (_req, _res, next) => next(),
+  };
+}
+
 const router = require('./maintenanceCalls');
 
 const app = express();

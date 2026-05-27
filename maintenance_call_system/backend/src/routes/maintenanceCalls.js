@@ -3,6 +3,7 @@ const router = express.Router();
 const db = require('../database/db');
 const logger = require('../lib/logger');
 const auth = require('../middleware/auth');
+const requirePermission = require('../middleware/requirePermission');
 const validate = require('../middleware/validate');
 const { errors } = require('../middleware/errors');
 const S = require('../schemas/maintenanceCalls');
@@ -190,6 +191,7 @@ router.get('/admin/badges', auth, handler(async (req, res) =>
 router.post(
   '/admin/badges',
   auth,
+  requirePermission('badges_add'),
   validate({ body: S.createBadgeBody }),
   handler(async (req, res) => res.status(201).json(await repo.upsertBadge(db, req.body)))
 );
@@ -197,6 +199,10 @@ router.post(
 router.put(
   '/admin/badges/:badge_id',
   auth,
+  (req, res, next) => {
+    if (req.user?.role !== 'admin') return errors.forbidden(res, 'Admin access required');
+    return next();
+  },
   validate({ body: S.updateBadgeBody }),
   handler(async (req, res) => {
     const updated = await repo.updateBadge(db, req.params.badge_id, req.body);
@@ -214,6 +220,7 @@ router.get('/admin/readers', auth, handler(async (req, res) =>
 router.post(
   '/admin/readers',
   auth,
+  requirePermission('readers_manage'),
   validate({ body: S.createReaderBody }),
   (req, res) => repo.insertReader(db, req.body)
     .then((reader) => res.status(201).json(reader))
@@ -227,6 +234,7 @@ router.post(
 router.put(
   '/admin/readers/:id',
   auth,
+  requirePermission('readers_manage'),
   validate({ params: S.idParam, body: S.updateReaderBody }),
   handler(async (req, res) => {
     const updated = await repo.updateReader(db, req.params.id, req.body);
