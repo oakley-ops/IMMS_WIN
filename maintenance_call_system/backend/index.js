@@ -11,6 +11,7 @@ const { Server } = require('socket.io');
 const logger = require('./src/lib/logger');
 const maintenanceCallsRouter = require('./src/routes/maintenanceCalls');
 const callBoardLayoutsRouter = require('./src/routes/callBoardLayouts');
+const permissionsRouter = require('./src/routes/permissions');
 
 const app = express();
 const server = http.createServer(app);
@@ -83,6 +84,7 @@ app.get('/health', (req, res) => res.json({ status: 'healthy', service: 'MCS', t
 // in directly. See maintenance_call_system/SCHEMA_CONTRACT.md.
 app.use('/api/v1/maintenance-calls', maintenanceCallsRouter);
 app.use('/api/v1/call-board-layouts', callBoardLayoutsRouter);
+app.use('/api/v1/mcs/permissions', permissionsRouter);
 
 // ─── Error handler ────────────────────────────────────────────────────────────
 
