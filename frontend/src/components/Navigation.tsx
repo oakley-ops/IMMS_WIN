@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -66,7 +66,8 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
   const [expanded, setExpanded] = useState(false);
 
   const MCS_BASE = process.env.REACT_APP_MCS_URL || 'http://localhost:3003';
-  const buildMCSUrl = (): string => {
+
+  const mcsUrl = useMemo(() => {
     const token = localStorage.getItem('token') || '';
     const userEncoded = btoa(unescape(encodeURIComponent(JSON.stringify({
       id: user?.id,
@@ -74,59 +75,63 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
       role: user?.role,
     }))));
     return `${MCS_BASE}#token=${token}&user=${userEncoded}`;
-  };
+  }, [user?.id, user?.username, user?.role, MCS_BASE]);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const navSections: NavSection[] = [
-    {
-      label: 'Inventory',
-      items: [
-        { path: '/dashboard', label: 'DASHBOARD', icon: <Dashboard /> },
-        { path: '/parts', label: 'PARTS', icon: <Inventory /> },
-        { path: '/purchase-orders', label: 'PURCHASE ORDERS', icon: <ShoppingCart />, requiredPermission: 'CAN_MANAGE_PURCHASE_ORDERS' },
-        { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
-      ],
-    },
-    {
-      label: 'Equipment',
-      items: [
-        { path: '/machines', label: 'MACHINES', icon: <Build />, requiredPermission: 'CAN_VIEW_MACHINES' },
-        { path: '/work-orders', label: 'WORK ORDERS', icon: <Engineering />, requiredPermission: 'CAN_VIEW_MACHINES' },
-        { path: '/pm-checklists', label: 'PM MANAGEMENT', icon: <PlaylistAddCheck />, requiredPermission: 'CAN_MANAGE_PM_CHECKLISTS' },
-        { path: '/die-tracker', label: 'DIE MANAGEMENT', icon: <Category />, requiredPermission: 'CAN_VIEW_MACHINES' },
-      ],
-    },
-    {
-      label: 'Management',
-      items: [
-        { path: '/projects', label: 'PROJECTS', icon: <Assignment />, requiredPermission: 'CAN_MANAGE_PROJECTS' },
-        { path: '/contacts', label: 'CONTACTS', icon: <ContactsIcon />, requiredPermission: 'CAN_VIEW_CONTACTS' },
-        { path: '/technicians', label: 'TECHNICIANS', icon: <People />, requiredPermission: 'CAN_MANAGE_USERS' },
-      ],
-    },
-    {
-      label: 'External',
-      items: [
-        { href: buildMCSUrl(), external: true, label: 'MAINTENANCE SYSTEM', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' },
-      ],
-    },
-  ];
+  const navSections: NavSection[] = useMemo(() => {
+    const sections: NavSection[] = [
+      {
+        label: 'Inventory',
+        items: [
+          { path: '/dashboard', label: 'DASHBOARD', icon: <Dashboard /> },
+          { path: '/parts', label: 'PARTS', icon: <Inventory /> },
+          { path: '/purchase-orders', label: 'PURCHASE ORDERS', icon: <ShoppingCart />, requiredPermission: 'CAN_MANAGE_PURCHASE_ORDERS' },
+          { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
+        ],
+      },
+      {
+        label: 'Equipment',
+        items: [
+          { path: '/machines', label: 'MACHINES', icon: <Build />, requiredPermission: 'CAN_VIEW_MACHINES' },
+          { path: '/work-orders', label: 'WORK ORDERS', icon: <Engineering />, requiredPermission: 'CAN_VIEW_MACHINES' },
+          { path: '/pm-checklists', label: 'PM MANAGEMENT', icon: <PlaylistAddCheck />, requiredPermission: 'CAN_MANAGE_PM_CHECKLISTS' },
+          { path: '/die-tracker', label: 'DIE MANAGEMENT', icon: <Category />, requiredPermission: 'CAN_VIEW_MACHINES' },
+        ],
+      },
+      {
+        label: 'Management',
+        items: [
+          { path: '/projects', label: 'PROJECTS', icon: <Assignment />, requiredPermission: 'CAN_MANAGE_PROJECTS' },
+          { path: '/contacts', label: 'CONTACTS', icon: <ContactsIcon />, requiredPermission: 'CAN_VIEW_CONTACTS' },
+          { path: '/technicians', label: 'TECHNICIANS', icon: <People />, requiredPermission: 'CAN_MANAGE_USERS' },
+        ],
+      },
+      {
+        label: 'External',
+        items: [
+          { href: mcsUrl, external: true, label: 'MAINTENANCE SYSTEM', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' },
+        ],
+      },
+    ];
 
-  if (hasPermission('CAN_VIEW_ALL')) {
-    navSections.push({
-      label: 'Analytics',
-      items: [
-        { path: '/kpi-dashboard', label: 'KPI DASHBOARD', icon: <BarChart />, requiredPermission: 'CAN_VIEW_ALL' },
-      ],
-    });
-  }
+    if (hasPermission('CAN_VIEW_ALL')) {
+      sections.push({
+        label: 'Analytics',
+        items: [
+          { path: '/kpi-dashboard', label: 'KPI DASHBOARD', icon: <BarChart />, requiredPermission: 'CAN_VIEW_ALL' },
+        ],
+      });
+    }
+
+    return sections;
+  }, [mcsUrl, hasPermission]);
 
   const isActive = (item: NavItem) =>
-    !item.external && item.path === location.pathname;
+    !item.external && !!item.path && location.pathname.startsWith(item.path);
 
   const itemSx = (active: boolean) => ({
     py: 1,
@@ -203,7 +208,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
               height: `calc(100vh - ${APPBAR_HEIGHT}px)`,
               borderRight: 'none',
               position: 'fixed',
-              zIndex: (t: any) => t.zIndex.drawer,
+              zIndex: (t) => t.zIndex.drawer,
             },
           }}
         >
