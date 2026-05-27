@@ -1,0 +1,74 @@
+<h2>Where should the MCS link live in IMMS?</h2>
+<p class="subtitle">The current "Maintenance Calls" nav item talks directly to MCS's backend. We're replacing it with a link that opens MCS as its own app. How should that appear in the sidebar?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:flex;height:220px;background:#1e1e2e;border-radius:6px;overflow:hidden;font-size:12px;">
+        <div style="width:200px;background:#16213e;padding:12px;display:flex;flex-direction:column;gap:4px;">
+          <div style="color:#6c7293;font-size:10px;font-weight:bold;margin-bottom:4px;letter-spacing:1px;">NAVIGATION</div>
+          <div style="background:#0f3460;color:#fff;padding:6px 10px;border-radius:4px;">📊 Dashboard</div>
+          <div style="color:#aaa;padding:6px 10px;">📦 Parts</div>
+          <div style="color:#aaa;padding:6px 10px;">⚙️ Machines</div>
+          <div style="color:#aaa;padding:6px 10px;">📋 Work Orders</div>
+          <div style="border-top:1px solid #2a2a4a;margin:6px 0;"></div>
+          <div style="color:#6c7293;font-size:10px;font-weight:bold;margin-bottom:4px;letter-spacing:1px;">EXTERNAL</div>
+          <div style="color:#e2b96c;padding:6px 10px;display:flex;align-items:center;gap:6px;">
+            🔧 Maintenance System <span style="font-size:9px;opacity:0.6;">↗</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Sidebar section separator</h3>
+      <p>MCS link sits in its own "External" section at the bottom of the sidebar, visually separated from IMMS navigation. Opens MCS in a new tab.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:flex;height:220px;background:#1e1e2e;border-radius:6px;overflow:hidden;font-size:12px;">
+        <div style="width:200px;background:#16213e;padding:12px;display:flex;flex-direction:column;gap:4px;">
+          <div style="color:#6c7293;font-size:10px;font-weight:bold;margin-bottom:4px;letter-spacing:1px;">NAVIGATION</div>
+          <div style="background:#0f3460;color:#fff;padding:6px 10px;border-radius:4px;">📊 Dashboard</div>
+          <div style="color:#aaa;padding:6px 10px;">📦 Parts</div>
+          <div style="color:#aaa;padding:6px 10px;">⚙️ Machines</div>
+          <div style="color:#aaa;padding:6px 10px;">📋 Work Orders</div>
+          <div style="color:#aaa;padding:6px 10px;">🔧 Maintenance System <span style="font-size:9px;background:#e2b96c;color:#111;border-radius:3px;padding:1px 4px;margin-left:2px;">↗</span></div>
+          <div style="color:#aaa;padding:6px 10px;">📊 KPI Dashboard</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Inline with a badge</h3>
+      <p>MCS sits in the regular nav flow with a small "external link" badge. No visual separation — it looks like a normal nav item but the badge signals it opens elsewhere.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="display:flex;height:220px;background:#1e1e2e;border-radius:6px;overflow:hidden;font-size:12px;">
+        <div style="width:200px;background:#16213e;padding:12px;display:flex;flex-direction:column;gap:4px;">
+          <div style="color:#6c7293;font-size:10px;font-weight:bold;margin-bottom:4px;letter-spacing:1px;">NAVIGATION</div>
+          <div style="background:#0f3460;color:#fff;padding:6px 10px;border-radius:4px;">📊 Dashboard</div>
+          <div style="color:#aaa;padding:6px 10px;">📦 Parts</div>
+          <div style="color:#aaa;padding:6px 10px;">⚙️ Machines</div>
+          <div style="color:#aaa;padding:6px 10px;">📋 Work Orders</div>
+        </div>
+        <div style="flex:1;padding:12px;display:flex;flex-direction:column;justify-content:flex-end;">
+          <div style="background:#e2b96c;color:#111;padding:8px 10px;border-radius:6px;font-weight:bold;font-size:11px;text-align:center;cursor:pointer;">
+            🔧 Open Maintenance System ↗
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Pinned button at sidebar bottom</h3>
+      <p>A distinct "launch" button pinned to the bottom of the sidebar, visually differentiated from navigation. Makes it clear this is a separate app, not just another page.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">In all options: the current Maintenance Calls page in IMMS is removed. The link opens MCS in a new tab at its own URL/port.</p>

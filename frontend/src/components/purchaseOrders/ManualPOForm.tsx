@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { generatePurchaseOrderPDF } from '../../utils/pdfTemplates';
 import { suppliersApi, purchaseOrdersApi } from '../../services/api';
 import '../../styles/Dialog.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';

@@ -1,0 +1,44 @@
+<h2>Badge & Reader Management — where does it live?</h2>
+<p class="subtitle">Two options for how to organize this in MCS. Both are admin-only.</p>
+
+<div class="options">
+
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Inside Admin — tabbed page (recommended)</h3>
+      <p>Admin page has two tabs: <strong>Badges</strong> (register operators &amp; technicians) and <strong>Readers</strong> (register badge readers at machines). One nav item, one place for all admin tasks. Easy to add more tabs later (e.g. machine config).</p>
+      <div style="margin-top:10px;background:#111;border-radius:4px;padding:10px;font-size:11px;color:#ccc;">
+        <div style="color:#FF6B35;font-weight:bold;margin-bottom:6px;">MCS Nav</div>
+        <div style="opacity:0.7;padding:3px 0;">📋 Call History</div>
+        <div style="opacity:0.7;padding:3px 0;">📊 Live Board ↗</div>
+        <div style="opacity:0.7;padding:3px 0;">📈 Analytics</div>
+        <div style="color:#FF6B35;font-weight:bold;padding:3px 0;">⚙️ Admin &nbsp;<span style="font-size:9px;background:#FF6B35;color:#111;padding:1px 4px;border-radius:2px;">ADMIN</span></div>
+        <div style="margin-top:8px;border-top:1px solid #333;padding-top:8px;color:#aaa;font-size:10px;">
+          /admin → tabs: [ Badges | Readers ]
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Separate "Badges" nav item</h3>
+      <p>Badges &amp; Readers get their own top-level nav entry alongside Call History, Live Board, Analytics. Admin page stays separate (or doesn't exist yet). More visible, but adds clutter to the nav for a task most users never touch.</p>
+      <div style="margin-top:10px;background:#111;border-radius:4px;padding:10px;font-size:11px;color:#ccc;">
+        <div style="color:#FF6B35;font-weight:bold;margin-bottom:6px;">MCS Nav</div>
+        <div style="opacity:0.7;padding:3px 0;">📋 Call History</div>
+        <div style="opacity:0.7;padding:3px 0;">📊 Live Board ↗</div>
+        <div style="opacity:0.7;padding:3px 0;">📈 Analytics</div>
+        <div style="color:#FF6B35;font-weight:bold;padding:3px 0;">🪪 Badges &nbsp;<span style="font-size:9px;background:#FF6B35;color:#111;padding:1px 4px;border-radius:2px;">ADMIN</span></div>
+        <div style="margin-top:8px;border-top:1px solid #333;padding-top:8px;color:#aaa;font-size:10px;">
+          /badges → tabs: [ Badges | Readers ]
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px;">I recommend <strong>A</strong> — keeps the nav clean and Admin becomes the single home for all setup tasks. Badges and Readers are already a natural pair (you register a reader, then register the badges that use it).</p>

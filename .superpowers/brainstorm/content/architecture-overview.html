@@ -1,0 +1,58 @@
+<h2>Migration Architecture</h2>
+<p class="subtitle">What moves, what's removed, and how the two systems connect</p>
+
+<div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:0;align-items:start;margin-top:8px;">
+
+  <!-- IMMS column -->
+  <div style="background:#1a2332;border-radius:8px;padding:16px;">
+    <div style="color:#64b5f6;font-weight:bold;font-size:13px;margin-bottom:12px;letter-spacing:1px;">IMMS FRONTEND · port 3002</div>
+
+    <div style="font-size:11px;color:#aaa;margin-bottom:6px;letter-spacing:0.5px;">STAYS</div>
+    <div style="background:#1e3a1e;border:1px solid #2d5a2d;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#81c784;">📦 Parts, Machines, Work Orders…</div>
+    <div style="background:#1e3a1e;border:1px solid #2d5a2d;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#81c784;">🔗 Nav item → "Maintenance System ↗"</div>
+    <div style="background:#1e3a1e;border:1px solid #2d5a2d;border-radius:4px;padding:6px 10px;margin-bottom:12px;font-size:12px;color:#81c784;">🔑 SSO: passes JWT + user via URL fragment</div>
+
+    <div style="font-size:11px;color:#aaa;margin-bottom:6px;letter-spacing:0.5px;">REMOVED</div>
+    <div style="background:#3a1e1e;border:1px solid #5a2d2d;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#e57373;text-decoration:line-through;opacity:0.8;">/maintenance-calls page</div>
+    <div style="background:#3a1e1e;border:1px solid #5a2d2d;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#e57373;text-decoration:line-through;opacity:0.8;">/maintenance-board (CallBoard)</div>
+    <div style="background:#3a1e1e;border:1px solid #5a2d2d;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#e57373;text-decoration:line-through;opacity:0.8;">/maintenance-call/station (CallStation)</div>
+    <div style="background:#3a1e1e;border:1px solid #5a2d2d;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#e57373;text-decoration:line-through;opacity:0.8;">/maintenance-calls/admin (BadgeAdmin)</div>
+    <div style="background:#3a1e1e;border:1px solid #5a2d2d;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#e57373;text-decoration:line-through;opacity:0.8;">maintenanceCallService.ts (duplicate)</div>
+  </div>
+
+  <!-- Arrow column -->
+  <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding-top:60px;gap:8px;">
+    <div style="color:#e2b96c;font-size:20px;">→</div>
+    <div style="background:#e2b96c;color:#111;font-size:9px;font-weight:bold;padding:3px 6px;border-radius:3px;text-align:center;line-height:1.4;">JWT SSO<br>fragment</div>
+    <div style="color:#e2b96c;font-size:20px;">→</div>
+  </div>
+
+  <!-- MCS column -->
+  <div style="background:#1a2332;border-radius:8px;padding:16px;">
+    <div style="color:#ff9800;font-weight:bold;font-size:13px;margin-bottom:12px;letter-spacing:1px;">MCS FRONTEND · port 3003</div>
+
+    <div style="font-size:11px;color:#aaa;margin-bottom:6px;letter-spacing:0.5px;">ALREADY EXISTS</div>
+    <div style="background:#1e3a1e;border:1px solid #2d5a2d;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#81c784;">/calls — Call History &amp; management</div>
+    <div style="background:#1e3a1e;border:1px solid #2d5a2d;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#81c784;">/board — Live Andon Board (TV display)</div>
+    <div style="background:#1e3a1e;border:1px solid #2d5a2d;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#81c784;">/station — Kiosk (badge swipe)</div>
+    <div style="background:#1e3a1e;border:1px solid #2d5a2d;border-radius:4px;padding:6px 10px;margin-bottom:12px;font-size:12px;color:#81c784;">/analytics — Metrics &amp; reports</div>
+    <div style="background:#1e3a1e;border:1px solid #2d5a2d;border-radius:4px;padding:6px 10px;margin-bottom:12px;font-size:12px;color:#81c784;">AuthContext: consumes #token fragment ✓</div>
+
+    <div style="font-size:11px;color:#aaa;margin-bottom:6px;letter-spacing:0.5px;">NEW (this work)</div>
+    <div style="background:#1e3430;border:1px solid #2d6050;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#4db6ac;font-weight:bold;">/admin — Badge &amp; Reader Admin ✨</div>
+    <div style="background:#1e3430;border:1px solid #2d6050;border-radius:4px;padding:6px 10px;margin-bottom:4px;font-size:12px;color:#4db6ac;font-weight:bold;">Admin nav item (admin role only) ✨</div>
+  </div>
+
+</div>
+
+<div style="margin-top:16px;background:#1e2a1e;border:1px solid #2d4a2d;border-radius:6px;padding:12px 16px;">
+  <div style="color:#81c784;font-size:12px;font-weight:bold;margin-bottom:6px;">SSO Flow</div>
+  <div style="color:#ccc;font-size:12px;line-height:1.8;">
+    User clicks "Maintenance System ↗" in IMMS sidebar
+    → IMMS reads JWT from localStorage + user from AuthContext
+    → Opens <code style="background:#111;padding:1px 4px;border-radius:3px;">http://localhost:3003#token=&lt;jwt&gt;&amp;user=&lt;base64-json&gt;</code> in new tab
+    → MCS AuthContext consumes fragment, stores token, lands on /calls
+  </div>
+</div>
+
+<p class="subtitle" style="margin-top:12px;">Does this architecture look right? Any questions before we go section by section?</p>

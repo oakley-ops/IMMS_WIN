@@ -9,8 +9,9 @@ Complete guide for setting up a Raspberry Pi as a secure kiosk that boots direct
 4. [Kiosk Mode Configuration](#kiosk-mode-configuration)
 5. [Disable Keyring Prompts](#disable-keyring-prompts)
 6. [Verification](#verification)
-7. [Reverting Changes](#reverting-changes)
-8. [Applying to Another Pi](#applying-to-another-pi)
+7. [Temporarily Exit Kiosk Mode](#temporarily-exit-kiosk-mode)
+8. [Reverting Changes](#reverting-changes)
+9. [Applying to Another Pi](#applying-to-another-pi)
 
 ---
 
@@ -342,6 +343,88 @@ cat ~/refresh-kiosk.sh
 ```
 
 Both files should exist and be executable.
+
+---
+
+## Temporarily Exit Kiosk Mode
+
+Use this when you need to get out of the kiosk briefly (debugging, updates, configuration changes) without permanently disabling kiosk mode. On the next reboot, the Pi will return to kiosk automatically.
+
+### Step 1: Open a Terminal
+
+**From your PC via SSH (easiest):**
+
+```powershell
+ssh pi@<pi-ip-address>
+```
+
+Find the Pi's IP from your router's DHCP list, or try `pi-kiosk.local` if mDNS is enabled.
+
+**At the Pi physically:**
+
+- **Ctrl+Alt+T** — opens a terminal on the LXDE desktop (may not work while Chromium has focus in kiosk)
+- **Ctrl+Alt+F2** — switches to a full-screen TTY console. Log in, do your work, then **Ctrl+Alt+F7** (or F1) to return to the graphical kiosk
+- **F11** — toggles Chromium out of fullscreen, exposing the taskbar
+
+### Step 2: Exit Chromium Cleanly (Recommended)
+
+The clean way — keeps the desktop visible, no black-screen recovery needed:
+
+1. In VNC (or at the Pi), click into Chromium and press **F11** to un-fullscreen
+2. Close the Chromium window with the X button
+3. Stop the auto-refresh loop from SSH:
+
+```bash
+pkill -f refresh-kiosk
+```
+
+### Step 2 (Alternative): Force-Kill Chromium
+
+If you can't get to the window (e.g., SSH-only access):
+
+```bash
+pkill chromium
+pkill -f refresh-kiosk
+```
+
+**⚠️ Black-screen gotcha:** `pkill chromium` removes the only thing being drawn on screen, so VNC/HDMI will show a black screen even though the desktop session is still running. The desktop components (wallpaper, taskbar) aren't started automatically in kiosk mode — they need to be launched manually.
+
+**Recovery from black screen** — from SSH:
+
+```bash
+export DISPLAY=:0
+export XAUTHORITY=/home/imms/.Xauthority
+xrandr                              # confirm X is reachable
+pcmanfm --desktop &                 # draws wallpaper/desktop icons
+lxpanel --profile LXDE-pi &         # draws taskbar
+```
+
+The autostart file is untouched either way, so kiosk returns on next reboot.
+
+### Step 3 (Optional): Temporarily Restore Internet
+
+If you also need internet access for the session (e.g., to run `apt update`):
+
+```bash
+sudo ip route add default via 10.1.10.1
+```
+
+This lasts only until the next reboot — the `@reboot` cron job re-blocks internet automatically.
+
+### Step 4: Return to Kiosk Mode
+
+Either reboot:
+
+```bash
+sudo reboot
+```
+
+Or relaunch the kiosk manually without rebooting:
+
+```bash
+chromium http://10.1.10.50:3001 --kiosk --noerrdialogs --disable-infobars --no-first-run --start-maximized &
+~/refresh-kiosk.sh &
+```
 
 ---
 

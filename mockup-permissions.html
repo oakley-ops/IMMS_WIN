@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>MCS Permissions Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #fff; }
+
+  .appbar {
+    background: #1E1E1E; height: 64px; display: flex; align-items: center;
+    padding: 0 16px; gap: 12px; position: fixed; top: 0; width: 100%; z-index: 10;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .appbar-logo { color: #FF6B35; font-size: 20px; font-weight: 700; }
+  .appbar-user { color: #aaa; font-size: 13px; margin-left: auto; margin-right: 8px; }
+  .appbar-btn { background: transparent; border: 1px solid #555; color: #fff; padding: 4px 12px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+
+  .layout { display: flex; min-height: 100vh; padding-top: 64px; }
+  .main { flex: 1; padding: 24px 32px; }
+
+  .tabs { display: flex; border-bottom: 1px solid #333; margin-bottom: 24px; }
+  .tab { padding: 10px 24px; font-size: 14px; cursor: pointer; color: #aaa; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab.active { color: #FF6B35; border-bottom-color: #FF6B35; font-weight: 600; }
+
+  .page-title { font-size: 24px; font-weight: 700; margin-bottom: 20px; }
+
+  .split-layout { display: grid; grid-template-columns: 280px 1fr; gap: 20px; }
+
+  /* Left panel */
+  .user-panel { background: #1E1E1E; border-radius: 8px; padding: 16px; height: fit-content; }
+  .user-panel-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 12px; }
+  .search-input {
+    width: 100%; background: #2A2A2A; border: 1px solid #444;
+    color: #fff; padding: 9px 12px; border-radius: 6px; font-size: 13px; margin-bottom: 12px;
+  }
+  .search-input::placeholder { color: #555; }
+
+  .user-list { display: flex; flex-direction: column; gap: 2px; }
+  .user-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+    border-radius: 6px; cursor: pointer;
+  }
+  .user-item.selected { background: rgba(255,107,53,0.12); border: 1px solid rgba(255,107,53,0.3); }
+  .user-avatar {
+    width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0;
+  }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role-badge {
+    font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; display: inline-block;
+  }
+  .role-tech { background: rgba(66,165,245,0.15); color: #42A5F5; }
+  .role-supervisor { background: rgba(255,167,38,0.15); color: #FFA726; }
+  .role-operator { background: rgba(102,187,106,0.15); color: #66BB6A; }
+  .role-admin { background: rgba(255,107,53,0.15); color: #FF6B35; }
+
+  /* Right panel */
+  .perm-panel { display: flex; flex-direction: column; gap: 16px; }
+
+  .selected-user-header {
+    background: #1E1E1E; border-radius: 8px; padding: 16px 20px;
+    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;
+  }
+  .selected-user-info { display: flex; align-items: center; gap: 12px; }
+  .selected-name { font-size: 16px; font-weight: 600; }
+  .selected-meta { font-size: 12px; color: #777; margin-top: 2px; }
+
+  .preset-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .preset-label { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+  .preset-btn {
+    padding: 4px 14px; border-radius: 20px; font-size: 11px; cursor: pointer;
+    border: 1px solid #444; background: #2A2A2A; color: #aaa;
+  }
+  .preset-btn.tech { border-color: #42A5F5; color: #42A5F5; background: rgba(66,165,245,0.08); }
+  .preset-btn.supervisor { border-color: #FFA726; color: #FFA726; background: rgba(255,167,38,0.08); }
+  .preset-btn.manager { border-color: #66BB6A; color: #66BB6A; background: rgba(102,187,106,0.08); }
+  .preset-btn.operator { border-color: #AB47BC; color: #AB47BC; background: rgba(171,71,188,0.08); }
+
+  .permissions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .perm-section { background: #1E1E1E; border-radius: 8px; padding: 18px; }
+  .perm-section-title {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+    color: #FF6B35; font-weight: 700; margin-bottom: 12px;
+    padding-bottom: 8px; border-bottom: 1px solid #2A2A2A;
+  }
+  .perm-row {
+    display: flex; align-items: flex-start; gap: 11px;
+    padding: 9px 0; border-bottom: 1px solid #252525;
+  }
+  .perm-row:last-child { border-bottom: none; padding-bottom: 0; }
+
+  /* Sub-permission indent */
+  .perm-row.sub { padding-left: 18px; border-left: 2px solid #2A2A2A; margin-left: 8px; }
+
+  .checkbox {
+    width: 18px; height: 18px; border-radius: 3px; border: 2px solid #444;
+    flex-shrink: 0; margin-top: 2px; display: flex; align-items: center;
+    justify-content: center; cursor: pointer;
+  }
+  .checkbox.checked { background: #FF6B35; border-color: #FF6B35; }
+  .checkbox.checked::after { content: '✓'; font-size: 11px; color: #fff; font-weight: 700; }
+  .checkbox.disabled { background: #1A1A1A; border-color: #2A2A2A; cursor: not-allowed; }
+  .checkbox.partial { background: transparent; border-color: #FF6B35; }
+  .checkbox.partial::after { content: '—'; font-size: 11px; color: #FF6B35; font-weight: 700; }
+
+  .perm-text { flex: 1; }
+  .perm-name { font-size: 13px; color: #ddd; font-weight: 500; }
+  .perm-name.disabled { color: #444; }
+  .perm-desc { font-size: 11px; color: #666; margin-top: 2px; line-height: 1.4; }
+  .perm-desc.disabled { color: #383838; }
+
+  /* Admin-only tag */
+  .admin-tag {
+    display: inline-block; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;
+    background: rgba(211,47,47,0.15); color: #EF5350; border: 1px solid rgba(211,47,47,0.3);
+    border-radius: 3px; padding: 1px 5px; margin-left: 6px; vertical-align: middle;
+  }
+
+  .action-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; background: #1E1E1E; border-radius: 8px;
+    border: 1px solid rgba(255,167,38,0.3);
+  }
+  .unsaved-note { font-size: 13px; color: #FFA726; display: flex; align-items: center; gap: 6px; }
+  .btn-save { background: #FF6B35; color: #fff; border: none; padding: 9px 26px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .btn-cancel { background: transparent; color: #aaa; border: 1px solid #444; padding: 9px 18px; border-radius: 6px; font-size: 13px; cursor: pointer; margin-right: 10px; }
+
+  .note-box {
+    background: rgba(255,167,38,0.08); border: 1px solid rgba(255,167,38,0.25);
+    border-radius: 6px; padding: 10px 14px; font-size: 12px; color: #FFB74D;
+  }
+</style>
+</head>
+<body>
+
+<div class="appbar">
+  <span style="color:#FF6B35;font-size:22px;">📣</span>
+  <span class="appbar-logo">MCS — Plant 1</span>
+  <span class="appbar-user">admin</span>
+  <button class="appbar-btn">Sign Out</button>
+</div>
+
+<div class="layout">
+  <div class="main">
+    <div class="page-title">Admin</div>
+
+    <div class="tabs">
+      <div class="tab">Badges</div>
+      <div class="tab">Readers</div>
+      <div class="tab active">Permissions</div>
+    </div>
+
+    <div class="split-layout">
+
+      <!-- LEFT: User list -->
+      <div class="user-panel">
+        <div class="user-panel-title">Users</div>
+        <input class="search-input" placeholder="🔍  Search name…" />
+        <div class="user-list">
+
+          <div class="user-item">
+            <div class="user-avatar" style="background:rgba(66,165,245,0.15);color:#42A5F5;">JD</div>
+            <div class="user-info">
+              <div class="user-name">John Doe</div>
+              <span class="user-role-badge role-tech">Tech</span>
+            </div>
+          </div>
+
+          <div class="user-item">
+            <div class="user-avatar" style="background:rgba(255,107,53,0.15);color:#FF6B35;">IR</div>
+            <div class="user-info">
+              <div class="user-name">Isaac Rodriguez</div>
+              <span class="user-role-badge role-operator">Operator</span>
+            </div>
+          </div>
+
+          <div class="user-item selected">
+            <div class="user-avatar" style="background:rgba(255,167,38,0.15);color:#FFA726;">MS</div>
+            <div class="user-info">
+              <div class="user-name">Maria Santos</div>
+              <span class="user-role-badge role-supervisor">Supervisor</span>
+            </div>
+          </div>
+
+          <div class="user-item">
+            <div class="user-avatar" style="background:rgba(66,165,245,0.15);color:#42A5F5;">TW</div>
+            <div class="user-info">
+              <div class="user-name">Tim Wallace</div>
+              <span class="user-role-badge role-tech">Tech</span>
+            </div>
+          </div>
+
+          <div class="user-item">
+            <div class="user-avatar" style="background:rgba(255,167,38,0.15);color:#FFA726;">RK</div>
+            <div class="user-info">
+              <div class="user-name">Ron Kim</div>
+              <span class="user-role-badge role-supervisor">Supervisor</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: Permissions for Maria (2nd shift supervisor) -->
+      <div class="perm-panel">
+
+        <div class="selected-user-header">
+          <div class="selected-user-info">
+            <div class="user-avatar" style="background:rgba(255,167,38,0.15);color:#FFA726;width:42px;height:42px;font-size:15px;">MS</div>
+            <div>
+              <div class="selected-name">Maria Santos</div>
+              <div class="selected-meta">Supervisor · 2nd Shift · maria.santos@plant1.com</div>
+            </div>
+          </div>
+          <div class="preset-bar">
+            <span class="preset-label">Preset:</span>
+            <button class="preset-btn operator">Operator</button>
+            <button class="preset-btn tech">Tech</button>
+            <button class="preset-btn supervisor">Supervisor</button>
+            <button class="preset-btn manager">Manager</button>
+          </div>
+        </div>
+
+        <!-- Callout for this specific scenario -->
+        <div class="note-box">
+          ⚠️ <strong>2nd shift supervisor</strong> — Maria can register new operator badges during her shift.
+          She cannot edit or deactivate existing badges — that stays with admin.
+        </div>
+
+        <div class="permissions-grid">
+
+          <!-- Live Board -->
+          <div class="perm-section">
+            <div class="perm-section-title">📺  Live Board</div>
+            <div class="perm-row">
+              <div class="checkbox checked"></div>
+              <div class="perm-text">
+                <div class="perm-name">View live board</div>
+                <div class="perm-desc">See real-time machine status and active calls</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Call History -->
+          <div class="perm-section">
+            <div class="perm-section-title">📋  Call History</div>
+            <div class="perm-row">
+              <div class="checkbox checked"></div>
+              <div class="perm-text">
+                <div class="perm-name">View call history</div>
+                <div class="perm-desc">Browse all past maintenance calls</div>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="checkbox checked"></div>
+              <div class="perm-text">
+                <div class="perm-name">Resolve calls</div>
+                <div class="perm-desc">Mark a call as resolved with notes</div>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="checkbox checked"></div>
+              <div class="perm-text">
+                <div class="perm-name">Suspend calls</div>
+                <div class="perm-desc">Pause a call mid-repair</div>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="checkbox checked"></div>
+              <div class="perm-text">
+                <div class="perm-name">Log parts used</div>
+                <div class="perm-desc">Record parts consumed on a call</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Analytics -->
+          <div class="perm-section">
+            <div class="perm-section-title">📊  Analytics</div>
+            <div class="perm-row">
+              <div class="checkbox checked"></div>
+              <div class="perm-text">
+                <div class="perm-name">View analytics</div>
+                <div class="perm-desc">Access the full analytics dashboard</div>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="checkbox"></div>
+              <div class="perm-text">
+                <div class="perm-name">Export reports</div>
+                <div class="perm-desc">Download analytics as CSV or PDF</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Admin — split permissions -->
+          <div class="perm-section">
+            <div class="perm-section-title">⚙️  Admin</div>
+
+            <!-- Badges — parent with sub-items -->
+            <div class="perm-row">
+              <div class="checkbox partial"></div>
+              <div class="perm-text">
+                <div class="perm-name">Manage badges</div>
+                <div class="perm-desc">Badge registration access (see below)</div>
+              </div>
+            </div>
+            <!-- Sub: Add new badges — CHECKED -->
+            <div class="perm-row sub">
+              <div class="checkbox checked"></div>
+              <div class="perm-text">
+                <div class="perm-name">Add new badges</div>
+                <div class="perm-desc">Register new operator badge cards</div>
+              </div>
+            </div>
+            <!-- Sub: Edit / deactivate — LOCKED -->
+            <div class="perm-row sub">
+              <div class="checkbox disabled"></div>
+              <div class="perm-text">
+                <div class="perm-name disabled">Edit / deactivate badges <span class="admin-tag">Admin only</span></div>
+                <div class="perm-desc disabled">Modify or disable existing badge records</div>
+              </div>
+            </div>
+
+            <div class="perm-row">
+              <div class="checkbox"></div>
+              <div class="perm-text">
+                <div class="perm-name">Manage readers</div>
+                <div class="perm-desc">Add and configure badge readers on machines</div>
+              </div>
+            </div>
+            <div class="perm-row">
+              <div class="checkbox disabled"></div>
+              <div class="perm-text">
+                <div class="perm-name disabled">Manage permissions <span class="admin-tag">Admin only</span></div>
+                <div class="perm-desc disabled">Cannot be delegated</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Action bar -->
+        <div class="action-bar">
+          <div class="unsaved-note">⚠ Unsaved changes for Maria Santos</div>
+          <div>
+            <button class="btn-cancel">Cancel</button>
+            <button class="btn-save">Save Permissions</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
