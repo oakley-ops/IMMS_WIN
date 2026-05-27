@@ -13,7 +13,7 @@ import {
   Checkbox,
 } from '@mui/material';
 import { useAuth } from '../contexts/AuthContext';
-import { theme, commonStyles } from '../theme';
+import { theme, PRIMARY_ORANGE, DARK_BG } from '../theme';
 
 // Allowlist of origins permitted as ?returnTo= targets. Without this the
 // login page could be turned into an open redirect by attackers who craft a
@@ -96,30 +96,42 @@ const Login: React.FC = () => {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={commonStyles.container}>
-        <Container maxWidth="sm">
-          <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-            <Typography 
-              variant="h4" 
-              component="h1" 
-              gutterBottom 
+      <Box
+        sx={{
+          minHeight: '100vh',
+          bgcolor: DARK_BG,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Container maxWidth="xs">
+          <Paper
+            elevation={8}
+            sx={{
+              p: 4,
+              borderRadius: 2,
+              borderTop: `4px solid ${PRIMARY_ORANGE}`,
+            }}
+          >
+            <Typography
+              variant="h4"
+              component="h1"
               align="center"
-              sx={commonStyles.title}
+              sx={{ color: PRIMARY_ORANGE, fontWeight: 'bold', mb: 0.5 }}
             >
               IMMS
             </Typography>
-            <Typography 
-              variant="h5" 
-              component="h2" 
-              gutterBottom 
+            <Typography
+              variant="subtitle1"
               align="center"
-              sx={commonStyles.subtitle}
+              sx={{ color: 'text.secondary', mb: 3 }}
             >
-              Login
+              Inventory Management System
             </Typography>
-            
+
             {error && (
-              <Alert severity="error" sx={{ mb: 3 }}>
+              <Alert severity="error" sx={{ mb: 2 }}>
                 {error}
               </Alert>
             )}
@@ -133,7 +145,7 @@ const Login: React.FC = () => {
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 autoFocus
-                sx={{ mb: 2 }}
+                sx={{ mb: 1 }}
               />
               <TextField
                 label="Password"
@@ -143,14 +155,14 @@ const Login: React.FC = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                sx={{ mb: 2 }}
+                sx={{ mb: 1 }}
               />
               <FormControlLabel
                 control={
                   <Checkbox
                     checked={rememberMe}
                     onChange={(e) => setRememberMe(e.target.checked)}
-                    color="secondary"
+                    color="primary"
                   />
                 }
                 label="Remember Me"
@@ -160,9 +172,9 @@ const Login: React.FC = () => {
                 type="submit"
                 fullWidth
                 variant="contained"
-                color="secondary"
+                color="primary"
                 size="large"
-                sx={commonStyles.loginButton}
+                sx={{ py: 1.5, fontSize: '1rem' }}
               >
                 Login
               </Button>
