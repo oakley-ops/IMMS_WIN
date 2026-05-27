@@ -15,6 +15,20 @@ db.query = vi.fn();
 
 const request = require('supertest');
 const express = require('express');
+
+// Bypass JWT auth so auth-protected routes can be tested without real tokens.
+// vi.mock does not intercept relative-path CJS modules in this vitest setup,
+// so we patch require.cache directly before loading the router.
+{
+  const authPath = require.resolve('../middleware/auth');
+  require.cache[authPath] = {
+    id: authPath,
+    filename: authPath,
+    loaded: true,
+    exports: (_req, _res, next) => next(),
+  };
+}
+
 const router = require('./maintenanceCalls');
 
 const app = express();
@@ -241,5 +255,39 @@ describe('PUT /:id/resume', () => {
     db.query.mockResolvedValueOnce({ rows: [] });
     const res = await request(app).put('/99/resume').send({});
     expect(res.status).toBe(404);
+  });
+});
+
+describe('GET /stats/parts-metrics', () => {
+  it('returns top_parts, by_machine, and by_tech arrays', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ part_id: 1, part_name: 'Bearing 6205', part_number: 'B-6205', total_qty: 5, call_count: 2 }] })
+      .mockResolvedValueOnce({ rows: [{ machine_id: 125, machine_name: 'Die Press 701', unique_parts: 3, total_qty: 8 }] })
+      .mockResolvedValueOnce({ rows: [{ technician_id: 1, technician_name: 'John D.', calls_with_parts: 4, unique_parts: 2, total_qty: 7 }] });
+
+    const res = await request(app).get('/stats/parts-metrics');
+    expect(res.status).toBe(200);
+    expect(res.body.top_parts[0].part_name).toBe('Bearing 6205');
+    expect(res.body.by_machine[0].machine_name).toBe('Die Press 701');
+    expect(res.body.by_tech[0].technician_name).toBe('John D.');
+  });
+
+  it('returns empty arrays when no parts have been logged', async () => {
+    db.query
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] });
+
+    const res = await request(app).get('/stats/parts-metrics');
+    expect(res.status).toBe(200);
+    expect(res.body.top_parts).toEqual([]);
+    expect(res.body.by_machine).toEqual([]);
+    expect(res.body.by_tech).toEqual([]);
+  });
+
+  it('returns 500 when the database throws', async () => {
+    db.query.mockRejectedValueOnce(new Error('db is down'));
+    const res = await request(app).get('/stats/parts-metrics');
+    expect(res.status).toBe(500);
   });
 });

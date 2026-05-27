@@ -85,6 +85,15 @@ router.get(
   handler(async (req, res) => res.json(await repo.callMetrics(db, req.query)))
 );
 
+// ─── Parts metrics — auth required ──────────────────────────────────────────
+
+router.get(
+  '/stats/parts-metrics',
+  auth,
+  validate({ query: S.partsMetricsQuery }),
+  handler(async (req, res) => res.json(await repo.partsMetrics(db, req.query)))
+);
+
 // ─── Call history — auth required ───────────────────────────────────────────
 
 router.get(

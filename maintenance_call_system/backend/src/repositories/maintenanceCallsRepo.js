@@ -399,6 +399,65 @@ const callMetrics = async (db, { from, to, shift_name, machine_id, reason }) => 
   };
 };
 
+const partsMetrics = async (db, { from, to, shift_name, machine_id, reason } = {}) => {
+  const conds = [];
+  const params = [];
+  let p = 1;
+  if (from)       { conds.push(`mc.called_at >= $${p++}`);      params.push(from); }
+  if (to)         { conds.push(`mc.called_at <= $${p++}`);      params.push(to); }
+  if (machine_id) { conds.push(`mc.machine_id = $${p++}`);      params.push(machine_id); }
+  if (shift_name) { conds.push(`mc.shift_name = $${p++}`);      params.push(shift_name); }
+  if (reason)     { conds.push(`mc.reason_category = $${p++}`); params.push(reason); }
+
+  const extra = conds.length ? ' AND ' + conds.join(' AND ') : '';
+  const whereResolved = `mc.status = 'resolved'${extra}`;
+
+  const [topParts, byMachine, byTech] = await Promise.all([
+    db.query(`
+      SELECT mcp.part_id, mcp.part_name, mcp.part_number,
+             SUM(mcp.quantity)::int           AS total_qty,
+             COUNT(DISTINCT mcp.call_id)::int  AS call_count
+        FROM maintenance_call_parts mcp
+        JOIN maintenance_calls mc ON mcp.call_id = mc.call_id
+       WHERE ${whereResolved}
+       GROUP BY mcp.part_id, mcp.part_name, mcp.part_number
+       ORDER BY total_qty DESC
+       LIMIT 10
+    `, params),
+
+    db.query(`
+      SELECT mc.machine_id, m.name AS machine_name,
+             COUNT(DISTINCT mcp.part_id)::int  AS unique_parts,
+             SUM(mcp.quantity)::int             AS total_qty
+        FROM maintenance_call_parts mcp
+        JOIN maintenance_calls mc ON mcp.call_id = mc.call_id
+        JOIN machines m ON mc.machine_id = m.machine_id
+       WHERE ${whereResolved}
+       GROUP BY mc.machine_id, m.name
+       ORDER BY total_qty DESC
+       LIMIT 10
+    `, params),
+
+    db.query(`
+      SELECT mc.technician_id, mc.technician_name,
+             COUNT(DISTINCT mcp.call_id)::int  AS calls_with_parts,
+             COUNT(DISTINCT mcp.part_id)::int  AS unique_parts,
+             SUM(mcp.quantity)::int             AS total_qty
+        FROM maintenance_call_parts mcp
+        JOIN maintenance_calls mc ON mcp.call_id = mc.call_id
+       WHERE ${whereResolved}
+       GROUP BY mc.technician_id, mc.technician_name
+       ORDER BY total_qty DESC
+    `, params),
+  ]);
+
+  return {
+    top_parts: topParts.rows,
+    by_machine: byMachine.rows,
+    by_tech: byTech.rows,
+  };
+};
+
 // ─── Badge admin ────────────────────────────────────────────────────────────
 
 const listBadges = async (db) => {
@@ -498,6 +557,7 @@ module.exports = {
   insertCallParts,
   listCallParts,
   callMetrics,
+  partsMetrics,
   listBadges,
   upsertBadge,
   updateBadge,

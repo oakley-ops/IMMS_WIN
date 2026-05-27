@@ -95,6 +95,9 @@ const metricsQuery = z.object({
   reason: z.enum(['mechanical', 'electrical', 'tooling', 'material', 'operator_error', 'other']).optional(),
 });
 
+// ─── Parts metrics query (same shape as metricsQuery) ───────────────────────
+const partsMetricsQuery = metricsQuery;
+
 module.exports = {
   idParam,
   badgeSwipeBody,
@@ -108,4 +111,5 @@ module.exports = {
   createReaderBody,
   updateReaderBody,
   metricsQuery,
+  partsMetricsQuery,
 };
