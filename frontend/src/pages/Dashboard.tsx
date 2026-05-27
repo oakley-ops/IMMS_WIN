@@ -1,11 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Container, Alert, Spinner } from 'react-bootstrap';
+import { Box, Alert, CircularProgress, Button, Typography, Card, CardContent } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { BarChart } from '@mui/icons-material';
 import LowStockReport from '../components/LowStockReport';
 import PMCalendar, { PMCalendarRef } from '../components/PMCalendar';
-import DashboardCard from '../components/DashboardCard';
-import ImmsButton from '../components/ImmsButton';
 import POStatusCard from '../components/purchaseOrders/POStatusCard';
 import axiosInstance from '../utils/axios';
 import { socket } from '../utils/socket';
@@ -24,7 +21,7 @@ const Dashboard: React.FC = () => {
 
   // Check if user can manage purchase orders
   const canManagePurchaseOrders = hasPermission('CAN_MANAGE_PURCHASE_ORDERS');
-  
+
   // Check if user is a tech user (PM should be more prominent)
   const isTechUser = userRole === 'tech';
 
@@ -63,57 +60,58 @@ const Dashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
-        <div className="d-flex justify-content-center align-items-center" style={{ 
-          minHeight: 'calc(100vh - 10px)', 
+      <Box sx={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
+        <Box sx={{
+          minHeight: 'calc(100vh - 10px)',
           backgroundColor: '#0066A1',
           borderRadius: '12px',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
         }}>
-          <Spinner animation="border" role="status" variant="primary">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
-        </div>
-      </div>
+          <CircularProgress color="primary" aria-label="Loading" />
+        </Box>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <div style={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
-        <div style={{ 
+      <Box sx={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
+        <Box sx={{
           backgroundColor: '#0066A1',
           borderRadius: '12px',
           padding: '20px',
           minHeight: 'calc(100vh - 10px)',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
         }}>
-          <Alert variant="danger">
+          <Alert severity="error" role="alert">
             {error}
-            <div className="mt-2">
-              <ImmsButton onClick={() => fetchDashboardData()}>
+            <Box sx={{ mt: 1 }}>
+              <Button variant="contained" color="primary" onClick={() => fetchDashboardData()}>
                 Try Again
-              </ImmsButton>
-            </div>
+              </Button>
+            </Box>
           </Alert>
-        </div>
-      </div>
+        </Box>
+      </Box>
     );
   }
 
   if (!dashboardData) {
     return (
-      <div style={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
-        <div style={{ 
+      <Box sx={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
+        <Box sx={{
           backgroundColor: '#0066A1',
           borderRadius: '12px',
           padding: '20px',
           minHeight: 'calc(100vh - 10px)',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
         }}>
-          <Alert variant="warning">No dashboard data available</Alert>
-        </div>
-      </div>
+          <Alert severity="warning">No dashboard data available</Alert>
+        </Box>
+      </Box>
     );
   }
 
@@ -122,12 +120,12 @@ const Dashboard: React.FC = () => {
   };
 
   return (
-    <div style={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
-      <div className="dashboard-page px-2 py-2" style={{ 
+    <Box sx={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
+      <Box sx={{
         backgroundColor: '#0066A1',
         borderRadius: '12px',
         margin: '0',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
         display: 'grid',
         gridTemplateColumns: 'repeat(12, 1fr)',
         gridTemplateRows: 'auto auto',
@@ -136,75 +134,90 @@ const Dashboard: React.FC = () => {
         overflow: 'hidden',
         width: '100%',
         maxWidth: '100%',
-        position: 'relative'
+        position: 'relative',
+        padding: '8px',
       }}>
         {/* PM Calendar - More prominent for tech users */}
-        <div className="card shadow-sm border-0 rounded-3" style={{ 
-          backgroundColor: '#f0f2f5', 
-          gridColumn: isTechUser ? 'span 7' : 'span 5', // Slightly smaller for tech users to give more space to Stock Status
-          gridRow: isTechUser ? 'span 2' : 'span 2', // Full height for tech users
+        <Card sx={{
+          backgroundColor: '#f0f2f5',
+          gridColumn: isTechUser ? 'span 7' : 'span 5',
+          gridRow: 'span 2',
           overflow: 'auto',
-          height: 'calc(100vh - 20px)'
+          height: 'calc(100vh - 20px)',
+          borderRadius: 2,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          border: 'none',
         }}>
-          <div className="card-body p-2" style={{ height: '100%' }}>
-            <div style={{ height: '100%' }}>
+          <CardContent sx={{ height: '100%', p: 1, '&:last-child': { pb: 1 } }}>
+            <Box sx={{ height: '100%' }}>
               <PMCalendar
                 ref={calendarRef}
                 defaultDate={calendarDate}
                 onDateChange={handleDateChange}
               />
-            </div>
-          </div>
-        </div>
+            </Box>
+          </CardContent>
+        </Card>
 
         {/* Inventory Status Alerts - Wider for tech users */}
-        <div className="card shadow-sm border-0 rounded-3" style={{ 
-          backgroundColor: '#f0f2f5', 
-          gridColumn: isTechUser ? 'span 5' : 'span 7', // Wider for tech users
-          gridRow: isTechUser ? 'span 2' : (canManagePurchaseOrders ? 'span 1' : 'span 2'), // Same height as PM for tech users
+        <Card sx={{
+          backgroundColor: '#f0f2f5',
+          gridColumn: isTechUser ? 'span 5' : 'span 7',
+          gridRow: isTechUser ? 'span 2' : (canManagePurchaseOrders ? 'span 1' : 'span 2'),
           overflow: 'auto',
-          height: isTechUser ? 'calc(100vh - 20px)' : (canManagePurchaseOrders ? 'calc(50vh - 10px)' : 'calc(100vh - 20px)')
+          height: isTechUser ? 'calc(100vh - 20px)' : (canManagePurchaseOrders ? 'calc(50vh - 10px)' : 'calc(100vh - 20px)'),
+          borderRadius: 2,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+          border: 'none',
         }}>
-          <div className="card-body p-2">
-            <div className="d-flex justify-content-between align-items-center mb-1">
-              <h5 className="card-title mb-0" style={{ color: '#FF6200', fontSize: '1.1rem' }}>
+          <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.5 }}>
+              <Typography variant="subtitle1" sx={{ color: '#FF6200', fontSize: '1.1rem', fontWeight: 600 }}>
                 {isTechUser ? 'Stock Status' : 'Inventory Status Alerts'}
-              </h5>
-              <div className="d-flex gap-2">
-                <ImmsButton 
-                  onClick={() => exportRef.current && exportRef.current()} 
-                  size="sm"
-                  variant="outline"
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => exportRef.current && exportRef.current()}
                 >
                   Export to Excel
-                </ImmsButton>
+                </Button>
                 {canManagePurchaseOrders && (
-                  <ImmsButton onClick={() => navigate('/purchase-orders')} size="sm">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    size="small"
+                    onClick={() => navigate('/purchase-orders')}
+                  >
                     View Purchase Orders
-                  </ImmsButton>
+                  </Button>
                 )}
-              </div>
-            </div>
-            <LowStockReport 
+              </Box>
+            </Box>
+            <LowStockReport
               data={[
                 ...(dashboardData.outOfStockParts || []),
                 ...(dashboardData.lowStockParts || [])
               ]}
               exportRef={exportRef}
             />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Purchase Order Status - Only show for non-tech users when they have permission */}
         {canManagePurchaseOrders && !isTechUser && (
-          <div className="card shadow-sm border-0 rounded-3" style={{ 
-            backgroundColor: '#f0f2f5', 
-            gridColumn: 'span 7', // Full width for non-tech users
+          <Card sx={{
+            backgroundColor: '#f0f2f5',
+            gridColumn: 'span 7',
             gridRow: 'span 1',
             overflow: 'auto',
-            height: 'calc(50vh - 10px)'
+            height: 'calc(50vh - 10px)',
+            borderRadius: 2,
+            boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+            border: 'none',
           }}>
-            <div className="card-body p-2">
+            <CardContent sx={{ p: 1, '&:last-child': { pb: 1 } }}>
               <POStatusCard
                 pendingCount={dashboardData.pendingPOCount || 0}
                 approvedCount={dashboardData.approvedPOCount || 0}
@@ -212,11 +225,11 @@ const Dashboard: React.FC = () => {
                 totalCount={dashboardData.totalPOCount || 0}
                 recentPOs={dashboardData.recentPurchaseOrders || []}
               />
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         )}
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };
 
