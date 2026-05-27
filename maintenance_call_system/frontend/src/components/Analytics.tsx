@@ -85,12 +85,9 @@ function HBar({ label, value, max, color, suffix }: {
   );
 }
 
-function SectionHeader({ label, pageBreak }: { label: string; pageBreak?: boolean }) {
+function SectionHeader({ label }: { label: string }) {
   return (
-    <Box sx={{
-      mt: 4, mb: 2,
-      ...(pageBreak && { '@media print': { breakBefore: 'page', mt: 1 } }),
-    }}>
+    <Box sx={{ mt: 4, mb: 2 }}>
       <Typography
         variant="overline"
         color="text.secondary"
@@ -121,7 +118,8 @@ export default function Analytics() {
   const [shift, setShift] = useState('');
   const [machineId, setMachineId] = useState('');
   const [reason, setReason] = useState<'' | ReasonCategory>('');
-  const [printTime, setPrintTime] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   // Load machine list once on mount for the filter dropdown.
   useEffect(() => {
@@ -165,9 +163,26 @@ export default function Analytics() {
 
   const handleRefresh = () => { fetchMetrics(); fetchPartsMetrics(); };
 
-  const handleExport = () => {
-    setPrintTime(new Date().toLocaleString());
-    setTimeout(() => window.print(), 50);
+  const handleExport = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const blob = await svc.exportAnalyticsPdf(buildFilters());
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const from_ = buildFilters().from ?? 'all';
+      const to_   = buildFilters().to   ?? 'present';
+      a.href = url;
+      a.download = `mcs-analytics-${from_}-to-${to_}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError('PDF generation failed. Please try again.');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const machineMax = useMemo(
@@ -186,52 +201,35 @@ export default function Analytics() {
     [metrics]
   );
 
-  /* Compute a readable summary of the active filters for the print header. */
-  const filterSummary = [
-    shift && `Shift: ${shift}`,
-    machineId && `Machine: ${machines.find(m => m.machine_id.toString() === machineId)?.name ?? machineId}`,
-    reason && `Reason: ${reasonLabel(reason)}`,
-  ].filter(Boolean).join('  ·  ') || 'All machines · All shifts · All reasons';
-
   return (
     <Box sx={{ p: 3 }}>
-      {/* ── Print-only report header (hidden on screen) ── */}
-      <Box sx={{ display: 'none', '@media print': { display: 'block' }, mb: 3 }}>
-        <Typography variant="h5" fontWeight={700}>MCS Maintenance Analytics Report</Typography>
-        <Typography variant="body1" sx={{ mt: 0.5 }}>
-          Period: {from || '—'} to {to || '—'}
-        </Typography>
-        <Typography variant="body2" color="text.secondary">{filterSummary}</Typography>
-        {printTime && (
-          <Typography variant="caption" color="text.secondary">Generated: {printTime}</Typography>
-        )}
-        <Divider sx={{ mt: 1 }} />
-      </Box>
-
-      {/* ── Page title + refresh ── */}
-      <Stack
-        direction="row" alignItems="center" justifyContent="space-between"
-        sx={{ mb: 2, '@media print': { display: 'none' } }}
-      >
+      {/* ── Page title + actions ── */}
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
         <Typography variant="h4" fontWeight={700}>Maintenance Analytics</Typography>
-        <Stack direction="row" spacing={1}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Button startIcon={<Refresh />} onClick={handleRefresh} disabled={loading} variant="outlined">
             Refresh
           </Button>
           <Button
-            startIcon={<PictureAsPdf />}
+            startIcon={exporting ? undefined : <PictureAsPdf />}
             onClick={handleExport}
-            disabled={loading || !metrics}
+            disabled={loading || !metrics || exporting}
             variant="contained"
-            sx={{ bgcolor: MCS_ORANGE, '&:hover': { bgcolor: '#e55a1f' } }}
+            sx={{ bgcolor: MCS_ORANGE, '&:hover': { bgcolor: '#e55a1f' }, minWidth: 140 }}
           >
-            Export PDF
+            {exporting ? 'Generating…' : 'Export PDF'}
           </Button>
         </Stack>
       </Stack>
 
+      {exportError && (
+        <Alert severity="error" onClose={() => setExportError(null)} sx={{ mb: 2 }}>
+          {exportError}
+        </Alert>
+      )}
+
       {/* ── Filter bar ── */}
-      <Paper sx={{ p: 2, mb: 1, '@media print': { display: 'none' } }}>
+      <Paper sx={{ p: 2, mb: 1 }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} flexWrap="wrap">
           <TextField
             label="From" type="date" size="small"
@@ -273,7 +271,7 @@ export default function Analytics() {
         </Stack>
       </Paper>
 
-      {error && <Alert severity="error" sx={{ mb: 2, '@media print': { display: 'none' } }}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {loading && !metrics ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
@@ -313,7 +311,7 @@ export default function Analytics() {
           </Grid>
 
           {/* ── ② PARTS CONSUMPTION ── */}
-          <SectionHeader label="② PARTS CONSUMPTION" pageBreak />
+          <SectionHeader label="② PARTS CONSUMPTION" />
           <PartsConsumptionSection
             partsMetrics={partsMetrics}
             loading={partsLoading}
@@ -321,7 +319,7 @@ export default function Analytics() {
           />
 
           {/* ── ③ EQUIPMENT ── */}
-          <SectionHeader label="③ EQUIPMENT" pageBreak />
+          <SectionHeader label="③ EQUIPMENT" />
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} lg={7}>
               <Paper sx={{ p: 2, height: '100%' }}>
@@ -378,7 +376,7 @@ export default function Analytics() {
           </Grid>
 
           {/* ── ④ TEAM PERFORMANCE ── */}
-          <SectionHeader label="④ TEAM PERFORMANCE" pageBreak />
+          <SectionHeader label="④ TEAM PERFORMANCE" />
 
           {/* Technician workload */}
           <Paper sx={{ p: 2, mb: 3 }}>

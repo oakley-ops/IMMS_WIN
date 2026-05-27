@@ -266,6 +266,22 @@ const svc = {
 
   getMachines: () =>
     api.get<{ machine_id: number; name: string; location: string }[]>('/machines/list').then(r => r.data),
+
+  exportAnalyticsPdf: async (filters: MetricsFilters): Promise<Blob> => {
+    const params: Record<string, string> = {};
+    if (filters.from)       params.from       = filters.from;
+    if (filters.to)         params.to         = filters.to;
+    if (filters.shift_name) params.shift_name = filters.shift_name;
+    if (filters.machine_id) params.machine_id = String(filters.machine_id);
+    if (filters.reason)     params.reason     = filters.reason;
+    const token = typeof window !== 'undefined' ? localStorage.getItem('mcs_token') : null;
+    const response = await axios.get(`${API}/mcs/analytics/pdf`, {
+      params,
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      responseType: 'blob',
+    });
+    return response.data as Blob;
+  },
 };
 
 export default svc;

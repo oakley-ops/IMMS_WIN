@@ -12,6 +12,7 @@ const logger = require('./src/lib/logger');
 const maintenanceCallsRouter = require('./src/routes/maintenanceCalls');
 const callBoardLayoutsRouter = require('./src/routes/callBoardLayouts');
 const permissionsRouter = require('./src/routes/permissions');
+const analyticsRouter = require('./src/routes/analytics');
 
 const app = express();
 const server = http.createServer(app);
@@ -85,6 +86,7 @@ app.get('/health', (req, res) => res.json({ status: 'healthy', service: 'MCS', t
 app.use('/api/v1/maintenance-calls', maintenanceCallsRouter);
 app.use('/api/v1/call-board-layouts', callBoardLayoutsRouter);
 app.use('/api/v1/mcs/permissions', permissionsRouter);
+app.use('/api/v1/mcs/analytics', analyticsRouter);
 
 // ─── Error handler ────────────────────────────────────────────────────────────
 

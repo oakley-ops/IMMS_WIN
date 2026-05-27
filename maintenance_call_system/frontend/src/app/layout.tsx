@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter';
 import Providers from '../components/Providers';
-import './globals.css';
 
 const siteName = process.env.NEXT_PUBLIC_SITE_NAME;
 
