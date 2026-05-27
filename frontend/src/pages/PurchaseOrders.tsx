@@ -9,7 +9,7 @@ import SupplierPartsList from '../components/suppliers/SupplierPartsList';
 
 const PurchaseOrders: React.FC = () => {
   return (
-    <div className="purchase-orders-container">
+    <div>
       <Routes>
         <Route path="/" element={<PurchaseOrderList />} />
         <Route path="/detail/:id" element={<PurchaseOrderDetail />} />

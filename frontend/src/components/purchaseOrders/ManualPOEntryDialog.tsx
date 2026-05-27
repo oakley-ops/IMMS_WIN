@@ -285,14 +285,16 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
         sx: { maxHeight: '90vh' }
       }}
     >
-      <div className="dialog-header">
-        <h5 className="dialog-title">Create Purchase Order from PDF</h5>
-        <IconButton onClick={onClose} size="small" sx={{ color: 'white' }}>
-          <CloseIcon />
-        </IconButton>
-      </div>
+      <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '4px 4px 0 0' }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6">Create Purchase Order from PDF</Typography>
+          <IconButton onClick={onClose} size="small" sx={{ color: 'white' }}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+      </DialogTitle>
 
-      <div className="dialog-content" style={{ padding: '2rem' }}>
+      <DialogContent sx={{ padding: '2rem' }}>
         <Grid container spacing={4}>
           {/* PDF Preview */}
           {pdfUrl && (
@@ -623,35 +625,27 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
             </Box>
           </Grid>
         </Grid>
-      </div>
+      </DialogContent>
 
-      <div className="dialog-footer">
-        <div className="d-flex justify-content-end gap-2">
-          <button 
-            type="button"
-            onClick={onClose} 
-            disabled={submitting}
-            className="btn btn-outline-secondary"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="btn btn-primary"
-          >
-            {submitting ? (
-              <>
-                <span className="spinner-border spinner-border-sm me-2"></span>
-                Creating...
-              </>
-            ) : (
-              'Create Purchase Order'
-            )}
-          </button>
-        </div>
-      </div>
+      <DialogActions sx={{ p: 2, gap: 1 }}>
+        <Button
+          onClick={onClose}
+          disabled={submitting}
+          variant="outlined"
+          color="inherit"
+        >
+          Cancel
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={submitting}
+          variant="contained"
+          color="primary"
+          startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+        >
+          {submitting ? 'Creating...' : 'Create Purchase Order'}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 };

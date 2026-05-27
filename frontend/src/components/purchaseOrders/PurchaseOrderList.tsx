@@ -48,33 +48,6 @@ import SimplePODocuments from './SimplePODocuments';
 import POImportDialog from './POImportDialog';
 import socket from '../../services/socket'; // Import socket for real-time updates
 
-// Custom CSS styles for IMMS branding
-const ImmsStyles = `
-  .text-primary {
-    color: #FF6600 !important;
-  }
-  
-  .bg-primary {
-    background-color: #0066A1 !important;
-  }
-  
-  .form-check-input:checked {
-    background-color: #FF6600;
-    border-color: #FF6600;
-  }
-  
-  .border-primary {
-    border-color: #FF6600 !important;
-  }
-  
-  a {
-    color: #FF6600;
-  }
-  
-  a:hover {
-    color: #e65c00;
-  }
-`;
 
 const StyledDataGrid = styled(DataGrid, {
   shouldForwardProp: (prop) => ![
@@ -285,31 +258,6 @@ const PurchaseOrderList: React.FC = () => {
     setDocumentDialogOpen(false);
     setSelectedPoId(null);
     setSelectedPoNumber('');
-  };
-
-  const getStatusClass = (status: string | undefined) => {
-    switch (status) {
-      case 'pending':
-        return 'status-badge status-warning';
-      case 'submitted':
-        return 'status-badge status-info';
-      case 'approved':
-        return 'status-badge status-success';
-      case 'waiting_for_po_number':
-        return 'status-badge status-secondary';
-      case 'on_hold':
-        return 'status-badge status-secondary';
-      case 'rejected':
-        return 'status-badge status-danger';
-      case 'received':
-        return 'status-badge status-success';
-      case 'on_order':
-        return 'status-badge status-info';
-      case 'canceled':
-        return 'status-badge status-danger';
-      default:
-        return 'status-badge';
-    }
   };
 
   const handleDelete = async (id: number | undefined) => {
@@ -561,9 +509,6 @@ const PurchaseOrderList: React.FC = () => {
         backgroundSize: '20px 20px'
       }}
     >
-      {/* Apply IMMS brand styling */}
-      <style>{ImmsStyles}</style>
-      
       <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
         Purchase Orders Management
         {isRefreshing && (

@@ -70,7 +70,6 @@ import { partsApi } from '../../services/api';
 import { Part } from '../../types/purchaseOrder';
 import { Autocomplete } from '@mui/material';
 import axios from 'axios';
-import ModalPortal from '../ModalPortal';
 
 // Define interface for email tracking records
 interface EmailTrackingRecord {
@@ -1327,7 +1326,7 @@ const PurchaseOrderDetail: React.FC = () => {
   }
 
   return (
-    <Box className="purchase-order-detail" mb={4}>
+    <Box mb={4}>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Button
           startIcon={<ArrowBack />}
@@ -2083,182 +2082,159 @@ const PurchaseOrderDetail: React.FC = () => {
       </Snackbar>
 
       {/* Add Part Dialog */}
-      <ModalPortal open={addPartDialogOpen}>
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content custom-dialog">
-            <div className="dialog-header">
-              <h5 className="dialog-title">Add Part to Purchase Order</h5>
-            </div>
-            <div className="dialog-content">
-              <div className="mb-3">
-                <div className="form-check form-switch">
-                  <input
-                    className="form-check-input"
-                    type="checkbox"
-                    id="customPartSwitch"
-                    checked={isCustomPart}
-                    onChange={(e) => setIsCustomPart(e.target.checked)}
-                  />
-                  <label className="form-check-label" htmlFor="customPartSwitch">
-                    Add custom/miscellaneous item
-                  </label>
-                </div>
-              </div>
+      <Dialog open={addPartDialogOpen} onClose={closeAddPartDialog} maxWidth="sm" fullWidth>
+        <DialogTitle>Add Part to Purchase Order</DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Box sx={{ mb: 2 }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={isCustomPart}
+                  onChange={(e) => setIsCustomPart(e.target.checked)}
+                />
+              }
+              label="Add custom/miscellaneous item"
+            />
+          </Box>
 
-              {isCustomPart ? (
-                <>
-                  <div className="mb-3">
-                    <label className="form-label">Item Name</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={customPartName}
-                      onChange={(e) => setCustomPartName(e.target.value)}
-                      placeholder="Enter custom item name"
-                      required
-                    />
-                  </div>
-                  <div className="mb-3">
-                    <label className="form-label">Item Number (Optional)</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={customPartNumber}
-                      onChange={(e) => setCustomPartNumber(e.target.value)}
-                      placeholder="Enter custom item number"
-                    />
-                  </div>
-                </>
-              ) : (
-                <div className="mb-3">
-                  <label className="form-label">Select Part</label>
-                  <div className="search-container">
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={partSearchTerm}
-                      onChange={(e) => setPartSearchTerm(e.target.value)}
-                      placeholder="Search by part number or name"
-                    />
-                    {loadingParts && (
-                      <div className="spinner-border spinner-border-sm text-primary position-absolute" 
-                           style={{ right: '1rem', top: '0.75rem' }} 
-                           role="status">
-                        <span className="visually-hidden">Loading...</span>
-                      </div>
-                    )}
-                  </div>
+          {isCustomPart ? (
+            <>
+              <TextField
+                fullWidth
+                size="small"
+                label="Item Name"
+                value={customPartName}
+                onChange={(e) => setCustomPartName(e.target.value)}
+                placeholder="Enter custom item name"
+                required
+                sx={{ mb: 2 }}
+              />
+              <TextField
+                fullWidth
+                size="small"
+                label="Item Number (Optional)"
+                value={customPartNumber}
+                onChange={(e) => setCustomPartNumber(e.target.value)}
+                placeholder="Enter custom item number"
+                sx={{ mb: 2 }}
+              />
+            </>
+          ) : (
+            <Box sx={{ mb: 2 }}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Search Parts"
+                value={partSearchTerm}
+                onChange={(e) => setPartSearchTerm(e.target.value)}
+                placeholder="Search by part number or name"
+                InputProps={{
+                  endAdornment: loadingParts ? <CircularProgress size={16} /> : undefined
+                }}
+                sx={{ mb: 1 }}
+              />
 
-                  {filteredParts.length > 0 && (
-                    <div className="search-results">
-                      {filteredParts.map((part) => (
-                        <div
-                          key={`part-${part.part_id}`}
-                          className="search-item"
-                          onClick={() => handlePartChange(part.part_id)}
-                        >
-                          <div className="d-flex justify-content-between align-items-center">
-                            <div>
-                              <div className="fw-bold">{part.name}</div>
-                              <div className="info-text">
-                                Internal: {part.internal_part_number} | 
-                                Mfr: {part.manufacturer_part_number}
-                              </div>
-                            </div>
-                            <div className="text-end">
-                              <div className="status-badge status-success">
-                                Stock: {part.quantity}
-                              </div>
-                              <div className="info-text mt-1">
-                                {part.unit_cost ? `$${parseFloat(part.unit_cost.toString()).toFixed(2)}` : 'No price'}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-
-                  {selectedPartId && (
-                    <div className="info-panel mt-3">
-                      <div className="d-flex justify-content-between align-items-start">
-                        <div>
-                          <div className="fw-bold">
-                            {availableParts.find(p => p.part_id === selectedPartId)?.name}
-                          </div>
-                          <div className="info-text">
-                            Selected for purchase order
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          className="btn btn-outline-secondary btn-sm"
-                          onClick={() => setSelectedPartId(null)}
-                        >
-                          Change Part
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                </div>
+              {filteredParts.length > 0 && (
+                <Box sx={{ border: '1px solid #e0e0e0', borderRadius: 1, maxHeight: 200, overflow: 'auto' }}>
+                  {filteredParts.map((part) => (
+                    <Box
+                      key={`part-${part.part_id}`}
+                      onClick={() => handlePartChange(part.part_id)}
+                      sx={{
+                        p: 1.5,
+                        cursor: 'pointer',
+                        borderBottom: '1px solid #eee',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        '&:hover': { bgcolor: 'rgba(25,118,210,0.05)' }
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold">{part.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          Internal: {part.internal_part_number} | Mfr: {part.manufacturer_part_number}
+                        </Typography>
+                      </Box>
+                      <Box textAlign="right">
+                        <Chip label={`Stock: ${part.quantity}`} size="small" color="success" />
+                        <Typography variant="caption" display="block" sx={{ mt: 0.5 }}>
+                          {part.unit_cost ? `$${parseFloat(part.unit_cost.toString()).toFixed(2)}` : 'No price'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
               )}
-              
-              <div className="row mb-3">
-                <div className="col-6">
-                  <label className="form-label">Quantity</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                    min="1"
-                  />
-                </div>
-                <div className="col-6">
-                  <label className="form-label">Unit Price</label>
-                  <div className="input-group">
-                    <span className="input-group-text">$</span>
-                    <input
-                      type="number"
-                      className="form-control"
-                      value={unitPrice}
-                      onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
-                      step="0.01"
-                      onFocus={(e) => e.target.select()}
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              <div className="alert alert-info">
-                Total: ${(quantity * unitPrice).toFixed(2)}
-              </div>
-            </div>
-            <div className="dialog-footer">
-              <div className="d-flex gap-2 justify-content-end">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={closeAddPartDialog}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleAddPartToPO}
-                  disabled={
-                    (isCustomPart && (!customPartName || quantity <= 0)) || 
-                    (!isCustomPart && (!selectedPartId || quantity <= 0))
-                  }
-                >
-                  Add to Purchase Order
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ModalPortal>
+
+              {selectedPartId && (
+                <Box sx={{ mt: 1, p: 1.5, border: '1px solid #e3f2fd', borderRadius: 1, bgcolor: '#f8fbff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Box>
+                    <Typography variant="body2" fontWeight="bold">
+                      {availableParts.find(p => p.part_id === selectedPartId)?.name}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Selected for purchase order</Typography>
+                  </Box>
+                  <Button size="small" variant="outlined" onClick={() => setSelectedPartId(null)}>
+                    Change Part
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          )}
+
+          <Grid container spacing={2} sx={{ mt: 1, mb: 2 }}>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Quantity"
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                inputProps={{ min: 1 }}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Unit Price"
+                type="number"
+                value={unitPrice}
+                onChange={(e) => setUnitPrice(parseFloat(e.target.value) || 0)}
+                inputProps={{ step: 0.01 }}
+                onFocus={(e) => e.target.select()}
+                InputProps={{
+                  startAdornment: <InputAdornment position="start">$</InputAdornment>
+                }}
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ p: 1.5, bgcolor: '#e3f2fd', borderRadius: 1 }}>
+            <Typography variant="body2">
+              Total: ${(quantity * unitPrice).toFixed(2)}
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={closeAddPartDialog} variant="outlined" color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleAddPartToPO}
+            variant="contained"
+            color="primary"
+            disabled={
+              (isCustomPart && (!customPartName || quantity <= 0)) ||
+              (!isCustomPart && (!selectedPartId || quantity <= 0))
+            }
+          >
+            Add to Purchase Order
+          </Button>
+        </DialogActions>
+      </Dialog>
       
       {/* Delete Item Confirmation Dialog */}
       <Dialog open={deleteItemDialogOpen} onClose={closeDeleteItemDialog}>
@@ -2276,236 +2252,180 @@ const PurchaseOrderDetail: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Update Order Status Dialog - Matching Create Contact UI */}
-      <ModalPortal open={receiptDialogOpen}>
-        <div className="modal-dialog modal-dialog-centered modal-lg">
-          <div className="modal-content" style={{ borderRadius: '0.5rem', overflow: 'hidden' }}>
-            {/* Header with close button */}
-            <div style={{ 
-              background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)', 
-              color: 'white', 
-              padding: '1rem 1.5rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between'
-            }}>
-              <div className="d-flex align-items-center">
-                <Check sx={{ fontSize: 24, marginRight: 2 }} />
-                <h5 className="mb-0 fw-bold">Update Order Status</h5>
-              </div>
-              <button 
-                type="button" 
-                className="btn-close btn-close-white" 
-                onClick={closeReceiptDialog}
-                aria-label="Close"
-                style={{ fontSize: '1.2rem' }}
-              ></button>
-            </div>
+      {/* Update Order Status Dialog */}
+      <Dialog open={receiptDialogOpen} onClose={closeReceiptDialog} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)', color: 'white' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Check />
+              <Typography variant="h6" fontWeight="bold">Update Order Status</Typography>
+            </Box>
+            <IconButton onClick={closeReceiptDialog} sx={{ color: 'white' }} size="small">
+              <Close />
+            </IconButton>
+          </Box>
+        </DialogTitle>
 
-            <div className="modal-body" style={{ padding: '2rem', backgroundColor: '#f8f9fa' }}>
-              {selectedItem && (
-                <>
-                  {/* Part Information Section */}
-                  <div className="mb-4">
-                    <h6 className="text-primary fw-bold mb-3" style={{ color: '#1976d2 !important' }}>
-                      Part Information
-                    </h6>
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-body">
-                        <div className="d-flex align-items-center mb-3">
-                          <div 
-                            className="rounded-circle d-flex align-items-center justify-content-center me-3"
-                            style={{ 
-                              width: '48px', 
-                              height: '48px',
-                              background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                              color: 'white'
-                            }}
-                          >
-                            <span className="fw-bold fs-5">
-                              {(selectedItem.custom_part_name || selectedItem.part_name || 'P').charAt(0).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex-grow-1">
-                            <h6 className="mb-1 fw-bold">
-                              {selectedItem.custom_part_name || selectedItem.part_name || 'Unknown Part'}
-                            </h6>
-                            <p className="mb-0 text-muted">
-                              <strong>Part #:</strong> {selectedItem.custom_part_number || selectedItem.manufacturer_part_number || selectedItem.internal_part_number || 'N/A'}
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {/* Quantity Status Badges */}
-                        <div className="d-flex flex-wrap gap-3">
-                          <div className="px-3 py-2 rounded" style={{ backgroundColor: '#e3f2fd', border: '1px solid #bbdefb' }}>
-                            <div className="small text-muted fw-bold">ORDERED</div>
-                            <div className="h5 mb-0 text-primary fw-bold">{selectedItem.quantity}</div>
-                          </div>
-                          
-                          <div 
-                            className="px-3 py-2 rounded"
-                            style={{ 
-                              backgroundColor: quantityReceived > 0 ? '#e8f5e8' : '#f5f5f5',
-                              border: `1px solid ${quantityReceived > 0 ? '#c8e6c9' : '#e0e0e0'}`,
-                              color: quantityReceived > 0 ? '#2e7d32' : '#757575'
-                            }}
-                          >
-                            <div className="small fw-bold">RECEIVED</div>
-                            <div className="h5 mb-0 fw-bold">{quantityReceived}</div>
-                          </div>
-                          
-                          <div 
-                            className="px-3 py-2 rounded"
-                            style={{ 
-                              backgroundColor: (selectedItem.quantity - quantityReceived) > 0 ? '#fff3e0' : '#f5f5f5',
-                              border: `1px solid ${(selectedItem.quantity - quantityReceived) > 0 ? '#ffcc02' : '#e0e0e0'}`,
-                              color: (selectedItem.quantity - quantityReceived) > 0 ? '#f57c00' : '#757575'
-                            }}
-                          >
-                            <div className="small fw-bold">PENDING</div>
-                            <div className="h5 mb-0 fw-bold">{selectedItem.quantity - quantityReceived}</div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+        <DialogContent sx={{ pt: 3, bgcolor: '#f8f9fa' }}>
+          {selectedItem && (
+            <>
+              {/* Part Information Section */}
+              <Typography variant="subtitle1" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
+                Part Information
+              </Typography>
+              <Card variant="outlined" sx={{ mb: 3 }}>
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        mr: 2,
+                        flexShrink: 0
+                      }}
+                    >
+                      <Typography variant="h6" fontWeight="bold">
+                        {(selectedItem.custom_part_name || selectedItem.part_name || 'P').charAt(0).toUpperCase()}
+                      </Typography>
+                    </Box>
+                    <Box>
+                      <Typography variant="body1" fontWeight="bold">
+                        {selectedItem.custom_part_name || selectedItem.part_name || 'Unknown Part'}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        <strong>Part #:</strong> {selectedItem.custom_part_number || selectedItem.manufacturer_part_number || selectedItem.internal_part_number || 'N/A'}
+                      </Typography>
+                    </Box>
+                  </Box>
 
-                  {/* Receipt Information Section */}
-                  <div className="mb-4">
-                    <h6 className="text-primary fw-bold mb-3" style={{ color: '#1976d2 !important' }}>
-                      Receipt Information
-                    </h6>
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-body">
-                        <div className="row g-3">
-                          <div className="col-md-6">
-                            <label className="form-label text-dark fw-medium">
-                              Quantity Received <span className="text-danger">*</span>
-                            </label>
-                            <input
-                              type="number"
-                              className={`form-control ${quantityReceived > selectedItem.quantity ? 'is-invalid' : ''}`}
-                              value={quantityReceived}
-                              onChange={(e) => setQuantityReceived(Math.max(0, parseInt(e.target.value) || 0))}
-                              min="0"
-                              max={selectedItem.quantity}
-                              placeholder="Enter quantity received"
-                              style={{ borderRadius: '0.375rem', padding: '0.75rem' }}
-                            />
-                            <div className="form-text text-muted">
-                              Enter quantity received (0 to {selectedItem.quantity})
-                            </div>
-                            {quantityReceived > selectedItem.quantity && (
-                              <div className="invalid-feedback">
-                                Quantity received cannot exceed quantity ordered
-                              </div>
-                            )}
-                          </div>
-                          
-                          <div className="col-md-6">
-                            <label className="form-label text-dark fw-medium">Received By</label>
-                            <div className="input-group">
-                              <span className="input-group-text bg-light border-end-0">
-                                <Person sx={{ fontSize: 18, color: '#757575' }} />
-                              </span>
-                              <input
-                                type="text"
-                                className="form-control border-start-0"
-                                value={receivedBy}
-                                onChange={(e) => setReceivedBy(e.target.value)}
-                                placeholder="Enter name of person who received the items"
-                                style={{ borderRadius: '0 0.375rem 0.375rem 0', padding: '0.75rem' }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                    <Box sx={{ px: 2, py: 1, borderRadius: 1, bgcolor: '#e3f2fd', border: '1px solid #bbdefb' }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight="bold">ORDERED</Typography>
+                      <Typography variant="h6" color="primary" fontWeight="bold">{selectedItem.quantity}</Typography>
+                    </Box>
+                    <Box sx={{
+                      px: 2, py: 1, borderRadius: 1,
+                      bgcolor: quantityReceived > 0 ? '#e8f5e8' : '#f5f5f5',
+                      border: `1px solid ${quantityReceived > 0 ? '#c8e6c9' : '#e0e0e0'}`,
+                      color: quantityReceived > 0 ? '#2e7d32' : '#757575'
+                    }}>
+                      <Typography variant="caption" fontWeight="bold">RECEIVED</Typography>
+                      <Typography variant="h6" fontWeight="bold">{quantityReceived}</Typography>
+                    </Box>
+                    <Box sx={{
+                      px: 2, py: 1, borderRadius: 1,
+                      bgcolor: (selectedItem.quantity - quantityReceived) > 0 ? '#fff3e0' : '#f5f5f5',
+                      border: `1px solid ${(selectedItem.quantity - quantityReceived) > 0 ? '#ffcc02' : '#e0e0e0'}`,
+                      color: (selectedItem.quantity - quantityReceived) > 0 ? '#f57c00' : '#757575'
+                    }}>
+                      <Typography variant="caption" fontWeight="bold">PENDING</Typography>
+                      <Typography variant="h6" fontWeight="bold">{selectedItem.quantity - quantityReceived}</Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
 
-                  {/* Additional Notes Section */}
-                  <div className="mb-3">
-                    <h6 className="text-primary fw-bold mb-3" style={{ color: '#1976d2 !important' }}>
-                      Additional Notes
-                    </h6>
-                    <div className="card border-0 shadow-sm">
-                      <div className="card-body">
-                        <label className="form-label text-dark fw-medium">Notes</label>
-                        <textarea
-                          className="form-control"
-                          rows={4}
-                          value={receiptNotes}
-                          onChange={(e) => setReceiptNotes(e.target.value)}
-                          placeholder="Optional notes about the order (condition, partial shipment, etc.)"
-                          style={{ 
-                            borderRadius: '0.375rem', 
-                            padding: '0.75rem',
-                            backgroundColor: '#f8f9fa',
-                            resize: 'vertical'
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {selectedItem.received_date && (
-                    <div className="alert alert-info border-0 shadow-sm" role="alert">
-                      <div className="d-flex align-items-center">
-                        <History sx={{ fontSize: 18, marginRight: 2 }} />
-                        <small className="mb-0">
-                          <strong>Last updated:</strong> {new Date(selectedItem.received_date).toLocaleString()}
-                          {selectedItem.received_by && ` by ${selectedItem.received_by}`}
-                        </small>
-                      </div>
-                    </div>
-                  )}
+              {/* Receipt Information Section */}
+              <Typography variant="subtitle1" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
+                Receipt Information
+              </Typography>
+              <Card variant="outlined" sx={{ mb: 3 }}>
+                <CardContent>
+                  <Grid container spacing={2}>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Quantity Received *"
+                        type="number"
+                        value={quantityReceived}
+                        onChange={(e) => setQuantityReceived(Math.max(0, parseInt(e.target.value) || 0))}
+                        inputProps={{ min: 0, max: selectedItem.quantity }}
+                        helperText={
+                          quantityReceived > selectedItem.quantity
+                            ? 'Cannot exceed quantity ordered'
+                            : `Enter quantity received (0 to ${selectedItem.quantity})`
+                        }
+                        error={quantityReceived > selectedItem.quantity}
+                      />
+                    </Grid>
+                    <Grid item xs={12} md={6}>
+                      <TextField
+                        fullWidth
+                        size="small"
+                        label="Received By"
+                        value={receivedBy}
+                        onChange={(e) => setReceivedBy(e.target.value)}
+                        placeholder="Enter name of person who received the items"
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <Person sx={{ fontSize: 18, color: '#757575' }} />
+                            </InputAdornment>
+                          )
+                        }}
+                      />
+                    </Grid>
+                  </Grid>
+                </CardContent>
+              </Card>
 
-                  <div className="text-muted small mt-3">
-                    <span className="text-danger">*</span> Required fields
-                  </div>
-                </>
+              {/* Additional Notes Section */}
+              <Typography variant="subtitle1" fontWeight="bold" color="primary" sx={{ mb: 1.5 }}>
+                Additional Notes
+              </Typography>
+              <Card variant="outlined" sx={{ mb: 2 }}>
+                <CardContent>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Notes"
+                    multiline
+                    rows={4}
+                    value={receiptNotes}
+                    onChange={(e) => setReceiptNotes(e.target.value)}
+                    placeholder="Optional notes about the order (condition, partial shipment, etc.)"
+                  />
+                </CardContent>
+              </Card>
+
+              {selectedItem.received_date && (
+                <Alert severity="info" icon={<History />} sx={{ mb: 2 }}>
+                  <Typography variant="caption">
+                    <strong>Last updated:</strong> {new Date(selectedItem.received_date).toLocaleString()}
+                    {selectedItem.received_by && ` by ${selectedItem.received_by}`}
+                  </Typography>
+                </Alert>
               )}
-            </div>
 
-            {/* Footer */}
-            <div className="modal-footer bg-white border-top-0" style={{ padding: '1rem 2rem' }}>
-              <button
-                type="button"
-                className="btn btn-outline-secondary fw-medium"
-                onClick={closeReceiptDialog}
-                style={{ minWidth: '100px', borderRadius: '0.375rem' }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn fw-medium text-white"
-                onClick={handleUpdateReceipt}
-                disabled={isUpdating || (selectedItem && quantityReceived > selectedItem.quantity)}
-                style={{ 
-                  minWidth: '140px', 
-                  borderRadius: '0.375rem',
-                  background: isUpdating ? '#6c757d' : 'linear-gradient(135deg, #1976d2 0%, #1565c0 100%)',
-                  border: 'none'
-                }}
-              >
-                {isUpdating ? (
-                  <>
-                    <CircularProgress size={16} sx={{ mr: 1, color: 'white' }} />
-                    Updating...
-                  </>
-                ) : (
-                  <>
-                    <Person sx={{ fontSize: 16, mr: 1 }} />
-                    Update Order
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      </ModalPortal>
+              <Typography variant="caption" color="text.secondary">
+                * Required fields
+              </Typography>
+            </>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button onClick={closeReceiptDialog} variant="outlined" color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleUpdateReceipt}
+            variant="contained"
+            color="primary"
+            disabled={isUpdating || (selectedItem && quantityReceived > selectedItem.quantity)}
+            startIcon={isUpdating ? <CircularProgress size={16} color="inherit" /> : <Person />}
+          >
+            {isUpdating ? 'Updating...' : 'Update Order'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Supplier Change Dialog */}
       <Dialog 

@@ -2,11 +2,31 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { generatePurchaseOrderPDF } from '../../utils/pdfTemplates';
 import { suppliersApi, purchaseOrdersApi } from '../../services/api';
-import '../../styles/Dialog.css';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Checkbox,
+  CircularProgress,
+  FormControlLabel,
+  Grid,
+  IconButton,
+  Paper,
+  Switch,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+  Alert,
+} from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SaveIcon from '@mui/icons-material/Save';
 
@@ -106,61 +126,33 @@ const ManualPOForm: React.FC = () => {
   // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
-    
-    // Handle checkbox fields
+
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
-      setPurchaseOrder({
-        ...purchaseOrder,
-        [name]: checked
-      });
+      setPurchaseOrder({ ...purchaseOrder, [name]: checked });
       return;
     }
-    
-    // Handle nested supplier fields
+
     if (name.startsWith('supplier.')) {
       const field = name.split('.')[1];
-      setPurchaseOrder({
-        ...purchaseOrder,
-        supplier: {
-          ...purchaseOrder.supplier,
-          [field]: value
-        }
-      });
+      setPurchaseOrder({ ...purchaseOrder, supplier: { ...purchaseOrder.supplier, [field]: value } });
       return;
     }
-    
-    // Handle numeric fields
+
     if (name === 'shipping_cost' || name === 'tax_amount') {
-      setPurchaseOrder({
-        ...purchaseOrder,
-        [name]: parseFloat(value) || 0
-      });
+      setPurchaseOrder({ ...purchaseOrder, [name]: parseFloat(value) || 0 });
       return;
     }
-    
-    // Handle all other fields
-    setPurchaseOrder({
-      ...purchaseOrder,
-      [name]: value
-    });
+
+    setPurchaseOrder({ ...purchaseOrder, [name]: value });
   };
 
   // Handle supplier selection
   const handleSupplierChange = (supplier: Supplier) => {
-    setPurchaseOrder({
-      ...purchaseOrder,
-      supplier: { supplier_id: supplier.supplier_id }
-    });
-    
-    // If supplier has email, auto-fill the recipient email
+    setPurchaseOrder({ ...purchaseOrder, supplier: { supplier_id: supplier.supplier_id } });
     if (supplier.email) {
-      setPurchaseOrder(prev => ({
-        ...prev,
-        recipientEmail: supplier.email
-      }));
+      setPurchaseOrder(prev => ({ ...prev, recipientEmail: supplier.email }));
     }
-    
     setSupplierSearchTerm('');
     setSupplierResults([]);
   };
@@ -168,20 +160,11 @@ const ManualPOForm: React.FC = () => {
   // Handle item form field changes
   const handleItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    
-    // Handle numeric fields
     if (type === 'number') {
-      setCurrentItem({
-        ...currentItem,
-        [name]: parseFloat(value) || 0
-      });
+      setCurrentItem({ ...currentItem, [name]: parseFloat(value) || 0 });
       return;
     }
-    
-    setCurrentItem({
-      ...currentItem,
-      [name]: value
-    });
+    setCurrentItem({ ...currentItem, [name]: value });
   };
 
   // Search suppliers
@@ -190,21 +173,17 @@ const ManualPOForm: React.FC = () => {
       setSupplierResults([]);
       return;
     }
-    
     setSearchingSuppliers(true);
-    
     const searchTerm = term.toLowerCase();
-    const filteredSuppliers = suppliers.filter(supplier => 
+    const filteredSuppliers = suppliers.filter(supplier =>
       (supplier.name && supplier.name.toLowerCase().includes(searchTerm)) ||
       (supplier.contact_name && supplier.contact_name.toLowerCase().includes(searchTerm)) ||
       (supplier.email && supplier.email.toLowerCase().includes(searchTerm))
     );
-    
     setSupplierResults(filteredSuppliers);
     setSearchingSuppliers(false);
   };
 
-  // Handle supplier search input change
   const handleSupplierSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const term = e.target.value;
     setSupplierSearchTerm(term);
@@ -213,67 +192,33 @@ const ManualPOForm: React.FC = () => {
 
   // Add item to PO
   const addItem = () => {
-    // Validate the item has minimum required fields
     if (!currentItem.name) {
-      setMessage({
-        text: 'Please enter an item name.',
-        type: 'warning'
-      });
+      setMessage({ text: 'Please enter an item name.', type: 'warning' });
       return;
     }
-    
     if (!currentItem.partNumber) {
-      setMessage({
-        text: 'Please enter a part number.',
-        type: 'warning'
-      });
+      setMessage({ text: 'Please enter a part number.', type: 'warning' });
       return;
     }
-    
     if (!currentItem.quantity || currentItem.quantity <= 0) {
-      setMessage({
-        text: 'Please enter a valid quantity.',
-        type: 'warning'
-      });
+      setMessage({ text: 'Please enter a valid quantity.', type: 'warning' });
       return;
     }
-    
-    // Add the item to the PO
-    setPurchaseOrder({
-      ...purchaseOrder,
-      items: [
-        ...purchaseOrder.items,
-        { ...currentItem }
-      ]
-    });
-    
-    // Reset the current item form
-    setCurrentItem({
-      name: '',
-      partNumber: '',
-      quantity: 1,
-      price: 0
-    });
-    
-    setMessage({
-      text: 'Item added successfully.',
-      type: 'success'
-    });
+    setPurchaseOrder({ ...purchaseOrder, items: [...purchaseOrder.items, { ...currentItem }] });
+    setCurrentItem({ name: '', partNumber: '', quantity: 1, price: 0 });
+    setMessage({ text: 'Item added successfully.', type: 'success' });
   };
 
   // Remove item from PO
   const removeItem = (index: number) => {
     const updatedItems = [...purchaseOrder.items];
     updatedItems.splice(index, 1);
-    setPurchaseOrder({...purchaseOrder, items: updatedItems});
+    setPurchaseOrder({ ...purchaseOrder, items: updatedItems });
   };
 
   // Calculate totals
-  const calculateSubtotal = () => {
-    return purchaseOrder.items.reduce((sum, item) => {
-      return sum + (item.price * item.quantity);
-    }, 0);
-  };
+  const calculateSubtotal = () =>
+    purchaseOrder.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
   const calculateTotal = () => {
     const subtotal = calculateSubtotal();
@@ -284,52 +229,29 @@ const ManualPOForm: React.FC = () => {
 
   // Preview PO as PDF
   const previewPO = async () => {
-    // Validate required fields
     if (!purchaseOrder.supplier.supplier_id && !isManualSupplier) {
-      setMessage({
-        text: 'Please select a supplier or enable manual entry.',
-        type: 'warning'
-      });
+      setMessage({ text: 'Please select a supplier or enable manual entry.', type: 'warning' });
       return;
     }
-    
     if (isManualSupplier && !manualSupplierName.trim()) {
-      setMessage({
-        text: 'Please enter a supplier name.',
-        type: 'warning'
-      });
+      setMessage({ text: 'Please enter a supplier name.', type: 'warning' });
       return;
     }
-    
     if (purchaseOrder.items.length === 0) {
-      setMessage({
-        text: 'At least one item is required.',
-        type: 'warning'
-      });
+      setMessage({ text: 'At least one item is required.', type: 'warning' });
       return;
     }
-    
     try {
-      // Find the selected supplier's details
       const selectedSupplier = suppliers.find(s => s.supplier_id === purchaseOrder.supplier.supplier_id);
-      
       if (!selectedSupplier && !isManualSupplier) {
-        setMessage({
-          text: 'Invalid supplier selected. Please select a valid supplier.',
-          type: 'error'
-        });
+        setMessage({ text: 'Invalid supplier selected. Please select a valid supplier.', type: 'error' });
         return;
       }
-      
-      // Generate PDF
       const pdfBlob = await generatePurchaseOrderPDF({
         ...purchaseOrder,
         supplier: selectedSupplier || { name: manualSupplierName }
       });
-      
-      // Check if pdfBlob is a valid blob
       if (pdfBlob && pdfBlob instanceof Blob) {
-        // Open PDF in a new window
         const pdfUrl = URL.createObjectURL(pdfBlob);
         window.open(pdfUrl, '_blank');
       } else {
@@ -337,43 +259,30 @@ const ManualPOForm: React.FC = () => {
       }
     } catch (error) {
       console.error('Error generating PDF:', error);
-      setMessage({
-        text: 'Failed to generate PDF preview.',
-        type: 'error'
-      });
+      setMessage({ text: 'Failed to generate PDF preview.', type: 'error' });
     }
   };
 
   // Send PO via email
   const sendPOEmail = async (poId: number, poNumber: string) => {
     if (!purchaseOrder.recipientEmail) {
-      setMessage({
-        text: 'Please enter a recipient email address.',
-        type: 'warning'
-      });
+      setMessage({ text: 'Please enter a recipient email address.', type: 'warning' });
       return false;
     }
-    
     try {
-      // Generate PDF
       const selectedSupplier = suppliers.find(s => s.supplier_id === purchaseOrder.supplier.supplier_id);
       const pdfBlob = await generatePurchaseOrderPDF({
         ...purchaseOrder,
         poNumber,
         supplier: selectedSupplier || { name: manualSupplierName }
       });
-      
-      // Check if pdfBlob is a valid blob
       if (!pdfBlob || !(pdfBlob instanceof Blob)) {
         throw new Error('Failed to generate PDF');
       }
-      
-      // Convert blob to base64
       const reader = new FileReader();
       return new Promise<boolean>((resolve) => {
         reader.onloadend = async () => {
           const base64data = reader.result?.toString().split(',')[1];
-          
           try {
             await purchaseOrdersApi.sendPOEmail({
               recipient: purchaseOrder.recipientEmail,
@@ -381,18 +290,11 @@ const ManualPOForm: React.FC = () => {
               poId,
               pdfBase64: base64data || ''
             });
-            
-            setMessage({
-              text: 'Purchase order email sent successfully!',
-              type: 'success'
-            });
+            setMessage({ text: 'Purchase order email sent successfully!', type: 'success' });
             resolve(true);
           } catch (error) {
             console.error('Error sending email:', error);
-            setMessage({
-              text: 'Failed to send email. Please try again.',
-              type: 'error'
-            });
+            setMessage({ text: 'Failed to send email. Please try again.', type: 'error' });
             resolve(false);
           }
         };
@@ -400,10 +302,7 @@ const ManualPOForm: React.FC = () => {
       });
     } catch (error) {
       console.error('Error generating PDF for email:', error);
-      setMessage({
-        text: 'Failed to generate PDF for email.',
-        type: 'error'
-      });
+      setMessage({ text: 'Failed to generate PDF for email.', type: 'error' });
       return false;
     }
   };
@@ -411,49 +310,30 @@ const ManualPOForm: React.FC = () => {
   // Save PO
   const savePO = async () => {
     try {
-      // Validate required fields - either DB supplier or manual supplier name
       if (!purchaseOrder.supplier.supplier_id && !isManualSupplier) {
-        setMessage({
-          text: 'Please select a supplier from the list or enable manual entry.',
-          type: 'warning'
-        });
+        setMessage({ text: 'Please select a supplier from the list or enable manual entry.', type: 'warning' });
         return;
       }
-      
       if (isManualSupplier && !manualSupplierName.trim()) {
-        setMessage({
-          text: 'Please enter a supplier name.',
-          type: 'warning'
-        });
+        setMessage({ text: 'Please enter a supplier name.', type: 'warning' });
         return;
       }
-      
       if (purchaseOrder.items.length === 0) {
-        setMessage({
-          text: 'At least one item is required.',
-          type: 'warning'
-        });
+        setMessage({ text: 'At least one item is required.', type: 'warning' });
         return;
       }
-      
+
       setSubmitting(true);
-      
-      // Determine supplier_id based on manual or DB selection
+
       let supplier_id: number | null = null;
-      
       if (!isManualSupplier) {
         supplier_id = parseInt(String(purchaseOrder.supplier.supplier_id));
-        
         if (isNaN(supplier_id) || supplier_id <= 0) {
-          setMessage({
-            text: 'Invalid supplier selected. Please select a valid supplier.',
-            type: 'error'
-          });
+          setMessage({ text: 'Invalid supplier selected. Please select a valid supplier.', type: 'error' });
           return;
         }
       }
-      
-      // Prepare the data for the backend (note: special fields will be encoded in the notes)
+
       const poData: any = {
         supplier_id: supplier_id || undefined,
         notes: purchaseOrder.notes || '',
@@ -463,530 +343,464 @@ const ManualPOForm: React.FC = () => {
         tax_amount: parseFloat(purchaseOrder.tax_amount?.toString() || '0') || 0,
         requested_by: purchaseOrder.requestedBy || '',
         approved_by: purchaseOrder.approvedBy || '',
-        items: [] // Add empty items array to satisfy validation
+        items: []
       };
-      
-      // If manual supplier, add supplier name to notes
+
       if (isManualSupplier && manualSupplierName.trim()) {
         poData.manual_supplier_name = manualSupplierName.trim();
       }
-      
-      console.log('Creating blank PO with data:', poData);
-      
-      // Create a blank PO first
+
       try {
-        console.log('Attempting to create blank PO with data:', JSON.stringify(poData, null, 2));
         const blankPoResponse = await purchaseOrdersApi.createBlankPO(poData);
-        console.log('Blank PO Response:', blankPoResponse);
-        
         const poId = blankPoResponse.data.po_id;
         const poNumber = blankPoResponse.data.po_number;
-        
-        // Add each item to the PO
+
         for (const item of purchaseOrder.items) {
           const itemData = {
-            part_id: null, // No part_id for custom items
+            part_id: null,
             custom_part: true,
-            part_name: item.name, 
+            part_name: item.name,
             part_number: item.partNumber,
             quantity: item.quantity,
             unit_price: item.price
           };
-          console.log('Adding item to PO:', itemData);
           await purchaseOrdersApi.addItemToPO(poId, itemData);
         }
-        
-        setMessage({
-          text: 'Purchase order created successfully!',
-          type: 'success'
-        });
-        
-        // If a recipient email is entered, offer to send email
+
+        setMessage({ text: 'Purchase order created successfully!', type: 'success' });
+
         if (purchaseOrder.recipientEmail) {
-          // Update PO number for PDF generation
-          setPurchaseOrder({
-            ...purchaseOrder,
-            poNumber
-          });
-          
-          // Send email if confirmed
+          setPurchaseOrder({ ...purchaseOrder, poNumber });
           if (window.confirm(`Would you like to email this PO to ${purchaseOrder.recipientEmail}?`)) {
             await sendPOEmail(poId, poNumber);
           }
         }
-        
-        // Redirect after delay
+
         setTimeout(() => {
           navigate(`/purchase-orders/detail/${poId}`);
         }, 2000);
       } catch (error: any) {
         console.error('Error creating PO:', error);
-        console.error('Error response:', error.response);
-        console.error('Error response data:', error.response?.data);
-        
-        // Try to extract the most detailed error message
         let errorMessage = 'Failed to create purchase order.';
         if (error.response?.data?.errors) {
-          // Validation errors array
           errorMessage = error.response.data.errors.map((e: any) => e.msg).join(', ');
         } else if (error.response?.data?.error) {
           errorMessage = error.response.data.error;
         } else if (error.response?.data?.message) {
           errorMessage = error.response.data.message;
         }
-        
-        setMessage({
-          text: errorMessage,
-          type: 'error'
-        });
+        setMessage({ text: errorMessage, type: 'error' });
       } finally {
         setSubmitting(false);
       }
     } catch (error: any) {
       console.error('Error in save process:', error);
-      setMessage({
-        text: 'An unexpected error occurred.',
-        type: 'error'
-      });
+      setMessage({ text: 'An unexpected error occurred.', type: 'error' });
       setSubmitting(false);
     }
   };
 
-  // Find supplier by ID
-  const getSelectedSupplier = () => {
-    return suppliers.find(s => s.supplier_id === purchaseOrder.supplier.supplier_id);
-  };
+  const getSelectedSupplier = () =>
+    suppliers.find(s => s.supplier_id === purchaseOrder.supplier.supplier_id);
+
+  const isSubmitDisabled =
+    submitting ||
+    purchaseOrder.items.length === 0 ||
+    (!purchaseOrder.supplier.supplier_id && !isManualSupplier) ||
+    (isManualSupplier && !manualSupplierName.trim());
 
   return (
-    <div className="modal-dialog modal-dialog-centered" style={{ maxWidth: '1400px', margin: '2rem auto' }}>
-      <div className="modal-content custom-dialog">
+    <Box sx={{ maxWidth: 1400, mx: 'auto', my: 3 }}>
+      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
         {/* Header */}
-        <div className="dialog-header">
-          <h5 className="dialog-title" style={{ color: '#FF6200' }}>Create Manual Purchase Order</h5>
-          <button
-            type="button"
-            className="btn-close btn-close-white"
-            onClick={() => navigate('/purchase-orders')}
-            aria-label="Close"
-          ></button>
-        </div>
-        
+        <Box sx={{ backgroundColor: '#0066A1', color: 'white', p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" sx={{ color: '#FF6200', fontWeight: 'bold' }}>
+            Create Manual Purchase Order
+          </Typography>
+          <IconButton onClick={() => navigate('/purchase-orders')} sx={{ color: 'white' }}>
+            ✕
+          </IconButton>
+        </Box>
+
         {/* Content */}
-        <form onSubmit={(e) => { e.preventDefault(); savePO(); }}>
-          <div className="dialog-content">
-            {message.text && (
-              <div className={`alert alert-${message.type}`} role="alert">
-                {message.text}
-              </div>
-            )}
-            
-            <div className="mb-4">
-              <h6 className="fw-bold mb-3">PO Information</h6>
-              
-              {/* Supplier Selection */}
-              <div className="mb-3">
-                <div className="d-flex justify-content-between align-items-center mb-2">
-                  <label className="form-label mb-0">Supplier</label>
-                  <div className="form-check form-switch">
-                    <input
-                      className="form-check-input"
-                      type="checkbox"
-                      id="manualSupplierToggle"
-                      checked={isManualSupplier}
-                      onChange={(e) => {
-                        setIsManualSupplier(e.target.checked);
-                        if (e.target.checked) {
-                          // Clear DB supplier selection
-                          setPurchaseOrder({
-                            ...purchaseOrder,
-                            supplier: { supplier_id: 0 }
-                          });
-                          setSupplierSearchTerm('');
-                          setSupplierResults([]);
-                        } else {
-                          // Clear manual supplier name
-                          setManualSupplierName('');
-                        }
-                      }}
-                    />
-                    <label className="form-check-label" htmlFor="manualSupplierToggle">
-                      Manual Entry
-                    </label>
-                  </div>
-                </div>
-                
-                {isManualSupplier ? (
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={manualSupplierName}
-                    onChange={(e) => setManualSupplierName(e.target.value)}
-                    placeholder="Enter supplier name manually"
-                  />
-                ) : (
-                  <div className="search-container">
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={supplierSearchTerm}
-                      onChange={handleSupplierSearchChange}
-                      placeholder="Search for a supplier"
-                      disabled={!!getSelectedSupplier()}
-                    />
-                    {searchingSuppliers && (
-                      <div className="spinner-border spinner-border-sm text-primary position-absolute" 
-                           style={{ right: '1rem', top: '0.75rem' }} 
-                           role="status">
-                        <span className="visually-hidden">Loading...</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                {!isManualSupplier && supplierResults.length > 0 && !getSelectedSupplier() && (
-                  <div className="search-results">
-                    {supplierResults.map((supplier) => (
-                      <div
-                        key={`supplier-${supplier.supplier_id}`}
-                        className="search-item"
-                        onClick={() => handleSupplierChange(supplier)}
-                      >
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <div className="fw-bold">{supplier.name}</div>
-                            <div className="info-text">
-                              Contact: {supplier.contact_name} | 
-                              Email: {supplier.email || 'N/A'}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-                
-                {!isManualSupplier && getSelectedSupplier() && (
-                  <div className="info-panel mt-3">
-                    <div className="d-flex justify-content-between align-items-start">
-                      <div>
-                        <div className="fw-bold">{getSelectedSupplier()?.name}</div>
-                        <div className="info-text">
-                          Contact: {getSelectedSupplier()?.contact_name}<br />
-                          Email: {getSelectedSupplier()?.email || 'N/A'}<br />
-                          Phone: {getSelectedSupplier()?.phone || 'N/A'}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => {
-                          setPurchaseOrder({
-                            ...purchaseOrder,
-                            supplier: { supplier_id: 0 },
-                            recipientEmail: ''
-                          });
-                        }}
-                      >
-                        Change Supplier
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              
-              {/* PO Details */}
-              <div className="d-flex gap-3 mb-3">
-                <div className="flex-grow-1">
-                  <label className="form-label">Requested By</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="requestedBy"
-                    value={purchaseOrder.requestedBy}
-                    onChange={handleChange}
-                    placeholder="Enter name"
-                  />
-                </div>
-                <div className="flex-grow-1">
-                  <label className="form-label">Approved By</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    name="approvedBy"
-                    value={purchaseOrder.approvedBy}
-                    onChange={handleChange}
-                    placeholder="Enter name"
-                  />
-                </div>
-              </div>
-              
-              <div className="d-flex gap-3 mb-3">
-                <div className="form-check">
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    name="urgent"
-                    id="urgent"
-                    checked={purchaseOrder.urgent}
+        <Box component="form" onSubmit={(e) => { e.preventDefault(); savePO(); }} sx={{ p: 3 }}>
+          {message.text && (
+            <Alert
+              severity={message.type === '' ? 'info' : message.type as any}
+              sx={{ mb: 3 }}
+              onClose={() => setMessage({ text: '', type: '' })}
+            >
+              {message.text}
+            </Alert>
+          )}
+
+          {/* PO Information */}
+          <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+            PO Information
+          </Typography>
+
+          {/* Supplier Selection */}
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+              <Typography variant="body2" fontWeight="medium">Supplier</Typography>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isManualSupplier}
                     onChange={(e) => {
-                      setPurchaseOrder({
-                        ...purchaseOrder,
-                        urgent: e.target.checked
-                      });
+                      setIsManualSupplier(e.target.checked);
+                      if (e.target.checked) {
+                        setPurchaseOrder({ ...purchaseOrder, supplier: { supplier_id: 0 } });
+                        setSupplierSearchTerm('');
+                        setSupplierResults([]);
+                      } else {
+                        setManualSupplierName('');
+                      }
                     }}
+                    size="small"
                   />
-                  <label className="form-check-label" htmlFor="urgent">Mark as Urgent</label>
-                </div>
-                <div className="form-check">
-                  <input
-                    type="checkbox"
-                    className="form-check-input"
-                    name="nextDayShipping"
-                    id="nextDayShipping"
-                    checked={purchaseOrder.nextDayShipping}
-                    onChange={(e) => {
-                      setPurchaseOrder({
-                        ...purchaseOrder,
-                        nextDayShipping: e.target.checked
-                      });
-                    }}
-                  />
-                  <label className="form-check-label" htmlFor="nextDayShipping">Next Day Air</label>
-                </div>
-              </div>
-              
-              {/* Email Section */}
-              <div className="mb-3">
-                <label className="form-label">Recipient Email (optional for sending PO)</label>
-                <input
-                  type="email"
-                  className="form-control"
-                  name="recipientEmail"
-                  value={purchaseOrder.recipientEmail}
-                  onChange={handleChange}
-                  placeholder="Enter email address"
+                }
+                label="Manual Entry"
+                sx={{ m: 0 }}
+              />
+            </Box>
+
+            {isManualSupplier ? (
+              <TextField
+                fullWidth
+                size="small"
+                value={manualSupplierName}
+                onChange={(e) => setManualSupplierName(e.target.value)}
+                placeholder="Enter supplier name manually"
+              />
+            ) : (
+              <Box sx={{ position: 'relative' }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  value={supplierSearchTerm}
+                  onChange={handleSupplierSearchChange}
+                  placeholder="Search for a supplier"
+                  disabled={!!getSelectedSupplier()}
+                  InputProps={{
+                    endAdornment: searchingSuppliers ? <CircularProgress size={16} /> : undefined
+                  }}
                 />
-              </div>
-            </div>
-            
-            {/* Line Items Section */}
-            <div className="mb-4">
-              <div className="d-flex justify-content-between align-items-center mb-3">
-                <h6 className="fw-bold mb-0">Line Items</h6>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={addItem}
-                  disabled={!currentItem.name || !currentItem.partNumber || currentItem.quantity <= 0}
-                >
-                  <AddIcon fontSize="small" style={{ marginRight: '4px' }} />
-                  Add Item
-                </button>
-              </div>
-              
-              {/* Current items table */}
-              {purchaseOrder.items.length > 0 && (
-                <div className="table-responsive mb-3">
-                  <table className="table table-bordered">
-                    <thead className="table-light">
-                      <tr>
-                        <th>Name</th>
-                        <th>Part Number</th>
-                        <th>Qty</th>
-                        <th>Price</th>
-                        <th>Total</th>
-                        <th className="actions-column" style={{ width: '50px' }}></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {purchaseOrder.items.map((item, index) => (
-                        <tr key={`item-${index}`}>
-                          <td>{item.name}</td>
-                          <td>{item.partNumber}</td>
-                          <td>{item.quantity}</td>
-                          <td>${item.price.toFixed(2)}</td>
-                          <td>${(item.price * item.quantity).toFixed(2)}</td>
-                          <td className="actions-column">
-                            <button
-                              type="button"
-                              className="btn btn-sm btn-outline-danger"
-                              onClick={() => removeItem(index)}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-              
-              {/* Add new item form */}
-              <div className="card mb-3">
-                <div className="card-body">
-                  <h6 className="card-title mb-3">Add New Item</h6>
-                  <div className="row g-3">
-                    <div className="col-md-4">
-                      <label className="form-label">Item Name</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="name"
-                        value={currentItem.name}
-                        onChange={handleItemChange}
-                        placeholder="Enter item name"
-                      />
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label">Part Number</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        name="partNumber"
-                        value={currentItem.partNumber}
-                        onChange={handleItemChange}
-                        placeholder="Enter part number"
-                      />
-                    </div>
-                    <div className="col-md-2">
-                      <label className="form-label">Quantity</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        name="quantity"
-                        value={currentItem.quantity}
-                        onChange={handleItemChange}
-                        min="1"
-                      />
-                    </div>
-                    <div className="col-md-3">
-                      <label className="form-label">Unit Price</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        name="price"
-                        value={currentItem.price}
-                        onChange={handleItemChange}
-                        onFocus={(e) => e.target.select()}
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            {/* Order Totals Section */}
-            <div className="mb-4">
-              <div className="row">
-                <div className="col-md-6">
-                  <h6 className="fw-bold mb-3">Notes</h6>
-                  <textarea
-                    className="form-control"
-                    name="notes"
-                    value={purchaseOrder.notes}
+              </Box>
+            )}
+
+            {!isManualSupplier && supplierResults.length > 0 && !getSelectedSupplier() && (
+              <Paper elevation={3} sx={{ mt: 0.5, maxHeight: 200, overflow: 'auto', zIndex: 100, position: 'relative' }}>
+                {supplierResults.map((supplier) => (
+                  <Box
+                    key={`supplier-${supplier.supplier_id}`}
+                    onClick={() => handleSupplierChange(supplier)}
+                    sx={{
+                      p: 1.5,
+                      cursor: 'pointer',
+                      borderBottom: '1px solid #eee',
+                      '&:hover': { bgcolor: 'rgba(255,102,0,0.05)' }
+                    }}
+                  >
+                    <Typography variant="body2" fontWeight="bold">{supplier.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Contact: {supplier.contact_name} | Email: {supplier.email || 'N/A'}
+                    </Typography>
+                  </Box>
+                ))}
+              </Paper>
+            )}
+
+            {!isManualSupplier && getSelectedSupplier() && (
+              <Card variant="outlined" sx={{ mt: 1 }}>
+                <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <Box>
+                      <Typography variant="body2" fontWeight="bold">{getSelectedSupplier()?.name}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Contact: {getSelectedSupplier()?.contact_name}<br />
+                        Email: {getSelectedSupplier()?.email || 'N/A'}<br />
+                        Phone: {getSelectedSupplier()?.phone || 'N/A'}
+                      </Typography>
+                    </Box>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => {
+                        setPurchaseOrder({ ...purchaseOrder, supplier: { supplier_id: 0 }, recipientEmail: '' });
+                      }}
+                    >
+                      Change Supplier
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            )}
+          </Box>
+
+          {/* PO Details */}
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Requested By"
+                name="requestedBy"
+                value={purchaseOrder.requestedBy}
+                onChange={handleChange}
+                placeholder="Enter name"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Approved By"
+                name="approvedBy"
+                value={purchaseOrder.approvedBy}
+                onChange={handleChange}
+                placeholder="Enter name"
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ display: 'flex', gap: 3, mb: 3 }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={purchaseOrder.urgent}
+                  onChange={(e) => setPurchaseOrder({ ...purchaseOrder, urgent: e.target.checked })}
+                  size="small"
+                />
+              }
+              label="Mark as Urgent"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={purchaseOrder.nextDayShipping}
+                  onChange={(e) => setPurchaseOrder({ ...purchaseOrder, nextDayShipping: e.target.checked })}
+                  size="small"
+                />
+              }
+              label="Next Day Air"
+            />
+          </Box>
+
+          <TextField
+            fullWidth
+            size="small"
+            type="email"
+            label="Recipient Email (optional for sending PO)"
+            name="recipientEmail"
+            value={purchaseOrder.recipientEmail}
+            onChange={handleChange}
+            placeholder="Enter email address"
+            sx={{ mb: 3 }}
+          />
+
+          {/* Line Items Section */}
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" fontWeight="bold">Line Items</Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<AddIcon />}
+                onClick={addItem}
+                disabled={!currentItem.name || !currentItem.partNumber || currentItem.quantity <= 0}
+                size="small"
+              >
+                Add Item
+              </Button>
+            </Box>
+
+            {purchaseOrder.items.length > 0 && (
+              <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: '#f8f9fa' }}>
+                      <TableCell>Name</TableCell>
+                      <TableCell>Part Number</TableCell>
+                      <TableCell>Qty</TableCell>
+                      <TableCell>Price</TableCell>
+                      <TableCell>Total</TableCell>
+                      <TableCell sx={{ width: 50 }}></TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {purchaseOrder.items.map((item, index) => (
+                      <TableRow key={`item-${index}`}>
+                        <TableCell>{item.name}</TableCell>
+                        <TableCell>{item.partNumber}</TableCell>
+                        <TableCell>{item.quantity}</TableCell>
+                        <TableCell>${item.price.toFixed(2)}</TableCell>
+                        <TableCell>${(item.price * item.quantity).toFixed(2)}</TableCell>
+                        <TableCell>
+                          <IconButton size="small" color="error" onClick={() => removeItem(index)}>
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+
+            {/* Add new item form */}
+            <Card variant="outlined">
+              <CardContent>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>
+                  Add New Item
+                </Typography>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={4}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Item Name"
+                      name="name"
+                      value={currentItem.name}
+                      onChange={handleItemChange}
+                      placeholder="Enter item name"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Part Number"
+                      name="partNumber"
+                      value={currentItem.partNumber}
+                      onChange={handleItemChange}
+                      placeholder="Enter part number"
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={2}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Quantity"
+                      type="number"
+                      name="quantity"
+                      value={currentItem.quantity}
+                      onChange={handleItemChange}
+                      inputProps={{ min: 1 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={3}>
+                    <TextField
+                      fullWidth
+                      size="small"
+                      label="Unit Price"
+                      type="number"
+                      name="price"
+                      value={currentItem.price}
+                      onChange={handleItemChange}
+                      onFocus={(e) => e.target.select()}
+                      inputProps={{ min: 0, step: 0.01 }}
+                    />
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Box>
+
+          {/* Order Totals & Notes */}
+          <Grid container spacing={3} sx={{ mb: 3 }}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Notes</Typography>
+              <TextField
+                fullWidth
+                multiline
+                rows={4}
+                name="notes"
+                value={purchaseOrder.notes}
+                onChange={handleChange}
+                placeholder="Enter any additional notes or special instructions"
+              />
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>Order Totals</Typography>
+              <Card variant="outlined">
+                <CardContent>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Shipping Cost"
+                    type="number"
+                    name="shipping_cost"
+                    value={purchaseOrder.shipping_cost}
                     onChange={handleChange}
-                    rows={4}
-                    placeholder="Enter any additional notes or special instructions"
-                  ></textarea>
-                </div>
-                <div className="col-md-6">
-                  <h6 className="fw-bold mb-3">Order Totals</h6>
-                  <div className="card">
-                    <div className="card-body">
-                      <div className="mb-3">
-                        <label className="form-label">Shipping Cost</label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="shipping_cost"
-                          value={purchaseOrder.shipping_cost}
-                          onChange={handleChange}
-                          min="0"
-                          step="0.01"
-                        />
-                      </div>
-                      <div className="mb-3">
-                        <label className="form-label">Tax Amount</label>
-                        <input
-                          type="number"
-                          className="form-control"
-                          name="tax_amount"
-                          value={purchaseOrder.tax_amount}
-                          onChange={handleChange}
-                          min="0"
-                          step="0.01"
-                        />
-                      </div>
-                      <div className="d-flex justify-content-between mb-2">
-                        <span>Subtotal:</span>
-                        <span>${calculateSubtotal().toFixed(2)}</span>
-                      </div>
-                      <div className="d-flex justify-content-between mb-2">
-                        <span>Shipping:</span>
-                        <span>${parseFloat(purchaseOrder.shipping_cost.toString()).toFixed(2)}</span>
-                      </div>
-                      <div className="d-flex justify-content-between mb-2">
-                        <span>Tax:</span>
-                        <span>${parseFloat(purchaseOrder.tax_amount.toString()).toFixed(2)}</span>
-                      </div>
-                      <hr />
-                      <div className="d-flex justify-content-between fw-bold">
-                        <span>Total:</span>
-                        <span>${calculateTotal().toFixed(2)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Footer */}
-          <div className="dialog-footer">
-            <div className="d-flex gap-2 justify-content-end">
-              <button
-                type="button"
-                className="btn btn-outline-secondary"
-                onClick={() => navigate('/purchase-orders')}
-              >
-                <ArrowBackIcon fontSize="small" style={{ marginRight: '4px' }} />
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-outline-primary"
-                onClick={previewPO}
-                disabled={submitting || purchaseOrder.items.length === 0 || (!purchaseOrder.supplier.supplier_id && !isManualSupplier) || (isManualSupplier && !manualSupplierName.trim())}
-              >
-                <PictureAsPdfIcon fontSize="small" style={{ marginRight: '4px' }} />
-                Preview PDF
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={submitting || purchaseOrder.items.length === 0 || (!purchaseOrder.supplier.supplier_id && !isManualSupplier) || (isManualSupplier && !manualSupplierName.trim())}
-              >
-                {submitting ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                    Saving...
-                  </>
-                ) : (
-                  <>
-                    <SaveIcon fontSize="small" style={{ marginRight: '4px' }} />
-                    Save PO
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </form>
-      </div>
-    </div>
+                    inputProps={{ min: 0, step: 0.01 }}
+                    sx={{ mb: 2 }}
+                  />
+                  <TextField
+                    fullWidth
+                    size="small"
+                    label="Tax Amount"
+                    type="number"
+                    name="tax_amount"
+                    value={purchaseOrder.tax_amount}
+                    onChange={handleChange}
+                    inputProps={{ min: 0, step: 0.01 }}
+                    sx={{ mb: 2 }}
+                  />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2">Subtotal:</Typography>
+                    <Typography variant="body2">${calculateSubtotal().toFixed(2)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2">Shipping:</Typography>
+                    <Typography variant="body2">${parseFloat(purchaseOrder.shipping_cost.toString()).toFixed(2)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="body2">Tax:</Typography>
+                    <Typography variant="body2">${parseFloat(purchaseOrder.tax_amount.toString()).toFixed(2)}</Typography>
+                  </Box>
+                  <Box sx={{ borderTop: '1px solid #eee', pt: 1, display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body1" fontWeight="bold">Total:</Typography>
+                    <Typography variant="body1" fontWeight="bold">${calculateTotal().toFixed(2)}</Typography>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          {/* Footer Actions */}
+          <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end', pt: 2, borderTop: '1px solid #eee' }}>
+            <Button
+              variant="outlined"
+              color="inherit"
+              startIcon={<ArrowBackIcon />}
+              onClick={() => navigate('/purchase-orders')}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="outlined"
+              color="primary"
+              startIcon={<PictureAsPdfIcon />}
+              onClick={previewPO}
+              disabled={isSubmitDisabled}
+            >
+              Preview PDF
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              color="primary"
+              startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SaveIcon />}
+              disabled={isSubmitDisabled}
+            >
+              {submitting ? 'Saving...' : 'Save PO'}
+            </Button>
+          </Box>
+        </Box>
+      </Paper>
+    </Box>
   );
 };
 
-export default ManualPOForm; 
+export default ManualPOForm;
