@@ -1,17 +1,18 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Tabs, Tab } from '@mui/material';
 import { useAuth } from '../../contexts/AuthContext';
 import NavLayout from '../../components/NavLayout';
 import { MCS_ORANGE } from '../../theme';
 
-// BadgeAdmin relies on client-only APIs (localStorage via Axios interceptor).
-// Disable SSR to prevent hydration mismatches.
+// Client-only components (use localStorage via Axios interceptors).
 const BadgeAdmin = dynamic(() => import('../../components/BadgeAdmin'), { ssr: false });
+const PermissionsPanel = dynamic(() => import('../../components/admin/PermissionsPanel'), { ssr: false });
 
 export default function AdminPage() {
-  const { isAuthenticated, isLoading, redirectToLogin } = useAuth();
+  const { user, isAuthenticated, isLoading, redirectToLogin } = useAuth();
+  const [tab, setTab] = useState(0);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -29,9 +30,24 @@ export default function AdminPage() {
 
   if (!isAuthenticated) return null;
 
+  const isAdmin = user?.role === 'admin';
+
   return (
     <NavLayout>
-      <BadgeAdmin />
+      <Box p={3}>
+        <Tabs
+          value={tab}
+          onChange={(_e, v) => setTab(v)}
+          sx={{ mb: 2, borderBottom: '1px solid', borderColor: 'divider' }}
+          TabIndicatorProps={{ style: { backgroundColor: MCS_ORANGE } }}
+        >
+          <Tab label="Badge Admin" sx={{ '&.Mui-selected': { color: MCS_ORANGE } }} />
+          {isAdmin && <Tab label="Permissions" sx={{ '&.Mui-selected': { color: MCS_ORANGE } }} />}
+        </Tabs>
+
+        {tab === 0 && <BadgeAdmin />}
+        {tab === 1 && isAdmin && <PermissionsPanel />}
+      </Box>
     </NavLayout>
   );
 }
