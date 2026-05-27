@@ -3,14 +3,15 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Box, Typography, Paper, Grid, Card, CardContent, CircularProgress,
   TextField, MenuItem, Stack, Table, TableHead, TableRow, TableCell,
-  TableBody, Chip, Button, Alert,
+  TableBody, Chip, Button, Alert, Divider,
 } from '@mui/material';
 import { Refresh } from '@mui/icons-material';
-import svc, { CallMetrics, MetricsFilters, ReasonCategory } from '../services/maintenanceCallService';
+import svc, { CallMetrics, MetricsFilters, PartsMetrics, ReasonCategory } from '../services/maintenanceCallService';
 import {
   MCS_ORANGE, STATUS_OPEN, STATUS_IN_PROGRESS, STATUS_RESOLVED,
   STATUS_SUSPENDED, STATUS_CRITICAL,
 } from '../theme';
+import PartsConsumptionSection from './analytics/PartsConsumptionSection';
 
 type ReasonMeta = { value: ReasonCategory; label: string; color: string };
 
@@ -50,7 +51,6 @@ const fmtMoney = (v: string | number | null | undefined): string => {
 
 const reasonLabel = (k: string | null): string =>
   REASONS.find(r => r.value === k)?.label || k || 'Unknown';
-
 const reasonColor = (k: string | null): string =>
   REASONS.find(r => r.value === k)?.color || '#9E9E9E';
 
@@ -76,9 +76,7 @@ function HBar({ label, value, max, color, suffix }: {
     <Box sx={{ mb: 1 }}>
       <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.25 }}>
         <Typography variant="body2" fontWeight={500} noWrap sx={{ maxWidth: '60%' }}>{label}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {fmt(value)}{suffix || ''}
-        </Typography>
+        <Typography variant="body2" color="text.secondary">{fmt(value)}{suffix || ''}</Typography>
       </Stack>
       <Box sx={{ height: 10, bgcolor: 'grey.200', borderRadius: 1, overflow: 'hidden' }}>
         <Box sx={{ width: `${pct}%`, height: '100%', bgcolor: color, transition: 'width 0.3s' }} />
@@ -87,35 +85,81 @@ function HBar({ label, value, max, color, suffix }: {
   );
 }
 
+function SectionHeader({ label }: { label: string }) {
+  return (
+    <Box sx={{ mt: 4, mb: 2 }}>
+      <Typography
+        variant="overline"
+        color="text.secondary"
+        sx={{ letterSpacing: 3, fontWeight: 700, fontSize: '0.75rem' }}
+      >
+        {label}
+      </Typography>
+      <Divider sx={{ mt: 0.5 }} />
+    </Box>
+  );
+}
+
+interface Machine { machine_id: number; name: string; location: string | null; }
+
 export default function Analytics() {
   const [metrics, setMetrics] = useState<CallMetrics | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [partsMetrics, setPartsMetrics] = useState<PartsMetrics | null>(null);
+  const [partsLoading, setPartsLoading] = useState(false);
+  const [partsError, setPartsError] = useState<string | null>(null);
+
+  const [machines, setMachines] = useState<Machine[]>([]);
+
   const [from, setFrom] = useState(ymd(daysAgo(30)));
   const [to, setTo] = useState(ymd(new Date()));
   const [shift, setShift] = useState('');
+  const [machineId, setMachineId] = useState('');
   const [reason, setReason] = useState<'' | ReasonCategory>('');
+
+  // Load machine list once on mount for the filter dropdown.
+  useEffect(() => {
+    svc.getMachines().then(setMachines).catch(() => {/* non-critical */});
+  }, []);
+
+  const buildFilters = useCallback((): MetricsFilters => ({
+    from: from || undefined,
+    to: to || undefined,
+    shift_name: shift || undefined,
+    machine_id: machineId ? parseInt(machineId) : undefined,
+    reason: (reason as ReasonCategory) || undefined,
+  }), [from, to, shift, machineId, reason]);
 
   const fetchMetrics = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const filters: MetricsFilters = {
-        from: from || undefined,
-        to: to || undefined,
-        shift_name: shift || undefined,
-        reason: reason || undefined,
-      };
-      setMetrics(await svc.getMetrics(filters));
+      setMetrics(await svc.getMetrics(buildFilters()));
     } catch (err: any) {
       setError(err?.response?.data?.error || err?.message || 'Failed to load metrics');
     } finally {
       setLoading(false);
     }
-  }, [from, to, shift, reason]);
+  }, [buildFilters]);
+
+  const fetchPartsMetrics = useCallback(async () => {
+    setPartsLoading(true);
+    setPartsError(null);
+    try {
+      setPartsMetrics(await svc.getPartsMetrics(buildFilters()));
+    } catch (err: any) {
+      setPartsError(err?.response?.data?.error || err?.message || 'Failed to load parts data');
+    } finally {
+      setPartsLoading(false);
+    }
+  }, [buildFilters]);
 
   useEffect(() => { fetchMetrics(); }, [fetchMetrics]);
+  useEffect(() => { fetchPartsMetrics(); }, [fetchPartsMetrics]);
+
+  const handleRefresh = () => { fetchMetrics(); fetchPartsMetrics(); };
 
   const machineMax = useMemo(
     () => Math.max(0, ...((metrics?.by_machine || []).map(m => num(m.total_downtime_hours)))),
@@ -123,10 +167,6 @@ export default function Analytics() {
   );
   const reasonMax = useMemo(
     () => Math.max(0, ...((metrics?.by_reason || []).map(r => num(r.count)))),
-    [metrics]
-  );
-  const shiftMax = useMemo(
-    () => Math.max(0, ...((metrics?.by_shift || []).map(s => num(s.call_count)))),
     [metrics]
   );
   const trendMax = useMemo(
@@ -139,20 +179,17 @@ export default function Analytics() {
 
   return (
     <Box sx={{ p: 3 }}>
+      {/* ── Page title + refresh ── */}
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
         <Typography variant="h4" fontWeight={700}>Maintenance Analytics</Typography>
-        <Button
-          startIcon={<Refresh />}
-          onClick={fetchMetrics}
-          disabled={loading}
-          variant="outlined"
-        >
+        <Button startIcon={<Refresh />} onClick={handleRefresh} disabled={loading} variant="outlined">
           Refresh
         </Button>
       </Stack>
 
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
+      {/* ── Filter bar ── */}
+      <Paper sx={{ p: 2, mb: 1 }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} flexWrap="wrap">
           <TextField
             label="From" type="date" size="small"
             value={from} onChange={e => setFrom(e.target.value)}
@@ -172,6 +209,17 @@ export default function Analytics() {
             {SHIFTS.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
           </TextField>
           <TextField
+            label="Machine" select size="small"
+            value={machineId} onChange={e => setMachineId(e.target.value)}
+            sx={{ minWidth: 180 }}
+            inputProps={{ 'aria-label': 'Machine' }}
+          >
+            <MenuItem value="">All machines</MenuItem>
+            {machines.map(m => (
+              <MenuItem key={m.machine_id} value={m.machine_id.toString()}>{m.name}</MenuItem>
+            ))}
+          </TextField>
+          <TextField
             label="Reason" select size="small"
             value={reason} onChange={e => setReason(e.target.value as any)}
             sx={{ minWidth: 180 }}
@@ -182,7 +230,7 @@ export default function Analytics() {
         </Stack>
       </Paper>
 
-      {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
       {loading && !metrics ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
@@ -190,67 +238,47 @@ export default function Analytics() {
         </Box>
       ) : !metrics ? null : (
         <>
-          <Grid container spacing={2} sx={{ mb: 3 }}>
+          {/* ── ① PRODUCTION HEALTH ── */}
+          <SectionHeader label="① PRODUCTION HEALTH" />
+          <Grid container spacing={2} sx={{ mb: 1 }}>
+            {/* Row 1: production impact */}
             <Grid item xs={6} md={3}>
-              <KpiCard
-                label="Open Calls"
-                value={fmt(metrics.overall.open_calls, 0)}
-                accent={STATUS_OPEN}
-              />
+              <KpiCard label="Downtime Cost"   value={fmtMoney(metrics.overall.total_downtime_cost)} sub="in period" accent={STATUS_CRITICAL} />
             </Grid>
             <Grid item xs={6} md={3}>
-              <KpiCard
-                label="Total Calls"
-                value={fmt(metrics.overall.total_calls, 0)}
-                sub="resolved in range"
-              />
+              <KpiCard label="Total Downtime"  value={`${fmt(metrics.overall.total_downtime_hours)} hr`} sub="in period" accent={STATUS_OPEN} />
             </Grid>
             <Grid item xs={6} md={3}>
-              <KpiCard
-                label="MTTA"
-                value={`${fmt(metrics.overall.avg_response_minutes)} min`}
-                sub="mean time to acknowledge"
-                accent={STATUS_IN_PROGRESS}
-              />
+              <KpiCard label="SLA %"           value={metrics.overall.sla_pct == null ? '—' : `${fmt(metrics.overall.sla_pct)}%`} sub="acknowledged ≤ 10 min" accent={STATUS_RESOLVED} />
             </Grid>
             <Grid item xs={6} md={3}>
-              <KpiCard
-                label="MTTR"
-                value={`${fmt(metrics.overall.avg_repair_minutes)} min`}
-                sub="mean time to repair"
-                accent={STATUS_IN_PROGRESS}
-              />
+              <KpiCard label="Open Calls"      value={fmt(metrics.overall.open_calls, 0)} sub="right now" accent={STATUS_OPEN} />
+            </Grid>
+            {/* Row 2: response metrics */}
+            <Grid item xs={6} md={3}>
+              <KpiCard label="Total Calls"     value={fmt(metrics.overall.total_calls, 0)} sub="resolved in range" />
             </Grid>
             <Grid item xs={6} md={3}>
-              <KpiCard
-                label="Avg Downtime"
-                value={`${fmt(metrics.overall.avg_downtime_minutes)} min`}
-              />
+              <KpiCard label="MTTA"            value={`${fmt(metrics.overall.avg_response_minutes)} min`} sub="mean time to acknowledge" accent={STATUS_IN_PROGRESS} />
             </Grid>
             <Grid item xs={6} md={3}>
-              <KpiCard
-                label="Total Downtime"
-                value={`${fmt(metrics.overall.total_downtime_hours)} hr`}
-                accent={STATUS_OPEN}
-              />
+              <KpiCard label="MTTR"            value={`${fmt(metrics.overall.avg_repair_minutes)} min`} sub="mean time to repair" accent={STATUS_IN_PROGRESS} />
             </Grid>
             <Grid item xs={6} md={3}>
-              <KpiCard
-                label="SLA %"
-                value={metrics.overall.sla_pct == null ? '—' : `${fmt(metrics.overall.sla_pct)}%`}
-                sub="acknowledged ≤ 10 min"
-                accent={STATUS_RESOLVED}
-              />
-            </Grid>
-            <Grid item xs={6} md={3}>
-              <KpiCard
-                label="Downtime Cost"
-                value={fmtMoney(metrics.overall.total_downtime_cost)}
-                accent={STATUS_CRITICAL}
-              />
+              <KpiCard label="Critical Calls"  value={fmt(metrics.overall.critical_calls, 0)} sub="priority = critical" accent={STATUS_CRITICAL} />
             </Grid>
           </Grid>
 
+          {/* ── ② PARTS CONSUMPTION ── */}
+          <SectionHeader label="② PARTS CONSUMPTION" />
+          <PartsConsumptionSection
+            partsMetrics={partsMetrics}
+            loading={partsLoading}
+            error={partsError}
+          />
+
+          {/* ── ③ EQUIPMENT ── */}
+          <SectionHeader label="③ EQUIPMENT" />
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} lg={7}>
               <Paper sx={{ p: 2, height: '100%' }}>
@@ -273,6 +301,108 @@ export default function Analytics() {
             </Grid>
             <Grid item xs={12} lg={5}>
               <Paper sx={{ p: 2, height: '100%' }}>
+                <Typography variant="h6" gutterBottom>Repeat Failures (3+ in range)</Typography>
+                {(metrics.repeat_failures || []).length === 0 ? (
+                  <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>
+                    No machine + reason combos with 3 or more occurrences
+                  </Typography>
+                ) : (
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Machine</TableCell>
+                        <TableCell>Reason</TableCell>
+                        <TableCell align="right">Count</TableCell>
+                        <TableCell align="right">Suspensions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {metrics.repeat_failures.map((r, i) => (
+                        <TableRow key={`${r.machine_id}-${r.reason_category}-${i}`}>
+                          <TableCell>{r.machine_name || `#${r.machine_id}`}</TableCell>
+                          <TableCell>
+                            <Chip size="small" label={reasonLabel(r.reason_category)} sx={{ bgcolor: reasonColor(r.reason_category), color: 'white' }} />
+                          </TableCell>
+                          <TableCell align="right">{fmt(r.occurrences, 0)}</TableCell>
+                          <TableCell align="right">{fmt(r.suspensions, 0)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </Paper>
+            </Grid>
+          </Grid>
+
+          {/* ── ④ TEAM PERFORMANCE ── */}
+          <SectionHeader label="④ TEAM PERFORMANCE" />
+
+          {/* Technician workload */}
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="h6" gutterBottom>Technician Workload</Typography>
+            {(metrics.by_tech || []).length === 0 ? (
+              <Typography color="text.secondary" sx={{ py: 2 }}>No data</Typography>
+            ) : (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Technician</TableCell>
+                    <TableCell align="right">Calls</TableCell>
+                    <TableCell align="right">Avg MTTA (min)</TableCell>
+                    <TableCell align="right">Avg MTTR (min)</TableCell>
+                    <TableCell align="right">SLA %</TableCell>
+                    <TableCell align="right">Suspensions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {metrics.by_tech.map((t, i) => (
+                    <TableRow key={`${t.technician_id ?? 'na'}-${i}`}>
+                      <TableCell>{t.technician_name || '—'}</TableCell>
+                      <TableCell align="right">{fmt(t.call_count, 0)}</TableCell>
+                      <TableCell align="right">{fmt(t.avg_response_minutes)}</TableCell>
+                      <TableCell align="right">{fmt(t.avg_repair_minutes)}</TableCell>
+                      <TableCell align="right">{t.sla_pct == null ? '—' : `${fmt(t.sla_pct)}%`}</TableCell>
+                      <TableCell align="right">{fmt(t.suspensions, 0)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Paper>
+
+          {/* By shift */}
+          <Paper sx={{ p: 2, mb: 3 }}>
+            <Typography variant="h6" gutterBottom>By Shift</Typography>
+            {(metrics.by_shift || []).length === 0 ? (
+              <Typography color="text.secondary" sx={{ py: 2 }}>No data</Typography>
+            ) : (
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Shift</TableCell>
+                    <TableCell align="right">Calls</TableCell>
+                    <TableCell align="right">Avg MTTA (min)</TableCell>
+                    <TableCell align="right">Avg Downtime (min)</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {metrics.by_shift.map(s => (
+                    <TableRow key={s.shift_name || 'Unknown'}>
+                      <TableCell>{s.shift_name || 'Unknown'}</TableCell>
+                      <TableCell align="right">{fmt(s.call_count, 0)}</TableCell>
+                      <TableCell align="right">{fmt(s.avg_response_minutes)}</TableCell>
+                      <TableCell align="right">{fmt(s.avg_downtime_minutes)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </Paper>
+
+          {/* Failure reasons + weekly trend */}
+          <Grid container spacing={2} sx={{ mb: 3 }}>
+            <Grid item xs={12} lg={5}>
+              <Paper sx={{ p: 2, height: '100%' }}>
                 <Typography variant="h6" gutterBottom>Failure Reasons</Typography>
                 {(metrics.by_reason || []).length === 0 ? (
                   <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>No data</Typography>
@@ -289,9 +419,6 @@ export default function Analytics() {
                 )}
               </Paper>
             </Grid>
-          </Grid>
-
-          <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} lg={7}>
               <Paper sx={{ p: 2 }}>
                 <Typography variant="h6" gutterBottom>Weekly Trend</Typography>
@@ -338,92 +465,7 @@ export default function Analytics() {
                 )}
               </Paper>
             </Grid>
-            <Grid item xs={12} lg={5}>
-              <Paper sx={{ p: 2, height: '100%' }}>
-                <Typography variant="h6" gutterBottom>By Shift</Typography>
-                {(metrics.by_shift || []).length === 0 ? (
-                  <Typography color="text.secondary" sx={{ py: 4, textAlign: 'center' }}>No data</Typography>
-                ) : (
-                  metrics.by_shift.map(s => (
-                    <HBar
-                      key={s.shift_name || 'Unknown'}
-                      label={`${s.shift_name || 'Unknown'}  (avg ${fmt(s.avg_downtime_minutes)} min)`}
-                      value={num(s.call_count)}
-                      max={shiftMax}
-                      color={MCS_ORANGE}
-                      suffix=" calls"
-                    />
-                  ))
-                )}
-              </Paper>
-            </Grid>
           </Grid>
-
-          <Paper sx={{ p: 2, mb: 3 }}>
-            <Typography variant="h6" gutterBottom>Technician Workload</Typography>
-            {(metrics.by_tech || []).length === 0 ? (
-              <Typography color="text.secondary" sx={{ py: 2 }}>No data</Typography>
-            ) : (
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Technician</TableCell>
-                    <TableCell align="right">Calls</TableCell>
-                    <TableCell align="right">Avg Response (min)</TableCell>
-                    <TableCell align="right">Avg Repair (min)</TableCell>
-                    <TableCell align="right">SLA %</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {metrics.by_tech.map((t, i) => (
-                    <TableRow key={`${t.technician_id ?? 'na'}-${i}`}>
-                      <TableCell>{t.technician_name || '—'}</TableCell>
-                      <TableCell align="right">{fmt(t.call_count, 0)}</TableCell>
-                      <TableCell align="right">{fmt(t.avg_response_minutes)}</TableCell>
-                      <TableCell align="right">{fmt(t.avg_repair_minutes)}</TableCell>
-                      <TableCell align="right">
-                        {t.sla_pct == null ? '—' : `${fmt(t.sla_pct)}%`}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </Paper>
-
-          <Paper sx={{ p: 2 }}>
-            <Typography variant="h6" gutterBottom>Repeat Failures (3+ in range)</Typography>
-            {(metrics.repeat_failures || []).length === 0 ? (
-              <Typography color="text.secondary" sx={{ py: 2 }}>
-                No machine + reason combos with 3 or more occurrences
-              </Typography>
-            ) : (
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Machine</TableCell>
-                    <TableCell>Reason</TableCell>
-                    <TableCell align="right">Occurrences</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {metrics.repeat_failures.map((r, i) => (
-                    <TableRow key={`${r.machine_id}-${r.reason_category}-${i}`}>
-                      <TableCell>{r.machine_name || `#${r.machine_id}`}</TableCell>
-                      <TableCell>
-                        <Chip
-                          size="small"
-                          label={reasonLabel(r.reason_category)}
-                          sx={{ bgcolor: reasonColor(r.reason_category), color: 'white' }}
-                        />
-                      </TableCell>
-                      <TableCell align="right">{fmt(r.occurrences, 0)}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-          </Paper>
         </>
       )}
     </Box>
