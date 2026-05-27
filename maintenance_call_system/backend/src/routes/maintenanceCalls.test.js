@@ -291,3 +291,48 @@ describe('GET /stats/parts-metrics', () => {
     expect(res.status).toBe(500);
   });
 });
+
+describe('GET /stats/metrics — new fields', () => {
+  // Helper: mock all 8 parallel queries in callMetrics order:
+  // [overall, openCount, byMachine, byReason, byShift, byTech, trend, repeats]
+  const mockAllMetrics = ({
+    overrideOverall = {},
+    overrideTech = [],
+    overrideRepeats = [],
+  } = {}) => {
+    db.query
+      .mockResolvedValueOnce({ rows: [{ total_calls: '10', avg_response_minutes: '5', avg_repair_minutes: '30', avg_downtime_minutes: '35', total_downtime_hours: '6', total_downtime_cost: '1200', sla_pct: '90', critical_calls: '3', ...overrideOverall }] })
+      .mockResolvedValueOnce({ rows: [{ open_calls: '2' }] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: overrideTech })
+      .mockResolvedValueOnce({ rows: [] })
+      .mockResolvedValueOnce({ rows: overrideRepeats });
+  };
+
+  it('overall includes critical_calls', async () => {
+    mockAllMetrics({ overrideOverall: { critical_calls: '7' } });
+    const res = await request(app).get('/stats/metrics');
+    expect(res.status).toBe(200);
+    expect(Number(res.body.overall.critical_calls)).toBe(7);
+  });
+
+  it('by_tech includes suspensions per technician', async () => {
+    mockAllMetrics({
+      overrideTech: [{ technician_id: 1, technician_name: 'John D.', call_count: '8', avg_response_minutes: '6', avg_repair_minutes: '30', sla_pct: '87', suspensions: '3' }],
+    });
+    const res = await request(app).get('/stats/metrics');
+    expect(res.status).toBe(200);
+    expect(Number(res.body.by_tech[0].suspensions)).toBe(3);
+  });
+
+  it('repeat_failures includes suspensions per machine+reason combo', async () => {
+    mockAllMetrics({
+      overrideRepeats: [{ machine_id: 125, machine_name: 'Die Press 701', reason_category: 'mechanical', occurrences: '5', suspensions: '2' }],
+    });
+    const res = await request(app).get('/stats/metrics');
+    expect(res.status).toBe(200);
+    expect(Number(res.body.repeat_failures[0].suspensions)).toBe(2);
+  });
+});

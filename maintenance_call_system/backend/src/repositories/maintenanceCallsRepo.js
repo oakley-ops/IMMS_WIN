@@ -275,13 +275,34 @@ const listCallParts = async (db, callId) => {
 // open_calls comes from the unfiltered-by-status view query.
 const callMetrics = async (db, { from, to, shift_name, machine_id, reason }) => {
   const baseConditions = [];
+  const baseConditionsV = [];  // same conditions but prefixed with v. for joined queries
   const baseParams = [];
   let p = 1;
-  if (from)       { baseConditions.push(`called_at >= $${p++}`);       baseParams.push(from); }
-  if (to)         { baseConditions.push(`called_at <= $${p++}`);       baseParams.push(to); }
-  if (machine_id) { baseConditions.push(`machine_id = $${p++}`);       baseParams.push(machine_id); }
-  if (shift_name) { baseConditions.push(`shift_name = $${p++}`);       baseParams.push(shift_name); }
-  if (reason)     { baseConditions.push(`reason_category = $${p++}`);  baseParams.push(reason); }
+  if (from) {
+    baseConditions.push(`called_at >= $${p}`);
+    baseConditionsV.push(`v.called_at >= $${p}`);
+    baseParams.push(from); p++;
+  }
+  if (to) {
+    baseConditions.push(`called_at <= $${p}`);
+    baseConditionsV.push(`v.called_at <= $${p}`);
+    baseParams.push(to); p++;
+  }
+  if (machine_id) {
+    baseConditions.push(`machine_id = $${p}`);
+    baseConditionsV.push(`v.machine_id = $${p}`);
+    baseParams.push(machine_id); p++;
+  }
+  if (shift_name) {
+    baseConditions.push(`shift_name = $${p}`);
+    baseConditionsV.push(`v.shift_name = $${p}`);
+    baseParams.push(shift_name); p++;
+  }
+  if (reason) {
+    baseConditions.push(`reason_category = $${p}`);
+    baseConditionsV.push(`v.reason_category = $${p}`);
+    baseParams.push(reason); p++;
+  }
 
   const baseWhere = baseConditions.length ? 'WHERE ' + baseConditions.join(' AND ') : '';
   const resolvedWhere = baseConditions.length
@@ -290,6 +311,10 @@ const callMetrics = async (db, { from, to, shift_name, machine_id, reason }) => 
   const openWhere = baseConditions.length
     ? `${baseWhere} AND status IN ('open', 'in_progress', 'suspended')`
     : `WHERE status IN ('open', 'in_progress', 'suspended')`;
+  // For queries that JOIN maintenance_calls mc alongside view alias v
+  const resolvedWhereV = baseConditionsV.length
+    ? `WHERE v.status = 'resolved' AND ` + baseConditionsV.join(' AND ')
+    : `WHERE v.status = 'resolved'`;
 
   const [overall, openCount, byMachine, byReason, byShift, byTech, trend, repeats] = await Promise.all([
     db.query(`
@@ -301,7 +326,8 @@ const callMetrics = async (db, { from, to, shift_name, machine_id, reason }) => 
         ROUND((SUM(downtime_minutes) / 60.0)::numeric, 1)   AS total_downtime_hours,
         ROUND(SUM(downtime_cost)::numeric, 2)               AS total_downtime_cost,
         ROUND((100.0 * COUNT(*) FILTER (WHERE sla_met)
-               / NULLIF(COUNT(*) FILTER (WHERE sla_met IS NOT NULL), 0))::numeric, 1) AS sla_pct
+               / NULLIF(COUNT(*) FILTER (WHERE sla_met IS NOT NULL), 0))::numeric, 1) AS sla_pct,
+        COUNT(*) FILTER (WHERE priority = 'critical')        AS critical_calls
       FROM v_maintenance_calls_enriched
       ${resolvedWhere}
     `, baseParams),
@@ -348,18 +374,20 @@ const callMetrics = async (db, { from, to, shift_name, machine_id, reason }) => 
     `, baseParams),
 
     db.query(`
-      SELECT technician_id,
-             technician_name,
-             COUNT(*)                                            AS call_count,
-             ROUND(AVG(response_minutes)::numeric, 1)            AS avg_response_minutes,
-             ROUND(AVG(repair_minutes)::numeric, 1)              AS avg_repair_minutes,
-             ROUND((100.0 * COUNT(*) FILTER (WHERE sla_met)
-                    / NULLIF(COUNT(*) FILTER (WHERE sla_met IS NOT NULL), 0))::numeric, 1) AS sla_pct
-      FROM v_maintenance_calls_enriched
-      ${resolvedWhere}
-      GROUP BY technician_id, technician_name
-      ORDER BY call_count DESC
-      LIMIT 20
+      SELECT v.technician_id,
+             v.technician_name,
+             COUNT(*)                                             AS call_count,
+             ROUND(AVG(v.response_minutes)::numeric, 1)           AS avg_response_minutes,
+             ROUND(AVG(v.repair_minutes)::numeric, 1)             AS avg_repair_minutes,
+             ROUND((100.0 * COUNT(*) FILTER (WHERE v.sla_met)
+                    / NULLIF(COUNT(*) FILTER (WHERE v.sla_met IS NOT NULL), 0))::numeric, 1) AS sla_pct,
+             COUNT(*) FILTER (WHERE mc.suspended_at IS NOT NULL)  AS suspensions
+        FROM v_maintenance_calls_enriched v
+        JOIN maintenance_calls mc ON mc.call_id = v.call_id
+        ${resolvedWhereV}
+        GROUP BY v.technician_id, v.technician_name
+        ORDER BY call_count DESC
+        LIMIT 20
     `, baseParams),
 
     db.query(`
@@ -375,16 +403,18 @@ const callMetrics = async (db, { from, to, shift_name, machine_id, reason }) => 
     `, baseParams),
 
     db.query(`
-      SELECT machine_id,
-             machine_name,
-             reason_category,
-             COUNT(*) AS occurrences
-      FROM v_maintenance_calls_enriched
-      ${resolvedWhere}
-      GROUP BY machine_id, machine_name, reason_category
-      HAVING COUNT(*) >= 3
-      ORDER BY occurrences DESC
-      LIMIT 10
+      SELECT v.machine_id,
+             v.machine_name,
+             v.reason_category,
+             COUNT(*)                                             AS occurrences,
+             COUNT(*) FILTER (WHERE mc.suspended_at IS NOT NULL)  AS suspensions
+        FROM v_maintenance_calls_enriched v
+        JOIN maintenance_calls mc ON mc.call_id = v.call_id
+        ${resolvedWhereV}
+        GROUP BY v.machine_id, v.machine_name, v.reason_category
+        HAVING COUNT(*) >= 3
+        ORDER BY occurrences DESC
+        LIMIT 10
     `, baseParams),
   ]);
 
