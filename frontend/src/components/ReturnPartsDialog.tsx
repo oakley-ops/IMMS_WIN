@@ -1,7 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Part } from '../types';
-import ModalPortal from './ModalPortal';
 import axios from '../utils/axios';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Box,
+  Typography,
+  Alert,
+  Chip,
+  CircularProgress,
+  Paper,
+  List,
+  ListItem,
+  ListItemButton,
+} from '@mui/material';
 
 interface ReturnPartsDialogProps {
   open: boolean;
@@ -23,7 +39,7 @@ const ReturnPartsDialog: React.FC<ReturnPartsDialogProps> = ({
   const [success, setSuccess] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [searchResults, setSearchResults] = useState<Part[]>([]);
-  
+
   // Debug searchResults changes
   const [searchLoading, setSearchLoading] = useState(false);
 
@@ -50,11 +66,11 @@ const ReturnPartsDialog: React.FC<ReturnPartsDialogProps> = ({
         setSearchLoading(true);
         try {
           const response = await axios.get(`/api/v1/parts?page=0&limit=50&search=${encodeURIComponent(searchTerm)}`);
-          
+
           // Get the actual data from the response
           const responseData = response.data || response;
           const partsArray = responseData.items || responseData.parts || responseData || [];
-          
+
           // Ensure we always set an array
           if (Array.isArray(partsArray)) {
             setSearchResults(partsArray);
@@ -115,7 +131,7 @@ const ReturnPartsDialog: React.FC<ReturnPartsDialogProps> = ({
       console.log('Return API response:', response);
 
       setSuccess(`Successfully returned ${quantity} units of ${selectedPart.name} to inventory`);
-      
+
       // Reset form after successful return
       setTimeout(() => {
         onSuccess?.();
@@ -130,9 +146,9 @@ const ReturnPartsDialog: React.FC<ReturnPartsDialogProps> = ({
     } catch (error: any) {
       console.error('Error returning parts:', error);
       setError(
-        error.response?.data?.error || 
-        error.response?.data?.details || 
-        error.message || 
+        error.response?.data?.error ||
+        error.response?.data?.details ||
+        error.message ||
         'Failed to return parts to inventory'
       );
     } finally {
@@ -153,149 +169,118 @@ const ReturnPartsDialog: React.FC<ReturnPartsDialogProps> = ({
   };
 
   return (
-    <ModalPortal open={open}>
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content custom-dialog">
-          <div className="dialog-header">
-            <h5 className="dialog-title">Return Parts to Inventory</h5>
-          </div>
-          <form onSubmit={handleSubmit}>
-            <div className="dialog-content">
-              {error && (
-                <div className="alert alert-danger" role="alert">
-                  {error}
-                </div>
-              )}
-              
-              {success && (
-                <div className="alert alert-success" role="alert">
-                  {success}
-                </div>
-              )}
+    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Return Parts to Inventory</DialogTitle>
+      <form onSubmit={handleSubmit}>
+        <DialogContent sx={{ pt: 2 }}>
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
 
-              <div className="mb-4">
-                <label className="form-label">Search and Select Part *</label>
-                <div className="search-container">
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="Type part name or part number..."
-                    disabled={!!selectedPart}
-                  />
-                  {searchLoading && (
-                    <div className="spinner-border spinner-border-sm text-primary position-absolute" 
-                         style={{ right: '1rem', top: '0.75rem' }} 
-                         role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                  )}
-                </div>
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ position: 'relative' }}>
+              <TextField
+                label="Search and Select Part *"
+                fullWidth
+                size="small"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Type part name or part number..."
+                disabled={!!selectedPart}
+                InputProps={{
+                  endAdornment: searchLoading ? <CircularProgress size={16} /> : undefined,
+                }}
+              />
+            </Box>
 
-                {searchResults.length > 0 && !selectedPart && searchTerm.length >= 2 && (
-                    <div className="search-results">
-                      {searchResults.map((part) => (
-                        <div
-                          key={part.part_id}
-                          className="search-item"
-                          onClick={() => {
-                            setSelectedPart(part);
-                            setSearchTerm(part.name);
-                          }}
-                        >
-                          <div className="d-flex justify-content-between align-items-start">
-                            <div className="flex-grow-1">
-                              <div className="fw-bold text-dark mb-1" style={{ fontSize: '0.95rem' }}>
-                                {part.name}
-                              </div>
-                              <div className="text-muted small">
-                                <div className="mb-1">
-                                  <strong>Mfg Part #:</strong> {part.manufacturer_part_number || 'N/A'}
-                                </div>
-                              </div>
-                            </div>
-                            <div className="text-end">
-                              <div className="badge bg-primary text-white">
-                                Stock: {part.quantity}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                )}
+            {searchResults.length > 0 && !selectedPart && searchTerm.length >= 2 && (
+              <Paper variant="outlined" sx={{ mt: 1, maxHeight: 200, overflow: 'auto' }}>
+                <List dense disablePadding>
+                  {searchResults.map((part) => (
+                    <ListItem key={part.part_id} disablePadding>
+                      <ListItemButton
+                        onClick={() => {
+                          setSelectedPart(part);
+                          setSearchTerm(part.name);
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'flex-start' }}>
+                          <Box sx={{ flexGrow: 1 }}>
+                            <Typography variant="body2" fontWeight={600}>{part.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              Mfg Part #: {part.manufacturer_part_number || 'N/A'}
+                            </Typography>
+                          </Box>
+                          <Chip
+                            label={`Stock: ${part.quantity}`}
+                            size="small"
+                            color="primary"
+                          />
+                        </Box>
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            )}
 
-                {selectedPart && (
-                  <div className="selected-part-info mt-3">
-                    <div className="card">
-                      <div className="card-body">
-                        <h6 className="card-title">Selected Part Details</h6>
-                        <p className="card-text">
-                          <strong>Name:</strong> {selectedPart.name}<br/>
-                          <strong>Manufacturer Part #:</strong> {selectedPart.manufacturer_part_number || 'N/A'}<br/>
-                          <strong>Current Stock:</strong> {selectedPart.quantity} units<br/>
-                          <strong>New Stock After Return:</strong> {selectedPart.quantity + quantity} units
-                        </p>
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-secondary"
-                          onClick={() => {
-                            setSelectedPart(null);
-                            setSearchTerm('');
-                          }}
-                        >
-                          Change Part
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+            {selectedPart && (
+              <Paper variant="outlined" sx={{ p: 2, mt: 2 }}>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Selected Part Details
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Name:</strong> {selectedPart.name}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Manufacturer Part #:</strong> {selectedPart.manufacturer_part_number || 'N/A'}
+                </Typography>
+                <Typography variant="body2">
+                  <strong>Current Stock:</strong> {selectedPart.quantity} units
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>New Stock After Return:</strong> {selectedPart.quantity + quantity} units
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    setSelectedPart(null);
+                    setSearchTerm('');
+                  }}
+                >
+                  Change Part
+                </Button>
+              </Paper>
+            )}
+          </Box>
 
-              <div className="mb-4">
-                <label className="form-label">Quantity to Return *</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  min="1"
-                  required
-                />
-                <div className="form-text">Enter the number of parts to return to inventory</div>
-              </div>
-
-            </div>
-
-            <div className="dialog-footer">
-              <button
-                type="button"
-                className="btn btn-secondary"
-                onClick={handleClose}
-                disabled={loading}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                disabled={loading || !selectedPart || quantity <= 0}
-              >
-                {loading ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                    Returning...
-                  </>
-                ) : (
-                  'Return to Inventory'
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </ModalPortal>
+          <TextField
+            label="Quantity to Return *"
+            type="number"
+            fullWidth
+            size="small"
+            value={quantity}
+            onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+            inputProps={{ min: 1 }}
+            required
+            helperText="Enter the number of parts to return to inventory"
+            sx={{ mb: 2 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} disabled={loading}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            disabled={loading || !selectedPart || quantity <= 0}
+            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+          >
+            {loading ? 'Returning...' : 'Return to Inventory'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 

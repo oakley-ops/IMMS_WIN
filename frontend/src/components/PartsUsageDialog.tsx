@@ -1,7 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../utils/axios';
-import '../styles/Dialog.css';
-import ModalPortal from './ModalPortal';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Box,
+  Typography,
+  Alert,
+  Chip,
+  CircularProgress,
+  Paper,
+  List,
+  ListItem,
+  ListItemButton,
+} from '@mui/material';
+import {
+  COLOR_ERROR_BG,
+  COLOR_ERROR_TEXT,
+  COLOR_WARNING_BG,
+  COLOR_WARNING_TEXT,
+  COLOR_SUCCESS_BG,
+  COLOR_SUCCESS_TEXT,
+} from '../theme';
 
 interface Part {
   id?: number;
@@ -140,7 +163,7 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
     }
 
     const searchTerm = term.toLowerCase();
-    const filteredMachines = allMachines.filter(machine => 
+    const filteredMachines = allMachines.filter(machine =>
       machine.name.toLowerCase().includes(searchTerm) ||
       (machine.description && machine.description.toLowerCase().includes(searchTerm))
     );
@@ -186,7 +209,7 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
       }
 
       const machineId = selectedMachine.machine_id || selectedMachine.id;
-      
+
       console.log('Sending request with data:', {
         part_id: partId,
         machine_id: machineId,
@@ -232,240 +255,200 @@ const PartsUsageDialog: React.FC<PartsUsageDialogProps> = ({
     }
   };
 
-  if (!open) return null;
-
-  const getStockStatusClass = (quantity: number, minimum_quantity: number) => {
-    if (quantity === 0) return 'status-badge status-danger';
-    if (quantity <= minimum_quantity) return 'status-badge status-warning';
-    return 'status-badge status-success';
-  };
-
-  const getStockStatusText = (quantity: number, minimum_quantity: number) => {
-    if (quantity === 0) return 'Out of Stock';
-    if (quantity <= minimum_quantity) return 'Low Stock';
-    return 'In Stock';
+  const getStockChip = (qty: number, minQty: number) => {
+    if (qty === 0) return <Chip label="Out of Stock" size="small" sx={{ bgcolor: COLOR_ERROR_BG, color: COLOR_ERROR_TEXT }} />;
+    if (qty <= minQty) return <Chip label="Low Stock" size="small" sx={{ bgcolor: COLOR_WARNING_BG, color: COLOR_WARNING_TEXT }} />;
+    return <Chip label="In Stock" size="small" sx={{ bgcolor: COLOR_SUCCESS_BG, color: COLOR_SUCCESS_TEXT }} />;
   };
 
   return (
-    <ModalPortal open={open}>
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content custom-dialog">
-          <div className="dialog-header">
-            <h5 className="dialog-title">Record Part Usage</h5>
-          </div>
-          <form onSubmit={handleSubmit}>
-            <div className="dialog-content">
-              <div className="mb-4">
-                <label className="form-label">Search Part</label>
-                <div className="search-container">
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    placeholder="Search by part number or name"
-                    disabled={!!selectedPart}
-                  />
-                  {searching && (
-                    <div key="search-spinner" className="spinner-border spinner-border-sm text-primary position-absolute" 
-                         style={{ right: '1rem', top: '0.75rem' }} 
-                         role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </div>
-                  )}
-                </div>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Record Part Usage</DialogTitle>
+      <form onSubmit={handleSubmit}>
+        <DialogContent sx={{ pt: 2 }}>
+          {/* Part Search */}
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              label="Search Part"
+              fullWidth
+              size="small"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Search by part number or name"
+              disabled={!!selectedPart}
+              InputProps={{
+                endAdornment: searching ? <CircularProgress size={16} /> : undefined,
+              }}
+            />
 
-                {searchResults.length > 0 && !selectedPart && (
-                  <div className="search-results">
-                    {searchResults.map((part) => (
-                      <div
-                        key={`part-${part.part_id || Math.random().toString(36).substr(2, 9)}`}
-                        className="search-item"
-                        onClick={() => selectPart(part)}
-                      >
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <div className="fw-bold">{part.name}</div>
-                            <div className="info-text">
+            {searchResults.length > 0 && !selectedPart && (
+              <Paper variant="outlined" sx={{ mt: 1, maxHeight: 200, overflow: 'auto' }}>
+                <List dense disablePadding>
+                  {searchResults.map((part) => (
+                    <ListItem
+                      key={`part-${part.part_id || Math.random().toString(36).substr(2, 9)}`}
+                      disablePadding
+                    >
+                      <ListItemButton onClick={() => selectPart(part)}>
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="body2" fontWeight={600}>{part.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
                               Mfr: {part.manufacturer_part_number || 'N/A'}
-                            </div>
-                          </div>
-                          <div className="text-end">
-                            <div className={getStockStatusClass(part.quantity, part.minimum_quantity)}>
-                              {getStockStatusText(part.quantity, part.minimum_quantity)}
-                            </div>
-                            <div className="info-text mt-1">
-                              Qty: {part.quantity}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: 'right' }}>
+                            {getStockChip(part.quantity, part.minimum_quantity)}
+                            <Typography variant="caption" display="block">Qty: {part.quantity}</Typography>
+                          </Box>
+                        </Box>
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            )}
 
-                {selectedPart && (
-                  <div key="selected-part" className="info-panel mt-3">
-                    <div className="d-flex justify-content-between align-items-start">
-                      <div>
-                        <div className="fw-bold">{selectedPart.name}</div>
-                        <div className="info-text">
-                          Mfr: {selectedPart.manufacturer_part_number || 'N/A'}
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-outline-secondary btn-sm"
-                        onClick={() => setSelectedPart(null)}
-                      >
-                        Change Part
-                      </button>
-                    </div>
-                    <div className="mt-2">
-                      <span className={getStockStatusClass(selectedPart.quantity, selectedPart.minimum_quantity)}>
-                        {getStockStatusText(selectedPart.quantity, selectedPart.minimum_quantity)}
-                      </span>
-                      <span className="info-text ms-2">
+            {selectedPart && (
+              <Paper key="selected-part" variant="outlined" sx={{ p: 2, mt: 1 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Box>
+                    <Typography variant="body2" fontWeight={600}>{selectedPart.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Mfr: {selectedPart.manufacturer_part_number || 'N/A'}
+                    </Typography>
+                    <Box sx={{ mt: 1 }}>
+                      {getStockChip(selectedPart.quantity, selectedPart.minimum_quantity)}
+                      <Typography variant="caption" sx={{ ml: 1 }}>
                         Available: {selectedPart.quantity}
-                      </span>
-                    </div>
-                  </div>
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => setSelectedPart(null)}
+                  >
+                    Change Part
+                  </Button>
+                </Box>
+              </Paper>
+            )}
+          </Box>
+
+          {selectedPart && (
+            <>
+              {/* Machine Search */}
+              <Box sx={{ mb: 3 }}>
+                <TextField
+                  label="Machine"
+                  fullWidth
+                  size="small"
+                  value={machineSearchTerm}
+                  onChange={handleMachineSearchChange}
+                  placeholder="Search for a machine"
+                  disabled={!!selectedMachine}
+                  InputProps={{
+                    endAdornment: searchingMachines ? <CircularProgress size={16} /> : undefined,
+                  }}
+                />
+
+                {machineResults.length > 0 && !selectedMachine && (
+                  <Paper variant="outlined" sx={{ mt: 1, maxHeight: 200, overflow: 'auto' }}>
+                    <List dense disablePadding>
+                      {machineResults.map((machine) => (
+                        <ListItem
+                          key={`machine-${machine.machine_id || machine.id || Math.random().toString(36).substr(2, 9)}`}
+                          disablePadding
+                        >
+                          <ListItemButton onClick={() => selectMachine(machine)}>
+                            <Box>
+                              <Typography variant="body2" fontWeight={600}>{machine.name}</Typography>
+                              {machine.description && (
+                                <Typography variant="caption" color="text.secondary">
+                                  {machine.description}
+                                </Typography>
+                              )}
+                            </Box>
+                          </ListItemButton>
+                        </ListItem>
+                      ))}
+                    </List>
+                  </Paper>
                 )}
-              </div>
 
-              {selectedPart && (
-                <>
-                  <div className="mb-4">
-                    <label className="form-label">Machine</label>
-                    <div className="search-container">
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={machineSearchTerm}
-                        onChange={handleMachineSearchChange}
-                        placeholder="Search for a machine"
-                        disabled={!!selectedMachine}
-                      />
-                      {searchingMachines && (
-                        <div key="machine-search-spinner" className="spinner-border spinner-border-sm text-primary position-absolute" 
-                             style={{ right: '1rem', top: '0.75rem' }} 
-                             role="status">
-                          <span className="visually-hidden">Loading...</span>
-                        </div>
-                      )}
-                    </div>
+                {selectedMachine && (
+                  <Paper key="selected-machine" variant="outlined" sx={{ p: 2, mt: 1 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <Box>
+                        <Typography variant="body2" fontWeight={600}>{selectedMachine.name}</Typography>
+                        {selectedMachine.description && (
+                          <Typography variant="caption" color="text.secondary">
+                            {selectedMachine.description}
+                          </Typography>
+                        )}
+                      </Box>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => setSelectedMachine(null)}
+                      >
+                        Change Machine
+                      </Button>
+                    </Box>
+                  </Paper>
+                )}
+              </Box>
 
-                    {machineResults.length > 0 && !selectedMachine && (
-                      <div className="search-results">
-                        {machineResults.map((machine) => (
-                          <div
-                            key={`machine-${machine.machine_id || machine.id || Math.random().toString(36).substr(2, 9)}`}
-                            className="search-item"
-                            onClick={() => selectMachine(machine)}
-                          >
-                            <div className="d-flex justify-content-between align-items-center">
-                              <div>
-                                <div className="fw-bold">{machine.name}</div>
-                                {machine.description && (
-                                  <div key={`machine-desc-${machine.machine_id || machine.id || Math.random().toString(36).substr(2, 9)}`} className="info-text">
-                                    {machine.description}
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+              <TextField
+                label="Quantity Used"
+                type="number"
+                fullWidth
+                size="small"
+                value={quantity}
+                onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+                inputProps={{ min: 1, max: selectedPart.quantity }}
+                sx={{ mb: 3 }}
+              />
 
-                    {selectedMachine && (
-                      <div key="selected-machine" className="info-panel mt-3">
-                        <div className="d-flex justify-content-between align-items-start">
-                          <div>
-                            <div className="fw-bold">{selectedMachine.name}</div>
-                            {selectedMachine.description && (
-                              <div key={`selected-machine-desc`} className="info-text">
-                                {selectedMachine.description}
-                              </div>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            className="btn btn-outline-secondary btn-sm"
-                            onClick={() => setSelectedMachine(null)}
-                          >
-                            Change Machine
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+              <TextField
+                label="Reason for Usage"
+                fullWidth
+                size="small"
+                multiline
+                rows={3}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Explain why this part was used"
+                sx={{ mb: 2 }}
+              />
+            </>
+          )}
 
-                  <div className="mb-4">
-                    <label className="form-label">Quantity Used</label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      value={quantity}
-                      onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-                      min="1"
-                      max={selectedPart.quantity}
-                    />
-                  </div>
-
-                  <div className="mb-4">
-                    <label className="form-label">Reason for Usage</label>
-                    <textarea
-                      className="form-control"
-                      value={reason}
-                      onChange={(e) => setReason(e.target.value)}
-                      rows={3}
-                      placeholder="Explain why this part was used"
-                    />
-                  </div>
-                </>
-              )}
-              {error && (
-                <div className="alert alert-danger" role="alert">
-                  {error}
-                </div>
-              )}
-            </div>
-            <div className="dialog-footer">
-              <div className="d-flex gap-2 justify-content-end">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={onClose}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={
-                    loading || 
-                    !selectedPart || 
-                    !selectedMachine || 
-                    quantity <= 0 || 
-                    quantity > (selectedPart?.quantity || 0)
-                  }
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Recording...
-                    </>
-                  ) : (
-                    'Record Usage'
-                  )}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </ModalPortal>
+          {error && (
+            <Alert severity="error">{error}</Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            disabled={
+              loading ||
+              !selectedPart ||
+              !selectedMachine ||
+              quantity <= 0 ||
+              quantity > (selectedPart?.quantity || 0)
+            }
+            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+          >
+            {loading ? 'Recording...' : 'Record Usage'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 

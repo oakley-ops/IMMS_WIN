@@ -1,10 +1,31 @@
 // src/components/LowStockReport.tsx
 import React, { useState, useEffect } from 'react';
-import './LowStockReport.css';
 import { Part } from '../types';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axios';
 import * as XLSX from 'xlsx';
+import {
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  Typography,
+  TableSortLabel,
+} from '@mui/material';
+import {
+  COLOR_ERROR_BG,
+  COLOR_ERROR_TEXT,
+  COLOR_WARNING_BG,
+  COLOR_WARNING_TEXT,
+  COLOR_SUCCESS_BG,
+  COLOR_SUCCESS_TEXT,
+  PRIMARY_ORANGE,
+} from '../theme';
 
 interface LowStockReportProps {
   data: Part[];
@@ -16,6 +37,18 @@ interface PartOrderStatus {
   order_status: 'pending' | 'submitted' | 'approved' | 'received' | 'canceled' | 'none';
   po_id?: number;
 }
+
+// Order status colors map
+const ORDER_STATUS_STYLES: Record<string, { bg: string; color: string; border: string }> = {
+  none:      { bg: '#f8f9fa', color: '#6c757d', border: '#dee2e6' },
+  pending:   { bg: '#fff8e1', color: '#f57c00', border: '#ffb74d' },
+  submitted: { bg: '#e3f2fd', color: '#1976d2', border: '#64b5f6' },
+  on_order:  { bg: '#f3e5f5', color: '#7b1fa2', border: '#ba68c8' },
+  approved:  { bg: '#e8f5e8', color: '#2e7d32', border: '#81c784' },
+  received:  { bg: '#e0f2f1', color: '#00695c', border: '#4db6ac' },
+  canceled:  { bg: '#ffebee', color: '#d32f2f', border: '#ef5350' },
+  cancelled: { bg: '#ffebee', color: '#d32f2f', border: '#ef5350' },
+};
 
 const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef }) => {
   const [sortConfig, setSortConfig] = useState<{
@@ -36,13 +69,13 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef })
   useEffect(() => {
     const fetchPartOrderStatuses = async () => {
       if (data.length === 0) return;
-      
+
       try {
         const partIds = data.map((part: Part) => part.part_id);
         const response = await axiosInstance.get('/api/v1/parts/order-status', {
           params: { partIds: partIds.join(',') }
         });
-        
+
         if (response.data && Array.isArray(response.data)) {
           setPartOrderStatuses(response.data);
         } else {
@@ -53,31 +86,27 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef })
         setPartOrderStatuses([]);
       }
     };
-    
+
     fetchPartOrderStatuses();
   }, [data]);
 
   if (!data) {
-    return <div className="empty-state">No data available</div>;
+    return <Typography color="text.secondary" sx={{ textAlign: 'center', p: 4 }}>No data available</Typography>;
   }
 
-  const getStockStatus = (part: Part): { label: string; className: string } => {
+  const getStockStatus = (part: Part): { label: string; bg: string; color: string } => {
     if (part.stock_status === 'out_of_stock') {
-      return { label: 'Out of Stock', className: 'out-of-stock' };
+      return { label: 'Out of Stock', bg: COLOR_ERROR_BG, color: COLOR_ERROR_TEXT };
     }
     if (part.stock_status === 'low_stock') {
-      return { label: 'Low Stock', className: 'low-stock' };
+      return { label: 'Low Stock', bg: COLOR_WARNING_BG, color: COLOR_WARNING_TEXT };
     }
-    return { label: 'In Stock', className: 'in-stock' };
+    return { label: 'In Stock', bg: COLOR_SUCCESS_BG, color: COLOR_SUCCESS_TEXT };
   };
 
   const getOrderStatus = (partId: number | string): PartOrderStatus => {
     const status = partOrderStatuses.find(s => s.part_id === partId.toString());
     return status || { part_id: partId.toString(), order_status: 'none' };
-  };
-
-  const getStatusLabel = (status: string): string => {
-    return status.toUpperCase();
   };
 
   const sortData = (data: Part[]) => {
@@ -142,12 +171,12 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef })
   const handleExportToExcel = async () => {
     try {
       setExportLoading(true);
-      
+
       // Transform data for export
       const exportData = data.map((part) => {
         const status = getStockStatus(part);
         const orderStatus = getOrderStatus(part.part_id.toString());
-        
+
         return {
           'Part Name': part.name,
           'Manufacturer Part #': part.manufacturer_part_number || 'N/A',
@@ -196,11 +225,11 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef })
       // Create workbook and append sheet
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, worksheet, 'Inventory Status');
-      
+
       // Generate filename with timestamp
       const timestamp = new Date().toISOString().split('T')[0];
       const filename = `inventory_status_alerts_${timestamp}.xlsx`;
-        
+
       // Export file
       XLSX.writeFile(workbook, filename);
       console.log('Inventory status exported successfully!');
@@ -225,27 +254,67 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef })
   };
 
   return (
-    <div className="low-stock-report">
-      <div className="table-responsive">
-        <table className="low-stock-table">
-          <thead>
-            <tr>
-              <th onClick={() => requestSort('name')}>Part Name</th>
-              <th onClick={() => requestSort('stockStatus')}>Status</th>
-              <th onClick={() => requestSort('orderStatus')}>Order Status</th>
-            </tr>
-          </thead>
-          <tbody>
+    <Box>
+      <TableContainer component={Paper} variant="outlined">
+        <Table size="small">
+          <TableHead>
+            <TableRow sx={{ bgcolor: 'grey.50' }}>
+              <TableCell>
+                <TableSortLabel
+                  active={sortConfig?.key === 'name'}
+                  direction={sortConfig?.key === 'name' ? (sortConfig.direction === 'ascending' ? 'asc' : 'desc') : 'asc'}
+                  onClick={() => requestSort('name')}
+                >
+                  <Typography variant="caption" fontWeight={600} textTransform="uppercase" letterSpacing={0.5}>
+                    Part Name
+                  </Typography>
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={sortConfig?.key === 'stockStatus'}
+                  direction={sortConfig?.key === 'stockStatus' ? (sortConfig.direction === 'ascending' ? 'asc' : 'desc') : 'asc'}
+                  onClick={() => requestSort('stockStatus')}
+                >
+                  <Typography variant="caption" fontWeight={600} textTransform="uppercase" letterSpacing={0.5}>
+                    Status
+                  </Typography>
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={sortConfig?.key === 'orderStatus'}
+                  direction={sortConfig?.key === 'orderStatus' ? (sortConfig.direction === 'ascending' ? 'asc' : 'desc') : 'asc'}
+                  onClick={() => requestSort('orderStatus')}
+                >
+                  <Typography variant="caption" fontWeight={600} textTransform="uppercase" letterSpacing={0.5}>
+                    Order Status
+                  </Typography>
+                </TableSortLabel>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
             {sortedParts.length > 0 ? (
               sortedParts.map((part) => {
                 const status = getStockStatus(part);
                 const orderStatus = getOrderStatus(part.part_id.toString());
-                
+                const orderStyle = ORDER_STATUS_STYLES[orderStatus.order_status] || ORDER_STATUS_STYLES.none;
+
                 return (
-                  <tr key={part.part_id}>
-                    <td>
-                      <span 
-                        className="part-name-link"
+                  <TableRow key={part.part_id} hover>
+                    <TableCell>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: PRIMARY_ORANGE,
+                          cursor: 'pointer',
+                          fontWeight: 500,
+                          '&:hover': {
+                            color: '#e55a00',
+                            textDecoration: 'underline',
+                          },
+                        }}
                         onClick={() => handlePartClick(part.part_id)}
                         role="button"
                         tabIndex={0}
@@ -256,38 +325,43 @@ const LowStockReport: React.FC<LowStockReportProps> = ({ data = [], exportRef })
                         }}
                       >
                         {part.name}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`status-chip ${status.className}`}>
-                        {status.label}
-                      </span>
-                    </td>
-                    <td>
-                      {orderStatus.order_status !== 'none' ? (
-                        <span className={`order-status-chip ${orderStatus.order_status}`}>
-                          {getStatusLabel(orderStatus.order_status)}
-                        </span>
-                      ) : (
-                        <span className="order-status-chip no-orders">
-                          No orders
-                        </span>
-                      )}
-                    </td>
-                  </tr>
+                      </Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={status.label}
+                        size="small"
+                        sx={{ bgcolor: status.bg, color: status.color, fontWeight: 500, textTransform: 'uppercase', fontSize: '0.75rem' }}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={orderStatus.order_status !== 'none' ? orderStatus.order_status.toUpperCase() : 'No orders'}
+                        size="small"
+                        sx={{
+                          bgcolor: orderStyle.bg,
+                          color: orderStyle.color,
+                          border: `1px solid ${orderStyle.border}`,
+                          fontWeight: 600,
+                          fontSize: '0.7rem',
+                          letterSpacing: 0.5,
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
                 );
               })
             ) : (
-              <tr>
-                <td colSpan={3} className="empty-state">
+              <TableRow>
+                <TableCell colSpan={3} align="center" sx={{ py: 4, color: 'text.secondary' }}>
                   No low stock or out of stock parts found
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
-      </div>
-    </div>
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
   );
 };
 

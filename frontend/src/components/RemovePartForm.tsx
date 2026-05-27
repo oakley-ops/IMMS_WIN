@@ -4,7 +4,13 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../store/store';
 import { fetchParts } from '../store/partsSlice';
 import axiosInstance from '../utils/axios';
-import { Form, Alert, Button, Spinner } from 'react-bootstrap'; // Import Form, Alert, Button, and Spinner components
+import {
+  Box,
+  TextField,
+  Button,
+  Alert,
+  CircularProgress,
+} from '@mui/material';
 
 const RemovePartForm: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -25,9 +31,9 @@ const RemovePartForm: React.FC = () => {
     }
 
     try {
-      await axiosInstance.post('/api/v1/parts/remove', { 
-        barcode, 
-        quantity: quantityToRemove 
+      await axiosInstance.post('/api/v1/parts/remove', {
+        barcode,
+        quantity: quantityToRemove
       });
       dispatch(fetchParts());
       setBarcode('');
@@ -42,49 +48,42 @@ const RemovePartForm: React.FC = () => {
   };
 
   return (
-    <Form onSubmit={handleSubmit}>
-      {error && <Alert variant="danger">{error}</Alert>}
-      
-      <Form.Group className="mb-3">
-        <Form.Label>Barcode</Form.Label>
-        <Form.Control
-          type="text"
-          value={barcode}
-          onChange={(e) => setBarcode(e.target.value)}
-          placeholder="Scan or enter barcode"
-          required
-        />
-      </Form.Group>
+    <Box component="form" onSubmit={handleSubmit}>
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Form.Group className="mb-3">
-        <Form.Label>Quantity to Remove</Form.Label>
-        <Form.Control
-          type="number"
-          min="1"
-          value={quantityToRemove}
-          onChange={(e) => setQuantityToRemove(parseInt(e.target.value))}
-          required
-        />
-      </Form.Group>
+      <TextField
+        label="Barcode"
+        fullWidth
+        size="small"
+        value={barcode}
+        onChange={(e) => setBarcode(e.target.value)}
+        placeholder="Scan or enter barcode"
+        required
+        sx={{ mb: 2 }}
+      />
 
-      <Button variant="primary" type="submit" disabled={loading}>
-        {loading ? (
-          <>
-            <Spinner
-              as="span"
-              animation="border"
-              size="sm"
-              role="status"
-              aria-hidden="true"
-              className="me-2"
-            />
-            Removing...
-          </>
-        ) : (
-          'Remove Part'
-        )}
+      <TextField
+        label="Quantity to Remove"
+        type="number"
+        fullWidth
+        size="small"
+        inputProps={{ min: 1 }}
+        value={quantityToRemove}
+        onChange={(e) => setQuantityToRemove(parseInt(e.target.value))}
+        required
+        sx={{ mb: 2 }}
+      />
+
+      <Button
+        variant="contained"
+        color="primary"
+        type="submit"
+        disabled={loading}
+        startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+      >
+        {loading ? 'Removing...' : 'Remove Part'}
       </Button>
-    </Form>
+    </Box>
   );
 };
 

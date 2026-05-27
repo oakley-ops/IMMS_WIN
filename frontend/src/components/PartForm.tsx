@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../store/store'; 
-import { fetchParts } from '../store/partsSlice'; 
+import { AppDispatch } from '../store/store';
+import { fetchParts } from '../store/partsSlice';
 import BarcodeScanner from './BarcodeScanner';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Alert,
+  Grid,
+  CircularProgress,
+} from '@mui/material';
 
 interface PartFormData {
   name: string;
@@ -12,7 +21,7 @@ interface PartFormData {
   minimum_quantity: number;
   manufacturer_part_number: string;
   internal_part_number: string;
-  machine_id: number; 
+  machine_id: number;
   supplier: string;
   unit_cost: number;
   location: string;
@@ -59,7 +68,7 @@ const PartForm: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value, type } = event.target;
-    
+
     // Special handling for internal_part_number
     if (name === 'internal_part_number') {
       const upperValue = value.trim().toUpperCase();
@@ -69,7 +78,7 @@ const PartForm: React.FC = () => {
         setIsTBD(false);
       }
     }
-    
+
     // Handle numeric inputs
     if (type === 'number') {
       setFormData({
@@ -82,7 +91,7 @@ const PartForm: React.FC = () => {
         [name]: value,
       });
     }
-    
+
     // Clear error when user starts typing
     setError(null);
   };
@@ -92,7 +101,7 @@ const PartForm: React.FC = () => {
     // based on the scanned barcode format or user input
     setFormData({
       ...formData,
-      manufacturer_part_number: scannedBarcode, 
+      manufacturer_part_number: scannedBarcode,
       // or
       // internal_part_number: scannedBarcode
     });
@@ -100,52 +109,52 @@ const PartForm: React.FC = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    
+
     // Prevent double submission
     if (isSubmitting) {
       return;
     }
-    
+
     setIsSubmitting(true);
-    
+
     // Reset status messages
     setError(null);
     setSuccess(null);
-    
+
     // Validate required fields
     if (!formData.name) {
       setError('Part name is required');
       setIsSubmitting(false);
       return;
     }
-    
+
     if (!formData.internal_part_number && !isTBD) {
       setError('internal part number is required (you can use "TBD" if unknown)');
       setIsSubmitting(false);
       return;
     }
-    
+
     // Create a copy of the form data to modify if needed
     const submissionData = { ...formData };
-    
+
     // If the user entered TBD, use our pre-generated unique TBD value
     if (isTBD || submissionData.internal_part_number.trim().toUpperCase() === "TBD") {
       submissionData.internal_part_number = uniqueTBD;
       console.log('Using unique TBD value:', uniqueTBD);
     }
-    
+
     try {
       // Send the modified data to the backend
       console.log('Submitting data:', submissionData);
       const response = await axios.post('/api/v1/parts', submissionData);
       console.log('Response:', response);
-      
+
       // Dispatch an action to update the parts list in the Redux store
-      dispatch(fetchParts()); 
-      
+      dispatch(fetchParts());
+
       // Generate a new unique TBD for next time
       generateUniqueTBD();
-      
+
       // Reset the form or show a success message
       setFormData({
         name: '',
@@ -165,19 +174,19 @@ const PartForm: React.FC = () => {
       setSuccess('Part created successfully!');
     } catch (error) {
       console.error('Error creating part:', error);
-      
+
       // Check for unique constraint violation on internal_part_number
       if (axios.isAxiosError(error) && error.response) {
         console.error('Error response:', error.response);
         const errorMessage = error.response.data.error || error.message;
-        
-        if (errorMessage.includes('unique_internal_part_number') || 
-            errorMessage.includes('duplicate key value') || 
+
+        if (errorMessage.includes('unique_internal_part_number') ||
+            errorMessage.includes('duplicate key value') ||
             errorMessage.includes('Key (internal_part_number)')) {
-          
+
           // Generate a new unique TBD and suggest trying again
           const newUniqueTBD = generateUniqueTBD();
-          
+
           if (isTBD || formData.internal_part_number.trim().toUpperCase() === "TBD") {
             setError(`There's already a part with "TBD" as the internal part number. We've generated a new unique ID "${newUniqueTBD}" for you. Please try submitting again.`);
           } else {
@@ -195,200 +204,171 @@ const PartForm: React.FC = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>Create Part</h2>
-      
+    <Box component="form" onSubmit={handleSubmit}>
+      <Typography variant="h5" gutterBottom>Create Part</Typography>
+
       {error && (
-        <div style={{ padding: '10px', backgroundColor: '#ffebee', color: '#c62828', borderRadius: '4px', marginBottom: '15px' }}>
-          {error}
-        </div>
+        <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
       )}
-      
+
       {success && (
-        <div style={{ padding: '10px', backgroundColor: '#e8f5e9', color: '#2e7d32', borderRadius: '4px', marginBottom: '15px' }}>
-          {success}
-        </div>
+        <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>
       )}
-      
+
       <BarcodeScanner onScan={handleBarcodeScanned} />
-      
-      <div style={{ marginBottom: '15px' }}>
-        <label htmlFor="name" style={{ display: 'block', marginBottom: '5px' }}>
-          Part Name: <span style={{ color: 'red' }}>*</span>
-        </label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-          style={{ width: '100%', padding: '8px' }}
-        />
-      </div>
-      
-      <div style={{ marginBottom: '15px' }}>
-        <label htmlFor="description" style={{ display: 'block', marginBottom: '5px' }}>
-          Description:
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          style={{ width: '100%', padding: '8px', minHeight: '80px' }}
-        />
-      </div>
-      
-      <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
-        <div style={{ flex: 1 }}>
-          <label htmlFor="manufacturer_part_number" style={{ display: 'block', marginBottom: '5px' }}>
-            Manufacturer Part Number:
-          </label>
-          <input
-            type="text"
+
+      <TextField
+        label={<>Part Name <span style={{ color: 'red' }}>*</span></>}
+        fullWidth
+        size="small"
+        id="name"
+        name="name"
+        value={formData.name}
+        onChange={handleChange}
+        required
+        sx={{ mb: 2 }}
+      />
+
+      <TextField
+        label="Description"
+        fullWidth
+        size="small"
+        multiline
+        rows={3}
+        id="description"
+        name="description"
+        value={formData.description}
+        onChange={handleChange}
+        sx={{ mb: 2 }}
+      />
+
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={6}>
+          <TextField
+            label="Manufacturer Part Number"
+            fullWidth
+            size="small"
             id="manufacturer_part_number"
             name="manufacturer_part_number"
             value={formData.manufacturer_part_number}
             onChange={handleChange}
-            style={{ width: '100%', padding: '8px' }}
           />
-        </div>
-        
-        <div style={{ flex: 1 }}>
-          <label htmlFor="internal_part_number" style={{ display: 'block', marginBottom: '5px' }}>
-            Internal Part Number: <span style={{ color: 'red' }}>*</span>
-          </label>
-          <input
-            type="text"
+        </Grid>
+
+        <Grid item xs={12} md={6}>
+          <TextField
+            label={<>Internal Part Number <span style={{ color: 'red' }}>*</span></>}
+            fullWidth
+            size="small"
             id="internal_part_number"
             name="internal_part_number"
             value={formData.internal_part_number}
             onChange={handleChange}
             required
-            style={{ width: '100%', padding: '8px' }}
+            helperText='If you don&apos;t have the internal part number yet, enter "TBD".'
           />
-          <small style={{ display: 'block', marginTop: '5px', color: '#666' }}>
-            If you don't have the internal part number yet, enter "TBD".
-          </small>
           {isTBD && (
-            <div style={{ marginTop: '5px', padding: '8px', backgroundColor: '#e3f2fd', borderRadius: '4px' }}>
-              <p style={{ margin: '0 0 5px 0', fontWeight: 'bold' }}>TBD Detected</p>
-              <p style={{ margin: '0', fontSize: '14px' }}>
+            <Alert severity="info" sx={{ mt: 1 }}>
+              <Typography variant="body2" fontWeight={600}>TBD Detected</Typography>
+              <Typography variant="caption">
                 We'll use this unique ID: <code>{uniqueTBD}</code>
-              </p>
-            </div>
+              </Typography>
+            </Alert>
           )}
-        </div>
-      </div>
-      
-      <div style={{ display: 'flex', gap: '15px', marginBottom: '15px' }}>
-        <div style={{ flex: 1 }}>
-          <label htmlFor="quantity" style={{ display: 'block', marginBottom: '5px' }}>
-            Quantity: <span style={{ color: 'red' }}>*</span>
-          </label>
-          <input
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid item xs={12} md={4}>
+          <TextField
+            label={<>Quantity <span style={{ color: 'red' }}>*</span></>}
             type="number"
+            fullWidth
+            size="small"
             id="quantity"
             name="quantity"
             value={formData.quantity}
             onChange={handleChange}
-            min="0"
+            inputProps={{ min: 0 }}
             required
-            style={{ width: '100%', padding: '8px' }}
           />
-        </div>
-        
-        <div style={{ flex: 1 }}>
-          <label htmlFor="minimum_quantity" style={{ display: 'block', marginBottom: '5px' }}>
-            Minimum Quantity: <span style={{ color: 'red' }}>*</span>
-          </label>
-          <input
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            label={<>Minimum Quantity <span style={{ color: 'red' }}>*</span></>}
             type="number"
+            fullWidth
+            size="small"
             id="minimum_quantity"
             name="minimum_quantity"
             value={formData.minimum_quantity}
             onChange={handleChange}
-            min="0"
+            inputProps={{ min: 0 }}
             required
-            style={{ width: '100%', padding: '8px' }}
           />
-        </div>
-        
-        <div style={{ flex: 1 }}>
-          <label htmlFor="unit_cost" style={{ display: 'block', marginBottom: '5px' }}>
-            Unit Cost:
-          </label>
-          <input
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <TextField
+            label="Unit Cost"
             type="number"
+            fullWidth
+            size="small"
             id="unit_cost"
             name="unit_cost"
             value={formData.unit_cost}
             onChange={handleChange}
-            min="0"
-            step="0.01"
-            style={{ width: '100%', padding: '8px' }}
+            inputProps={{ min: 0, step: 0.01 }}
           />
-        </div>
-      </div>
-      
-      <div style={{ marginBottom: '15px' }}>
-        <label htmlFor="supplier" style={{ display: 'block', marginBottom: '5px' }}>
-          Supplier/Manufacturer:
-        </label>
-        <input
-          type="text"
-          id="supplier"
-          name="supplier"
-          value={formData.supplier}
-          onChange={handleChange}
-          style={{ width: '100%', padding: '8px' }}
-        />
-      </div>
-      
-      <div style={{ marginBottom: '15px' }}>
-        <label htmlFor="location" style={{ display: 'block', marginBottom: '5px' }}>
-          Location:
-        </label>
-        <input
-          type="text"
-          id="location"
-          name="location"
-          value={formData.location}
-          onChange={handleChange}
-          style={{ width: '100%', padding: '8px' }}
-        />
-      </div>
-      
-      <div style={{ marginBottom: '15px' }}>
-        <label htmlFor="notes" style={{ display: 'block', marginBottom: '5px' }}>
-          Notes:
-        </label>
-        <textarea
-          id="notes"
-          name="notes"
-          value={formData.notes}
-          onChange={handleChange}
-          style={{ width: '100%', padding: '8px', minHeight: '80px' }}
-        />
-      </div>
-      
-      <button 
+        </Grid>
+      </Grid>
+
+      <TextField
+        label="Supplier/Manufacturer"
+        fullWidth
+        size="small"
+        id="supplier"
+        name="supplier"
+        value={formData.supplier}
+        onChange={handleChange}
+        sx={{ mb: 2 }}
+      />
+
+      <TextField
+        label="Location"
+        fullWidth
+        size="small"
+        id="location"
+        name="location"
+        value={formData.location}
+        onChange={handleChange}
+        sx={{ mb: 2 }}
+      />
+
+      <TextField
+        label="Notes"
+        fullWidth
+        size="small"
+        multiline
+        rows={3}
+        id="notes"
+        name="notes"
+        value={formData.notes}
+        onChange={handleChange}
+        sx={{ mb: 3 }}
+      />
+
+      <Button
         type="submit"
+        variant="contained"
+        color="primary"
         disabled={isSubmitting}
-        style={{
-          backgroundColor: isSubmitting ? '#cccccc' : '#1976d2',
-          color: 'white',
-          padding: '10px 20px',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: isSubmitting ? 'not-allowed' : 'pointer',
-          fontSize: '16px'
-        }}
+        startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : undefined}
       >
         {isSubmitting ? 'Creating...' : 'Create Part'}
-      </button>
-    </form>
+      </Button>
+    </Box>
   );
 };
 

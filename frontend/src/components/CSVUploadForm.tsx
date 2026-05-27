@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { Form, Button, Alert, ProgressBar } from 'react-bootstrap';
+import {
+  Box,
+  Button,
+  Alert,
+  LinearProgress,
+  Typography,
+  CircularProgress,
+} from '@mui/material';
 import axiosInstance from '../utils/axios';
 import { useDispatch } from 'react-redux';
 import { fetchParts } from '../store/partsSlice';
@@ -70,60 +77,72 @@ const CSVUploadForm: React.FC = () => {
   };
 
   return (
-    <div className="p-3">
-      <h3 className="mb-3">Import Parts from CSV</h3>
-      
-      <Form onSubmit={handleSubmit}>
-        <Form.Group controlId="csvFile" className="mb-3">
-          <Form.Label>Choose CSV File</Form.Label>
-          <Form.Control
-            type="file"
-            onChange={handleFileChange}
-            accept=".csv"
-            disabled={uploading}
-          />
-          <Form.Text className="text-muted">
-            File should be a CSV with headers: name, description, manufacturer_part_number, 
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h5" sx={{ mb: 3 }}>Import Parts from CSV</Typography>
+
+      <Box component="form" onSubmit={handleSubmit}>
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="body2" sx={{ mb: 1 }}>Choose CSV File</Typography>
+          <Button variant="outlined" component="label">
+            {file ? file.name : 'Browse CSV File'}
+            <input
+              id="csvFile"
+              type="file"
+              hidden
+              accept=".csv"
+              onChange={handleFileChange}
+              disabled={uploading}
+            />
+          </Button>
+          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+            File should be a CSV with headers: name, description, manufacturer_part_number,
             internal_part_number, quantity, minimum_quantity, machine_id, supplier, unit_cost, location
-          </Form.Text>
-        </Form.Group>
+          </Typography>
+        </Box>
 
         {uploading && (
-          <div className="mb-3">
-            <ProgressBar now={uploadProgress} label={`${uploadProgress}%`} />
-          </div>
+          <Box sx={{ mb: 2 }}>
+            <LinearProgress variant="determinate" value={uploadProgress} />
+          </Box>
         )}
 
         {error && (
-          <Alert variant="danger" className="mb-3">
-            {error}
-          </Alert>
+          <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>
         )}
 
         {success && (
-          <Alert variant="success" className="mb-3">
-            {success}
-          </Alert>
+          <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>
         )}
 
-        <Button 
-          type="submit" 
-          variant="primary"
+        <Button
+          type="submit"
+          variant="contained"
+          color="primary"
           disabled={!file || uploading}
+          startIcon={uploading ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
           {uploading ? 'Uploading...' : 'Upload CSV'}
         </Button>
-      </Form>
+      </Box>
 
-      <div className="mt-4">
-        <h5>CSV Format Example:</h5>
-        <pre className="bg-light p-3 rounded">
+      <Box sx={{ mt: 4 }}>
+        <Typography variant="h6" gutterBottom>CSV Format Example:</Typography>
+        <Box
+          component="pre"
+          sx={{
+            bgcolor: 'grey.100',
+            p: 2,
+            borderRadius: 1,
+            fontSize: '0.8rem',
+            overflow: 'auto',
+          }}
+        >
           {`name,description,manufacturer_part_number,internal_part_number,quantity,minimum_quantity,machine_id,supplier,unit_cost,location
 "Receipt Printer","Thermal printer","MPN123","FPN123",10,5,1,"Supplier A",99.99,"Shelf A1"
 "Card Reader","EMV Reader","MPN456","FPN456",15,8,1,"Supplier B",149.99,"Shelf B2"`}
-        </pre>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 

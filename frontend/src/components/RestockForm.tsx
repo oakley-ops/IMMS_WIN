@@ -1,8 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../utils/axios';
-import '../styles/RestockForm.css';
-import '../styles/Dialog.css';
-import ModalPortal from './ModalPortal';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Box,
+  Typography,
+  Alert,
+  Chip,
+  CircularProgress,
+  Paper,
+  List,
+  ListItem,
+  ListItemButton,
+} from '@mui/material';
+import {
+  COLOR_ERROR_BG,
+  COLOR_ERROR_TEXT,
+  COLOR_WARNING_BG,
+  COLOR_WARNING_TEXT,
+  COLOR_SUCCESS_BG,
+  COLOR_SUCCESS_TEXT,
+} from '../theme';
 
 interface Part {
   part_id: string;
@@ -69,7 +91,7 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, pre
           search: term
         }
       });
-      
+
       setParts(response.data.items);
     } catch (error) {
       console.error('Error searching parts:', error);
@@ -78,13 +100,13 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, pre
     }
   };
 
-  const getStockStatus = (part: Part) => {
+  const getStockChip = (part: Part) => {
     if (part.quantity === 0) {
-      return <span className="stock-status status-out">Out of Stock</span>;
+      return <Chip label="Out of Stock" size="small" sx={{ bgcolor: COLOR_ERROR_BG, color: COLOR_ERROR_TEXT }} />;
     } else if (part.quantity <= part.minimum_quantity) {
-      return <span className="stock-status status-low">Low Stock</span>;
+      return <Chip label="Low Stock" size="small" sx={{ bgcolor: COLOR_WARNING_BG, color: COLOR_WARNING_TEXT }} />;
     }
-    return <span className="stock-status status-in">In Stock</span>;
+    return <Chip label="In Stock" size="small" sx={{ bgcolor: COLOR_SUCCESS_BG, color: COLOR_SUCCESS_TEXT }} />;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,145 +138,118 @@ const RestockForm: React.FC<RestockFormProps> = ({ open, onClose, onSuccess, pre
     }
   };
 
-  if (!open) return null;
-
   return (
-    <ModalPortal open={open}>
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content restock-dialog">
-          <div className="dialog-header">
-            <h5 className="dialog-title">Restock Parts</h5>
-          </div>
-          <form onSubmit={handleSubmit}>
-            <div className="dialog-content">
-              <div className="mb-4">
-                <label className="form-label">Search Part</label>
-                <div className="input-group">
-                  <input
-                    type="text"
-                    className="form-control"
-                    placeholder="Search by part number or name"
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      searchParts(e.target.value);
-                    }}
-                    disabled={!!preSelectedPart}
-                  />
-                  {searchLoading && (
-                    <span className="input-group-text">
-                      <div className="spinner-border spinner-border-sm loading-spinner" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                      </div>
-                    </span>
-                  )}
-                  {preSelectedPart && (
-                    <button
-                      type="button"
-                      className="btn btn-outline-secondary"
-                      onClick={() => {
-                        setSelectedPart(null);
-                        setSearchTerm('');
-                        setParts([]);
-                      }}
-                    >
-                      Clear Selection
-                    </button>
-                  )}
-                </div>
-                {parts.length > 0 && (
-                  <div className="search-results">
-                    {parts.map((part) => (
-                      <div
-                        key={part.part_id}
-                        className="search-item"
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Restock Parts</DialogTitle>
+      <form onSubmit={handleSubmit}>
+        <DialogContent sx={{ pt: 2 }}>
+          <Box sx={{ mb: 3 }}>
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <TextField
+                label="Search Part"
+                placeholder="Search by part number or name"
+                fullWidth
+                size="small"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  searchParts(e.target.value);
+                }}
+                disabled={!!preSelectedPart}
+              />
+              {searchLoading && <CircularProgress size={20} />}
+              {preSelectedPart && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={() => {
+                    setSelectedPart(null);
+                    setSearchTerm('');
+                    setParts([]);
+                  }}
+                  sx={{ whiteSpace: 'nowrap' }}
+                >
+                  Clear
+                </Button>
+              )}
+            </Box>
+
+            {parts.length > 0 && (
+              <Paper variant="outlined" sx={{ mt: 1, maxHeight: 200, overflow: 'auto' }}>
+                <List dense disablePadding>
+                  {parts.map((part) => (
+                    <ListItem key={part.part_id} disablePadding>
+                      <ListItemButton
                         onClick={() => {
                           setSelectedPart(part);
                           setParts([]);
                         }}
                       >
-                        <div className="d-flex justify-content-between align-items-center">
-                          <div>
-                            <div>{part.name}</div>
-                            <div className="part-info">
+                        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                          <Box>
+                            <Typography variant="body2">{part.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
                               Mfr: {part.manufacturer_part_number || 'N/A'}
-                            </div>
-                          </div>
-                          <div className="text-end">
-                            <div className="quantity-info">Qty: {part.quantity}</div>
-                            {getStockStatus(part)}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: 'right' }}>
+                            <Typography variant="caption" display="block">Qty: {part.quantity}</Typography>
+                            {getStockChip(part)}
+                          </Box>
+                        </Box>
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            )}
+          </Box>
 
-              {selectedPart && (
-                <div className="mb-4">
-                  <div className="selected-part p-3 bg-light rounded">
-                    <div className="d-flex justify-content-between align-items-center mb-2">
-                      <strong>{selectedPart.name}</strong>
-                      {getStockStatus(selectedPart)}
-                    </div>
-                    <div className="part-info mb-2">
-                      Mfr: {selectedPart.manufacturer_part_number || 'N/A'}
-                    </div>
-                    <div className="quantity-info">
-                      Current Stock: {selectedPart.quantity} | Minimum Required: {selectedPart.minimum_quantity}
-                    </div>
-                  </div>
-                </div>
-              )}
+          {selectedPart && (
+            <Paper variant="outlined" sx={{ p: 2, mb: 3, bgcolor: 'grey.50' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                <Typography variant="subtitle2" fontWeight={600}>{selectedPart.name}</Typography>
+                {getStockChip(selectedPart)}
+              </Box>
+              <Typography variant="caption" color="text.secondary" display="block">
+                Mfr: {selectedPart.manufacturer_part_number || 'N/A'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Current Stock: {selectedPart.quantity} | Minimum Required: {selectedPart.minimum_quantity}
+              </Typography>
+            </Paper>
+          )}
 
-              <div className="mb-3">
-                <label className="form-label">Quantity to Restock</label>
-                <input
-                  type="number"
-                  className="form-control"
-                  value={quantity}
-                  onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
-                  min="0"
-                  disabled={!selectedPart}
-                />
-              </div>
+          <TextField
+            label="Quantity to Restock"
+            type="number"
+            fullWidth
+            size="small"
+            value={quantity}
+            onChange={(e) => setQuantity(parseInt(e.target.value) || 0)}
+            inputProps={{ min: 0 }}
+            disabled={!selectedPart}
+            sx={{ mb: 2 }}
+          />
 
-              {error && (
-                <div className="alert alert-danger" role="alert">
-                  {error}
-                </div>
-              )}
-            </div>
-            <div className="dialog-footer">
-              <div className="d-flex gap-2 justify-content-end">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={onClose}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading || !selectedPart || quantity <= 0}
-                >
-                  {loading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Restocking...
-                    </>
-                  ) : (
-                    'Restock'
-                  )}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </ModalPortal>
+          {error && (
+            <Alert severity="error">{error}</Alert>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            disabled={loading || !selectedPart || quantity <= 0}
+            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : undefined}
+          >
+            {loading ? 'Restocking...' : 'Restock'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 

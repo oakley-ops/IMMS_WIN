@@ -1,12 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store/store';
-import { Form, Card, Badge, Spinner, ListGroup } from 'react-bootstrap';
+import {
+  Box,
+  TextField,
+  List,
+  ListItem,
+  Paper,
+  Typography,
+  Chip,
+  CircularProgress,
+} from '@mui/material';
 import axiosInstance from '../utils/axios';
 import { useDebounce } from 'use-debounce';
 import { AxiosError } from 'axios';
 import { ApiErrorResponse } from '../types/api';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
+import {
+  COLOR_ERROR_BG,
+  COLOR_ERROR_TEXT,
+  COLOR_WARNING_BG,
+  COLOR_WARNING_TEXT,
+  COLOR_SUCCESS_BG,
+  COLOR_SUCCESS_TEXT,
+} from '../theme';
 
 interface PartLocation {
   location: string;
@@ -49,10 +66,10 @@ const PartSearch: React.FC = () => {
         const response = await axiosInstance.get<Part[]>('/api/v1/parts');
         const filteredParts = response.data.filter(part => {
           const searchTermLower = debouncedSearchTerm.toLowerCase();
-          const locationMatch = part.locations.some(loc => 
+          const locationMatch = part.locations.some(loc =>
             loc.location.toLowerCase().includes(searchTermLower)
           );
-          
+
           return (
             part.name.toLowerCase().includes(searchTermLower) ||
             part.description?.toLowerCase().includes(searchTermLower) ||
@@ -75,13 +92,13 @@ const PartSearch: React.FC = () => {
     searchParts();
   }, [debouncedSearchTerm]);
 
-  const getStockStatus = (quantity: number, minimum_quantity: number) => {
+  const getStockChip = (quantity: number, minimum_quantity: number) => {
     if (quantity <= 0) {
-      return <Badge bg="danger">Out of Stock</Badge>;
+      return <Chip label="Out of Stock" size="small" sx={{ bgcolor: COLOR_ERROR_BG, color: COLOR_ERROR_TEXT }} />;
     } else if (quantity < minimum_quantity) {
-      return <Badge bg="warning" text="dark">Low Stock</Badge>;
+      return <Chip label="Low Stock" size="small" sx={{ bgcolor: COLOR_WARNING_BG, color: COLOR_WARNING_TEXT }} />;
     }
-    return <Badge bg="success">In Stock</Badge>;
+    return <Chip label="In Stock" size="small" sx={{ bgcolor: COLOR_SUCCESS_BG, color: COLOR_SUCCESS_TEXT }} />;
   };
 
   const formatCurrency = (value: string | number): string => {
@@ -90,96 +107,102 @@ const PartSearch: React.FC = () => {
   };
 
   return (
-    <div className="mb-4">
-      <Form.Group className="mb-3">
-        <Form.Label>Search Parts</Form.Label>
-        <Form.Control
-          type="text"
-          placeholder="Search by name, part number, or description..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-      </Form.Group>
+    <Box sx={{ mb: 4 }}>
+      <TextField
+        label="Search Parts"
+        fullWidth
+        size="small"
+        placeholder="Search by name, part number, or description..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        sx={{ mb: 2 }}
+      />
 
       {loading && (
-        <div className="text-center">
-          <Spinner animation="border" role="status">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
-        </div>
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 2 }}>
+          <CircularProgress />
+        </Box>
       )}
 
-      {error && <div className="text-danger mb-3">{error}</div>}
+      {error && (
+        <Typography color="error" sx={{ mb: 2 }}>{error}</Typography>
+      )}
 
       {!loading && !error && parts.length > 0 && (
-        <ListGroup>
+        <List disablePadding>
           {parts.map(part => (
-            <ListGroup.Item key={part.part_id}>
-              <div className="d-flex justify-content-between align-items-start">
-                <div className="d-flex align-items-start" style={{ gap: '15px' }}>
-                  {/* Image Preview */}
-                  {part.image_url ? (
-                    <img
-                      src={part.image_url}
-                      alt={part.name}
-                      style={{
-                        width: 60,
-                        height: 60,
-                        objectFit: 'cover',
-                        borderRadius: 8,
-                        border: '1px solid #ddd'
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: 60,
-                        height: 60,
-                        backgroundColor: '#f8f9fa',
-                        border: '1px solid #ddd',
-                        borderRadius: 8,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center'
-                      }}
-                    >
-                      <PhotoCameraIcon style={{ color: '#ccc' }} />
-                    </div>
-                  )}
-                  
-                  <div>
-                    <h5>{part.name}</h5>
-                    <p className="mb-1">{part.description}</p>
-                    <small>
-                      Part Numbers: {part.manufacturer_part_number} / {part.internal_part_number}
-                    </small>
-                    <div>
-                      <strong>Locations: </strong>
-                      {part.locations.map((loc, idx) => (
-                        <span key={idx} className="me-2">
-                          {loc.location} ({loc.quantity} units)
-                          {idx < part.locations.length - 1 ? ', ' : ''}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-                <div className="text-end">
-                  {getStockStatus(part.quantity, part.minimum_quantity)}
-                  <div className="mt-2">
-                    <strong>{formatCurrency(part.unit_cost)}</strong>
-                  </div>
-                </div>
-              </div>
-            </ListGroup.Item>
+            <ListItem key={part.part_id} disablePadding sx={{ mb: 1 }}>
+              <Paper variant="outlined" sx={{ p: 2, width: '100%' }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2 }}>
+                    {/* Image Preview */}
+                    {part.image_url ? (
+                      <img
+                        src={part.image_url}
+                        alt={part.name}
+                        style={{
+                          width: 60,
+                          height: 60,
+                          objectFit: 'cover',
+                          borderRadius: 8,
+                          border: '1px solid #ddd'
+                        }}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: 60,
+                          height: 60,
+                          bgcolor: 'grey.100',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <PhotoCameraIcon sx={{ color: 'grey.400' }} />
+                      </Box>
+                    )}
+
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight={600}>{part.name}</Typography>
+                      <Typography variant="body2" sx={{ mb: 0.5 }}>{part.description}</Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Part Numbers: {part.manufacturer_part_number} / {part.internal_part_number}
+                      </Typography>
+                      <Box sx={{ mt: 0.5 }}>
+                        <Typography variant="caption" component="span">
+                          <strong>Locations: </strong>
+                          {part.locations.map((loc, idx) => (
+                            <span key={idx}>
+                              {loc.location} ({loc.quantity} units)
+                              {idx < part.locations.length - 1 ? ', ' : ''}
+                            </span>
+                          ))}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Box>
+
+                  <Box sx={{ textAlign: 'right' }}>
+                    {getStockChip(part.quantity, part.minimum_quantity)}
+                    <Typography variant="body2" fontWeight={600} sx={{ mt: 1 }}>
+                      {formatCurrency(part.unit_cost)}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Paper>
+            </ListItem>
           ))}
-        </ListGroup>
+        </List>
       )}
 
       {!loading && !error && searchTerm && parts.length === 0 && (
-        <div className="text-muted">No parts found matching your search.</div>
+        <Typography color="text.secondary">No parts found matching your search.</Typography>
       )}
-    </div>
+    </Box>
   );
 };
 

@@ -282,10 +282,10 @@ const ManagePartSuppliers: React.FC<ManagePartSuppliersProps> = ({ partId, onUpd
   };
 
   return (
-    <Card variant="outlined" className="mb-4">
+    <Card variant="outlined" sx={{ mb: 4 }}>
       <CardContent>
-        {error && <Alert severity="error" className="mb-3">{error}</Alert>}
-        {success && <Alert severity="success" className="mb-3">{success}</Alert>}
+        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
         
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
           <Typography variant="h6">Part Suppliers</Typography>
@@ -357,8 +357,8 @@ const ManagePartSuppliers: React.FC<ManagePartSuppliersProps> = ({ partId, onUpd
             </Table>
           </TableContainer>
         ) : (
-          <Alert severity="info" className="mb-0">
-            {isNewPart 
+          <Alert severity="info">
+            {isNewPart
               ? "Save the part first, then you can add suppliers."
               : "No suppliers associated with this part. Click 'Add Supplier' to add one."}
           </Alert>

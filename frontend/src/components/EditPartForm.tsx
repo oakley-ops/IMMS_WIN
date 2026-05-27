@@ -6,7 +6,20 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../store/store';
 import { fetchParts } from '../store/partsSlice';
 import ManagePartSuppliers from './ManagePartSuppliers';
-import Button from '@mui/material/Button';
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  Alert,
+  Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Paper,
+  CircularProgress,
+} from '@mui/material';
 
 interface BinLocation {
   location_id: number;
@@ -45,7 +58,7 @@ interface PartFormData {
 }
 
 const EditPartForm: React.FC = () => {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const [formData, setFormData] = useState<PartFormData>({
@@ -82,7 +95,7 @@ const EditPartForm: React.FC = () => {
           axiosInstance.get('/api/v1/suppliers'),
           axiosInstance.get('/api/v1/parts/locations')
         ]);
-        
+
         // Format the data
         const part = partResponse.data;
         setFormData({
@@ -99,7 +112,7 @@ const EditPartForm: React.FC = () => {
           notes: part.notes || '',
           image: part.image || '',
         });
-        
+
         setMachines(machinesResponse.data);
         setSuppliers(suppliersResponse.data);
         setBinLocations(locationsResponse.data);
@@ -128,7 +141,7 @@ const EditPartForm: React.FC = () => {
     event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = event.target;
-    
+
     // Handle number inputs
     if (type === 'number') {
       setFormData({
@@ -148,7 +161,7 @@ const EditPartForm: React.FC = () => {
     setIsSubmitting(true);
     setError('');
     setSuccessMessage('');
-    
+
     try {
       // Convert empty strings to appropriate types for backend
       const dataToSubmit = {
@@ -157,9 +170,9 @@ const EditPartForm: React.FC = () => {
         minimum_quantity: typeof formData.minimum_quantity === 'string' ? Number(formData.minimum_quantity) : formData.minimum_quantity,
         unit_cost: typeof formData.unit_cost === 'string' ? Number(formData.unit_cost) : formData.unit_cost,
       };
-      
+
       let savedPartId: number;
-      
+
       if (id) {
         await axiosInstance.put(`/api/v1/parts/${id}`, dataToSubmit);
         savedPartId = parseInt(id);
@@ -170,7 +183,7 @@ const EditPartForm: React.FC = () => {
         setPartId(savedPartId); // Set the part ID for the supplier manager
         setSuccessMessage('Part created successfully!');
       }
-      
+
       // Refresh parts list in Redux store
       dispatch(fetchParts());
     } catch (err) {
@@ -186,269 +199,271 @@ const EditPartForm: React.FC = () => {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
+        <CircularProgress />
+      </Box>
+    );
   }
 
   return (
-    <div className="container mt-4">
-      <h2>{id ? 'Edit Part' : 'Add New Part'}</h2>
-      
-      {error && <div className="alert alert-danger">{error}</div>}
-      {successMessage && <div className="alert alert-success">{successMessage}</div>}
-      
-      <div className="row">
-        <div className="col-md-8">
-          <form onSubmit={handleSubmit}>
-            <div className="card mb-4">
-              <div className="card-header">
-                <h5 className="mb-0">Part Details</h5>
-              </div>
-              <div className="card-body">
-                <div className="mb-3">
-                  <label htmlFor="name" className="form-label">Name</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="internal_part_number" className="form-label">Internal Part Number</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="internal_part_number"
-                    name="internal_part_number"
-                    value={formData.internal_part_number}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="manufacturer_part_number" className="form-label">Manufacturer Part Number</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="manufacturer_part_number"
-                    name="manufacturer_part_number"
-                    value={formData.manufacturer_part_number}
-                    onChange={handleChange}
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="unit_cost" className="form-label">Unit Cost ($)</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    id="unit_cost"
-                    name="unit_cost"
-                    min="0"
-                    step="0.01"
-                    value={formData.unit_cost}
-                    onChange={handleChange}
-                    placeholder="Leave blank for $0.00"
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="quantity" className="form-label">Quantity</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    id="quantity"
-                    name="quantity"
-                    min="0"
-                    value={formData.quantity}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="minimum_quantity" className="form-label">Minimum Quantity</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    id="minimum_quantity"
-                    name="minimum_quantity"
-                    min="0"
-                    value={formData.minimum_quantity}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-                
-                <div className="mb-3" ref={locationRef} style={{ position: 'relative' }}>
-                  <label htmlFor="location" className="form-label">Storage Location</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="location"
-                    name="location"
-                    autoComplete="off"
-                    placeholder="Type or select a bin..."
-                    value={formData.location || ''}
-                    onChange={(e) => { handleChange(e); setShowLocationDropdown(true); }}
-                    onFocus={() => setShowLocationDropdown(true)}
-                  />
-                  {showLocationDropdown && (
-                    <div style={{
+    <Box sx={{ mt: 4 }}>
+      <Typography variant="h5" gutterBottom>{id ? 'Edit Part' : 'Add New Part'}</Typography>
+
+      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {successMessage && <Alert severity="success" sx={{ mb: 2 }}>{successMessage}</Alert>}
+
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={8}>
+          <Box component="form" onSubmit={handleSubmit}>
+            <Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>Part Details</Typography>
+
+              <TextField
+                label="Name"
+                fullWidth
+                size="small"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                required
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                label="Internal Part Number"
+                fullWidth
+                size="small"
+                id="internal_part_number"
+                name="internal_part_number"
+                value={formData.internal_part_number}
+                onChange={handleChange}
+                required
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                label="Manufacturer Part Number"
+                fullWidth
+                size="small"
+                id="manufacturer_part_number"
+                name="manufacturer_part_number"
+                value={formData.manufacturer_part_number}
+                onChange={handleChange}
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                label="Unit Cost ($)"
+                type="number"
+                fullWidth
+                size="small"
+                id="unit_cost"
+                name="unit_cost"
+                inputProps={{ min: 0, step: 0.01 }}
+                value={formData.unit_cost}
+                onChange={handleChange}
+                placeholder="Leave blank for $0.00"
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                label="Quantity"
+                type="number"
+                fullWidth
+                size="small"
+                id="quantity"
+                name="quantity"
+                inputProps={{ min: 0 }}
+                value={formData.quantity}
+                onChange={handleChange}
+                required
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                label="Minimum Quantity"
+                type="number"
+                fullWidth
+                size="small"
+                id="minimum_quantity"
+                name="minimum_quantity"
+                inputProps={{ min: 0 }}
+                value={formData.minimum_quantity}
+                onChange={handleChange}
+                required
+                sx={{ mb: 2 }}
+              />
+
+              {/* Location with autocomplete dropdown */}
+              <Box ref={locationRef} sx={{ position: 'relative', mb: 2 }}>
+                <TextField
+                  label="Storage Location"
+                  fullWidth
+                  size="small"
+                  id="location"
+                  name="location"
+                  autoComplete="off"
+                  placeholder="Type or select a bin..."
+                  value={formData.location || ''}
+                  onChange={(e) => { handleChange(e); setShowLocationDropdown(true); }}
+                  onFocus={() => setShowLocationDropdown(true)}
+                />
+                {showLocationDropdown && (
+                  <Paper
+                    elevation={4}
+                    sx={{
                       position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
-                      maxHeight: '200px', overflowY: 'auto',
-                      border: '1px solid #dee2e6', borderRadius: '0 0 4px 4px',
-                      backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                    }}>
-                      {binLocations
-                        .filter(loc => loc.name.toLowerCase().includes((formData.location || '').toLowerCase()))
-                        .map(loc => (
-                          <div
-                            key={loc.location_id}
-                            onMouseDown={() => {
-                              setFormData(prev => ({ ...prev, location: loc.name }));
-                              setShowLocationDropdown(false);
+                      maxHeight: 200, overflowY: 'auto',
+                    }}
+                  >
+                    {binLocations
+                      .filter(loc => loc.name.toLowerCase().includes((formData.location || '').toLowerCase()))
+                      .map(loc => (
+                        <Box
+                          key={loc.location_id}
+                          onMouseDown={() => {
+                            setFormData(prev => ({ ...prev, location: loc.name }));
+                            setShowLocationDropdown(false);
+                          }}
+                          sx={{
+                            px: 2, py: 1, cursor: 'pointer',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            borderBottom: '1px solid', borderColor: 'divider',
+                            '&:hover': { bgcolor: 'action.hover' }
+                          }}
+                        >
+                          <Typography variant="body2">{loc.name}</Typography>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              px: 1, borderRadius: 3,
+                              bgcolor: loc.part_count > 0 ? '#fff3cd' : '#d1e7dd',
+                              color: loc.part_count > 0 ? '#856404' : '#0a3622',
+                              fontWeight: 600,
                             }}
-                            style={{
-                              padding: '8px 12px', cursor: 'pointer',
-                              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                              borderBottom: '1px solid #f0f0f0'
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
-                            onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#fff')}
                           >
-                            <span>{loc.name}</span>
-                            <span style={{
-                              fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '12px',
-                              backgroundColor: loc.part_count > 0 ? '#fff3cd' : '#d1e7dd',
-                              color: loc.part_count > 0 ? '#856404' : '#0a3622'
-                            }}>
-                              {loc.part_count > 0 ? `${loc.part_count} part${loc.part_count !== 1 ? 's' : ''}` : 'Available'}
-                            </span>
-                          </div>
-                        ))}
-                      {binLocations.filter(loc => loc.name.toLowerCase().includes((formData.location || '').toLowerCase())).length === 0 && formData.location && (
-                        <div style={{ padding: '8px 12px', color: '#6c757d', fontSize: '0.875rem' }}>
+                            {loc.part_count > 0 ? `${loc.part_count} part${loc.part_count !== 1 ? 's' : ''}` : 'Available'}
+                          </Typography>
+                        </Box>
+                      ))}
+                    {binLocations.filter(loc => loc.name.toLowerCase().includes((formData.location || '').toLowerCase())).length === 0 && formData.location && (
+                      <Box sx={{ px: 2, py: 1 }}>
+                        <Typography variant="caption" color="text.secondary">
                           New location: <strong>"{formData.location}"</strong> will be created
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="machine_id" className="form-label">Associated Machine</label>
-                  <select
-                    className="form-select"
-                    id="machine_id"
-                    name="machine_id"
-                    value={formData.machine_id}
-                    onChange={handleChange}
-                  >
-                    <option value={0}>None</option>
-                    {machines.map((machine) => (
-                      <option key={machine.id} value={machine.id}>
-                        {machine.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="status" className="form-label">Status</label>
-                  <select
-                    className="form-select"
-                    id="status"
-                    name="status"
-                    value={formData.status}
-                    onChange={handleChange}
-                  >
-                    <option value="active">Active</option>
-                    <option value="discontinued">Discontinued</option>
-                  </select>
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="description" className="form-label">Description</label>
-                  <textarea
-                    className="form-control"
-                    id="description"
-                    name="description"
-                    rows={3}
-                    value={formData.description}
-                    onChange={handleChange}
-                  />
-                </div>
-                
-                <div className="mb-3">
-                  <label htmlFor="notes" className="form-label">Notes</label>
-                  <textarea
-                    className="form-control"
-                    id="notes"
-                    name="notes"
-                    rows={3}
-                    value={formData.notes}
-                    onChange={handleChange}
-                  />
-                </div>
-                
-                <div className="d-flex justify-content-between mt-4">
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    type="submit"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                        Saving...
-                      </>
-                    ) : (
-                      id ? 'Update Part' : 'Create Part'
+                        </Typography>
+                      </Box>
                     )}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    onClick={handleCancel}
-                    disabled={isSubmitting}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </form>
-        </div>
-        
-        <div className="col-md-4">
-          <div className="alert alert-info mb-3">
-            <strong>Managing Suppliers</strong>
-            <p className="mb-0 small">
-              {id 
-                ? "You can add multiple suppliers for this part. Set one as preferred for purchase orders." 
+                  </Paper>
+                )}
+              </Box>
+
+              <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                <InputLabel id="machine-label">Associated Machine</InputLabel>
+                <Select
+                  labelId="machine-label"
+                  id="machine_id"
+                  name="machine_id"
+                  value={formData.machine_id}
+                  label="Associated Machine"
+                  onChange={(e) => setFormData({ ...formData, machine_id: Number(e.target.value) })}
+                >
+                  <MenuItem value={0}>None</MenuItem>
+                  {machines.map((machine) => (
+                    <MenuItem key={machine.id} value={machine.id}>
+                      {machine.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth size="small" sx={{ mb: 2 }}>
+                <InputLabel id="status-label">Status</InputLabel>
+                <Select
+                  labelId="status-label"
+                  id="status"
+                  name="status"
+                  value={formData.status}
+                  label="Status"
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'discontinued' })}
+                >
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="discontinued">Discontinued</MenuItem>
+                </Select>
+              </FormControl>
+
+              <TextField
+                label="Description"
+                fullWidth
+                size="small"
+                multiline
+                rows={3}
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleChange}
+                sx={{ mb: 2 }}
+              />
+
+              <TextField
+                label="Notes"
+                fullWidth
+                size="small"
+                multiline
+                rows={3}
+                id="notes"
+                name="notes"
+                value={formData.notes}
+                onChange={handleChange}
+                sx={{ mb: 3 }}
+              />
+
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  type="submit"
+                  disabled={isSubmitting}
+                  startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+                >
+                  {isSubmitting ? 'Saving...' : (id ? 'Update Part' : 'Create Part')}
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+              </Box>
+            </Paper>
+          </Box>
+        </Grid>
+
+        <Grid item xs={12} md={4}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="subtitle2" gutterBottom>Managing Suppliers</Typography>
+            <Typography variant="caption">
+              {id
+                ? "You can add multiple suppliers for this part. Set one as preferred for purchase orders."
                 : "After saving the part, you'll be able to add multiple suppliers."}
-            </p>
-          </div>
-          
+            </Typography>
+          </Alert>
+
           {/* Supplier Manager Section */}
           {id && (
             <ManagePartSuppliers partId={parseInt(id)} onUpdate={() => dispatch(fetchParts())} />
           )}
-          
+
           {/* Show supplier manager for newly created parts */}
           {!id && partId && (
             <ManagePartSuppliers partId={partId} onUpdate={() => dispatch(fetchParts())} isNewPart={!id && !partId} />
           )}
-        </div>
-      </div>
-    </div>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 
