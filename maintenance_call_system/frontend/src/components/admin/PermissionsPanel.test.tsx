@@ -113,4 +113,14 @@ describe('PermissionsPanel', () => {
     await userEvent.click(screen.getByRole('button', { name: /Save Changes/i }));
     expect(await screen.findByText(/Failed to save/i)).toBeInTheDocument();
   });
+
+  it('role-default checkboxes are disabled for tech users (calls_manage)', async () => {
+    render(<PermissionsPanel />);
+    await screen.findByText('maria.santos');
+    await userEvent.click(screen.getByText('maria.santos'));
+    // maria.santos is role=tech; calls_manage is a tech role default — must be disabled
+    const callsCheckbox = await screen.findByLabelText(/Create \/ resolve \/ suspend calls/i) as HTMLInputElement;
+    expect(callsCheckbox.disabled).toBe(true);
+    expect(callsCheckbox.checked).toBe(true);
+  });
 });

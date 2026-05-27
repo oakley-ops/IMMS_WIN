@@ -187,6 +187,7 @@ export default function PermissionsPanel() {
                 </ListItemAvatar>
                 <ListItemText
                   primary={u.username}
+                  secondaryTypographyProps={{ component: 'span' as const }}
                   secondary={
                     <Chip
                       label={u.role}
@@ -284,11 +285,11 @@ export default function PermissionsPanel() {
                         }
                         label={
                           <Box>
-                            <Typography variant="body2">
+                            <Typography variant="body2" component="span">
                               {item.label}
                               {isDefault && <Chip label="Role default" size="small" sx={{ ml: 1, fontSize: 10, height: 16 }} />}
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">{item.description}</Typography>
+                            <Typography variant="caption" color="text.secondary" component="div">{item.description}</Typography>
                           </Box>
                         }
                       />
