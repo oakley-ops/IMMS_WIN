@@ -5,7 +5,7 @@ import {
   TextField, MenuItem, Stack, Table, TableHead, TableRow, TableCell,
   TableBody, Chip, Button, Alert, Divider,
 } from '@mui/material';
-import { Refresh } from '@mui/icons-material';
+import { PictureAsPdf, Refresh } from '@mui/icons-material';
 import svc, { CallMetrics, MetricsFilters, PartsMetrics, ReasonCategory } from '../services/maintenanceCallService';
 import {
   MCS_ORANGE, STATUS_OPEN, STATUS_IN_PROGRESS, STATUS_RESOLVED,
@@ -85,9 +85,12 @@ function HBar({ label, value, max, color, suffix }: {
   );
 }
 
-function SectionHeader({ label }: { label: string }) {
+function SectionHeader({ label, pageBreak }: { label: string; pageBreak?: boolean }) {
   return (
-    <Box sx={{ mt: 4, mb: 2 }}>
+    <Box sx={{
+      mt: 4, mb: 2,
+      ...(pageBreak && { '@media print': { breakBefore: 'page', mt: 1 } }),
+    }}>
       <Typography
         variant="overline"
         color="text.secondary"
@@ -118,6 +121,7 @@ export default function Analytics() {
   const [shift, setShift] = useState('');
   const [machineId, setMachineId] = useState('');
   const [reason, setReason] = useState<'' | ReasonCategory>('');
+  const [printTime, setPrintTime] = useState('');
 
   // Load machine list once on mount for the filter dropdown.
   useEffect(() => {
@@ -161,6 +165,11 @@ export default function Analytics() {
 
   const handleRefresh = () => { fetchMetrics(); fetchPartsMetrics(); };
 
+  const handleExport = () => {
+    setPrintTime(new Date().toLocaleString());
+    setTimeout(() => window.print(), 50);
+  };
+
   const machineMax = useMemo(
     () => Math.max(0, ...((metrics?.by_machine || []).map(m => num(m.total_downtime_hours)))),
     [metrics]
@@ -177,18 +186,52 @@ export default function Analytics() {
     [metrics]
   );
 
+  /* Compute a readable summary of the active filters for the print header. */
+  const filterSummary = [
+    shift && `Shift: ${shift}`,
+    machineId && `Machine: ${machines.find(m => m.machine_id.toString() === machineId)?.name ?? machineId}`,
+    reason && `Reason: ${reasonLabel(reason)}`,
+  ].filter(Boolean).join('  ·  ') || 'All machines · All shifts · All reasons';
+
   return (
     <Box sx={{ p: 3 }}>
+      {/* ── Print-only report header (hidden on screen) ── */}
+      <Box sx={{ display: 'none', '@media print': { display: 'block' }, mb: 3 }}>
+        <Typography variant="h5" fontWeight={700}>MCS Maintenance Analytics Report</Typography>
+        <Typography variant="body1" sx={{ mt: 0.5 }}>
+          Period: {from || '—'} to {to || '—'}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">{filterSummary}</Typography>
+        {printTime && (
+          <Typography variant="caption" color="text.secondary">Generated: {printTime}</Typography>
+        )}
+        <Divider sx={{ mt: 1 }} />
+      </Box>
+
       {/* ── Page title + refresh ── */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+      <Stack
+        direction="row" alignItems="center" justifyContent="space-between"
+        sx={{ mb: 2, '@media print': { display: 'none' } }}
+      >
         <Typography variant="h4" fontWeight={700}>Maintenance Analytics</Typography>
-        <Button startIcon={<Refresh />} onClick={handleRefresh} disabled={loading} variant="outlined">
-          Refresh
-        </Button>
+        <Stack direction="row" spacing={1}>
+          <Button startIcon={<Refresh />} onClick={handleRefresh} disabled={loading} variant="outlined">
+            Refresh
+          </Button>
+          <Button
+            startIcon={<PictureAsPdf />}
+            onClick={handleExport}
+            disabled={loading || !metrics}
+            variant="contained"
+            sx={{ bgcolor: MCS_ORANGE, '&:hover': { bgcolor: '#e55a1f' } }}
+          >
+            Export PDF
+          </Button>
+        </Stack>
       </Stack>
 
       {/* ── Filter bar ── */}
-      <Paper sx={{ p: 2, mb: 1 }}>
+      <Paper sx={{ p: 2, mb: 1, '@media print': { display: 'none' } }}>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} flexWrap="wrap">
           <TextField
             label="From" type="date" size="small"
@@ -230,7 +273,7 @@ export default function Analytics() {
         </Stack>
       </Paper>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && <Alert severity="error" sx={{ mb: 2, '@media print': { display: 'none' } }}>{error}</Alert>}
 
       {loading && !metrics ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 6 }}>
@@ -270,7 +313,7 @@ export default function Analytics() {
           </Grid>
 
           {/* ── ② PARTS CONSUMPTION ── */}
-          <SectionHeader label="② PARTS CONSUMPTION" />
+          <SectionHeader label="② PARTS CONSUMPTION" pageBreak />
           <PartsConsumptionSection
             partsMetrics={partsMetrics}
             loading={partsLoading}
@@ -278,7 +321,7 @@ export default function Analytics() {
           />
 
           {/* ── ③ EQUIPMENT ── */}
-          <SectionHeader label="③ EQUIPMENT" />
+          <SectionHeader label="③ EQUIPMENT" pageBreak />
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid item xs={12} lg={7}>
               <Paper sx={{ p: 2, height: '100%' }}>
@@ -335,7 +378,7 @@ export default function Analytics() {
           </Grid>
 
           {/* ── ④ TEAM PERFORMANCE ── */}
-          <SectionHeader label="④ TEAM PERFORMANCE" />
+          <SectionHeader label="④ TEAM PERFORMANCE" pageBreak />
 
           {/* Technician workload */}
           <Paper sx={{ p: 2, mb: 3 }}>

@@ -1,0 +1,22 @@
+/* ─── Print styles for MCS Analytics PDF export ─────────────────────────── */
+@media print {
+  /* Hide navigation chrome */
+  .MuiAppBar-root  { display: none !important; }
+  .MuiDrawer-root  { display: none !important; }
+
+  /* Remove the top-margin offset that compensates for the fixed AppBar */
+  main { margin-top: 0 !important; }
+
+  /* Clean paper/card for print — no shadows, subtle border */
+  .MuiCard-root,
+  .MuiPaper-root {
+    box-shadow: none !important;
+    border: 1px solid #e0e0e0 !important;
+  }
+
+  /* Force colour printing (bars, chips, accent borders) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
