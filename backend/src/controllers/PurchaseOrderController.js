@@ -149,7 +149,7 @@ class PurchaseOrderController {
       let query = `
         SELECT po.*, 
                COALESCE(po.approval_status, po.status) as status,
-               s.name as supplier_name, 
+               COALESCE(s.name, po.manual_supplier_name) as supplier_name,
                s.address as supplier_address, 
                s.email as supplier_email, 
                s.phone as supplier_phone
@@ -346,7 +346,7 @@ class PurchaseOrderController {
     
     try {
       const poResult = await this.pool.query(`
-        SELECT po.*, s.name as supplier_name, s.contact_name, s.email, s.phone, s.address
+        SELECT po.*, COALESCE(s.name, po.manual_supplier_name) as supplier_name, s.contact_name, s.email, s.phone, s.address
         FROM purchase_orders po
         LEFT JOIN suppliers s ON po.supplier_id = s.supplier_id
         WHERE po.po_id = $1
@@ -370,19 +370,60 @@ class PurchaseOrderController {
         items: itemsResult.rows
       };
       
-      // Parse the notes field to add virtual priority and shipping fields
-      if (purchaseOrder.notes) {
-        const isUrgentMatch = purchaseOrder.notes.match(/\[PRIORITY:\s*(urgent|normal)\]/i);
-        const nextDayAirMatch = purchaseOrder.notes.match(/\[SHIPPING:\s*(nextday|regular)\]/i);
-        
-        // Add virtual fields to the response
-        purchaseOrder.is_urgent = isUrgentMatch ? isUrgentMatch[1].toLowerCase() === 'urgent' : false;
-        purchaseOrder.priority = isUrgentMatch ? isUrgentMatch[1].toLowerCase() : 'normal';
-        purchaseOrder.next_day_air = nextDayAirMatch ? nextDayAirMatch[1].toLowerCase() === 'nextday' : false;
-      } else {
-        purchaseOrder.is_urgent = false;
-        purchaseOrder.priority = 'normal';
-        purchaseOrder.next_day_air = false;
+      // Prefer the real columns. Fall back to legacy metadata encoded in notes
+      // (a JSON blob from the old blank-create path, or [TAG] markers from the
+      // old update path) so historical purchase orders still display correctly.
+      purchaseOrder.is_urgent = purchaseOrder.is_urgent ?? false;
+      purchaseOrder.next_day_air = purchaseOrder.next_day_air ?? false;
+      purchaseOrder.priority = purchaseOrder.priority || (purchaseOrder.is_urgent ? 'urgent' : 'normal');
+
+      const rawNotes = typeof purchaseOrder.notes === 'string' ? purchaseOrder.notes.trim() : '';
+      if (rawNotes.startsWith('{')) {
+        try {
+          const meta = JSON.parse(rawNotes);
+          purchaseOrder.notes = meta.original_notes || '';
+          if (Number(purchaseOrder.shipping_cost || 0) === 0 && meta.shipping_cost != null) {
+            purchaseOrder.shipping_cost = meta.shipping_cost;
+          }
+          if (Number(purchaseOrder.tax_amount || 0) === 0 && meta.tax_amount != null) {
+            purchaseOrder.tax_amount = meta.tax_amount;
+          }
+          if (!purchaseOrder.is_urgent && meta.is_urgent) purchaseOrder.is_urgent = true;
+          if (!purchaseOrder.next_day_air && meta.next_day_air) purchaseOrder.next_day_air = true;
+          if (!purchaseOrder.requested_by && meta.requested_by) purchaseOrder.requested_by = meta.requested_by;
+          if (!purchaseOrder.approved_by && meta.approved_by) purchaseOrder.approved_by = meta.approved_by;
+          if (!purchaseOrder.supplier_name && meta.manual_supplier_name) {
+            purchaseOrder.supplier_name = meta.manual_supplier_name;
+          }
+          purchaseOrder.priority = purchaseOrder.is_urgent ? 'urgent' : 'normal';
+        } catch (e) {
+          // Not valid JSON after all; leave the notes text untouched.
+        }
+      } else if (rawNotes) {
+        const isUrgentMatch = rawNotes.match(/\[PRIORITY:\s*(urgent|normal)\]/i);
+        const nextDayAirMatch = rawNotes.match(/\[SHIPPING:\s*(nextday|regular)\]/i);
+        const shippingCostMatch = rawNotes.match(/\[SHIPPING_COST:\s*([\d.]+)\]/i);
+        const taxMatch = rawNotes.match(/\[TAX_AMOUNT:\s*([\d.]+)\]/i);
+        if (isUrgentMatch) {
+          purchaseOrder.is_urgent = isUrgentMatch[1].toLowerCase() === 'urgent';
+          purchaseOrder.priority = isUrgentMatch[1].toLowerCase();
+        }
+        if (nextDayAirMatch) purchaseOrder.next_day_air = nextDayAirMatch[1].toLowerCase() === 'nextday';
+        if (shippingCostMatch && Number(purchaseOrder.shipping_cost || 0) === 0) {
+          purchaseOrder.shipping_cost = parseFloat(shippingCostMatch[1]);
+        }
+        if (taxMatch && Number(purchaseOrder.tax_amount || 0) === 0) {
+          purchaseOrder.tax_amount = parseFloat(taxMatch[1]);
+        }
+        // Hide the internal [TAG] markers from the user-facing notes.
+        purchaseOrder.notes = rawNotes
+          .replace(/\[PRIORITY:\s*(?:urgent|normal)\]/ig, '')
+          .replace(/\[SHIPPING:\s*(?:nextday|regular)\]/ig, '')
+          .replace(/\[SHIPPING_COST:\s*[\d.]+\]/ig, '')
+          .replace(/\[TAX_AMOUNT:\s*[\d.]+\]/ig, '')
+          .replace(/\[REQUESTED_BY:\s*[^\]]+\]/ig, '')
+          .replace(/\[APPROVED_BY:\s*[^\]]+\]/ig, '')
+          .trim();
       }
 
       res.json(purchaseOrder);
@@ -551,7 +592,7 @@ class PurchaseOrderController {
   
   async getPurchaseOrderWithItems(poId) {
     const poResult = await this.pool.query(`
-      SELECT po.*, s.name as supplier_name, s.contact_name, s.email, s.phone, s.address
+      SELECT po.*, COALESCE(s.name, po.manual_supplier_name) as supplier_name, s.contact_name, s.email, s.phone, s.address
       FROM purchase_orders po
       LEFT JOIN suppliers s ON po.supplier_id = s.supplier_id
       WHERE po.po_id = $1
@@ -656,71 +697,10 @@ class PurchaseOrderController {
         });
       }
       
-      let notes = result.rows[0].notes || '';
-      
-      // If we're updating priority or shipping, update the notes
-      if (updateData.hasOwnProperty('is_urgent') || updateData.hasOwnProperty('priority') || updateData.hasOwnProperty('next_day_air')) {
-        // Parse existing flags from notes
-        const isUrgentMatch = notes.match(/\[PRIORITY:\s*(urgent|normal)\]/i);
-        const nextDayAirMatch = notes.match(/\[SHIPPING:\s*(nextday|regular)\]/i);
-        
-        let priority = isUrgentMatch ? isUrgentMatch[1].toLowerCase() : 'normal';
-        let shipping = nextDayAirMatch ? nextDayAirMatch[1].toLowerCase() : 'regular';
-        
-        // Update with new values if provided
-        if (updateData.hasOwnProperty('is_urgent')) {
-          priority = updateData.is_urgent ? 'urgent' : 'normal';
-        }
-        
-        if (updateData.hasOwnProperty('priority')) {
-          priority = updateData.priority;
-        }
-        
-        if (updateData.hasOwnProperty('next_day_air')) {
-          shipping = updateData.next_day_air ? 'nextday' : 'regular';
-        }
-        
-        // Remove existing flags
-        notes = notes.replace(/\[PRIORITY:\s*(?:urgent|normal)\]/ig, '');
-        notes = notes.replace(/\[SHIPPING:\s*(?:nextday|regular)\]/ig, '');
-        
-        // Add updated flags
-        const flagsText = `[PRIORITY: ${priority}] [SHIPPING: ${shipping}]`;
-        
-        // If notes are empty or just whitespace, just use the flags
-        if (!notes.trim()) {
-          notes = flagsText;
-        } else {
-          // Otherwise add flags at the beginning
-          notes = `${flagsText} ${notes.trim()}`;
-        }
-      }
-      
-      // Check for shipping_cost and tax_amount in the notes if we're updating those
-      if (updateData.hasOwnProperty('shipping_cost') || updateData.hasOwnProperty('tax_amount')) {
-        // Extract existing shipping cost and tax amount from notes if they exist
-        const shippingMatch = notes.match(/\[SHIPPING_COST:\s*([\d.]+)\]/i);
-        const taxMatch = notes.match(/\[TAX_AMOUNT:\s*([\d.]+)\]/i);
-        
-        // Remove existing shipping and tax notes
-        notes = notes.replace(/\[SHIPPING_COST:\s*[\d.]+\]/ig, '');
-        notes = notes.replace(/\[TAX_AMOUNT:\s*[\d.]+\]/ig, '');
-        
-        // Add updated shipping cost and tax amount
-        if (updateData.hasOwnProperty('shipping_cost')) {
-          notes = `${notes.trim()} [SHIPPING_COST: ${updateData.shipping_cost}]`;
-        } else if (shippingMatch) {
-          notes = `${notes.trim()} [SHIPPING_COST: ${shippingMatch[1]}]`;
-        }
-        
-        if (updateData.hasOwnProperty('tax_amount')) {
-          notes = `${notes.trim()} [TAX_AMOUNT: ${updateData.tax_amount}]`;
-        } else if (taxMatch) {
-          notes = `${notes.trim()} [TAX_AMOUNT: ${taxMatch[1]}]`;
-        }
-        
-        notes = notes.trim();
-      }
+      // Notes are plain text now; metadata is written to real columns below.
+      let notes = Object.prototype.hasOwnProperty.call(updateData, 'notes')
+        ? (updateData.notes || '')
+        : (result.rows[0].notes || '');
       
       // Try updating with the new fields first, fall back to notes-based approach if columns don't exist
       try {
@@ -741,7 +721,35 @@ class PurchaseOrderController {
           queryParams.push(updateData.tax_amount);
           paramIndex++;
         }
-        
+
+        // Priority / shipping flags are real columns now (no longer notes tags)
+        if (updateData.hasOwnProperty('is_urgent')) {
+          updateFields.push(`is_urgent = $${paramIndex}`);
+          queryParams.push(!!updateData.is_urgent);
+          paramIndex++;
+        }
+
+        if (updateData.hasOwnProperty('next_day_air')) {
+          updateFields.push(`next_day_air = $${paramIndex}`);
+          queryParams.push(!!updateData.next_day_air);
+          paramIndex++;
+        }
+
+        if (updateData.hasOwnProperty('priority') || updateData.hasOwnProperty('is_urgent')) {
+          const priorityVal =
+            (updateData.priority || (updateData.is_urgent ? 'urgent' : 'normal'))
+              .toString().toLowerCase() === 'urgent' ? 'urgent' : 'normal';
+          updateFields.push(`priority = $${paramIndex}`);
+          queryParams.push(priorityVal);
+          paramIndex++;
+        }
+
+        if (updateData.hasOwnProperty('manual_supplier_name')) {
+          updateFields.push(`manual_supplier_name = $${paramIndex}`);
+          queryParams.push(updateData.manual_supplier_name);
+          paramIndex++;
+        }
+
         // Handle PO number updates
         if (updateData.hasOwnProperty('po_number')) {
           updateFields.push(`po_number = $${paramIndex}`);
@@ -1985,18 +1993,10 @@ class PurchaseOrderController {
       }
     }
     
-    // Format the notes to include special fields
-    const formattedNotes = JSON.stringify({
-      original_notes: notes,
-      is_urgent,
-      next_day_air,
-      shipping_cost,
-      tax_amount,
-      priority,
-      requested_by,
-      approved_by,
-      manual_supplier_name: manual_supplier_name || null
-    });
+    // Metadata now lives in real columns; notes holds the user's text only.
+    // Treat the PO as urgent if either signal says so, and keep both columns consistent.
+    const isUrgentFlag = !!is_urgent || (priority || '').toString().toLowerCase() === 'urgent';
+    const normalizedPriority = isUrgentFlag ? 'urgent' : 'normal';
     
     let client;
     try {
@@ -2037,12 +2037,27 @@ class PurchaseOrderController {
       const poNumber = `${poPrefix}-${nextNum.toString().padStart(4, '0')}`;
       console.log(`Generated PO number: ${poNumber}`);
 
-      // Insert PO with blank status
+      // Insert PO with blank status, storing metadata in real columns
       const insertPoResult = await client.query(
         `INSERT INTO purchase_orders (
-          po_number, supplier_id, status, notes
-        ) VALUES ($1, $2, $3, $4) RETURNING po_id`,
-        [poNumber, supplier_id || null, 'pending', formattedNotes]
+          po_number, supplier_id, manual_supplier_name, status, notes,
+          is_urgent, next_day_air, priority, shipping_cost, tax_amount,
+          requested_by, approved_by
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING po_id`,
+        [
+          poNumber,
+          supplier_id || null,
+          manual_supplier_name || null,
+          'pending',
+          notes || '',
+          isUrgentFlag,
+          !!next_day_air,
+          normalizedPriority,
+          shipping_cost || 0,
+          tax_amount || 0,
+          requested_by || null,
+          approved_by || null
+        ]
       );
       
       const poId = insertPoResult.rows[0].po_id;
