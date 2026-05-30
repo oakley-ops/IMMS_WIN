@@ -486,8 +486,10 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
             </tr>
           </thead>
           <tbody>
-            {events.length > 0 ? (
-              events.map((event) => {
+            {(() => {
+              const scheduledEvents = events.filter(e => e.resource.status !== 'not_scheduled');
+              return scheduledEvents.length > 0 ? (
+              scheduledEvents.map((event) => {
                 const isCurrentDay = formatDate(event.start, 'yyyy-MM-dd') === formatDate(new Date(), 'yyyy-MM-dd');
                 const isNotScheduled = event.resource.status === 'not_scheduled';
                 return (
@@ -531,10 +533,11 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
             ) : (
               <tr>
                 <td colSpan={4} style={{ textAlign: 'center', padding: '2rem' }}>
-                  No maintenance schedules found. Make sure machines have next maintenance dates set.
+                  No maintenance scheduled. Schedule one from the PM Management section.
                 </td>
               </tr>
-            )}
+            );
+            })()}
           </tbody>
         </table>
       )}
