@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (token) {
         axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         const response = await axiosInstance.get('/api/v1/auth/verify');
-        setUser(response.data);
+        setUser(response.data.user);
         setIsAuthenticated(true);
       }
     } catch (error) {
