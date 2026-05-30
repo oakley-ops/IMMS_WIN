@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { PRIMARY_ORANGE } from '../theme';
 import {
   Container,
   Typography,
@@ -50,26 +51,26 @@ interface Transaction {
 // Custom CSS styles for IMMS branding
 const ImmsStyles = `
   .text-primary {
-    color: #FF6600 !important;
+    color: ${PRIMARY_ORANGE} !important;
   }
-  
+
   .bg-primary {
     background-color: #0066A1 !important;
   }
-  
+
   .form-check-input:checked {
-    background-color: #FF6600;
-    border-color: #FF6600;
+    background-color: ${PRIMARY_ORANGE};
+    border-color: ${PRIMARY_ORANGE};
   }
-  
+
   .border-primary {
-    border-color: #FF6600 !important;
+    border-color: ${PRIMARY_ORANGE} !important;
   }
-  
+
   a {
-    color: #FF6600;
+    color: ${PRIMARY_ORANGE};
   }
-  
+
   a:hover {
     color: #e65c00;
   }
@@ -376,7 +377,7 @@ const Transactions = () => {
       {/* Apply IMMS brand styling */}
       <style>{ImmsStyles}</style>
       
-      <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
+      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
         Parts Usage History
       </Typography>
       
@@ -404,16 +405,16 @@ const Transactions = () => {
                       borderColor: '#e0e0e0',
                     },
                     '&:hover fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                   },
                 }}
               />
               {loading && searchTerm && (
-                <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
+                <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: PRIMARY_ORANGE } }} />
               )}
             </Grid>
             
@@ -438,10 +439,10 @@ const Transactions = () => {
                       borderColor: '#e0e0e0',
                     },
                     '&:hover fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                   },
                 }}
@@ -469,10 +470,10 @@ const Transactions = () => {
                       borderColor: '#e0e0e0',
                     },
                     '&:hover fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                   },
                 }}
@@ -486,8 +487,8 @@ const Transactions = () => {
                   onClick={handleReset}
                   startIcon={<RefreshIcon />}
                   sx={{ 
-                    borderColor: '#FF6600',
-                    color: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
+                    color: PRIMARY_ORANGE,
                     '&:hover': { 
                       borderColor: '#e65c00',
                       backgroundColor: 'rgba(255, 102, 0, 0.04)'
@@ -503,8 +504,8 @@ const Transactions = () => {
                   disabled={exportLoading}
                   startIcon={exportLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
                   sx={{ 
-                    borderColor: '#FF6600',
-                    color: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
+                    color: PRIMARY_ORANGE,
                     '&:hover': { 
                       borderColor: '#e65c00',
                       backgroundColor: 'rgba(255, 102, 0, 0.04)'
@@ -525,8 +526,8 @@ const Transactions = () => {
               color="primary" 
               variant="outlined"
               sx={{ 
-                borderColor: '#FF6600',
-                color: '#FF6600',
+                borderColor: PRIMARY_ORANGE,
+                color: PRIMARY_ORANGE,
                 backgroundColor: 'rgba(255, 102, 0, 0.04)'
               }}
             />
@@ -534,7 +535,7 @@ const Transactions = () => {
               label={`${transactions.length} total transactions`} 
               color="primary" 
               sx={{ 
-                backgroundColor: '#FF6600',
+                backgroundColor: PRIMARY_ORANGE,
                 color: 'white'
               }}
             />
@@ -582,7 +583,7 @@ const Transactions = () => {
           <Box sx={{ width: '100%', height: 650 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
-                <CircularProgress sx={{ color: '#FF6600' }} />
+                <CircularProgress sx={{ color: PRIMARY_ORANGE }} />
                 <Typography variant="body1" sx={{ mt: 2 }}>Loading transactions...</Typography>
               </Box>
             ) : (

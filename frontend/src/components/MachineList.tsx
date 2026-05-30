@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { PRIMARY_ORANGE } from '../theme';
 import {
   List,
   ListItem,
@@ -49,26 +50,26 @@ interface MachineListProps {
 // Custom CSS styles for app branding
 const AppStyles = `
   .text-primary {
-    color: #FF6600 !important;
+    color: ${PRIMARY_ORANGE} !important;
   }
-  
+
   .bg-primary {
     background-color: #0066A1 !important;
   }
-  
+
   .form-check-input:checked {
-    background-color: #FF6600;
-    border-color: #FF6600;
+    background-color: ${PRIMARY_ORANGE};
+    border-color: ${PRIMARY_ORANGE};
   }
-  
+
   .border-primary {
-    border-color: #FF6600 !important;
+    border-color: ${PRIMARY_ORANGE} !important;
   }
-  
+
   a {
-    color: #FF6600;
+    color: ${PRIMARY_ORANGE};
   }
-  
+
   a:hover {
     color: #e65c00;
   }
@@ -458,7 +459,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
       {/* Apply app brand styling */}
       <style>{AppStyles}</style>
       
-      <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
+      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
         Machine Management
       </Typography>
       
@@ -486,16 +487,16 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                       borderColor: '#e0e0e0',
                     },
                     '&:hover fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                   },
                 }}
               />
               {loading && searchTerm && (
-                <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
+                <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: PRIMARY_ORANGE } }} />
               )}
             </Grid>
             
@@ -507,8 +508,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                   ref={addButtonRef}
                   startIcon={<AddIcon />}
                   sx={{ 
-                    backgroundColor: '#FF6600', 
-                    borderColor: '#FF6600',
+                    backgroundColor: PRIMARY_ORANGE, 
+                    borderColor: PRIMARY_ORANGE,
                     '&:hover': { backgroundColor: '#e65c00' },
                     minWidth: '140px'
                   }}
@@ -520,8 +521,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                   onClick={() => setExportDialogOpen(true)}
                   startIcon={<DownloadIcon />}
                   sx={{ 
-                    borderColor: '#FF6600',
-                    color: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
+                    color: PRIMARY_ORANGE,
                     '&:hover': { 
                       borderColor: '#e65c00',
                       backgroundColor: 'rgba(255, 102, 0, 0.04)'
@@ -537,8 +538,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                   to="costs"
                   startIcon={<BarChartIcon />}
                   sx={{ 
-                    borderColor: '#FF6600',
-                    color: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
+                    color: PRIMARY_ORANGE,
                     '&:hover': { 
                       borderColor: '#e65c00',
                       backgroundColor: 'rgba(255, 102, 0, 0.04)'
@@ -559,8 +560,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
               color="primary" 
               variant="outlined"
               sx={{ 
-                borderColor: '#FF6600',
-                color: '#FF6600',
+                borderColor: PRIMARY_ORANGE,
+                color: PRIMARY_ORANGE,
                 backgroundColor: 'rgba(255, 102, 0, 0.04)'
               }}
             />
@@ -568,7 +569,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
               label={`${machines.length} total machines`} 
               color="primary" 
               sx={{ 
-                backgroundColor: '#FF6600',
+                backgroundColor: PRIMARY_ORANGE,
                 color: 'white'
               }}
             />
@@ -600,7 +601,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
         >
           {loading ? (
             <Box sx={{ p: 4, textAlign: 'center' }}>
-              <CircularProgress sx={{ color: '#FF6600' }} />
+              <CircularProgress sx={{ color: PRIMARY_ORANGE }} />
               <Typography variant="body1" sx={{ mt: 2 }}>Loading machines...</Typography>
             </Box>
           ) : filteredMachines.length === 0 ? (
@@ -621,7 +622,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                   onClick={handleOpen}
                   startIcon={<AddIcon />}
                   sx={{ 
-                    backgroundColor: '#FF6600',
+                    backgroundColor: PRIMARY_ORANGE,
                     '&:hover': { backgroundColor: '#e65c00' }
                   }}
                 >
@@ -705,8 +706,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                         aria-label={`Edit ${machine.name}`}
                         sx={{ 
                           minWidth: '100px',
-                          borderColor: '#FF6600',
-                          color: '#FF6600',
+                          borderColor: PRIMARY_ORANGE,
+                          color: PRIMARY_ORANGE,
                           '&:hover': { 
                             borderColor: '#e65c00',
                             backgroundColor: 'rgba(255, 102, 0, 0.04)'
@@ -822,10 +823,10 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                       borderColor: '#e0e0e0',
                     },
                     '&:hover fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                   },
                 }}
@@ -860,7 +861,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                 disabled={exportLoading}
                 startIcon={exportLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
                 sx={{ 
-                  backgroundColor: '#FF6600',
+                  backgroundColor: PRIMARY_ORANGE,
                   '&:hover': { backgroundColor: '#e65c00' }
                 }}
               >

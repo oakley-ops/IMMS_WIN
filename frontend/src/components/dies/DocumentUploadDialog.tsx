@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { PRIMARY_ORANGE } from '../../theme';
 import {
   Dialog,
   DialogTitle,
@@ -305,7 +306,7 @@ const DocumentUploadDialog: React.FC<DocumentUploadDialogProps> = ({
           disabled={loading || !selectedFile}
           startIcon={<CloudUpload />}
           sx={{
-            bgcolor: '#FF6600',
+            bgcolor: PRIMARY_ORANGE,
             '&:hover': { bgcolor: '#E55A00' },
           }}
         >

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { PRIMARY_ORANGE } from '../theme';
 import {
   Box,
   Typography,
@@ -204,7 +205,7 @@ const DieDetail: React.FC = () => {
                 <Button
                   variant="contained"
                   startIcon={<Schedule />}
-                  sx={{ bgcolor: '#FF6600', '&:hover': { bgcolor: '#E55A00' } }}
+                  sx={{ bgcolor: PRIMARY_ORANGE, '&:hover': { bgcolor: '#E55A00' } }}
                 >
                   Send for Sharpening
                 </Button>

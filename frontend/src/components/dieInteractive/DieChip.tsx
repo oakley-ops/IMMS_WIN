@@ -1,4 +1,5 @@
 import React from 'react';
+import { PRIMARY_ORANGE } from '../../theme';
 import {
   Box,
   Typography,
@@ -140,7 +141,7 @@ const DieChip: React.FC<DieChipProps> = ({ die, compatibleMachineIds, compatible
         size="small"
         sx={{
           width: '100%',
-          bgcolor: '#FF6600',
+          bgcolor: PRIMARY_ORANGE,
           color: 'white',
           fontWeight: 'bold',
           fontSize: '0.65rem',

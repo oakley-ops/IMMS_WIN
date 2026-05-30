@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PRIMARY_ORANGE } from '../../theme';
 import {
   Dialog,
   DialogTitle,
@@ -329,7 +330,7 @@ const ScheduleSharpeningDialog: React.FC<ScheduleSharpeningDialogProps> = ({
           variant="contained"
           disabled={loading || dies.length === 0}
           sx={{
-            bgcolor: '#FF6600',
+            bgcolor: PRIMARY_ORANGE,
             '&:hover': { bgcolor: '#E55A00' },
           }}
         >

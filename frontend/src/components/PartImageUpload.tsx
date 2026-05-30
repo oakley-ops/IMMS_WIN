@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { PRIMARY_ORANGE } from '../theme';
 import { 
   Box, 
   Button, 
@@ -324,7 +325,7 @@ const PartImageUpload: React.FC<PartImageUploadProps> = ({
       <Paper
         sx={{
           p: 3,
-          border: dragOver ? '2px dashed #FF6600' : '2px dashed #ccc',
+          border: dragOver ? `2px dashed ${PRIMARY_ORANGE}` : '2px dashed #ccc',
           backgroundColor: dragOver ? '#fff5f0' : '#fafafa',
           textAlign: 'center',
           cursor: 'pointer'
@@ -340,7 +341,7 @@ const PartImageUpload: React.FC<PartImageUploadProps> = ({
           <CircularProgress />
         ) : (
           <>
-            <CloudUpload sx={{ fontSize: 48, color: '#FF6600', mb: 2 }} />
+            <CloudUpload sx={{ fontSize: 48, color: PRIMARY_ORANGE, mb: 2 }} />
             <Typography variant="h6" gutterBottom>
               {currentImageUrl ? 'Replace Image' : 'Upload Part Image'}
             </Typography>
@@ -387,7 +388,7 @@ const PartImageUpload: React.FC<PartImageUploadProps> = ({
           startIcon={<Videocam />}
           onClick={startCamera}
           disabled={uploading}
-          sx={{ color: '#FF6600', borderColor: '#FF6600' }}
+          sx={{ color: PRIMARY_ORANGE, borderColor: PRIMARY_ORANGE }}
         >
           Take Photo with Camera
         </Button>
@@ -478,7 +479,7 @@ const PartImageUpload: React.FC<PartImageUploadProps> = ({
                   variant="contained"
                   onClick={capturePhoto}
                   startIcon={<CameraAlt />}
-                  sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e55a00' } }}
+                  sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e55a00' } }}
                 >
                   Capture Photo
                 </Button>
@@ -496,7 +497,7 @@ const PartImageUpload: React.FC<PartImageUploadProps> = ({
                     onClick={uploadCapturedPhoto}
                     startIcon={<CloudUpload />}
                     disabled={uploading}
-                    sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e55a00' } }}
+                    sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e55a00' } }}
                   >
                     {uploading ? 'Uploading...' : 'Upload Photo'}
                   </Button>

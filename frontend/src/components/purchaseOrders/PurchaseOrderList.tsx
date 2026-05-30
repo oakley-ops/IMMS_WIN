@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PRIMARY_ORANGE } from '../../theme';
 import {
   Container,
   Typography,
@@ -459,7 +460,7 @@ const PurchaseOrderList: React.FC = () => {
             size="small"
             onClick={() => navigate(`/purchase-orders/detail/${params.row.po_id}`)}
             sx={{ 
-              backgroundColor: '#FF6600',
+              backgroundColor: PRIMARY_ORANGE,
               color: 'white',
               '&:hover': { backgroundColor: '#e65c00' }
             }}
@@ -508,12 +509,12 @@ const PurchaseOrderList: React.FC = () => {
         backgroundSize: '20px 20px'
       }}
     >
-      <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
+      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
         Purchase Orders Management
         {isRefreshing && (
           <CircularProgress 
             size={24} 
-            sx={{ ml: 2, color: '#FF6600' }} 
+            sx={{ ml: 2, color: PRIMARY_ORANGE }} 
             title="Refreshing purchase orders..." 
           />
         )}
@@ -543,16 +544,16 @@ const PurchaseOrderList: React.FC = () => {
                       borderColor: '#e0e0e0',
                     },
                     '&:hover fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                     '&.Mui-focused fieldset': {
-                      borderColor: '#FF6600',
+                      borderColor: PRIMARY_ORANGE,
                     },
                   },
                 }}
               />
               {loading && searchTerm && (
-                <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
+                <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: PRIMARY_ORANGE } }} />
               )}
             </Grid>
             
@@ -563,8 +564,8 @@ const PurchaseOrderList: React.FC = () => {
                   onClick={() => navigate('/purchase-orders/create')}
                   startIcon={<AddIcon />}
                   sx={{ 
-                    backgroundColor: '#FF6600', 
-                    borderColor: '#FF6600',
+                    backgroundColor: PRIMARY_ORANGE, 
+                    borderColor: PRIMARY_ORANGE,
                     '&:hover': { backgroundColor: '#e65c00' },
                     minWidth: '140px'
                   }}
@@ -576,8 +577,8 @@ const PurchaseOrderList: React.FC = () => {
                   onClick={() => navigate('/purchase-orders/create-manual')}
                   startIcon={<AddIcon />}
                   sx={{ 
-                    borderColor: '#FF6600',
-                    color: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
+                    color: PRIMARY_ORANGE,
                     '&:hover': { 
                       borderColor: '#e65c00',
                       backgroundColor: 'rgba(255, 102, 0, 0.04)'
@@ -592,8 +593,8 @@ const PurchaseOrderList: React.FC = () => {
                   onClick={() => setImportDialogOpen(true)}
                   startIcon={<UploadIcon />}
                   sx={{ 
-                    borderColor: '#FF6600',
-                    color: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
+                    color: PRIMARY_ORANGE,
                     '&:hover': { 
                       borderColor: '#e65c00',
                       backgroundColor: 'rgba(255, 102, 0, 0.04)'
@@ -608,8 +609,8 @@ const PurchaseOrderList: React.FC = () => {
                   onClick={() => navigate('/purchase-orders/suppliers')}
                   startIcon={<BusinessIcon />}
                   sx={{ 
-                    borderColor: '#FF6600',
-                    color: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
+                    color: PRIMARY_ORANGE,
                     '&:hover': { 
                       borderColor: '#e65c00',
                       backgroundColor: 'rgba(255, 102, 0, 0.04)'
@@ -625,8 +626,8 @@ const PurchaseOrderList: React.FC = () => {
                   disabled={exportLoading}
                   startIcon={exportLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
                   sx={{ 
-                    borderColor: '#FF6600',
-                    color: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
+                    color: PRIMARY_ORANGE,
                     '&:hover': { 
                       borderColor: '#e65c00',
                       backgroundColor: 'rgba(255, 102, 0, 0.04)'
@@ -648,9 +649,9 @@ const PurchaseOrderList: React.FC = () => {
                   checked={showHistoricalReceived}
                   onChange={(e) => setShowHistoricalReceived(e.target.checked)}
                   sx={{
-                    color: '#FF6600',
+                    color: PRIMARY_ORANGE,
                     '&.Mui-checked': {
-                      color: '#FF6600',
+                      color: PRIMARY_ORANGE,
                     },
                   }}
                 />
@@ -670,8 +671,8 @@ const PurchaseOrderList: React.FC = () => {
                 color="primary" 
                 variant="outlined"
                 sx={{ 
-                  borderColor: '#FF6600',
-                  color: '#FF6600',
+                  borderColor: PRIMARY_ORANGE,
+                  color: PRIMARY_ORANGE,
                   backgroundColor: 'rgba(255, 102, 0, 0.04)'
                 }}
               />
@@ -679,7 +680,7 @@ const PurchaseOrderList: React.FC = () => {
                 label={`${purchaseOrders.length} total orders`} 
                 color="primary" 
                 sx={{ 
-                  backgroundColor: '#FF6600',
+                  backgroundColor: PRIMARY_ORANGE,
                   color: 'white'
                 }}
               />
@@ -729,7 +730,7 @@ const PurchaseOrderList: React.FC = () => {
           <Box sx={{ width: '100%', height: 650 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
-                <CircularProgress sx={{ color: '#FF6600' }} />
+                <CircularProgress sx={{ color: PRIMARY_ORANGE }} />
                 <Typography variant="body1" sx={{ mt: 2 }}>Loading purchase orders...</Typography>
               </Box>
             ) : error ? (
@@ -745,7 +746,7 @@ const PurchaseOrderList: React.FC = () => {
                   onClick={fetchPurchaseOrders}
                   startIcon={<RefreshIcon />}
                   sx={{ 
-                    backgroundColor: '#FF6600',
+                    backgroundColor: PRIMARY_ORANGE,
                     '&:hover': { backgroundColor: '#e65c00' }
                   }}
                 >
@@ -769,7 +770,7 @@ const PurchaseOrderList: React.FC = () => {
                       onClick={() => navigate('/purchase-orders/create')}
                       startIcon={<AddIcon />}
                       sx={{ 
-                        backgroundColor: '#FF6600',
+                        backgroundColor: PRIMARY_ORANGE,
                         '&:hover': { backgroundColor: '#e65c00' }
                       }}
                     >
@@ -780,8 +781,8 @@ const PurchaseOrderList: React.FC = () => {
                       onClick={() => navigate('/purchase-orders/create-manual')}
                       startIcon={<AddIcon />}
                       sx={{ 
-                        borderColor: '#FF6600',
-                        color: '#FF6600',
+                        borderColor: PRIMARY_ORANGE,
+                        color: PRIMARY_ORANGE,
                         '&:hover': { 
                           borderColor: '#e65c00',
                           backgroundColor: 'rgba(255, 102, 0, 0.04)'
@@ -856,7 +857,7 @@ const PurchaseOrderList: React.FC = () => {
         }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <DescriptionIcon sx={{ mr: 1, color: '#FF6600' }} />
+              <DescriptionIcon sx={{ mr: 1, color: PRIMARY_ORANGE }} />
               <Typography variant="h6" sx={{ color: 'white' }}>
                 Documents for PO #{selectedPoNumber}
               </Typography>

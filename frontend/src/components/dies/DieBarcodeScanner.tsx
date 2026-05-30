@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { PRIMARY_ORANGE } from '../../theme';
 import { Html5QrcodeScanner } from 'html5-qrcode';
 import {
   Dialog,
@@ -253,7 +254,7 @@ const DieBarcodeScanner: React.FC<DieBarcodeScannerProps> = ({
             startIcon={scanning ? <CircularProgress size={16} /> : <CameraAlt />}
             disabled={scanning}
             sx={{
-              bgcolor: '#FF6600',
+              bgcolor: PRIMARY_ORANGE,
               '&:hover': { bgcolor: '#E55A00' },
             }}
           >

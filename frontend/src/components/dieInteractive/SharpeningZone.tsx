@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { PRIMARY_ORANGE } from '../../theme';
 import {
   Box,
   Paper,
@@ -187,7 +188,7 @@ const SharpeningZone: React.FC<SharpeningZoneProps> = ({
                       label={die.die_type}
                       size="small"
                       sx={{
-                        bgcolor: '#FF6600',
+                        bgcolor: PRIMARY_ORANGE,
                         color: 'white',
                         fontWeight: 'bold',
                         fontSize: '0.6rem',

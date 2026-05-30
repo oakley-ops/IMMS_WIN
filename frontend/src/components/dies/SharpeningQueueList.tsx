@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PRIMARY_ORANGE } from '../../theme';
 import {
   Box,
   Paper,
@@ -155,7 +156,7 @@ const SharpeningQueueList: React.FC<SharpeningQueueListProps> = ({
           startIcon={<Add />}
           onClick={onScheduleSharpening}
           sx={{
-            bgcolor: '#FF6600',
+            bgcolor: PRIMARY_ORANGE,
             '&:hover': { bgcolor: '#E55A00' },
             px: 3,
             py: 1,

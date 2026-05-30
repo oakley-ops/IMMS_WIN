@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { PRIMARY_ORANGE } from '../../theme';
 import {
   Box,
   Card,
@@ -255,7 +256,7 @@ const DieInventoryList: React.FC<DieInventoryListProps> = ({
             startIcon={<Add />}
             onClick={onAddDie}
             sx={{
-              bgcolor: '#FF6600',
+              bgcolor: PRIMARY_ORANGE,
               '&:hover': { bgcolor: '#E55A00' },
             }}
           >

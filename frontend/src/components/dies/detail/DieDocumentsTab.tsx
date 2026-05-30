@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PRIMARY_ORANGE } from '../../../theme';
 import {
   Box,
   Typography,
@@ -165,7 +166,7 @@ const DieDocumentsTab: React.FC<DieDocumentsTabProps> = ({ dieId, onRefresh }) =
         <Button
           variant="contained"
           startIcon={<CloudUpload />}
-          sx={{ bgcolor: '#FF6600', '&:hover': { bgcolor: '#E55A00' } }}
+          sx={{ bgcolor: PRIMARY_ORANGE, '&:hover': { bgcolor: '#E55A00' } }}
         >
           Upload Document
         </Button>

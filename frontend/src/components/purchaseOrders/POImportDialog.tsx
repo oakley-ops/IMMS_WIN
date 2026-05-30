@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { PRIMARY_ORANGE } from '../../theme';
 import { API_URL } from '../../config';
 import {
   Dialog,
@@ -183,7 +184,7 @@ const POImportDialog: React.FC<POImportDialogProps> = ({ isOpen, onClose, onSucc
               <Paper
                 elevation={0}
                 sx={{
-                  border: dragActive ? '2px dashed #FF6600' : '2px dashed #ccc',
+                  border: dragActive ? `2px dashed ${PRIMARY_ORANGE}` : '2px dashed #ccc',
                   backgroundColor: dragActive ? 'rgba(255, 102, 0, 0.05)' : 'transparent',
                   borderRadius: 2,
                   p: 8,
@@ -191,7 +192,7 @@ const POImportDialog: React.FC<POImportDialogProps> = ({ isOpen, onClose, onSucc
                   cursor: 'pointer',
                   '&:hover': {
                     backgroundColor: 'rgba(255, 102, 0, 0.02)',
-                    borderColor: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
                   },
                 }}
                 onDragEnter={handleDrag}
@@ -213,7 +214,7 @@ const POImportDialog: React.FC<POImportDialogProps> = ({ isOpen, onClose, onSucc
 
         {uploading && (
           <Box textAlign="center" py={8}>
-            <CircularProgress size={60} sx={{ color: '#FF6600' }} />
+            <CircularProgress size={60} sx={{ color: PRIMARY_ORANGE }} />
             <Typography variant="h6" mt={3}>
               Extracting data from PDF...
             </Typography>
@@ -333,7 +334,7 @@ const POImportDialog: React.FC<POImportDialogProps> = ({ isOpen, onClose, onSucc
             onClick={handleViewPO}
             variant="contained"
             sx={{
-              backgroundColor: '#FF6600',
+              backgroundColor: PRIMARY_ORANGE,
               '&:hover': { backgroundColor: '#e65c00' },
             }}
           >

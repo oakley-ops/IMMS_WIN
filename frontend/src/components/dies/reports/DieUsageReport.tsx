@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PRIMARY_ORANGE } from '../../../theme';
 import {
   Box,
   Typography,
@@ -251,7 +252,7 @@ const DieUsageReport: React.FC = () => {
                         sx={{
                           width: `${percentage}%`,
                           height: '100%',
-                          bgcolor: '#FF6600',
+                          bgcolor: PRIMARY_ORANGE,
                         }}
                       />
                     </Box>
