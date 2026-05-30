@@ -89,7 +89,7 @@ describe('PODocumentsList', () => {
     render(<PODocumentsList poId={123} />);
     
     await waitFor(() => {
-      expect(screen.getByText('Failed to load documents')).toBeInTheDocument();
+      expect(screen.getByText(/Failed to load documents/)).toBeInTheDocument();
     });
   });
 
@@ -127,7 +127,7 @@ describe('PODocumentsList', () => {
     });
     
     // Check for formatted dates (the exact format will depend on the implementation)
-    const dateElements = screen.getAllByText(expect.stringMatching(/\d{1,2}\/\d{1,2}\/\d{4}/));
+    const dateElements = screen.getAllByText(/\d{1,2}\/\d{1,2}\/\d{4}/);
     expect(dateElements.length).toBeGreaterThan(0);
   });
 }); 

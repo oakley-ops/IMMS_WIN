@@ -85,13 +85,6 @@ export const hasPermission = (userRole: string | undefined, permission: string):
   // Handle case where role permissions aren't defined
   if (!PERMISSIONS[normalizedRole]) {
     console.warn(`Unknown role: ${userRole}. Defaulting to no permissions.`);
-    
-    // Special case for purchase orders - enable for all users temporarily
-    if (permission === 'CAN_MANAGE_PURCHASE_ORDERS' || permission === 'CAN_VIEW_TRANSACTIONS') {
-      console.log(`Granting ${permission} to user with role ${userRole} temporarily`);
-      return true;
-    }
-    
     return false;
   }
   
@@ -123,8 +116,8 @@ export const getPermissionsForRole = (role: string): PermissionSet => {
       CAN_ADD_PARTS: false,
       CAN_DELETE_PARTS: false,
       CAN_CHECKOUT_PARTS: true,
-      CAN_MANAGE_PURCHASE_ORDERS: true, // Allow purchase order access to all users temporarily
-      CAN_VIEW_TRANSACTIONS: true, // Allow transaction access to all users temporarily
+      CAN_MANAGE_PURCHASE_ORDERS: false,
+      CAN_VIEW_TRANSACTIONS: false,
       CAN_MANAGE_USERS: false,
       CAN_MANAGE_PM_CHECKLISTS: false,
       CAN_VIEW_MACHINES: false
