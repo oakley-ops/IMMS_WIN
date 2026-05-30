@@ -35,9 +35,9 @@ import {
   Refresh as RefreshIcon,
   CalendarToday as CalendarIcon,
 } from '@mui/icons-material';
-import { 
-  DataGrid, 
-  GridColDef, 
+import {
+  DataGrid,
+  GridColDef,
   GridRenderCellParams,
   GridPaginationModel,
 } from '@mui/x-data-grid';
@@ -46,7 +46,7 @@ import * as XLSX from 'xlsx';
 import CloseIcon from '@mui/icons-material/Close';
 import { format } from 'date-fns';
 
-import { 
+import {
   getAllProjects,
   createProject,
   updateProject,
@@ -56,34 +56,7 @@ import {
 } from '../../services/projectService';
 import { Project } from '../../types/project';
 import ProjectCreationWizard from './ProjectCreationWizard';
-
-// Custom CSS styles for app branding
-const AppStyles = `
-  .text-primary {
-    color: #FF6600 !important;
-  }
-  
-  .bg-primary {
-    background-color: #0066A1 !important;
-  }
-  
-  .form-check-input:checked {
-    background-color: #FF6600;
-    border-color: #FF6600;
-  }
-  
-  .border-primary {
-    border-color: #FF6600 !important;
-  }
-  
-  a {
-    color: #FF6600;
-  }
-  
-  a:hover {
-    color: #e65c00;
-  }
-`;
+import { PRIMARY_ORANGE, COLOR_SUCCESS_BG, COLOR_ERROR_BG, COLOR_SUCCESS_TEXT, COLOR_ERROR_TEXT } from '../../theme';
 
 const StyledDataGrid = styled(DataGrid, {
   shouldForwardProp: (prop) => ![
@@ -429,21 +402,21 @@ const ProjectList: React.FC = () => {
               </Typography>
             )}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-              <LinearProgress 
-                variant="determinate" 
-                value={progress} 
-                sx={{ 
-                  flex: 1, 
-                  height: 6, 
+              <LinearProgress
+                variant="determinate"
+                value={progress}
+                sx={{
+                  flex: 1,
+                  height: 6,
                   borderRadius: 3,
                   backgroundColor: '#e0e0e0',
-                  '& .MuiLinearProgress-bar': { 
-                    backgroundColor: progress === 100 ? '#4caf50' : '#FF6600',
+                  '& .MuiLinearProgress-bar': {
+                    backgroundColor: progress === 100 ? 'success.main' : PRIMARY_ORANGE,
                     borderRadius: 3
                   }
-                }} 
+                }}
               />
-              <Typography variant="caption" sx={{ fontWeight: 'bold', color: '#0066A1', minWidth: '35px' }}>
+              <Typography variant="caption" sx={{ fontWeight: 'bold', color: 'primary.main', minWidth: '35px' }}>
                 {progress}%
               </Typography>
             </Box>
@@ -517,10 +490,10 @@ const ProjectList: React.FC = () => {
           <IconButton
             size="small"
             onClick={() => navigate(`/projects/${params.row.project_id}/timeline`)}
-            sx={{ 
-              backgroundColor: '#0066A1',
+            sx={{
+              backgroundColor: 'secondary.main',
               color: 'white',
-              '&:hover': { backgroundColor: '#004d7a' }
+              '&:hover': { backgroundColor: 'secondary.dark' }
             }}
             title="View Timeline"
           >
@@ -529,10 +502,10 @@ const ProjectList: React.FC = () => {
           <IconButton
             size="small"
             onClick={() => handleOpenProjectDialog(params.row)}
-            sx={{ 
-              backgroundColor: '#FF6600',
+            sx={{
+              backgroundColor: PRIMARY_ORANGE,
               color: 'white',
-              '&:hover': { backgroundColor: '#e65c00' }
+              '&:hover': { backgroundColor: 'primary.dark' }
             }}
             title="Edit Project"
           >
@@ -541,10 +514,10 @@ const ProjectList: React.FC = () => {
           <IconButton
             size="small"
             onClick={() => handleDelete(params.row.project_id)}
-            sx={{ 
-              backgroundColor: '#f44336',
+            sx={{
+              backgroundColor: 'error.main',
               color: 'white',
-              '&:hover': { backgroundColor: '#d32f2f' }
+              '&:hover': { backgroundColor: 'error.dark' }
             }}
             title="Delete"
           >
@@ -556,10 +529,10 @@ const ProjectList: React.FC = () => {
   ];
 
   return (
-    <Container 
-      maxWidth="xl" 
-      sx={{ 
-        backgroundColor: '#0066A1',
+    <Container
+      maxWidth="xl"
+      sx={{
+        backgroundColor: 'secondary.main',
         padding: '2rem',
         borderRadius: '1rem',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
@@ -567,10 +540,7 @@ const ProjectList: React.FC = () => {
         backgroundSize: '20px 20px'
       }}
     >
-      {/* Apply app brand styling */}
-      <style>{AppStyles}</style>
-      
-      <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
+      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
         Projects Management
       </Typography>
       
@@ -592,22 +562,9 @@ const ProjectList: React.FC = () => {
                   ),
                   sx: { borderRadius: '0.5rem' }
                 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#e0e0e0',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#FF6600',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#FF6600',
-                    },
-                  },
-                }}
               />
               {loading && searchTerm && (
-                <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
+                <LinearProgress color="primary" sx={{ mt: 1, height: '2px' }} />
               )}
             </Grid>
             
@@ -617,10 +574,10 @@ const ProjectList: React.FC = () => {
                   variant="contained"
                   onClick={() => setOpenWizard(true)}
                   startIcon={<AddIcon />}
-                  sx={{ 
-                    backgroundColor: '#FF6600', 
-                    borderColor: '#FF6600',
-                    '&:hover': { backgroundColor: '#e65c00' },
+                  sx={{
+                    backgroundColor: PRIMARY_ORANGE,
+                    borderColor: PRIMARY_ORANGE,
+                    '&:hover': { backgroundColor: 'primary.dark' },
                     minWidth: '140px'
                   }}
                 >
@@ -631,12 +588,12 @@ const ProjectList: React.FC = () => {
                   onClick={handleExportToExcel}
                   disabled={exportLoading}
                   startIcon={exportLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
-                  sx={{ 
-                    borderColor: '#FF6600',
-                    color: '#FF6600',
-                    '&:hover': { 
-                      borderColor: '#e65c00',
-                      backgroundColor: 'rgba(255, 102, 0, 0.04)'
+                  sx={{
+                    borderColor: PRIMARY_ORANGE,
+                    color: PRIMARY_ORANGE,
+                    '&:hover': {
+                      borderColor: 'primary.dark',
+                      backgroundColor: 'rgba(255, 107, 53, 0.04)'
                     },
                     minWidth: '120px'
                   }}
@@ -655,17 +612,6 @@ const ProjectList: React.FC = () => {
                 value={filterStatus}
                 label="Status"
                 onChange={(e) => setFilterStatus(e.target.value as StatusFilter)}
-                sx={{
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#e0e0e0',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FF6600',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FF6600',
-                  },
-                }}
               >
                 <MenuItem value="all">All Status</MenuItem>
                 <MenuItem value="planning">Planning</MenuItem>
@@ -682,17 +628,6 @@ const ProjectList: React.FC = () => {
                 value={filterPriority}
                 label="Priority"
                 onChange={(e) => setFilterPriority(e.target.value as PriorityFilter)}
-                sx={{
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#e0e0e0',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FF6600',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FF6600',
-                  },
-                }}
               >
                 <MenuItem value="all">All Priority</MenuItem>
                 <MenuItem value="low">Low</MenuItem>
@@ -725,33 +660,20 @@ const ProjectList: React.FC = () => {
             />
             
             <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
-              <Chip 
-                label={`${filteredProjects.length} projects showing`} 
-                color="primary" 
+              <Chip
+                label={`${filteredProjects.length} projects showing`}
+                color="primary"
                 variant="outlined"
-                sx={{ 
-                  borderColor: '#FF6600',
-                  color: '#FF6600',
-                  backgroundColor: 'rgba(255, 102, 0, 0.04)'
-                }}
               />
-              <Chip 
-                label={`${projects.length} total projects`} 
-                color="primary" 
-                sx={{ 
-                  backgroundColor: '#FF6600',
-                  color: 'white'
-                }}
+              <Chip
+                label={`${projects.length} total projects`}
+                color="primary"
               />
               {searchTerm && (
-                <Chip 
-                  label={`Search: "${searchTerm}"`} 
-                  color="primary" 
+                <Chip
+                  label={`Search: "${searchTerm}"`}
+                  color="secondary"
                   onDelete={() => setSearchTerm('')}
-                  sx={{ 
-                    backgroundColor: '#0066A1',
-                    color: 'white'
-                  }}
                 />
               )}
             </Box>
@@ -759,23 +681,22 @@ const ProjectList: React.FC = () => {
 
           {/* Stats Cards */}
           <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Chip 
+            <Chip
               icon={<CalendarIcon />}
-              label={`${projects.filter(p => p.status === 'planning').length} Planning`} 
+              label={`${projects.filter(p => p.status === 'planning').length} Planning`}
               variant="outlined"
-              sx={{ borderColor: '#666', color: '#666' }}
             />
-            <Chip 
+            <Chip
               icon={<BusinessIcon />}
-              label={`${projects.filter(p => p.status === 'in_progress').length} In Progress`} 
+              label={`${projects.filter(p => p.status === 'in_progress').length} In Progress`}
               variant="outlined"
-              sx={{ borderColor: '#0066A1', color: '#0066A1' }}
+              color="primary"
             />
-            <Chip 
+            <Chip
               icon={<BusinessIcon />}
-              label={`${projects.filter(p => p.status === 'completed').length} Completed`} 
+              label={`${projects.filter(p => p.status === 'completed').length} Completed`}
               variant="outlined"
-              sx={{ borderColor: '#28a745', color: '#28a745' }}
+              color="success"
             />
           </Box>
         </Paper>
@@ -795,7 +716,7 @@ const ProjectList: React.FC = () => {
           <Box sx={{ width: '100%', height: 650 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
-                <CircularProgress sx={{ color: '#FF6600' }} />
+                <CircularProgress color="primary" />
                 <Typography variant="body1" sx={{ mt: 2 }}>Loading projects...</Typography>
               </Box>
             ) : error ? (
@@ -808,12 +729,9 @@ const ProjectList: React.FC = () => {
                 </Typography>
                 <Button
                   variant="contained"
+                  color="primary"
                   onClick={fetchProjects}
                   startIcon={<RefreshIcon />}
-                  sx={{ 
-                    backgroundColor: '#FF6600',
-                    '&:hover': { backgroundColor: '#e65c00' }
-                  }}
                 >
                   Retry
                 </Button>
@@ -824,19 +742,16 @@ const ProjectList: React.FC = () => {
                   {searchTerm ? 'No projects match your search' : 'No projects found'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  {searchTerm ? 
+                  {searchTerm ?
                     'Try adjusting your search terms or clear the search to see all projects.' :
                     'Use the "New Project" button to create your first project.'}
                 </Typography>
                 {!searchTerm && (
                   <Button
                     variant="contained"
+                    color="primary"
                     onClick={() => setOpenWizard(true)}
                     startIcon={<AddIcon />}
-                    sx={{ 
-                      backgroundColor: '#FF6600',
-                      '&:hover': { backgroundColor: '#e65c00' }
-                    }}
                   >
                     Create Your First Project
                   </Button>
@@ -895,31 +810,25 @@ const ProjectList: React.FC = () => {
       />
 
       {/* Project Dialog (for editing) */}
-      <Dialog 
-        open={openProjectDialog} 
+      <Dialog
+        open={openProjectDialog}
         onClose={handleCloseProjectDialog}
         maxWidth="md"
         fullWidth
-        sx={{
-          '& .MuiDialog-paper': {
-            borderRadius: '0.75rem'
-          }
-        }}
       >
-        <DialogTitle sx={{ 
-          backgroundColor: '#0066A1', 
+        <DialogTitle sx={{
+          backgroundColor: 'secondary.main',
           color: 'white',
-          borderRadius: '0.75rem 0.75rem 0 0'
         }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <BusinessIcon sx={{ mr: 1, color: '#FF6600' }} />
+              <BusinessIcon sx={{ mr: 1, color: PRIMARY_ORANGE }} />
               <Typography variant="h6" sx={{ color: 'white' }}>
                 {editingProject ? 'Edit Project' : 'Create New Project'}
               </Typography>
             </Box>
-            <IconButton 
-              onClick={handleCloseProjectDialog} 
+            <IconButton
+              onClick={handleCloseProjectDialog}
               size="small"
               sx={{ color: 'white' }}
             >
@@ -938,16 +847,6 @@ const ProjectList: React.FC = () => {
                   name="name"
                   value={projectFormData.name}
                   onChange={handleProjectFormChange}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#FF6600',
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12}>
@@ -959,16 +858,6 @@ const ProjectList: React.FC = () => {
                   name="description"
                   value={projectFormData.description}
                   onChange={handleProjectFormChange}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#FF6600',
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -981,16 +870,6 @@ const ProjectList: React.FC = () => {
                   value={projectFormData.start_date}
                   onChange={handleProjectFormChange}
                   InputLabelProps={{ shrink: true }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#FF6600',
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -1002,16 +881,6 @@ const ProjectList: React.FC = () => {
                   value={projectFormData.end_date}
                   onChange={handleProjectFormChange}
                   InputLabelProps={{ shrink: true }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#FF6600',
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -1022,16 +891,6 @@ const ProjectList: React.FC = () => {
                   name="status"
                   value={projectFormData.status}
                   onChange={handleProjectFormChange}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#FF6600',
-                    },
-                  }}
                 >
                   <MenuItem value="planning">Planning</MenuItem>
                   <MenuItem value="in_progress">In Progress</MenuItem>
@@ -1048,16 +907,6 @@ const ProjectList: React.FC = () => {
                   name="priority"
                   value={projectFormData.priority}
                   onChange={handleProjectFormChange}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#FF6600',
-                    },
-                  }}
                 >
                   <MenuItem value="low">Low</MenuItem>
                   <MenuItem value="medium">Medium</MenuItem>
@@ -1073,16 +922,6 @@ const ProjectList: React.FC = () => {
                   type="number"
                   value={projectFormData.budget}
                   onChange={handleProjectFormChange}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#FF6600',
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -1092,16 +931,6 @@ const ProjectList: React.FC = () => {
                   name="project_manager"
                   value={projectFormData.project_manager}
                   onChange={handleProjectFormChange}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                    '& .MuiInputLabel-root.Mui-focused': {
-                      color: '#FF6600',
-                    },
-                  }}
                 />
               </Grid>
             </Grid>
@@ -1113,14 +942,11 @@ const ProjectList: React.FC = () => {
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               variant="contained"
+              color="primary"
               disabled={isLoading}
-              sx={{ 
-                backgroundColor: '#FF6600',
-                '&:hover': { backgroundColor: '#e65c00' }
-              }}
             >
               {isLoading ? (
                 <>
@@ -1151,13 +977,13 @@ const ProjectList: React.FC = () => {
               elevation={6}
               sx={{
                 p: 2,
-                backgroundColor: '#4caf50',
-                color: 'white',
-                borderRadius: '0.75rem',
+                backgroundColor: COLOR_SUCCESS_BG,
+                color: COLOR_SUCCESS_TEXT,
+                borderRadius: 2,
                 mb: 1,
               }}
             >
-              <Typography variant="body2">✅ {success}</Typography>
+              <Typography variant="body2">{success}</Typography>
             </Paper>
           )}
           {error && (
@@ -1165,12 +991,12 @@ const ProjectList: React.FC = () => {
               elevation={6}
               sx={{
                 p: 2,
-                backgroundColor: '#f44336',
-                color: 'white',
-                borderRadius: '0.75rem',
+                backgroundColor: COLOR_ERROR_BG,
+                color: COLOR_ERROR_TEXT,
+                borderRadius: 2,
               }}
             >
-              <Typography variant="body2">❌ {error}</Typography>
+              <Typography variant="body2">{error}</Typography>
             </Paper>
           )}
         </Box>

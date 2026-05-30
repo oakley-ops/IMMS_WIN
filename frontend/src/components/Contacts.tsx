@@ -34,13 +34,12 @@ import {
   Phone as PhoneIcon,
   Business as BusinessIcon,
   Refresh as RefreshIcon,
-  FilterList as FilterListIcon,
   PersonAdd as PersonAddIcon,
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
-import { 
-  DataGrid, 
-  GridColDef, 
+import {
+  DataGrid,
+  GridColDef,
   GridRenderCellParams,
   GridPaginationModel,
 } from '@mui/x-data-grid';
@@ -50,6 +49,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import axiosInstance from '../utils/axios';
 import { Contact, ContactType, ContactStatus, ContactFormData } from '../types/contact';
 import { format } from 'date-fns';
+import { PRIMARY_ORANGE, COLOR_SUCCESS_BG, COLOR_ERROR_BG, COLOR_SUCCESS_TEXT, COLOR_ERROR_TEXT } from '../theme';
 
 // Define contactsApi locally for now due to import issues - Updated
 const contactsApi = {
@@ -64,34 +64,6 @@ const contactsApi = {
   update: (id: number, contactData: any) => axiosInstance.put(`/api/v1/contacts/${id}`, contactData),
   delete: (id: number) => axiosInstance.delete(`/api/v1/contacts/${id}`),
 };
-
-// Custom CSS styles for app branding
-const AppStyles = `
-  .text-primary {
-    color: #FF6600 !important;
-  }
-  
-  .bg-primary {
-    background-color: #0066A1 !important;
-  }
-  
-  .form-check-input:checked {
-    background-color: #FF6600;
-    border-color: #FF6600;
-  }
-  
-  .border-primary {
-    border-color: #FF6600 !important;
-  }
-  
-  a {
-    color: #FF6600;
-  }
-  
-  a:hover {
-    color: #e65c00;
-  }
-`;
 
 const StyledDataGrid = styled(DataGrid, {
   shouldForwardProp: (prop) => ![
@@ -467,7 +439,7 @@ const Contacts: React.FC = () => {
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <EmailIcon fontSize="small" sx={{ color: '#666' }} />
-          <a href={`mailto:${params.value}`} style={{ textDecoration: 'none', color: '#FF6600' }}>
+          <a href={`mailto:${params.value}`} style={{ textDecoration: 'none', color: PRIMARY_ORANGE }}>
             {params.value}
           </a>
         </Box>
@@ -480,7 +452,7 @@ const Contacts: React.FC = () => {
       renderCell: (params: GridRenderCellParams) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <PhoneIcon fontSize="small" sx={{ color: '#666' }} />
-          <a href={`tel:${params.value}`} style={{ textDecoration: 'none', color: '#FF6600' }}>
+          <a href={`tel:${params.value}`} style={{ textDecoration: 'none', color: PRIMARY_ORANGE }}>
             {params.value}
           </a>
         </Box>
@@ -520,10 +492,10 @@ const Contacts: React.FC = () => {
           <IconButton
             size="small"
             onClick={() => handleOpenDetailsDialog(params.row)}
-            sx={{ 
-              backgroundColor: '#0066A1',
+            sx={{
+              backgroundColor: 'secondary.main',
               color: 'white',
-              '&:hover': { backgroundColor: '#004d7a' }
+              '&:hover': { backgroundColor: 'secondary.dark' }
             }}
             title="View Details"
           >
@@ -532,10 +504,10 @@ const Contacts: React.FC = () => {
           <IconButton
             size="small"
             onClick={() => handleOpenEditDialog(params.row)}
-            sx={{ 
-              backgroundColor: '#FF6600',
+            sx={{
+              backgroundColor: PRIMARY_ORANGE,
               color: 'white',
-              '&:hover': { backgroundColor: '#e65c00' }
+              '&:hover': { backgroundColor: 'primary.dark' }
             }}
             title="Edit Contact"
           >
@@ -544,10 +516,10 @@ const Contacts: React.FC = () => {
           <IconButton
             size="small"
             onClick={() => handleDelete(params.row.contact_id)}
-            sx={{ 
-              backgroundColor: '#f44336',
+            sx={{
+              backgroundColor: 'error.main',
               color: 'white',
-              '&:hover': { backgroundColor: '#d32f2f' }
+              '&:hover': { backgroundColor: 'error.dark' }
             }}
             title="Delete"
           >
@@ -559,10 +531,10 @@ const Contacts: React.FC = () => {
   ];
 
   return (
-    <Container 
-      maxWidth="xl" 
-      sx={{ 
-        backgroundColor: '#0066A1',
+    <Container
+      maxWidth="xl"
+      sx={{
+        backgroundColor: 'secondary.main',
         padding: '2rem',
         borderRadius: '1rem',
         boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
@@ -570,10 +542,7 @@ const Contacts: React.FC = () => {
         backgroundSize: '20px 20px'
       }}
     >
-      {/* Apply app brand styling */}
-      <style>{AppStyles}</style>
-      
-      <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
+      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
         Contacts Management
       </Typography>
       
@@ -595,22 +564,9 @@ const Contacts: React.FC = () => {
                   ),
                   sx: { borderRadius: '0.5rem' }
                 }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    '& fieldset': {
-                      borderColor: '#e0e0e0',
-                    },
-                    '&:hover fieldset': {
-                      borderColor: '#FF6600',
-                    },
-                    '&.Mui-focused fieldset': {
-                      borderColor: '#FF6600',
-                    },
-                  },
-                }}
               />
               {loading && searchTerm && (
-                <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
+                <LinearProgress color="primary" sx={{ mt: 1, height: '2px' }} />
               )}
             </Grid>
             
@@ -618,31 +574,20 @@ const Contacts: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 <Button
                   variant="contained"
+                  color="primary"
                   onClick={handleOpenDialog}
                   startIcon={<AddIcon />}
-                  sx={{ 
-                    backgroundColor: '#FF6600', 
-                    borderColor: '#FF6600',
-                    '&:hover': { backgroundColor: '#e65c00' },
-                    minWidth: '140px'
-                  }}
+                  sx={{ minWidth: '140px' }}
                 >
                   Add Contact
                 </Button>
                 <Button
                   variant="outlined"
+                  color="primary"
                   onClick={handleExportToExcel}
                   disabled={exportLoading}
                   startIcon={exportLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
-                  sx={{ 
-                    borderColor: '#FF6600',
-                    color: '#FF6600',
-                    '&:hover': { 
-                      borderColor: '#e65c00',
-                      backgroundColor: 'rgba(255, 102, 0, 0.04)'
-                    },
-                    minWidth: '120px'
-                  }}
+                  sx={{ minWidth: '120px' }}
                 >
                   {exportLoading ? 'Exporting...' : 'Export'}
                 </Button>
@@ -658,17 +603,6 @@ const Contacts: React.FC = () => {
                 value={filterType}
                 label="Type"
                 onChange={(e) => setFilterType(e.target.value as ContactType)}
-                sx={{
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#e0e0e0',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FF6600',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FF6600',
-                  },
-                }}
               >
                 <MenuItem value="all">All Types</MenuItem>
                 <MenuItem value="vendor">Vendors</MenuItem>
@@ -683,17 +617,6 @@ const Contacts: React.FC = () => {
                 value={filterStatus}
                 label="Status"
                 onChange={(e) => setFilterStatus(e.target.value as ContactStatus)}
-                sx={{
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#e0e0e0',
-                  },
-                  '&:hover .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FF6600',
-                  },
-                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                    borderColor: '#FF6600',
-                  },
-                }}
               >
                 <MenuItem value="all">All Status</MenuItem>
                 <MenuItem value="active">Active</MenuItem>
@@ -706,12 +629,7 @@ const Contacts: React.FC = () => {
                 <Checkbox
                   checked={showActiveOnly}
                   onChange={(e) => setShowActiveOnly(e.target.checked)}
-                  sx={{
-                    color: '#FF6600',
-                    '&.Mui-checked': {
-                      color: '#FF6600',
-                    },
-                  }}
+                  color="primary"
                 />
               }
               label="Show active only"
@@ -724,33 +642,20 @@ const Contacts: React.FC = () => {
             />
             
             <Box sx={{ ml: 'auto', display: 'flex', gap: 2 }}>
-              <Chip 
-                label={`${filteredContacts.length} contacts showing`} 
-                color="primary" 
+              <Chip
+                label={`${filteredContacts.length} contacts showing`}
+                color="primary"
                 variant="outlined"
-                sx={{ 
-                  borderColor: '#FF6600',
-                  color: '#FF6600',
-                  backgroundColor: 'rgba(255, 102, 0, 0.04)'
-                }}
               />
-              <Chip 
-                label={`${contacts.length} total contacts`} 
-                color="primary" 
-                sx={{ 
-                  backgroundColor: '#FF6600',
-                  color: 'white'
-                }}
+              <Chip
+                label={`${contacts.length} total contacts`}
+                color="primary"
               />
               {searchTerm && (
-                <Chip 
-                  label={`Search: "${searchTerm}"`} 
-                  color="primary" 
+                <Chip
+                  label={`Search: "${searchTerm}"`}
+                  color="secondary"
                   onDelete={() => setSearchTerm('')}
-                  sx={{ 
-                    backgroundColor: '#0066A1',
-                    color: 'white'
-                  }}
                 />
               )}
             </Box>
@@ -758,23 +663,23 @@ const Contacts: React.FC = () => {
 
           {/* Stats Cards */}
           <Box sx={{ mt: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-            <Chip 
+            <Chip
               icon={<BusinessIcon />}
-              label={`${contacts.filter(c => c.type === 'vendor').length} Vendors`} 
+              label={`${contacts.filter(c => c.type === 'vendor').length} Vendors`}
               variant="outlined"
-              sx={{ borderColor: '#0066A1', color: '#0066A1' }}
+              color="primary"
             />
-            <Chip 
+            <Chip
               icon={<BusinessIcon />}
-              label={`${contacts.filter(c => c.type === 'contractor').length} Contractors`} 
+              label={`${contacts.filter(c => c.type === 'contractor').length} Contractors`}
               variant="outlined"
-              sx={{ borderColor: '#28a745', color: '#28a745' }}
+              color="success"
             />
-            <Chip 
+            <Chip
               icon={<BusinessIcon />}
-              label={`${contacts.filter(c => c.type === 'supplier').length} Suppliers`} 
+              label={`${contacts.filter(c => c.type === 'supplier').length} Suppliers`}
               variant="outlined"
-              sx={{ borderColor: '#17a2b8', color: '#17a2b8' }}
+              color="info"
             />
           </Box>
         </Paper>
@@ -794,7 +699,7 @@ const Contacts: React.FC = () => {
           <Box sx={{ width: '100%', height: 650 }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
-                <CircularProgress sx={{ color: '#FF6600' }} />
+                <CircularProgress color="primary" />
                 <Typography variant="body1" sx={{ mt: 2 }}>Loading contacts...</Typography>
               </Box>
             ) : error ? (
@@ -807,12 +712,9 @@ const Contacts: React.FC = () => {
                 </Typography>
                 <Button
                   variant="contained"
+                  color="primary"
                   onClick={fetchContacts}
                   startIcon={<RefreshIcon />}
-                  sx={{ 
-                    backgroundColor: '#FF6600',
-                    '&:hover': { backgroundColor: '#e65c00' }
-                  }}
                 >
                   Retry
                 </Button>
@@ -823,19 +725,16 @@ const Contacts: React.FC = () => {
                   {searchTerm ? 'No contacts match your search' : 'No contacts found'}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                  {searchTerm ? 
+                  {searchTerm ?
                     'Try adjusting your search terms or clear the search to see all contacts.' :
                     'Use the "Add Contact" button to create your first contact.'}
                 </Typography>
                 {!searchTerm && (
                   <Button
                     variant="contained"
+                    color="primary"
                     onClick={handleOpenDialog}
                     startIcon={<AddIcon />}
-                    sx={{ 
-                      backgroundColor: '#FF6600',
-                      '&:hover': { backgroundColor: '#e65c00' }
-                    }}
                   >
                     Add Contact
                   </Button>
@@ -878,7 +777,7 @@ const Contacts: React.FC = () => {
                     display: 'none',
                   },
                   '& .MuiDataGrid-iconButtonContainer': {
-                    color: '#0066A1',
+                    color: 'secondary.main',
                   }
                 }}
               />
@@ -903,13 +802,13 @@ const Contacts: React.FC = () => {
               elevation={6}
               sx={{
                 p: 2,
-                backgroundColor: '#4caf50',
-                color: 'white',
-                borderRadius: '0.75rem',
+                backgroundColor: COLOR_SUCCESS_BG,
+                color: COLOR_SUCCESS_TEXT,
+                borderRadius: 2,
                 mb: 1,
               }}
             >
-              <Typography variant="body2">✅ {success}</Typography>
+              <Typography variant="body2">{success}</Typography>
             </Paper>
           )}
           {error && (
@@ -917,54 +816,40 @@ const Contacts: React.FC = () => {
               elevation={6}
               sx={{
                 p: 2,
-                backgroundColor: '#f44336',
-                color: 'white',
-                borderRadius: '0.75rem',
+                backgroundColor: COLOR_ERROR_BG,
+                color: COLOR_ERROR_TEXT,
+                borderRadius: 2,
               }}
             >
-              <Typography variant="body2">❌ {error}</Typography>
+              <Typography variant="body2">{error}</Typography>
             </Paper>
           )}
         </Box>
       )}
 
       {/* Add Contact Dialog */}
-      <Dialog 
-        open={openDialog} 
-        onClose={handleCloseDialog} 
-        maxWidth="md" 
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
         fullWidth
-        sx={{
-          '& .MuiDialog-paper': {
-            borderRadius: '0.75rem'
-          }
-        }}
       >
-        <DialogTitle sx={{ 
-          backgroundColor: '#0066A1', 
-          color: 'white',
-          borderRadius: '0.75rem 0.75rem 0 0',
-          p: 2
-        }}>
+        <DialogTitle sx={{ backgroundColor: 'secondary.main', color: 'white', p: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <PersonAddIcon sx={{ mr: 1, color: '#FF6600' }} />
+              <PersonAddIcon sx={{ mr: 1, color: PRIMARY_ORANGE }} />
               <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
                 {isEditing ? 'Edit Contact' : 'Create New Contact'}
               </Typography>
             </Box>
-            <IconButton 
-              onClick={handleCloseDialog} 
-              size="small"
-              sx={{ color: 'white' }}
-            >
+            <IconButton onClick={handleCloseDialog} size="small" sx={{ color: 'white' }}>
               <CloseIcon />
             </IconButton>
           </Box>
         </DialogTitle>
         <DialogContent dividers sx={{ p: 3 }}>
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ color: '#0066A1', mb: 2, fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ color: 'secondary.main', mb: 2, fontWeight: 'bold' }}>
               Basic Information
             </Typography>
             <Grid container spacing={3}>
@@ -976,19 +861,6 @@ const Contacts: React.FC = () => {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({...formData, name: e.target.value})}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -998,19 +870,6 @@ const Contacts: React.FC = () => {
                   required
                   value={formData.company}
                   onChange={(e) => setFormData({...formData, company: e.target.value})}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -1020,33 +879,22 @@ const Contacts: React.FC = () => {
                     value={formData.type}
                     label="Contact Type"
                     onChange={(e) => setFormData({...formData, type: e.target.value as 'vendor' | 'contractor' | 'supplier'})}
-                    sx={{
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#FF6600',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#FF6600',
-                      },
-                    }}
                   >
                     <MenuItem value="vendor">
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <BusinessIcon sx={{ mr: 1, color: '#0066A1' }} />
+                        <BusinessIcon sx={{ mr: 1, color: 'primary.main' }} />
                         Vendor
                       </Box>
                     </MenuItem>
                     <MenuItem value="contractor">
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <BusinessIcon sx={{ mr: 1, color: '#28a745' }} />
+                        <BusinessIcon sx={{ mr: 1, color: 'success.main' }} />
                         Contractor
                       </Box>
                     </MenuItem>
                     <MenuItem value="supplier">
                       <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <BusinessIcon sx={{ mr: 1, color: '#17a2b8' }} />
+                        <BusinessIcon sx={{ mr: 1, color: 'info.main' }} />
                         Supplier
                       </Box>
                     </MenuItem>
@@ -1060,17 +908,6 @@ const Contacts: React.FC = () => {
                     value={formData.status}
                     label="Status"
                     onChange={(e) => setFormData({...formData, status: e.target.value as 'active' | 'inactive'})}
-                    sx={{
-                      '& .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#FF6600',
-                      },
-                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                        borderColor: '#FF6600',
-                      },
-                    }}
                   >
                     <MenuItem value="active">
                       <Chip label="Active" size="small" color="success" />
@@ -1085,7 +922,7 @@ const Contacts: React.FC = () => {
           </Box>
 
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ color: '#0066A1', mb: 2, fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ color: 'secondary.main', mb: 2, fontWeight: 'bold' }}>
               Contact Information
             </Typography>
             <Grid container spacing={3}>
@@ -1104,19 +941,6 @@ const Contacts: React.FC = () => {
                       </InputAdornment>
                     ),
                   }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -1133,26 +957,13 @@ const Contacts: React.FC = () => {
                       </InputAdornment>
                     ),
                   }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                  }}
                 />
               </Grid>
             </Grid>
           </Box>
 
           <Box sx={{ mb: 3 }}>
-            <Typography variant="h6" sx={{ color: '#0066A1', mb: 2, fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ color: 'secondary.main', mb: 2, fontWeight: 'bold' }}>
               Address Information
             </Typography>
             <Grid container spacing={3}>
@@ -1162,19 +973,6 @@ const Contacts: React.FC = () => {
                   fullWidth
                   value={formData.address}
                   onChange={(e) => setFormData({...formData, address: e.target.value})}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -1183,19 +981,6 @@ const Contacts: React.FC = () => {
                   fullWidth
                   value={formData.city}
                   onChange={(e) => setFormData({...formData, city: e.target.value})}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -1204,19 +989,6 @@ const Contacts: React.FC = () => {
                   fullWidth
                   value={formData.state}
                   onChange={(e) => setFormData({...formData, state: e.target.value})}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                  }}
                 />
               </Grid>
               <Grid item xs={12} sm={4}>
@@ -1225,26 +997,13 @@ const Contacts: React.FC = () => {
                   fullWidth
                   value={formData.zip_code}
                   onChange={(e) => setFormData({...formData, zip_code: e.target.value})}
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': {
-                        borderColor: '#e0e0e0',
-                      },
-                      '&:hover fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                      '&.Mui-focused fieldset': {
-                        borderColor: '#FF6600',
-                      },
-                    },
-                  }}
                 />
               </Grid>
             </Grid>
           </Box>
 
           <Box>
-            <Typography variant="h6" sx={{ color: '#0066A1', mb: 2, fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ color: 'secondary.main', mb: 2, fontWeight: 'bold' }}>
               Additional Notes
             </Typography>
             <TextField
@@ -1256,17 +1015,6 @@ const Contacts: React.FC = () => {
               onChange={(e) => setFormData({...formData, notes: e.target.value})}
               placeholder="Add any additional notes about this contact..."
               sx={{
-                '& .MuiOutlinedInput-root': {
-                  '& fieldset': {
-                    borderColor: '#e0e0e0',
-                  },
-                  '&:hover fieldset': {
-                    borderColor: '#FF6600',
-                  },
-                  '&.Mui-focused fieldset': {
-                    borderColor: '#FF6600',
-                  },
-                },
               }}
             />
           </Box>
@@ -1292,17 +1040,13 @@ const Contacts: React.FC = () => {
               >
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleSubmitContact}
                 variant="contained"
+                color="primary"
                 disabled={isSubmitting || !formData.name.trim() || !formData.company.trim() || !formData.email.trim() || !formData.phone.trim()}
                 startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : <PersonAddIcon />}
-                sx={{ 
-                  backgroundColor: '#FF6600',
-                  minWidth: '140px',
-                  '&:hover': { backgroundColor: '#e65c00' },
-                  '&:disabled': { backgroundColor: '#ccc' }
-                }}
+                sx={{ minWidth: '140px' }}
               >
                 {isSubmitting ? (isEditing ? 'Updating...' : 'Creating...') : (isEditing ? 'Update Contact' : 'Create Contact')}
               </Button>
@@ -1312,35 +1056,21 @@ const Contacts: React.FC = () => {
       </Dialog>
 
       {/* Contact Details Dialog */}
-      <Dialog 
-        open={openDetailsDialog} 
-        onClose={handleCloseDetailsDialog} 
-        maxWidth="md" 
+      <Dialog
+        open={openDetailsDialog}
+        onClose={handleCloseDetailsDialog}
+        maxWidth="md"
         fullWidth
-        sx={{
-          '& .MuiDialog-paper': {
-            borderRadius: '0.75rem'
-          }
-        }}
       >
-        <DialogTitle sx={{ 
-          backgroundColor: '#0066A1', 
-          color: 'white',
-          borderRadius: '0.75rem 0.75rem 0 0',
-          p: 2
-        }}>
+        <DialogTitle sx={{ backgroundColor: 'secondary.main', color: 'white', p: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <VisibilityIcon sx={{ mr: 1, color: '#FF6600' }} />
+              <VisibilityIcon sx={{ mr: 1, color: PRIMARY_ORANGE }} />
               <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
                 Contact Details
               </Typography>
             </Box>
-            <IconButton 
-              onClick={handleCloseDetailsDialog} 
-              size="small"
-              sx={{ color: 'white' }}
-            >
+            <IconButton onClick={handleCloseDetailsDialog} size="small" sx={{ color: 'white' }}>
               <CloseIcon />
             </IconButton>
           </Box>
@@ -1350,7 +1080,7 @@ const Contacts: React.FC = () => {
             <Box>
               {/* Basic Information */}
               <Box sx={{ mb: 2 }}>
-                <Typography variant="h6" sx={{ color: '#0066A1', mb: 1.5, fontWeight: 'bold' }}>
+                <Typography variant="h6" sx={{ color: 'secondary.main', mb: 1.5, fontWeight: 'bold' }}>
                   Basic Information
                 </Typography>
                 <Grid container spacing={2}>
@@ -1411,7 +1141,7 @@ const Contacts: React.FC = () => {
 
               {/* Contact Information */}
               <Box sx={{ mb: 2 }}>
-                <Typography variant="h6" sx={{ color: '#0066A1', mb: 1.5, fontWeight: 'bold' }}>
+                <Typography variant="h6" sx={{ color: 'secondary.main', mb: 1.5, fontWeight: 'bold' }}>
                   Contact Information
                 </Typography>
                 <Grid container spacing={2}>
@@ -1424,7 +1154,7 @@ const Contacts: React.FC = () => {
                         <EmailIcon fontSize="small" sx={{ color: '#666', fontSize: '1rem' }} />
                         <a 
                           href={`mailto:${selectedContact.email}`} 
-                          style={{ textDecoration: 'none', color: '#FF6600', fontSize: '0.875rem' }}
+                          style={{ textDecoration: 'none', color: PRIMARY_ORANGE, fontSize: '0.875rem' }}
                         >
                           {selectedContact.email || 'N/A'}
                         </a>
@@ -1440,7 +1170,7 @@ const Contacts: React.FC = () => {
                         <PhoneIcon fontSize="small" sx={{ color: '#666', fontSize: '1rem' }} />
                         <a 
                           href={`tel:${selectedContact.phone}`} 
-                          style={{ textDecoration: 'none', color: '#FF6600', fontSize: '0.875rem' }}
+                          style={{ textDecoration: 'none', color: PRIMARY_ORANGE, fontSize: '0.875rem' }}
                         >
                           {selectedContact.phone || 'N/A'}
                         </a>
@@ -1453,7 +1183,7 @@ const Contacts: React.FC = () => {
               {/* Address Information - Only show if there's address data */}
               {(selectedContact.address || selectedContact.city || selectedContact.state || selectedContact.zip_code) && (
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="h6" sx={{ color: '#0066A1', mb: 1.5, fontWeight: 'bold' }}>
+                  <Typography variant="h6" sx={{ color: 'secondary.main', mb: 1.5, fontWeight: 'bold' }}>
                     Address Information
                   </Typography>
                   <Grid container spacing={2}>
@@ -1490,7 +1220,7 @@ const Contacts: React.FC = () => {
               {/* Notes - Only show if there are notes */}
               {selectedContact.notes && (
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="h6" sx={{ color: '#0066A1', mb: 1.5, fontWeight: 'bold' }}>
+                  <Typography variant="h6" sx={{ color: 'secondary.main', mb: 1.5, fontWeight: 'bold' }}>
                     Notes
                   </Typography>
                   <Paper 
@@ -1535,7 +1265,7 @@ const Contacts: React.FC = () => {
         </DialogContent>
         <DialogActions sx={{ p: 2, backgroundColor: '#f8f9fa', borderTop: '1px solid #e9ecef' }}>
           <Box sx={{ display: 'flex', gap: 2, width: '100%', justifyContent: 'space-between' }}>
-            <Button 
+            <Button
               onClick={() => {
                 handleCloseDetailsDialog();
                 if (selectedContact) {
@@ -1543,11 +1273,8 @@ const Contacts: React.FC = () => {
                 }
               }}
               variant="contained"
+              color="primary"
               startIcon={<EditIcon />}
-              sx={{ 
-                backgroundColor: '#FF6600',
-                '&:hover': { backgroundColor: '#e65c00' }
-              }}
             >
               Edit Contact
             </Button>

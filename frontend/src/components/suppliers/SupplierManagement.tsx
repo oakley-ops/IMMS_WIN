@@ -194,7 +194,7 @@ const SupplierManagement: React.FC = () => {
   };
 
   return (
-    <div>
+    <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h5">Manage Suppliers</Typography>
         <Box>
@@ -389,7 +389,7 @@ const SupplierManagement: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </Box>
   );
 };
 

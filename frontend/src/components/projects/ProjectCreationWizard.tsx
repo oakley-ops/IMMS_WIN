@@ -38,6 +38,7 @@ import {
 import { format, addDays } from 'date-fns';
 import { PROJECT_TEMPLATES, calculateMilestoneDates, ProjectTemplate } from '../../config/milestoneTemplates';
 import { Project } from '../../types/project';
+import { PRIMARY_ORANGE } from '../../theme';
 
 interface ProjectCreationWizardProps {
   open: boolean;
@@ -48,11 +49,11 @@ interface ProjectCreationWizardProps {
 const steps = ['Project Details', 'Select Template', 'Configure Milestones', 'Review'];
 
 const templateIcons: { [key: string]: React.ReactElement } = {
-  'BuildCircle': <BuildCircleIcon sx={{ fontSize: 48, color: '#FF6600' }} />,
-  'Business': <BusinessIcon sx={{ fontSize: 48, color: '#FF6600' }} />,
-  'Computer': <ComputerIcon sx={{ fontSize: 48, color: '#FF6600' }} />,
-  'Build': <BuildIcon sx={{ fontSize: 48, color: '#FF6600' }} />,
-  'AddCircle': <AddCircleIcon sx={{ fontSize: 48, color: '#FF6600' }} />,
+  'BuildCircle': <BuildCircleIcon sx={{ fontSize: 48, color: PRIMARY_ORANGE }} />,
+  'Business': <BusinessIcon sx={{ fontSize: 48, color: PRIMARY_ORANGE }} />,
+  'Computer': <ComputerIcon sx={{ fontSize: 48, color: PRIMARY_ORANGE }} />,
+  'Build': <BuildIcon sx={{ fontSize: 48, color: PRIMARY_ORANGE }} />,
+  'AddCircle': <AddCircleIcon sx={{ fontSize: 48, color: PRIMARY_ORANGE }} />,
 };
 
 export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
@@ -200,14 +201,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                 name="name"
                 value={projectData.name}
                 onChange={handleProjectDataChange}
-                sx={{
-                  '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                    borderColor: '#FF6600',
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#FF6600',
-                  },
-                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -219,14 +212,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                 name="description"
                 value={projectData.description}
                 onChange={handleProjectDataChange}
-                sx={{
-                  '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                    borderColor: '#FF6600',
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#FF6600',
-                  },
-                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -239,14 +224,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                 value={projectData.start_date}
                 onChange={handleProjectDataChange}
                 InputLabelProps={{ shrink: true }}
-                sx={{
-                  '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                    borderColor: '#FF6600',
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#FF6600',
-                  },
-                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -266,14 +243,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                     ? 'Milestones will be scaled to fit within this timeline'
                     : 'Leave empty for flexible timeline'
                 }
-                sx={{
-                  '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                    borderColor: '#FF6600',
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#FF6600',
-                  },
-                }}
               />
             </Grid>
             <Grid item xs={12} sm={6}>
@@ -284,14 +253,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                 name="priority"
                 value={projectData.priority}
                 onChange={handleProjectDataChange}
-                sx={{
-                  '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                    borderColor: '#FF6600',
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#FF6600',
-                  },
-                }}
               >
                 <MenuItem value="low">Low</MenuItem>
                 <MenuItem value="medium">Medium</MenuItem>
@@ -307,14 +268,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                 type="number"
                 value={projectData.budget}
                 onChange={handleProjectDataChange}
-                sx={{
-                  '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                    borderColor: '#FF6600',
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#FF6600',
-                  },
-                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -324,14 +277,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                 name="project_manager"
                 value={projectData.project_manager}
                 onChange={handleProjectDataChange}
-                sx={{
-                  '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                    borderColor: '#FF6600',
-                  },
-                  '& .MuiInputLabel-root.Mui-focused': {
-                    color: '#FF6600',
-                  },
-                }}
               />
             </Grid>
           </Grid>
@@ -340,7 +285,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
       case 1:
         return (
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ color: '#0066A1', mb: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ color: 'secondary.main', mb: 3 }}>
               Choose a project template to get started with pre-configured milestones
             </Typography>
             <Grid container spacing={2}>
@@ -349,7 +294,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                   <Card
                     sx={{
                       height: '100%',
-                      border: selectedTemplate?.id === template.id ? '2px solid #FF6600' : '1px solid #e0e0e0',
+                      border: selectedTemplate?.id === template.id ? `2px solid ${PRIMARY_ORANGE}` : '1px solid #e0e0e0',
                       backgroundColor: selectedTemplate?.id === template.id ? 'rgba(255, 102, 0, 0.05)' : 'white',
                       transition: 'all 0.2s',
                       '&:hover': {
@@ -363,7 +308,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                         <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
                           {templateIcons[template.icon]}
                         </Box>
-                        <Typography variant="h6" gutterBottom align="center" sx={{ color: '#0066A1' }}>
+                        <Typography variant="h6" gutterBottom align="center" sx={{ color: 'secondary.main' }}>
                           {template.name}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
@@ -373,7 +318,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                           label={`${template.milestones.length} milestones`}
                           size="small"
                           sx={{
-                            backgroundColor: '#0066A1',
+                            backgroundColor: 'secondary.main',
                             color: 'white',
                             display: 'block',
                             width: 'fit-content',
@@ -393,17 +338,14 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
         return (
           <Box>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-              <Typography variant="h6" sx={{ color: '#0066A1' }}>
+              <Typography variant="h6" sx={{ color: 'secondary.main' }}>
                 Configure Project Milestones
               </Typography>
               <Button
+                variant="contained"
+                color="primary"
                 startIcon={<AddIcon />}
                 onClick={handleAddMilestone}
-                sx={{
-                  backgroundColor: '#FF6600',
-                  color: 'white',
-                  '&:hover': { backgroundColor: '#e65c00' }
-                }}
               >
                 Add Milestone
               </Button>
@@ -436,14 +378,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                           label="Milestone Name"
                           value={milestone.name}
                           onChange={(e) => handleMilestoneChange(index, 'name', e.target.value)}
-                          sx={{
-                            '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                              borderColor: '#FF6600',
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#FF6600',
-                            },
-                          }}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>
@@ -456,14 +390,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                           value={milestone.due_date}
                           onChange={(e) => handleMilestoneChange(index, 'due_date', e.target.value)}
                           InputLabelProps={{ shrink: true }}
-                          sx={{
-                            '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                              borderColor: '#FF6600',
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#FF6600',
-                            },
-                          }}
                         />
                       </Grid>
                       <Grid item xs={12}>
@@ -475,14 +401,6 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                           label="Description"
                           value={milestone.description}
                           onChange={(e) => handleMilestoneChange(index, 'description', e.target.value)}
-                          sx={{
-                            '& .MuiOutlinedInput-root.Mui-focused fieldset': {
-                              borderColor: '#FF6600',
-                            },
-                            '& .MuiInputLabel-root.Mui-focused': {
-                              color: '#FF6600',
-                            },
-                          }}
                         />
                       </Grid>
                     </Grid>
@@ -505,12 +423,12 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
       case 3:
         return (
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ color: '#0066A1', mb: 3 }}>
+            <Typography variant="h6" gutterBottom sx={{ color: 'secondary.main', mb: 3 }}>
               Review Your Project
             </Typography>
             
             <Card sx={{ mb: 3, p: 3 }}>
-              <Typography variant="subtitle1" sx={{ color: '#FF6600', fontWeight: 'bold', mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ color: PRIMARY_ORANGE, fontWeight: 'bold', mb: 2 }}>
                 Project Details
               </Typography>
               <Grid container spacing={2}>
@@ -542,7 +460,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
             </Card>
 
             <Card sx={{ p: 3 }}>
-              <Typography variant="subtitle1" sx={{ color: '#FF6600', fontWeight: 'bold', mb: 2 }}>
+              <Typography variant="subtitle1" sx={{ color: PRIMARY_ORANGE, fontWeight: 'bold', mb: 2 }}>
                 Milestones ({milestones.length})
               </Typography>
               {milestones.length === 0 ? (
@@ -553,7 +471,7 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
                     <ListItem key={index} sx={{ borderBottom: '1px solid #e0e0e0' }}>
                       <ListItemText
                         primary={
-                          <Typography sx={{ fontWeight: 'bold', color: '#0066A1' }}>
+                          <Typography sx={{ fontWeight: 'bold', color: 'secondary.main' }}>
                             {index + 1}. {milestone.name}
                           </Typography>
                         }
@@ -594,10 +512,10 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
         }
       }}
     >
-      <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '12px 12px 0 0' }}>
+      <DialogTitle sx={{ backgroundColor: 'secondary.main', color: 'white', borderRadius: '12px 12px 0 0' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Box sx={{ display: 'flex', alignItems: 'center' }}>
-            <BusinessIcon sx={{ mr: 1, color: '#FF6600' }} />
+            <BusinessIcon sx={{ mr: 1, color: PRIMARY_ORANGE }} />
             <Typography variant="h6" sx={{ color: 'white' }}>
               Create New Project
             </Typography>
@@ -615,17 +533,17 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
               <StepLabel
                 sx={{
                   '& .MuiStepLabel-label.Mui-active': {
-                    color: '#FF6600',
+                    color: PRIMARY_ORANGE,
                     fontWeight: 'bold'
                   },
                   '& .MuiStepLabel-label.Mui-completed': {
-                    color: '#0066A1'
+                    color: 'secondary.main'
                   },
                   '& .MuiStepIcon-root.Mui-active': {
-                    color: '#FF6600'
+                    color: PRIMARY_ORANGE
                   },
                   '& .MuiStepIcon-root.Mui-completed': {
-                    color: '#0066A1'
+                    color: 'secondary.main'
                   }
                 }}
               >
@@ -648,19 +566,16 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
         <Button
           disabled={activeStep === 0}
           onClick={handleBack}
-          sx={{ color: '#0066A1' }}
+          sx={{ color: 'secondary.main' }}
         >
           Back
         </Button>
         {activeStep === steps.length - 1 ? (
           <Button
             variant="contained"
+            color="primary"
             onClick={handleSubmit}
             disabled={loading}
-            sx={{
-              backgroundColor: '#FF6600',
-              '&:hover': { backgroundColor: '#e65c00' }
-            }}
           >
             {loading ? (
               <>
@@ -674,12 +589,9 @@ export const ProjectCreationWizard: React.FC<ProjectCreationWizardProps> = ({
         ) : (
           <Button
             variant="contained"
+            color="primary"
             onClick={handleNext}
             disabled={!isStepValid(activeStep)}
-            sx={{
-              backgroundColor: '#FF6600',
-              '&:hover': { backgroundColor: '#e65c00' }
-            }}
           >
             Next
           </Button>

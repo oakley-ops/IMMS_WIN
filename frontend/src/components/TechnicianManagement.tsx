@@ -41,6 +41,7 @@ import {
   Cancel as CancelIcon
 } from '@mui/icons-material';
 import axiosInstance from '../utils/axios';
+import { PRIMARY_ORANGE } from '../theme';
 
 interface Technician {
   technician_id: number;
@@ -190,8 +191,8 @@ const TechnicianManagement: React.FC = () => {
       <Box sx={{ mb: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Box display="flex" alignItems="center">
-            <BuildIcon sx={{ mr: 2, color: '#FF6200', fontSize: 32 }} />
-            <Typography variant="h4" sx={{ color: '#0066A1', fontWeight: 'bold' }}>
+            <BuildIcon sx={{ mr: 2, color: PRIMARY_ORANGE, fontSize: 32 }} />
+            <Typography variant="h4" sx={{ color: 'secondary.main', fontWeight: 'bold' }}>
               Technician Management
             </Typography>
           </Box>
@@ -199,10 +200,7 @@ const TechnicianManagement: React.FC = () => {
             startIcon={<AddIcon />}
             onClick={() => handleOpenDialog()}
             variant="contained"
-            sx={{ 
-              backgroundColor: '#FF6200', 
-              '&:hover': { backgroundColor: '#e55a00' }
-            }}
+            color="primary"
           >
             Add New Technician
           </Button>
@@ -303,7 +301,7 @@ const TechnicianManagement: React.FC = () => {
 
       {/* Active Technicians Table */}
       <Paper sx={{ mb: 4 }}>
-        <Box sx={{ p: 3, backgroundColor: '#0066A1', color: 'white' }}>
+        <Box sx={{ p: 3, backgroundColor: 'secondary.main', color: 'white' }}>
           <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
             <CheckCircleIcon sx={{ mr: 1 }} />
             Active Technicians ({activeTechnicians.length})
@@ -334,7 +332,7 @@ const TechnicianManagement: React.FC = () => {
                   <TableRow key={technician.technician_id} hover>
                     <TableCell>
                       <Box display="flex" alignItems="center">
-                        <PersonIcon sx={{ mr: 1, color: '#0066A1' }} />
+                        <PersonIcon sx={{ mr: 1, color: 'secondary.main' }} />
                         {technician.name}
                       </Box>
                     </TableCell>
