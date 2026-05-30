@@ -52,6 +52,8 @@ const PurchaseOrderList: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState('');
+  // Server-reported total for the current filter (may exceed the rows loaded)
+  const [totalCount, setTotalCount] = useState<number>(0);
   const [exportLoading, setExportLoading] = useState(false);
   // Add state for document dialog
   const [documentDialogOpen, setDocumentDialogOpen] = useState<boolean>(false);
@@ -95,6 +97,7 @@ const PurchaseOrderList: React.FC = () => {
       
       setPurchaseOrders(orders);
       setFilteredOrders(orders);
+      setTotalCount(response.data?.total ?? orders.length);
     } catch (error: any) {
       console.error('Error fetching purchase orders:', error);
       // More detailed error information
@@ -135,6 +138,7 @@ const PurchaseOrderList: React.FC = () => {
           
           setPurchaseOrders(orders);
           setFilteredOrders(orders);
+          setTotalCount(response.data?.total ?? orders.length);
         } catch (error: any) {
           console.error('Error searching purchase orders:', error);
           setError('Failed to search purchase orders');
@@ -183,6 +187,7 @@ const PurchaseOrderList: React.FC = () => {
         
         setPurchaseOrders(orders);
         setFilteredOrders(orders);
+        setTotalCount(response.data?.total ?? orders.length);
       } catch (error) {
         console.error('Error refreshing purchase orders list:', error);
       } finally {
@@ -642,8 +647,8 @@ const PurchaseOrderList: React.FC = () => {
                   backgroundColor: 'rgba(255, 102, 0, 0.04)'
                 }}
               />
-              <Chip 
-                label={`${purchaseOrders.length} total orders`} 
+              <Chip
+                label={`${totalCount} total orders`}
                 color="primary" 
                 sx={{ 
                   backgroundColor: PRIMARY_ORANGE,
@@ -693,7 +698,7 @@ const PurchaseOrderList: React.FC = () => {
             backgroundColor: 'white'
           }}
         >
-          <Box sx={{ width: '100%', height: 650 }}>
+          <Box sx={{ width: '100%' }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
                 <CircularProgress sx={{ color: PRIMARY_ORANGE }} />

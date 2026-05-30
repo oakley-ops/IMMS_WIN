@@ -1094,7 +1094,7 @@ const PurchaseOrderDetail: React.FC = () => {
         };
       }
       
-      await purchaseOrdersApi.addPartToPO(parseInt(id), partData);
+      await purchaseOrdersApi.addItemToPO(parseInt(id), partData);
       
       // Refresh purchase order data
       await fetchPurchaseOrder();
@@ -1324,6 +1324,16 @@ const PurchaseOrderDetail: React.FC = () => {
   if (!purchaseOrder) {
     return <Alert severity="warning">Purchase order not found</Alert>;
   }
+
+  // Order total breakdown. Subtotal is the sum of line items; the grand total
+  // folds in shipping and tax (which the stored total_amount does not).
+  const itemsSubtotal = (purchaseOrder.items ?? []).reduce((sum, it) => {
+    const line = typeof it.total_price === 'number'
+      ? it.total_price
+      : (Number(it.quantity) || 0) * (Number(it.unit_price) || 0);
+    return sum + (Number.isFinite(line) ? line : 0);
+  }, 0);
+  const grandTotal = itemsSubtotal + (Number(shippingCost) || 0) + (Number(taxAmount) || 0);
 
   return (
     <Box mb={4}>
@@ -1626,15 +1636,24 @@ const PurchaseOrderDetail: React.FC = () => {
                   </Typography>
                 </Box>
                 
-                <Box sx={{ display: 'flex', mb: 2 }}>
-                  <Typography variant="body2" fontWeight="bold" sx={{ minWidth: 150 }}>
-                    Total Amount:
-                  </Typography>
-                  <Typography variant="body2">
-                    ${typeof purchaseOrder.total_amount === 'number' ? 
-                      purchaseOrder.total_amount.toFixed(2) : 
-                      parseFloat(purchaseOrder.total_amount || '0').toFixed(2)}
-                  </Typography>
+                <Box sx={{ mb: 2, maxWidth: 320 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2">Subtotal:</Typography>
+                    <Typography variant="body2">${itemsSubtotal.toFixed(2)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2">Shipping:</Typography>
+                    <Typography variant="body2">${(Number(shippingCost) || 0).toFixed(2)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                    <Typography variant="body2">Tax:</Typography>
+                    <Typography variant="body2">${(Number(taxAmount) || 0).toFixed(2)}</Typography>
+                  </Box>
+                  <Divider sx={{ my: 1 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography variant="body1" fontWeight="bold">Grand Total:</Typography>
+                    <Typography variant="body1" fontWeight="bold">${grandTotal.toFixed(2)}</Typography>
+                  </Box>
                 </Box>
 
                 <Divider sx={{ my: 2 }} />
