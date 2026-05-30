@@ -25,6 +25,14 @@ interface DataTableProps<T extends { id: number | string }> {
   toolbar?: React.ReactNode;
   emptyMessage?: string;
   pagination?: boolean;
+  // Server-side mode: the parent owns filtering/sorting/pagination. The rows
+  // passed in are already the current page; DataTable only emits intent.
+  serverMode?: boolean;
+  rowCount?: number;
+  page?: number;
+  onPageChange?: (page: number) => void;
+  onSearchChange?: (search: string) => void;
+  onSortChange?: (key: keyof T, dir: SortDir) => void;
 }
 
 type SortDir = 'asc' | 'desc';
@@ -39,48 +47,63 @@ export default function DataTable<T extends { id: number | string }>({
   toolbar,
   emptyMessage = 'No results found.',
   pagination = true,
+  serverMode = false,
+  rowCount,
+  page: pageProp,
+  onPageChange,
+  onSearchChange,
+  onSortChange,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<keyof T | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('asc');
-  const [page, setPage] = useState(1);
+  const [internalPage, setInternalPage] = useState(1);
+
+  const page = pageProp ?? internalPage;
 
   const filtered = useMemo(() => {
-    if (!search) return rows;
+    if (serverMode || !search) return rows;
     const q = search.toLowerCase();
     return rows.filter((row) =>
       Object.values(row as object).some((v) =>
         String(v ?? '').toLowerCase().includes(q)
       )
     );
-  }, [rows, search]);
+  }, [rows, search, serverMode]);
 
   const sorted = useMemo(() => {
-    if (!sortKey) return filtered;
+    if (serverMode || !sortKey) return filtered;
     return [...filtered].sort((a, b) => {
       const av = a[sortKey];
       const bv = b[sortKey];
       const cmp = String(av ?? '').localeCompare(String(bv ?? ''), undefined, { numeric: true });
       return sortDir === 'asc' ? cmp : -cmp;
     });
-  }, [filtered, sortKey, sortDir]);
+  }, [filtered, sortKey, sortDir, serverMode]);
 
-  const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-  const paged = pagination ? sorted.slice((page - 1) * pageSize, page * pageSize) : sorted;
+  // In server mode the rows passed in are already the current page; total count
+  // comes from the server. Client mode counts the in-memory rows.
+  const totalCount = serverMode ? (rowCount ?? sorted.length) : sorted.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const paged = serverMode || !pagination ? sorted : sorted.slice((page - 1) * pageSize, page * pageSize);
+
+  const setPage = (next: number) => {
+    if (pageProp === undefined) setInternalPage(next);
+    onPageChange?.(next);
+  };
 
   const handleSort = (key: keyof T) => {
-    if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
-    } else {
-      setSortKey(key);
-      setSortDir('asc');
-    }
+    const nextDir: SortDir = sortKey === key && sortDir === 'asc' ? 'desc' : 'asc';
+    setSortKey(key);
+    setSortDir(nextDir);
     setPage(1);
+    if (serverMode) onSortChange?.(key, nextDir);
   };
 
   const handleSearch = (v: string) => {
     setSearch(v);
     setPage(1);
+    if (serverMode) onSearchChange?.(v);
   };
 
   return (
@@ -181,7 +204,7 @@ export default function DataTable<T extends { id: number | string }>({
         </Table>
       </TableContainer>
 
-      {pagination && sorted.length > pageSize && (
+      {pagination && totalCount > pageSize && (
         <Box
           sx={{
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -189,7 +212,7 @@ export default function DataTable<T extends { id: number | string }>({
           }}
         >
           <Typography variant="caption" color="text.secondary">
-            {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, sorted.length)} of {sorted.length}
+            {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalCount)} of {totalCount}
           </Typography>
           <Pagination
             count={totalPages}

@@ -85,4 +85,66 @@ describe('DataTable', () => {
     expect(screen.getAllByTestId('status')[0]).toHaveTextContent('OK');
     expect(screen.getAllByTestId('status')[1]).toHaveTextContent('Low');
   });
+
+  describe('server mode', () => {
+    test('does not filter rows client-side; emits onSearchChange', () => {
+      const onSearchChange = jest.fn();
+      render(
+        <DataTable
+          columns={columns}
+          rows={rows}
+          serverMode
+          searchable
+          searchPlaceholder="Search..."
+          onSearchChange={onSearchChange}
+        />
+      );
+      const input = screen.getByPlaceholderText('Search...');
+      fireEvent.change(input, { target: { value: 'Gear' } });
+      // Rows stay as-is — the server owns filtering
+      expect(screen.getByText('Bearing')).toBeInTheDocument();
+      expect(onSearchChange).toHaveBeenCalledWith('Gear');
+    });
+
+    test('does not sort rows client-side; emits onSortChange', () => {
+      const onSortChange = jest.fn();
+      render(
+        <DataTable columns={columns} rows={rows} serverMode onSortChange={onSortChange} />
+      );
+      fireEvent.click(screen.getByText('Name'));
+      expect(onSortChange).toHaveBeenCalledWith('name', 'asc');
+      // Order is unchanged — server returns sorted rows
+      const cells = screen.getAllByRole('cell').filter(c => ['Bearing','Gasket','Shaft'].includes(c.textContent ?? ''));
+      expect(cells[0].textContent).toBe('Bearing');
+    });
+
+    test('derives pagination from rowCount and emits onPageChange', () => {
+      const onPageChange = jest.fn();
+      render(
+        <DataTable
+          columns={columns}
+          rows={rows}
+          serverMode
+          rowCount={50}
+          pageSize={10}
+          page={1}
+          onPageChange={onPageChange}
+        />
+      );
+      // 50 rows / 10 per page = 5 pages
+      expect(screen.getByText('1–10 of 50')).toBeInTheDocument();
+      fireEvent.click(screen.getByLabelText('Go to page 3'));
+      expect(onPageChange).toHaveBeenCalledWith(3);
+    });
+
+    test('renders all passed rows in server mode regardless of pageSize', () => {
+      render(
+        <DataTable columns={columns} rows={rows} serverMode rowCount={100} pageSize={2} page={1} />
+      );
+      // Server already paged; DataTable must not slice further
+      expect(screen.getByText('Bearing')).toBeInTheDocument();
+      expect(screen.getByText('Gasket')).toBeInTheDocument();
+      expect(screen.getByText('Shaft')).toBeInTheDocument();
+    });
+  });
 });
