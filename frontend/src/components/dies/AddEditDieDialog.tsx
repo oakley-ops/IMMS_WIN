@@ -1,12 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Grid,
+  CircularProgress,
+  Alert,
+  Typography,
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+} from '@mui/material';
 import axios from 'axios';
-import '../../styles/Dialog.css';
 
 const API_URL = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/v1`
   : 'http://localhost:4000/api/v1';
-const IMMS_BLUE = '#0066A1';
-const IMMS_ORANGE = '#FF6600';
 
 interface Machine {
   machine_id: number;
@@ -133,129 +150,131 @@ const AddEditDieDialog: React.FC<AddEditDieDialogProps> = ({
     }
   };
 
-  if (!open) return null;
-
   return (
-    <div className="modal">
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content custom-dialog">
-          <div className="dialog-header" style={{ backgroundColor: IMMS_BLUE }}>
-            <h5 className="dialog-title">{die ? 'Edit Die' : 'Add New Die'}</h5>
-          </div>
-          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-            <div className="dialog-content">
-              {error && (
-                <div className="alert alert-danger mb-4" role="alert">
-                  {error}
-                </div>
-              )}
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{die ? 'Edit Die' : 'Add New Die'}</DialogTitle>
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+        <DialogContent sx={{ pt: 2 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-              <div className="grid-container grid-2-cols">
-                <div className="form-group">
-                  <label className="form-label">Die Number *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={formData.die_number}
-                    onChange={(e) => handleChange('die_number', e.target.value)}
-                    placeholder="e.g., 100, 201, 305"
-                    required
-                  />
-                </div>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Die Number *"
+                size="small"
+                value={formData.die_number}
+                onChange={(e) => handleChange('die_number', e.target.value)}
+                placeholder="e.g., 100, 201, 305"
+                required
+              />
+            </Grid>
 
-                <div className="form-group">
-                  <label className="form-label">Die Type *</label>
-                  <select
-                    className="form-select"
-                    value={formData.die_type}
-                    onChange={(e) => handleChange('die_type', e.target.value)}
-                    required
+            <Grid item xs={12} sm={6}>
+              <FormControl fullWidth size="small" required>
+                <InputLabel>Die Type *</InputLabel>
+                <Select
+                  value={formData.die_type}
+                  label="Die Type *"
+                  onChange={(e) => handleChange('die_type', e.target.value)}
+                >
+                  <MenuItem value="">Select Type</MenuItem>
+                  <MenuItem value="4 up die">4 up die</MenuItem>
+                  <MenuItem value="8 up die">8 up die</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {die && (
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Status</InputLabel>
+                  <Select
+                    value={formData.status}
+                    label="Status"
+                    onChange={(e) => handleChange('status', e.target.value)}
                   >
-                    <option value="">Select Type</option>
-                    <option value="4 up die">4 up die</option>
-                    <option value="8 up die">8 up die</option>
-                  </select>
-                </div>
+                    <MenuItem value="SHARP">Sharp</MenuItem>
+                    <MenuItem value="USED">Used</MenuItem>
+                    <MenuItem value="OUT_FOR_SHARPENING">Sent Out for Sharpening</MenuItem>
+                    <MenuItem value="IN_MACHINE">In Machine</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
-                {die && (
-                  <div className="form-group">
-                    <label className="form-label">Status</label>
-                    <select
-                      className="form-select"
-                      value={formData.status}
-                      onChange={(e) => handleChange('status', e.target.value)}
-                    >
-                      <option value="SHARP">Sharp</option>
-                      <option value="USED">Used</option>
-                      <option value="OUT_FOR_SHARPENING">Sent Out for Sharpening</option>
-                      <option value="IN_MACHINE">In Machine</option>
-                    </select>
-                  </div>
-                )}
-              </div>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label="Notes"
+                size="small"
+                multiline
+                rows={3}
+                value={formData.notes}
+                onChange={(e) => handleChange('notes', e.target.value)}
+                placeholder="Additional notes about this die..."
+              />
+            </Grid>
 
-              <div className="form-group">
-                <label className="form-label">Notes</label>
-                <textarea
-                  className="form-control"
-                  rows={3}
-                  value={formData.notes}
-                  onChange={(e) => handleChange('notes', e.target.value)}
-                  placeholder="Additional notes about this die..."
-                />
-              </div>
-
-              {machines.length > 0 && (
-                <div className="form-group">
-                  <label className="form-label">Compatible Machines</label>
-                  <p className="text-muted small mb-2">
-                    Select which machines this die can be installed in. Leave empty if compatible with all.
-                  </p>
-                  <div className="border rounded p-2" style={{ maxHeight: '150px', overflowY: 'auto' }}>
+            {machines.length > 0 && (
+              <Grid item xs={12}>
+                <Typography variant="body2" sx={{ mb: 0.5, fontWeight: 500 }}>
+                  Compatible Machines
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                  Select which machines this die can be installed in. Leave empty if compatible with all.
+                </Typography>
+                <Box
+                  sx={{
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 1,
+                    p: 1,
+                    maxHeight: 150,
+                    overflowY: 'auto',
+                  }}
+                >
+                  <FormGroup>
                     {machines.map((machine) => (
-                      <div key={machine.machine_id} className="form-check">
-                        <input
-                          type="checkbox"
-                          className="form-check-input"
-                          id={`machine-${machine.machine_id}`}
-                          checked={formData.compatible_machine_ids?.includes(machine.machine_id) || false}
-                          onChange={() => handleMachineToggle(machine.machine_id)}
-                        />
-                        <label className="form-check-label" htmlFor={`machine-${machine.machine_id}`}>
-                          {machine.name}
-                        </label>
-                      </div>
+                      <FormControlLabel
+                        key={machine.machine_id}
+                        control={
+                          <Checkbox
+                            size="small"
+                            checked={formData.compatible_machine_ids?.includes(machine.machine_id) || false}
+                            onChange={() => handleMachineToggle(machine.machine_id)}
+                          />
+                        }
+                        label={machine.name}
+                      />
                     ))}
-                  </div>
-                </div>
-              )}
-            </div>
+                  </FormGroup>
+                </Box>
+              </Grid>
+            )}
+          </Grid>
+        </DialogContent>
 
-            <div className="dialog-footer">
-              <div className="d-flex justify-content-end gap-2">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={onClose}
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                  ) : die ? 'Update Die' : 'Add Die'}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+        <DialogActions>
+          <Button onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={18} /> : undefined}
+          >
+            {die ? 'Update Die' : 'Add Die'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 

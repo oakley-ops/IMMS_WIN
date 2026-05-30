@@ -1,11 +1,26 @@
 import React, { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  TextField,
+  Grid,
+  CircularProgress,
+  Alert,
+  Typography,
+  Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from '@mui/material';
 import axios from 'axios';
-import '../../styles/Dialog.css';
 
 const API_URL = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/v1`
   : 'http://localhost:4000/api/v1';
-const IMMS_BLUE = '#0066A1';
 
 interface DieChangeDialogProps {
   open: boolean;
@@ -170,220 +185,211 @@ const DieChangeDialog: React.FC<DieChangeDialogProps> = ({
 
   const reasonCodes = ALL_REASON_CODES;
 
-  if (!open) return null;
-
   return (
-    <div className="modal">
-      <div className="modal-dialog modal-dialog-centered">
-        <div className="modal-content custom-dialog">
-          <div className="dialog-header" style={{ backgroundColor: IMMS_BLUE }}>
-            <h5 className="dialog-title">
-              {action === 'install' ? 'Install Die in Machine' : 'Remove Die from Machine'}
-            </h5>
-          </div>
-          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
-            <div className="dialog-content">
-              {error && (
-                <div className="alert alert-danger mb-4" role="alert">
-                  {error}
-                </div>
-              )}
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        {action === 'install' ? 'Install Die in Machine' : 'Remove Die from Machine'}
+      </DialogTitle>
+      <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
+        <DialogContent sx={{ pt: 2 }}>
+          {error && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
 
-              <div className="info-panel" style={{ marginBottom: '1.5rem' }}>
-                <p className="info-text" style={{ margin: 0 }}>
-                  Die: <strong>{die?.die_number}</strong> ({die?.die_type})
-                </p>
-              </div>
+          <Box sx={{ mb: 2, p: 1.5, bgcolor: 'action.hover', borderRadius: 1 }}>
+            <Typography variant="body2">
+              Die: <strong>{die?.die_number}</strong> ({die?.die_type})
+            </Typography>
+          </Box>
 
-              {action === 'install' && (
-                <div className="form-group">
-                  <label className="form-label">Select Machine *</label>
-                  <select
-                    className="form-select"
+          <Grid container spacing={2}>
+            {action === 'install' && (
+              <Grid item xs={12}>
+                <FormControl fullWidth size="small" required>
+                  <InputLabel>Select Machine *</InputLabel>
+                  <Select
                     value={formData.machine_id}
+                    label="Select Machine *"
                     onChange={(e) => handleChange('machine_id', e.target.value)}
                     required
                   >
-                    <option value="">Select a machine...</option>
+                    <MenuItem value="">Select a machine...</MenuItem>
                     {machines.map((machine) => (
-                      <option key={machine.machine_id} value={machine.machine_id}>
+                      <MenuItem key={machine.machine_id} value={machine.machine_id}>
                         {machine.name} - {machine.location || 'No location'}
-                      </option>
+                      </MenuItem>
                     ))}
-                  </select>
-                </div>
-              )}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
 
-              <div className="form-group">
-                <label className="form-label">Reason for Change *</label>
-                <select
-                  className="form-select"
+            <Grid item xs={12}>
+              <FormControl fullWidth size="small" required>
+                <InputLabel>Reason for Change *</InputLabel>
+                <Select
                   value={formData.change_reason_code}
+                  label="Reason for Change *"
                   onChange={(e) => handleChange('change_reason_code', e.target.value)}
                   required
                 >
-                  <option value="">Select a reason...</option>
+                  <MenuItem value="">Select a reason...</MenuItem>
                   {reasonCodes.map((reason: { value: string; label: string }) => (
-                    <option key={reason.value} value={reason.value}>
+                    <MenuItem key={reason.value} value={reason.value}>
                       {reason.label}
-                    </option>
+                    </MenuItem>
                   ))}
-                </select>
-              </div>
+                </Select>
+              </FormControl>
+            </Grid>
 
-              <div className="form-group">
-                <label className="form-label">Technician or Operator</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={formData.technician_name}
-                  onChange={(e) => handleChange('technician_name', e.target.value)}
-                  list="technicians-list"
-                  placeholder="Enter or select technician name"
-                />
-                <datalist id="technicians-list">
-                  {technicians.map((tech) => (
-                    <option key={tech.technician_id} value={tech.name} />
-                  ))}
-                </datalist>
-              </div>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                size="small"
+                label="Technician or Operator"
+                value={formData.technician_name}
+                onChange={(e) => handleChange('technician_name', e.target.value)}
+                inputProps={{ list: 'technicians-list' }}
+                placeholder="Enter or select technician name"
+              />
+              <datalist id="technicians-list">
+                {technicians.map((tech) => (
+                  <option key={tech.technician_id} value={tech.name} />
+                ))}
+              </datalist>
+            </Grid>
 
-              {action === 'install' && (
-                <div className="grid-container grid-2-cols">
-                  <div className="form-group">
-                    <label className="form-label">Expected Runtime (hours)</label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      value={formData.expected_runtime_hours}
-                      onChange={(e) => handleChange('expected_runtime_hours', e.target.value)}
-                      placeholder="0"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Expected Cycles</label>
-                    <input
-                      type="number"
-                      className="form-control"
-                      value={formData.expected_cycles}
-                      onChange={(e) => handleChange('expected_cycles', e.target.value)}
-                      placeholder="0"
-                    />
-                  </div>
-                </div>
-              )}
+            {action === 'install' && (
+              <>
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Expected Runtime (hours)"
+                    value={formData.expected_runtime_hours}
+                    onChange={(e) => handleChange('expected_runtime_hours', e.target.value)}
+                    placeholder="0"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Expected Cycles"
+                    value={formData.expected_cycles}
+                    onChange={(e) => handleChange('expected_cycles', e.target.value)}
+                    placeholder="0"
+                  />
+                </Grid>
+              </>
+            )}
 
-              {action === 'remove' && (
-                <>
-                  <div className="grid-container grid-2-cols">
-                    <div className="form-group">
-                      <label className="form-label">Actual Runtime (hours)</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        value={formData.actual_runtime_hours}
-                        onChange={(e) => handleChange('actual_runtime_hours', e.target.value)}
-                        placeholder="0"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Actual Cycles</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        value={formData.actual_cycles}
-                        onChange={(e) => handleChange('actual_cycles', e.target.value)}
-                        placeholder="0"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Total Cycles at Removal</label>
-                      <input
-                        type="number"
-                        className="form-control"
-                        value={formData.cycles_at_removal}
-                        onChange={(e) => handleChange('cycles_at_removal', e.target.value)}
-                        placeholder="0"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Die Condition</label>
-                      <select
-                        className="form-select"
-                        value={formData.die_condition}
-                        onChange={(e) => handleChange('die_condition', e.target.value)}
-                      >
-                        <option value="">Select condition...</option>
-                        <option value="GOOD">Good</option>
-                        <option value="FAIR">Fair</option>
-                        <option value="POOR">Poor</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Next Status</label>
-                    <select
-                      className="form-select"
+            {action === 'remove' && (
+              <>
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Actual Runtime (hours)"
+                    value={formData.actual_runtime_hours}
+                    onChange={(e) => handleChange('actual_runtime_hours', e.target.value)}
+                    placeholder="0"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Actual Cycles"
+                    value={formData.actual_cycles}
+                    onChange={(e) => handleChange('actual_cycles', e.target.value)}
+                    placeholder="0"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <TextField
+                    fullWidth
+                    size="small"
+                    type="number"
+                    label="Total Cycles at Removal"
+                    value={formData.cycles_at_removal}
+                    onChange={(e) => handleChange('cycles_at_removal', e.target.value)}
+                    placeholder="0"
+                  />
+                </Grid>
+                <Grid item xs={6}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Die Condition</InputLabel>
+                    <Select
+                      value={formData.die_condition}
+                      label="Die Condition"
+                      onChange={(e) => handleChange('die_condition', e.target.value)}
+                    >
+                      <MenuItem value="">Select condition...</MenuItem>
+                      <MenuItem value="GOOD">Good</MenuItem>
+                      <MenuItem value="FAIR">Fair</MenuItem>
+                      <MenuItem value="POOR">Poor</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12}>
+                  <FormControl fullWidth size="small">
+                    <InputLabel>Next Status</InputLabel>
+                    <Select
                       value={formData.next_status}
+                      label="Next Status"
                       onChange={(e) => handleChange('next_status', e.target.value)}
                     >
-                      <option value="">Auto (Based on Condition)</option>
-                      <option value="SHARP">Sharp</option>
-                      <option value="USED">Used</option>
-                    </select>
-                    <small className="info-text" style={{ display: 'block', marginTop: '0.25rem' }}>
-                      Leave blank for automatic status based on condition
-                    </small>
-                  </div>
-                </>
-              )}
+                      <MenuItem value="">Auto (Based on Condition)</MenuItem>
+                      <MenuItem value="SHARP">Sharp</MenuItem>
+                      <MenuItem value="USED">Used</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                    Leave blank for automatic status based on condition
+                  </Typography>
+                </Grid>
+              </>
+            )}
 
-              <div className="form-group">
-                <label className="form-label">Additional Notes</label>
-                <textarea
-                  className="form-control"
-                  rows={3}
-                  value={formData.change_reason_notes}
-                  onChange={(e) => handleChange('change_reason_notes', e.target.value)}
-                  placeholder="Enter any additional notes..."
-                />
-              </div>
-            </div>
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                size="small"
+                multiline
+                rows={3}
+                label="Additional Notes"
+                value={formData.change_reason_notes}
+                onChange={(e) => handleChange('change_reason_notes', e.target.value)}
+                placeholder="Enter any additional notes..."
+              />
+            </Grid>
+          </Grid>
+        </DialogContent>
 
-            <div className="dialog-footer">
-              <div className="d-flex justify-content-end gap-2">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
-                  onClick={onClose}
-                  disabled={loading}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading}
-                  style={{
-                    background: action === 'install' 
-                      ? 'linear-gradient(135deg, #4CAF50 0%, #45A049 100%)' 
-                      : 'linear-gradient(135deg, #F44336 0%, #D32F2F 100%)',
-                  }}
-                >
-                  {loading ? (
-                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                  ) : action === 'install' ? (
-                    'Install Die'
-                  ) : (
-                    'Remove Die'
-                  )}
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+        <DialogActions>
+          <Button onClick={onClose} disabled={loading}>
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            disabled={loading}
+            startIcon={loading ? <CircularProgress size={18} /> : undefined}
+            color={action === 'install' ? 'success' : 'error'}
+          >
+            {action === 'install' ? 'Install Die' : 'Remove Die'}
+          </Button>
+        </DialogActions>
+      </form>
+    </Dialog>
   );
 };
 
