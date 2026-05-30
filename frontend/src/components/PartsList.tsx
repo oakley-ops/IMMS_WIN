@@ -1,7 +1,6 @@
 ﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { PRIMARY_ORANGE, COLOR_WARNING_BG, COLOR_WARNING_TEXT, COLOR_SUCCESS_BG, COLOR_SUCCESS_TEXT } from '../theme';
 import {
-  Container,
   Typography,
   Paper,
   Box,
@@ -1210,117 +1209,93 @@ const PartsList: React.FC = () => {
   };
 
   return (
-    <Container 
-      maxWidth="xl" 
-      sx={{ 
-        backgroundColor: '#0066A1',
-        padding: '2rem',
-        borderRadius: '1rem',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-        backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent)',
-        backgroundSize: '20px 20px'
-      }}
-    >
-      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
-        Parts Inventory
-      </Typography>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+        <Box sx={{ width: 6, height: 40, bgcolor: PRIMARY_ORANGE, borderRadius: 1 }} />
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          Parts Inventory
+        </Typography>
+      </Box>
       
       <Box sx={{ my: 2 }}>
         {/* Search and Filters */}
-        <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: '0.75rem', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
-          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'stretch', gap: 2 }}>
-            <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="caption" sx={{ color: '#6c757d', display: 'block', mb: 0.5, fontWeight: 600 }}>
-                Search Parts Inventory
-              </Typography>
-              <Box sx={{ position: 'relative' }}>
-                <TextField
-                  fullWidth
-                  size="small"
-                  placeholder="Search by name, part number, location..."
-                  value={searchTerm}
-                  onChange={handleSearch}
-                  InputProps={{
-                    endAdornment: loading && searchTerm ? (
-                      <CircularProgress size={16} sx={{ mr: 1 }} />
-                    ) : undefined,
-                  }}
-                />
-              </Box>
-            </Box>
-
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 1, minWidth: '250px' }}>
-              <Typography variant="caption" sx={{ color: '#6c757d', display: 'block', fontWeight: 600 }}>
-                Actions
-              </Typography>
-              <Button
-                variant="contained"
-                fullWidth
-                onClick={handleOpenAdd}
-                startIcon={<AddIcon />}
-                sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontWeight: 600, mb: 0.5 }}
-              >
-                Add Part
-              </Button>
-
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  sx={{ flexGrow: 1, backgroundColor: canRestockParts ? PRIMARY_ORANGE : '#6c757d', '&:hover': { backgroundColor: canRestockParts ? '#e65c00' : '#5a6268' }, fontSize: '0.85rem' }}
-                  onClick={() => canRestockParts && setOpenRestockForm(true)}
-                  disabled={!canRestockParts}
-                  title={canRestockParts ? 'Restock parts' : 'Only admin and purchasing users can restock parts'}
-                  startIcon={<AddCircleIcon sx={{ fontSize: 16 }} />}
-                >
-                  Restock
-                </Button>
-                <Button
-                  variant="contained"
-                  sx={{ flexGrow: 1, backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
-                  onClick={() => setOpenUsageDialog(true)}
-                  startIcon={<RemoveCircleIcon sx={{ fontSize: 16 }} />}
-                >
-                  Check Out
-                </Button>
-              </Box>
-
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  sx={{ flexGrow: 1, backgroundColor: '#2196f3', '&:hover': { backgroundColor: '#1976d2' }, fontSize: '0.85rem' }}
-                  onClick={() => setOpenReturnDialog(true)}
-                  startIcon={<UndoIcon sx={{ fontSize: 16 }} />}
-                >
-                  Return Parts
-                </Button>
-              </Box>
-
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant="contained"
-                  sx={{ flexGrow: 1, backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
-                  onClick={() => setImportDialogOpen(true)}
-                  startIcon={<CloudUploadIcon sx={{ fontSize: 16 }} />}
-                >
-                  Import
-                </Button>
-                <Button
-                  variant="contained"
-                  sx={{ flexGrow: 1, backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
-                  onClick={() => setExportDialogOpen(true)}
-                  startIcon={<DownloadIcon sx={{ fontSize: 16 }} />}
-                >
-                  Export
-                </Button>
-                <Button
-                  variant="contained"
-                  sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, minWidth: 'auto', px: 1 }}
-                  onClick={(e) => setColumnVisibilityMenuAnchor(e.currentTarget)}
-                >
-                  <ViewColumnIcon sx={{ fontSize: 16 }} />
-                </Button>
-              </Box>
-            </Box>
+        <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: '0.75rem', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
+            <TextField
+              size="small"
+              placeholder="Search by name, part number, location..."
+              value={searchTerm}
+              onChange={handleSearch}
+              sx={{ flexGrow: 1, minWidth: 280 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: loading && searchTerm ? (
+                  <CircularProgress size={16} sx={{ mr: 1 }} />
+                ) : undefined,
+              }}
+            />
+            <Button
+              variant="contained"
+              onClick={handleOpenAdd}
+              startIcon={<AddIcon />}
+              sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontWeight: 600 }}
+            >
+              Add Part
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => canRestockParts && setOpenRestockForm(true)}
+              disabled={!canRestockParts}
+              title={canRestockParts ? 'Restock parts' : 'Only admin and purchasing users can restock parts'}
+              startIcon={<AddCircleIcon sx={{ fontSize: 18 }} />}
+              sx={{ backgroundColor: canRestockParts ? PRIMARY_ORANGE : '#6c757d', '&:hover': { backgroundColor: canRestockParts ? '#e65c00' : '#5a6268' } }}
+            >
+              Restock
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => setOpenUsageDialog(true)}
+              startIcon={<RemoveCircleIcon sx={{ fontSize: 18 }} />}
+              sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' } }}
+            >
+              Check Out
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => setOpenReturnDialog(true)}
+              startIcon={<UndoIcon sx={{ fontSize: 18 }} />}
+              sx={{ backgroundColor: '#2196f3', '&:hover': { backgroundColor: '#1976d2' } }}
+            >
+              Return Parts
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => setImportDialogOpen(true)}
+              startIcon={<CloudUploadIcon sx={{ fontSize: 18 }} />}
+              sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' } }}
+            >
+              Import
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => setExportDialogOpen(true)}
+              startIcon={<DownloadIcon sx={{ fontSize: 18 }} />}
+              sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' } }}
+            >
+              Export
+            </Button>
+            <Button
+              variant="contained"
+              title="Show/hide columns"
+              onClick={(e) => setColumnVisibilityMenuAnchor(e.currentTarget)}
+              sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, minWidth: 'auto', px: 1 }}
+            >
+              <ViewColumnIcon sx={{ fontSize: 18 }} />
+            </Button>
           </Box>
         </Paper>
 
@@ -1454,7 +1429,7 @@ const PartsList: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { borderRadius: '0.75rem' } }}
       >
-        <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '0.75rem 0.75rem 0 0' }}>
+        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid', borderColor: 'divider' }}>
           Part Details
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
@@ -1571,7 +1546,7 @@ const PartsList: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { borderRadius: '0.75rem', maxHeight: '90vh' } }}
       >
-        <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '0.75rem 0.75rem 0 0' }}>
+        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid', borderColor: 'divider' }}>
           {isEditing ? 'Edit Part' : 'Add Part'}
         </DialogTitle>
         <form onSubmit={handleSubmit} noValidate>
@@ -2014,7 +1989,7 @@ const PartsList: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { borderRadius: '0.75rem' } }}
       >
-        <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '0.75rem 0.75rem 0 0' }}>
+        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid', borderColor: 'divider' }}>
           Export Inventory
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
@@ -2087,7 +2062,7 @@ const PartsList: React.FC = () => {
         fullWidth
         PaperProps={{ sx: { borderRadius: '0.75rem' } }}
       >
-        <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '0.75rem 0.75rem 0 0' }}>
+        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid', borderColor: 'divider' }}>
           Part Actions
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
@@ -2201,7 +2176,7 @@ const PartsList: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 

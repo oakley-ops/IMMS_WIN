@@ -232,7 +232,7 @@ const PredictiveMaintenanceReport: React.FC = () => {
                         }}
                       />
                     </TableCell>
-                    <TableCell sx={{ fontWeight: 'bold', color: '#0066A1' }}>
+                    <TableCell sx={{ fontWeight: 'bold', color: '#FF6B35' }}>
                       {die.die_number}
                     </TableCell>
                     <TableCell>{die.die_name}</TableCell>

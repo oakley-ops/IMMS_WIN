@@ -81,7 +81,7 @@ const DieShelf: React.FC<DieShelfProps> = ({
     >
       {/* Shelf Header */}
       <Box sx={{ mb: 1.5 }}>
-        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#0066A1', mb: 1 }}>
+        <Typography variant="h6" sx={{ fontWeight: 'bold', color: '#FF6B35', mb: 1 }}>
           Die Shelf - Available Dies
           {isOver && (
             <Typography component="span" sx={{ ml: 2, color: '#F44336', fontWeight: 'bold', fontSize: '0.9rem' }}>

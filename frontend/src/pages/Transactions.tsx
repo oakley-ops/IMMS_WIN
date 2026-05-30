@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { PRIMARY_ORANGE } from '../theme';
 import {
-  Container,
   Typography,
   Paper,
   Box,
@@ -51,7 +50,7 @@ const ImmsStyles = `
   }
 
   .bg-primary {
-    background-color: #0066A1 !important;
+    background-color: ${PRIMARY_ORANGE} !important;
   }
 
   .form-check-input:checked {
@@ -344,23 +343,16 @@ const Transactions = () => {
   ];
 
   return (
-    <Container 
-      maxWidth="xl" 
-      sx={{ 
-        backgroundColor: '#0066A1',
-        padding: '2rem',
-        borderRadius: '1rem',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-        backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent)',
-        backgroundSize: '20px 20px'
-      }}
-    >
+    <Box sx={{ p: 3 }}>
       {/* Apply IMMS brand styling */}
       <style>{ImmsStyles}</style>
-      
-      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
-        Parts Usage History
-      </Typography>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+        <Box sx={{ width: 6, height: 40, bgcolor: PRIMARY_ORANGE, borderRadius: 1 }} />
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          Parts Usage History
+        </Typography>
+      </Box>
       
       <Box sx={{ my: 2 }}>
         {/* Search and Filters */}
@@ -525,8 +517,8 @@ const Transactions = () => {
                 label={`Search: "${searchTerm}"`} 
                 color="primary" 
                 onDelete={() => setSearchTerm('')}
-                sx={{ 
-                  backgroundColor: '#0066A1',
+                sx={{
+                  backgroundColor: PRIMARY_ORANGE,
                   color: 'white'
                 }}
               />
@@ -540,8 +532,8 @@ const Transactions = () => {
                   setEndDate('');
                   fetchTransactions();
                 }}
-                sx={{ 
-                  backgroundColor: '#0066A1',
+                sx={{
+                  backgroundColor: PRIMARY_ORANGE,
                   color: 'white'
                 }}
               />
@@ -616,7 +608,7 @@ const Transactions = () => {
           </Paper>
         </Box>
       )}
-    </Container>
+    </Box>
   );
 };
 

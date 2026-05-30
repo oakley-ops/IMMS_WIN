@@ -6,7 +6,6 @@ import {
   ListItemText,
   Typography,
   Button,
-  Container,
   TextField,
   IconButton,
   Tooltip,
@@ -54,7 +53,7 @@ const AppStyles = `
   }
 
   .bg-primary {
-    background-color: #0066A1 !important;
+    background-color: ${PRIMARY_ORANGE} !important;
   }
 
   .form-check-input:checked {
@@ -445,23 +444,16 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
 
 
   return (
-    <Container 
-      maxWidth="xl" 
-      sx={{ 
-        backgroundColor: '#0066A1',
-        padding: '2rem',
-        borderRadius: '1rem',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-        backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent)',
-        backgroundSize: '20px 20px'
-      }}
-    >
+    <Box sx={{ p: 3 }}>
       {/* Apply app brand styling */}
       <style>{AppStyles}</style>
-      
-      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
-        Machine Management
-      </Typography>
+
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+        <Box sx={{ width: 6, height: 40, bgcolor: PRIMARY_ORANGE, borderRadius: 1 }} />
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          Machine Management
+        </Typography>
+      </Box>
       
       <Box sx={{ my: 2 }}>
         {/* Search and Actions */}
@@ -578,8 +570,8 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                 label={`Search: "${searchTerm}"`} 
                 color="primary" 
                 onDelete={() => setSearchTerm('')}
-                sx={{ 
-                  backgroundColor: '#0066A1',
+                sx={{
+                  backgroundColor: PRIMARY_ORANGE,
                   color: 'white'
                 }}
               />
@@ -799,7 +791,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <Typography variant="h6" sx={{ mb: 3, color: '#0066A1', fontWeight: 'bold' }}>
+            <Typography variant="h6" sx={{ mb: 3, fontWeight: 'bold' }}>
               Export Machines
             </Typography>
             
@@ -910,7 +902,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
         </Box>
       )}
       </Box>
-    </Container>
+    </Box>
   );
 };
 

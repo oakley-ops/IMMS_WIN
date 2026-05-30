@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   Typography,
   Paper,
   Box,
@@ -506,20 +505,13 @@ const ProjectList: React.FC = () => {
   ];
 
   return (
-    <Container
-      maxWidth="xl"
-      sx={{
-        backgroundColor: 'secondary.main',
-        padding: '2rem',
-        borderRadius: '1rem',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-        backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent)',
-        backgroundSize: '20px 20px'
-      }}
-    >
-      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
-        Projects Management
-      </Typography>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+        <Box sx={{ width: 6, height: 40, bgcolor: PRIMARY_ORANGE, borderRadius: 1 }} />
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          Projects Management
+        </Typography>
+      </Box>
       
       <Box sx={{ my: 2 }}>
         {/* Search and Actions */}
@@ -760,21 +752,17 @@ const ProjectList: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle sx={{
-          backgroundColor: 'secondary.main',
-          color: 'white',
-        }}>
+        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid', borderColor: 'divider' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <BusinessIcon sx={{ mr: 1, color: PRIMARY_ORANGE }} />
-              <Typography variant="h6" sx={{ color: 'white' }}>
+              <Typography variant="h6">
                 {editingProject ? 'Edit Project' : 'Create New Project'}
               </Typography>
             </Box>
             <IconButton
               onClick={handleCloseProjectDialog}
               size="small"
-              sx={{ color: 'white' }}
             >
               <CloseIcon />
             </IconButton>
@@ -946,7 +934,7 @@ const ProjectList: React.FC = () => {
         </Box>
       )}
 
-    </Container>
+    </Box>
   );
 };
 

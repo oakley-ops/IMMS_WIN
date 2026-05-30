@@ -22,7 +22,6 @@ import {
   Chip,
   Switch,
   FormControlLabel,
-  Container,
   Grid,
   Card,
   CardContent,
@@ -175,22 +174,22 @@ const TechnicianManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <Container maxWidth="lg">
+      <Box sx={{ p: 3 }}>
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
           <CircularProgress />
         </Box>
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="lg">
+    <Box sx={{ p: 3 }}>
       {/* Header */}
       <Box sx={{ mb: 4 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-          <Box display="flex" alignItems="center">
-            <BuildIcon sx={{ mr: 2, color: PRIMARY_ORANGE, fontSize: 32 }} />
-            <Typography variant="h4" sx={{ color: 'secondary.main', fontWeight: 'bold' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ width: 6, height: 40, bgcolor: PRIMARY_ORANGE, borderRadius: 1 }} />
+            <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
               Technician Management
             </Typography>
           </Box>
@@ -484,7 +483,7 @@ const TechnicianManagement: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 

@@ -413,11 +413,11 @@ const ManualPOForm: React.FC = () => {
     <Box sx={{ maxWidth: 1400, mx: 'auto', my: 3 }}>
       <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
         {/* Header */}
-        <Box sx={{ backgroundColor: '#0066A1', color: 'white', p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h6" sx={{ color: '#FF6200', fontWeight: 'bold' }}>
+        <Box sx={{ p: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
             Create Manual Purchase Order
           </Typography>
-          <IconButton onClick={() => navigate('/purchase-orders')} sx={{ color: 'white' }}>
+          <IconButton onClick={() => navigate('/purchase-orders')}>
             ✕
           </IconButton>
         </Box>

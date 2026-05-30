@@ -76,7 +76,7 @@ const DiePressCard: React.FC<DiePressCardProps> = ({
       {/* Machine Header */}
       <Box
         sx={{
-          bgcolor: '#0066A1',
+          bgcolor: '#FF6B35',
           color: 'white',
           p: 2,
           textAlign: 'center',

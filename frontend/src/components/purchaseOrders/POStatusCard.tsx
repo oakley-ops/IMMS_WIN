@@ -72,8 +72,8 @@ const POStatusCard: React.FC<POStatusCardProps> = ({
         <Typography variant="h5" sx={{ color: '#FF6200' }}>Purchase Order Status</Typography>
         <Button
           variant="contained"
+          color="primary"
           onClick={() => navigate('/purchase-orders')}
-          sx={{ backgroundColor: '#0066A1' }}
         >
           View All
         </Button>

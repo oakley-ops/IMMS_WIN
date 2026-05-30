@@ -18,7 +18,6 @@ import {
   Typography,
   IconButton,
   Alert,
-  Container,
   Grid,
   Card,
   CardContent,
@@ -593,20 +592,13 @@ const PMChecklistManagement: React.FC = () => {
   ];
 
   return (
-    <Container 
-      maxWidth="xl" 
-      sx={{ 
-        backgroundColor: '#0066A1',
-        padding: '2rem',
-        borderRadius: '1rem',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-        backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent)',
-        backgroundSize: '20px 20px'
-      }}
-    >
-      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
-        PM Management System
-      </Typography>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+        <Box sx={{ width: 6, height: 40, bgcolor: PRIMARY_ORANGE, borderRadius: 1 }} />
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          PM Management System
+        </Typography>
+      </Box>
 
       {/* Stats Cards */}
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -756,12 +748,12 @@ const PMChecklistManagement: React.FC = () => {
                 variant="outlined"
                 onClick={() => handleScheduleOpen()}
                 startIcon={<ScheduleIcon />}
-                sx={{ 
-                  borderColor: '#0066A1',
-                  color: '#0066A1',
-                  '&:hover': { 
-                    borderColor: '#004d7a',
-                    backgroundColor: 'rgba(0, 102, 161, 0.04)'
+                sx={{
+                  borderColor: PRIMARY_ORANGE,
+                  color: PRIMARY_ORANGE,
+                  '&:hover': {
+                    borderColor: '#e65c00',
+                    backgroundColor: 'rgba(255, 102, 0, 0.04)'
                   },
                   minWidth: '160px'
                 }}
@@ -823,11 +815,11 @@ const PMChecklistManagement: React.FC = () => {
             onClick={() => setActiveTab(1)}
             color={activeTab === 1 ? "primary" : "default"}
             variant={activeTab === 1 ? "filled" : "outlined"}
-            sx={{ 
-              backgroundColor: activeTab === 1 ? '#0066A1' : 'transparent',
-              color: activeTab === 1 ? 'white' : '#0066A1',
-              borderColor: '#0066A1',
-              '&:hover': { backgroundColor: activeTab === 1 ? '#004d7a' : 'rgba(0, 102, 161, 0.04)' }
+            sx={{
+              backgroundColor: activeTab === 1 ? PRIMARY_ORANGE : 'transparent',
+              color: activeTab === 1 ? 'white' : PRIMARY_ORANGE,
+              borderColor: PRIMARY_ORANGE,
+              '&:hover': { backgroundColor: activeTab === 1 ? '#e65c00' : 'rgba(255, 102, 0, 0.04)' }
             }}
           />
           
@@ -847,8 +839,8 @@ const PMChecklistManagement: React.FC = () => {
                 label={`Search: "${searchTerm}"`} 
                 color="primary" 
                 onDelete={() => setSearchTerm('')}
-                sx={{ 
-                  backgroundColor: '#0066A1',
+                sx={{
+                  backgroundColor: PRIMARY_ORANGE,
                   color: 'white'
                 }}
               />
@@ -1120,12 +1112,8 @@ const PMChecklistManagement: React.FC = () => {
 
       {/* Schedule Maintenance Dialog */}
       <Dialog open={scheduleDialogOpen} onClose={handleScheduleClose} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{
-          backgroundColor: '#0066A1',
-          color: 'white',
-          borderRadius: '0.75rem 0.75rem 0 0'
-        }}>
-          <Typography variant="h6" sx={{ color: 'white' }}>
+        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Typography variant="h6">
             Schedule Maintenance
           </Typography>
         </DialogTitle>
@@ -1259,7 +1247,7 @@ const PMChecklistManagement: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </Box>
   );
 };
 

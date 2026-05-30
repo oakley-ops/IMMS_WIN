@@ -133,13 +133,13 @@ const DieDetail: React.FC = () => {
   }
 
   return (
-    <Box>
+    <Box sx={{ p: 3 }}>
       <Breadcrumbs sx={{ mb: 2 }}>
         <Link
           component="button"
           variant="body1"
           onClick={() => navigate('/die-tracker')}
-          sx={{ textDecoration: 'none', color: '#0066A1', cursor: 'pointer' }}
+          sx={{ textDecoration: 'none', color: PRIMARY_ORANGE, cursor: 'pointer' }}
         >
           Die Tracker
         </Link>
@@ -150,7 +150,7 @@ const DieDetail: React.FC = () => {
         <CardContent>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <Box>
-              <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#0066A1', mb: 2 }}>
+              <Typography variant="h4" sx={{ fontWeight: 'bold', mb: 2 }}>
                 Die {die.die_number}
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>

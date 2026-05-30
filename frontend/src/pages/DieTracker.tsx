@@ -680,13 +680,16 @@ const DieTracker: React.FC = () => {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <Box>
+      <Box sx={{ p: 3 }}>
         {/* Header */}
         <Box sx={{ mb: 3 }}>
-          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#0066A1' }}>
-            Die Management
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Box sx={{ width: 6, height: 40, bgcolor: PRIMARY_ORANGE, borderRadius: 1 }} />
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
+              Die Management
+            </Typography>
+          </Box>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
             Drag and drop dies to machines, manage inventory, schedule sharpening, and view reports
           </Typography>
         </Box>
@@ -711,7 +714,7 @@ const DieTracker: React.FC = () => {
         {activeTab === 0 && (
           <Box>
             {/* Die Press Machines */}
-            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold', color: '#0066A1' }}>
+            <Typography variant="h6" sx={{ mb: 2, fontWeight: 'bold' }}>
               Die Press Machines
             </Typography>
 

@@ -244,7 +244,7 @@ const DieInventoryList: React.FC<DieInventoryListProps> = ({
             startIcon={<QrCodeScanner />}
             onClick={() => setScannerOpen(true)}
             disabled={scanning}
-            sx={{ borderColor: '#0066A1', color: '#0066A1' }}
+            sx={{ borderColor: PRIMARY_ORANGE, color: PRIMARY_ORANGE }}
           >
             Scan Barcode
           </Button>
@@ -298,7 +298,7 @@ const DieInventoryList: React.FC<DieInventoryListProps> = ({
                           sx={{ cursor: 'pointer' }}
                           onClick={() => handleRowClick(die.die_id)}
                         >
-                          <TableCell sx={{ fontWeight: 'bold', color: '#0066A1' }}>
+                          <TableCell sx={{ fontWeight: 'bold', color: PRIMARY_ORANGE }}>
                             {die.die_number}
                           </TableCell>
                           <TableCell>{die.die_type}</TableCell>

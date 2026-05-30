@@ -261,8 +261,8 @@
 
 /* IMMS color scheme */
 :root {
-  --imms-blue: #0066A1;
-  --imms-blue-hover: #005080;
+  --imms-blue: #FF6B35;
+  --imms-blue-hover: #e65c00;
   --imms-orange: #FF6200;
   --imms-orange-hover: #e55800;
 }
@@ -271,23 +271,23 @@
 .btn-primary,
 button.btn-primary,
 .btn.btn-primary {
-  background-color: #0066A1 !important;
-  border-color: #0066A1 !important;
+  background-color: #FF6B35 !important;
+  border-color: #FF6B35 !important;
   color: white !important;
 }
 
 .btn-outline-primary,
 button.btn-outline-primary,
 .btn.btn-outline-primary {
-  color: #0066A1 !important;
-  border-color: #0066A1 !important;
+  color: #FF6B35 !important;
+  border-color: #FF6B35 !important;
   background-color: transparent !important;
 }
 
 .btn-outline-primary:hover,
 button.btn-outline-primary:hover,
 .btn.btn-outline-primary:hover {
-  background-color: #0066A1 !important;
+  background-color: #FF6B35 !important;
   color: white !important;
 }
 
@@ -451,7 +451,7 @@ button.btn-outline-primary:hover,
 }
 
 .technician-name {
-  color: #0066A1;
+  color: #FF6B35;
   font-weight: 600;
   background-color: #e8f4f8;
   padding: 0.25rem 0.5rem;
@@ -557,7 +557,7 @@ button.btn-outline-primary:hover,
 
 /* Modal styling */
 .maintenance-modal .modal-title {
-  color: #0066A1;
+  color: #FF6B35;
 }
 
 .maintenance-modal .modal-body h5 {

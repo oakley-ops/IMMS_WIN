@@ -16,12 +16,15 @@ const DieReports: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <Box>
+    <Box sx={{ p: 3 }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold', color: '#0066A1' }}>
-          Die Reports & Analytics
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box sx={{ width: 6, height: 40, bgcolor: '#FF6B35', borderRadius: 1 }} />
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 'bold' }}>
+            Die Reports & Analytics
+          </Typography>
+        </Box>
+        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
           Analyze die usage, costs, and maintenance patterns
         </Typography>
       </Box>

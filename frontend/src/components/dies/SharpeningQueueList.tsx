@@ -290,7 +290,7 @@ const SharpeningQueueList: React.FC<SharpeningQueueListProps> = ({
                               <Box>
                                 <Typography
                                   variant="subtitle2"
-                                  sx={{ fontWeight: 'bold', color: '#0066A1' }}
+                                  sx={{ fontWeight: 'bold', color: '#FF6B35' }}
                                 >
                                   Die #{record.die_number}
                                 </Typography>

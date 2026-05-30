@@ -143,11 +143,11 @@ const CostAnalysisReport: React.FC = () => {
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid item xs={12} sm={6} md={3}>
           <Paper sx={{ p: 2, textAlign: 'center', bgcolor: '#E3F2FD' }}>
-            <AttachMoney sx={{ fontSize: 40, color: '#0066A1', mb: 1 }} />
+            <AttachMoney sx={{ fontSize: 40, color: '#FF6B35', mb: 1 }} />
             <Typography variant="caption" color="text.secondary">
               Total Purchase Cost
             </Typography>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#0066A1' }}>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#FF6B35' }}>
               ${getTotalPurchaseCost().toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </Typography>
           </Paper>
@@ -213,7 +213,7 @@ const CostAnalysisReport: React.FC = () => {
             <TableBody>
               {getMostExpensiveDies().map((die) => (
                 <TableRow key={die.die_id} hover>
-                  <TableCell sx={{ fontWeight: 'bold', color: '#0066A1' }}>
+                  <TableCell sx={{ fontWeight: 'bold', color: '#FF6B35' }}>
                     {die.die_number}
                   </TableCell>
                   <TableCell>{die.die_name}</TableCell>
@@ -271,7 +271,7 @@ const CostAnalysisReport: React.FC = () => {
                       100
                     }%`,
                     height: '100%',
-                    bgcolor: '#0066A1',
+                    bgcolor: '#FF6B35',
                   }}
                 />
               </Box>

@@ -323,7 +323,7 @@ const SharpeningDetailDialog: React.FC<SharpeningDetailDialogProps> = ({
       </DialogContent>
 
       <DialogActions>
-        <Button onClick={onClose} variant="contained" sx={{ bgcolor: '#0066A1' }}>
+        <Button onClick={onClose} variant="contained" sx={{ bgcolor: '#FF6B35' }}>
           Close
         </Button>
       </DialogActions>

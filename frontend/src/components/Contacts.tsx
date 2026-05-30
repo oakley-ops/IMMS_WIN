@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Container,
   Typography,
   Paper,
   Box,
@@ -503,20 +502,13 @@ const Contacts: React.FC = () => {
   ];
 
   return (
-    <Container
-      maxWidth="xl"
-      sx={{
-        backgroundColor: 'secondary.main',
-        padding: '2rem',
-        borderRadius: '1rem',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-        backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent)',
-        backgroundSize: '20px 20px'
-      }}
-    >
-      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
-        Contacts Management
-      </Typography>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+        <Box sx={{ width: 6, height: 40, bgcolor: PRIMARY_ORANGE, borderRadius: 1 }} />
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          Contacts Management
+        </Typography>
+      </Box>
       
       <Box sx={{ my: 2 }}>
         {/* Search and Actions */}
@@ -773,15 +765,15 @@ const Contacts: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle sx={{ backgroundColor: 'secondary.main', color: 'white', p: 2 }}>
+        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid', borderColor: 'divider', p: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <PersonAddIcon sx={{ mr: 1, color: PRIMARY_ORANGE }} />
-              <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 {isEditing ? 'Edit Contact' : 'Create New Contact'}
               </Typography>
             </Box>
-            <IconButton onClick={handleCloseDialog} size="small" sx={{ color: 'white' }}>
+            <IconButton onClick={handleCloseDialog} size="small">
               <CloseIcon />
             </IconButton>
           </Box>
@@ -999,15 +991,15 @@ const Contacts: React.FC = () => {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle sx={{ backgroundColor: 'secondary.main', color: 'white', p: 2 }}>
+        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid', borderColor: 'divider', p: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <VisibilityIcon sx={{ mr: 1, color: PRIMARY_ORANGE }} />
-              <Typography variant="h6" sx={{ color: 'white', fontWeight: 'bold' }}>
+              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
                 Contact Details
               </Typography>
             </Box>
-            <IconButton onClick={handleCloseDetailsDialog} size="small" sx={{ color: 'white' }}>
+            <IconButton onClick={handleCloseDetailsDialog} size="small">
               <CloseIcon />
             </IconButton>
           </Box>
@@ -1233,7 +1225,7 @@ const Contacts: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-    </Container>
+    </Box>
   );
 };
 

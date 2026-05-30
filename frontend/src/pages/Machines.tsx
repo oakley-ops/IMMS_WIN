@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Container as MuiContainer } from '@mui/material';
+import { Box } from '@mui/material';
 import MachineList from '../components/MachineList';
 import MachineForm from '../components/MachineForm';
 import Machine from '../components/Machine';
@@ -10,7 +10,7 @@ import MachineCategories from '../components/MachineCategories';
 
 const Machines: React.FC = () => {
   return (
-    <MuiContainer maxWidth="lg" sx={{ py: 4 }}>
+    <Box>
       <Routes>
         {/* List all machines with category filtering */}
         <Route index element={<MachineCategories />} />
@@ -30,7 +30,7 @@ const Machines: React.FC = () => {
         {/* Machine costs report */}
         <Route path="costs" element={<MachineCostReport />} />
       </Routes>
-    </MuiContainer>
+    </Box>
   );
 };
 

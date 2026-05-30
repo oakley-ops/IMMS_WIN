@@ -1,7 +1,7 @@
 // src/pages/Parts.tsx
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Container, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import { Provider } from 'react-redux';
 import { store } from '../store/store';
 import PartsList from '../components/PartsList';
@@ -21,7 +21,7 @@ interface Part {
 
 const Parts: React.FC = () => {
   return (
-    <Container sx={{ py: 4 }}>
+    <Box>
       <Provider store={store}>
         <Routes>
           <Route path="/" element={<PartsList />} />
@@ -29,7 +29,7 @@ const Parts: React.FC = () => {
           <Route path="/add" element={<EditPartForm />} />
         </Routes>
       </Provider>
-    </Container>
+    </Box>
   );
 };
 

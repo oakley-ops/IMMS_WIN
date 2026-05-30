@@ -63,7 +63,7 @@ const Dashboard: React.FC = () => {
       <Box sx={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
         <Box sx={{
           minHeight: 'calc(100vh - 10px)',
-          backgroundColor: '#0066A1',
+          backgroundColor: '#f3f4f6',
           borderRadius: '12px',
           boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',
           display: 'flex',
@@ -80,7 +80,7 @@ const Dashboard: React.FC = () => {
     return (
       <Box sx={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
         <Box sx={{
-          backgroundColor: '#0066A1',
+          backgroundColor: '#f3f4f6',
           borderRadius: '12px',
           padding: '20px',
           minHeight: 'calc(100vh - 10px)',
@@ -103,7 +103,7 @@ const Dashboard: React.FC = () => {
     return (
       <Box sx={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
         <Box sx={{
-          backgroundColor: '#0066A1',
+          backgroundColor: '#f3f4f6',
           borderRadius: '12px',
           padding: '20px',
           minHeight: 'calc(100vh - 10px)',
@@ -122,7 +122,7 @@ const Dashboard: React.FC = () => {
   return (
     <Box sx={{ backgroundColor: '#d1d5db', minHeight: '100vh', padding: '5px' }}>
       <Box sx={{
-        backgroundColor: '#0066A1',
+        backgroundColor: '#f3f4f6',
         borderRadius: '12px',
         margin: '0',
         boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)',

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PRIMARY_ORANGE } from '../../theme';
 import {
-  Container,
   Typography,
   Paper,
   Box,
@@ -472,27 +471,20 @@ const PurchaseOrderList: React.FC = () => {
   ];
 
   return (
-    <Container 
-      maxWidth="xl" 
-      sx={{ 
-        backgroundColor: '#0066A1',
-        padding: '2rem',
-        borderRadius: '1rem',
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)',
-        backgroundImage: 'linear-gradient(135deg, rgba(0, 0, 0, 0.05) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.05) 50%, rgba(0, 0, 0, 0.05) 75%, transparent 75%, transparent)',
-        backgroundSize: '20px 20px'
-      }}
-    >
-      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
-        Purchase Orders Management
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
+        <Box sx={{ width: 6, height: 40, bgcolor: PRIMARY_ORANGE, borderRadius: 1 }} />
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          Purchase Orders Management
+        </Typography>
         {isRefreshing && (
-          <CircularProgress 
-            size={24} 
-            sx={{ ml: 2, color: PRIMARY_ORANGE }} 
-            title="Refreshing purchase orders..." 
+          <CircularProgress
+            size={24}
+            sx={{ ml: 2, color: PRIMARY_ORANGE }}
+            title="Refreshing purchase orders..."
           />
         )}
-      </Typography>
+      </Box>
       
       <Box sx={{ my: 2 }}>
         {/* Search and Actions */}
@@ -663,8 +655,8 @@ const PurchaseOrderList: React.FC = () => {
                   label={`Search: "${searchTerm}"`} 
                   color="primary" 
                   onDelete={() => setSearchTerm('')}
-                  sx={{ 
-                    backgroundColor: '#0066A1',
+                  sx={{
+                    backgroundColor: PRIMARY_ORANGE,
                     color: 'white'
                   }}
                 />
@@ -792,22 +784,17 @@ const PurchaseOrderList: React.FC = () => {
           }
         }}
       >
-        <DialogTitle sx={{ 
-          backgroundColor: '#0066A1', 
-          color: 'white',
-          borderRadius: '0.75rem 0.75rem 0 0'
-        }}>
+        <DialogTitle sx={{ fontWeight: 'bold', borderBottom: '1px solid', borderColor: 'divider' }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <DescriptionIcon sx={{ mr: 1, color: PRIMARY_ORANGE }} />
-              <Typography variant="h6" sx={{ color: 'white' }}>
+              <Typography variant="h6">
                 Documents for PO #{selectedPoNumber}
               </Typography>
             </Box>
-            <IconButton 
-              onClick={closeDocumentDialog} 
+            <IconButton
+              onClick={closeDocumentDialog}
               size="small"
-              sx={{ color: 'white' }}
             >
               <CloseIcon />
             </IconButton>
@@ -869,7 +856,7 @@ const PurchaseOrderList: React.FC = () => {
         }}
       />
 
-    </Container>
+    </Box>
   );
 };
 
