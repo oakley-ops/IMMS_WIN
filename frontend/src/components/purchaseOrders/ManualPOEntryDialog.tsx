@@ -280,6 +280,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
         sx: { maxHeight: '90vh', borderRadius: '0.75rem', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }
       }}
     >
+      {/* #0066A1: brand blue used for PO dialog header — no theme token for blue exists */}
       <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '4px 4px 0 0' }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
           <Typography variant="h6">Create Purchase Order from PDF</Typography>
