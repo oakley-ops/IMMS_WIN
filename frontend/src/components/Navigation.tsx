@@ -90,7 +90,7 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
           { path: '/dashboard', label: 'DASHBOARD', icon: <Dashboard /> },
           { path: '/parts', label: 'PARTS', icon: <Inventory /> },
           { path: '/purchase-orders', label: 'PURCHASE ORDERS', icon: <ShoppingCart />, requiredPermission: 'CAN_MANAGE_PURCHASE_ORDERS' },
-          { path: '/transactions', label: 'TRANSACTIONS', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
+          { path: '/transactions', label: 'PARTS USAGE HISTORY', icon: <ReceiptLong />, requiredPermission: 'CAN_VIEW_TRANSACTIONS' },
         ],
       },
       {
