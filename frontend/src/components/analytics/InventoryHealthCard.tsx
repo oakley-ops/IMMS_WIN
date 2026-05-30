@@ -1,5 +1,16 @@
 import React from 'react';
-import { Card, Table } from 'react-bootstrap';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 import { InventoryHealth } from '../../services/analyticsService';
 
 interface InventoryHealthCardProps {
@@ -8,43 +19,57 @@ interface InventoryHealthCardProps {
 
 const InventoryHealthCard: React.FC<InventoryHealthCardProps> = ({ data }) => {
   return (
-    <Card className="shadow-sm h-100">
-      <Card.Body>
-        <h5 className="card-title">Inventory Health</h5>
-        
-        <div className="d-flex justify-content-between mb-4 mt-3">
-          <div className="text-center">
-            <div className="text-muted small mb-1">Turnover Rate</div>
-            <h3 className="mb-0">{data.average_turnover_rate.toFixed(2)}</h3>
-          </div>
-          <div className="text-center">
-            <div className="text-muted small mb-1">Stock Coverage</div>
-            <h3 className="mb-0">{data.stock_coverage_days} days</h3>
-          </div>
-        </div>
-        
-        <h6 className="mt-4 mb-2">High Risk Parts</h6>
-        <Table responsive size="sm">
-          <thead>
-            <tr>
-              <th>Part Name</th>
-              <th>Risk Score</th>
-              <th>Days to Stockout</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.high_risk_parts.map(part => (
-              <tr key={part.part_id}>
-                <td>{part.name}</td>
-                <td>{(part.risk_score * 100).toFixed(1)}%</td>
-                <td>{part.days_until_stockout.toFixed(1)} days</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </Card.Body>
+    <Card sx={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', height: '100%' }}>
+      <CardContent>
+        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+          Inventory Health
+        </Typography>
+
+        <Box display="flex" justifyContent="space-between" sx={{ mb: 3, mt: 1 }}>
+          <Box textAlign="center">
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+              Turnover Rate
+            </Typography>
+            <Typography variant="h5" fontWeight={700}>
+              {data.average_turnover_rate.toFixed(2)}
+            </Typography>
+          </Box>
+          <Box textAlign="center">
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+              Stock Coverage
+            </Typography>
+            <Typography variant="h5" fontWeight={700}>
+              {data.stock_coverage_days} days
+            </Typography>
+          </Box>
+        </Box>
+
+        <Typography variant="subtitle2" fontWeight={600} sx={{ mt: 2, mb: 1 }}>
+          High Risk Parts
+        </Typography>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Part Name</TableCell>
+                <TableCell>Risk Score</TableCell>
+                <TableCell>Days to Stockout</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.high_risk_parts.map(part => (
+                <TableRow key={part.part_id}>
+                  <TableCell>{part.name}</TableCell>
+                  <TableCell>{(part.risk_score * 100).toFixed(1)}%</TableCell>
+                  <TableCell>{part.days_until_stockout.toFixed(1)} days</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
     </Card>
   );
 };
 
-export default InventoryHealthCard; 
+export default InventoryHealthCard;

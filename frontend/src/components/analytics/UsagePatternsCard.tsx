@@ -1,5 +1,16 @@
 import React from 'react';
-import { Card, Table } from 'react-bootstrap';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 import { UsagePatterns } from '../../services/analyticsService';
 
 interface UsagePatternsCardProps {
@@ -8,36 +19,44 @@ interface UsagePatternsCardProps {
 
 const UsagePatternsCard: React.FC<UsagePatternsCardProps> = ({ data }) => {
   return (
-    <Card className="shadow-sm h-100">
-      <Card.Body>
-        <h5 className="card-title">Usage Patterns</h5>
-        
-        <h6 className="mt-4 mb-2">Fastest Moving Parts</h6>
-        <Table responsive size="sm">
-          <thead>
-            <tr>
-              <th>Part Name</th>
-              <th>Usage Trend</th>
-              <th>Used (30d)</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.fastest_moving_parts.map(part => (
-              <tr key={part.part_id}>
-                <td>{part.name}</td>
-                <td>{Math.abs(part.trend).toFixed(2)} units/day</td>
-                <td>{part.usage_last_30_days} units</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
+    <Card sx={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', height: '100%' }}>
+      <CardContent>
+        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+          Usage Patterns
+        </Typography>
 
-        <div className="text-center text-muted mt-4">
-          <p>Usage chart visualization will be available soon</p>
-        </div>
-      </Card.Body>
+        <Typography variant="subtitle2" fontWeight={600} sx={{ mt: 2, mb: 1 }}>
+          Fastest Moving Parts
+        </Typography>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Part Name</TableCell>
+                <TableCell>Usage Trend</TableCell>
+                <TableCell>Used (30d)</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.fastest_moving_parts.map(part => (
+                <TableRow key={part.part_id}>
+                  <TableCell>{part.name}</TableCell>
+                  <TableCell>{Math.abs(part.trend).toFixed(2)} units/day</TableCell>
+                  <TableCell>{part.usage_last_30_days} units</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+
+        <Box textAlign="center" sx={{ mt: 3 }}>
+          <Typography variant="body2" color="text.secondary">
+            Usage chart visualization will be available soon
+          </Typography>
+        </Box>
+      </CardContent>
     </Card>
   );
 };
 
-export default UsagePatternsCard; 
+export default UsagePatternsCard;

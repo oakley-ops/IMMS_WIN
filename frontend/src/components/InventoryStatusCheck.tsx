@@ -1,5 +1,21 @@
 import React, { useState } from 'react';
-import { Button, Card, Alert, Spinner } from 'react-bootstrap';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Typography,
+  Alert,
+  CircularProgress,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Collapse,
+  Divider,
+} from '@mui/material';
 import axios from 'axios';
 
 interface InventoryStatus {
@@ -21,7 +37,7 @@ const InventoryStatusCheck: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Create a direct request to the active port (4000) with authentication
       const token = localStorage.getItem('token');
       const result = await axios.get('http://localhost:4000/api/v1/parts/low-stock', {
@@ -30,9 +46,9 @@ const InventoryStatusCheck: React.FC = () => {
           'Authorization': token ? `Bearer ${token}` : ''
         }
       });
-      
+
       console.log('Low stock parts:', result.data);
-      
+
       // Format the response to match our expected structure
       const formattedResult = {
         diagnosticRun: new Date().toISOString(),
@@ -40,11 +56,11 @@ const InventoryStatusCheck: React.FC = () => {
         outOfStockCount: result.data.filter((part: any) => part.quantity === 0).length,
         lowStockParts: result.data.filter((part: any) => part.quantity > 0),
         outOfStockParts: result.data.filter((part: any) => part.quantity === 0),
-        message: result.data.length > 0 
-          ? 'Retrieved inventory status data successfully.' 
+        message: result.data.length > 0
+          ? 'Retrieved inventory status data successfully.'
           : 'No low stock or out of stock parts found.'
       };
-      
+
       setStatus(formattedResult);
     } catch (err: any) {
       console.error('Error checking inventory status:', err);
@@ -58,15 +74,14 @@ const InventoryStatusCheck: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Example: Update a few parts to have low stock
-      // You can adjust these IDs based on actual parts in your database
       const partsToUpdate = [
         { id: '1', quantity: 1, minimum_quantity: 5 },
         { id: '2', quantity: 0, minimum_quantity: 3 },
         { id: '3', quantity: 2, minimum_quantity: 10 }
       ];
-      
+
       for (const part of partsToUpdate) {
         try {
           await axios.put(`http://localhost:4000/api/v1/parts/${part.id}`, {
@@ -83,7 +98,7 @@ const InventoryStatusCheck: React.FC = () => {
           console.error(`Error updating part ${part.id}:`, updateErr);
         }
       }
-      
+
       // Re-check status
       await checkStatus();
     } catch (err: any) {
@@ -94,130 +109,113 @@ const InventoryStatusCheck: React.FC = () => {
     }
   };
 
+  const StockTable = ({ parts, title }: { parts: any[]; title: string }) => (
+    <Box sx={{ mt: 2 }}>
+      <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1 }}>
+        {title}
+      </Typography>
+      <TableContainer>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <TableCell>ID</TableCell>
+              <TableCell>Name</TableCell>
+              <TableCell>Quantity</TableCell>
+              <TableCell>Minimum</TableCell>
+              <TableCell>Vendor</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {parts.map(part => (
+              <TableRow key={part.part_id}>
+                <TableCell>{part.part_id}</TableCell>
+                <TableCell>{part.name}</TableCell>
+                <TableCell>{part.quantity}</TableCell>
+                <TableCell>{part.minimum_quantity}</TableCell>
+                <TableCell>{part.vendor_name}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    </Box>
+  );
+
   return (
-    <Card className="shadow-sm border-0 rounded-3 mb-4">
-      <Card.Body className="p-4">
-        <Card.Title className="d-flex justify-content-between align-items-center mb-4">
-          <span>Inventory Status Diagnostic</span>
-          <div>
-            <Button 
-              variant="outline-primary" 
+    <Card sx={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', mb: 3 }}>
+      <CardContent sx={{ p: 3 }}>
+        <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
+          <Typography variant="subtitle1" fontWeight={600}>
+            Inventory Status Diagnostic
+          </Typography>
+          <Box display="flex" gap={1}>
+            <Button
+              variant="outlined"
+              color="primary"
               onClick={checkStatus}
               disabled={loading}
-              className="me-2"
+              startIcon={loading ? <CircularProgress size={16} /> : undefined}
             >
-              {loading ? (
-                <>
-                  <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" />
-                  <span className="ms-2">Checking...</span>
-                </>
-              ) : 'Check Status'}
+              {loading ? 'Checking...' : 'Check Status'}
             </Button>
-            <Button 
-              variant="outline-warning" 
+            <Button
+              variant="outlined"
+              color="warning"
               onClick={updateParts}
               disabled={loading}
             >
               Set Test Low Stock
             </Button>
-          </div>
-        </Card.Title>
+          </Box>
+        </Box>
 
         {error && (
-          <Alert variant="danger">
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
         {status && (
           <>
-            <div className="d-flex justify-content-between mb-3">
-              <div>
-                <p className="mb-1"><strong>Diagnostic Run:</strong> {new Date(status.diagnosticRun).toLocaleString()}</p>
-                <p className="mb-1"><strong>Low Stock Count:</strong> <span className="text-warning">{status.lowStockCount}</span></p>
-                <p className="mb-1"><strong>Out of Stock Count:</strong> <span className="text-danger">{status.outOfStockCount}</span></p>
-              </div>
-              <div>
-                <Button 
-                  variant="outline-secondary" 
-                  size="sm"
-                  onClick={() => setShowDetails(!showDetails)}
-                >
-                  {showDetails ? 'Hide Details' : 'Show Details'}
-                </Button>
-              </div>
-            </div>
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start" sx={{ mb: 2 }}>
+              <Box>
+                <Typography variant="body2" sx={{ mb: 0.5 }}>
+                  <strong>Diagnostic Run:</strong> {new Date(status.diagnosticRun).toLocaleString()}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }} color="warning.main">
+                  <strong>Low Stock Count:</strong> {status.lowStockCount}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 0.5 }} color="error.main">
+                  <strong>Out of Stock Count:</strong> {status.outOfStockCount}
+                </Typography>
+              </Box>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => setShowDetails(!showDetails)}
+              >
+                {showDetails ? 'Hide Details' : 'Show Details'}
+              </Button>
+            </Box>
 
-            <Alert variant={status.lowStockCount > 0 || status.outOfStockCount > 0 ? "info" : "success"}>
+            <Alert severity={status.lowStockCount > 0 || status.outOfStockCount > 0 ? 'info' : 'success'}>
               {status.message}
             </Alert>
 
-            {showDetails && (
-              <>
-                {status.lowStockParts.length > 0 && (
-                  <div className="mt-3">
-                    <h6>Low Stock Parts</h6>
-                    <div className="table-responsive">
-                      <table className="table table-sm table-hover">
-                        <thead>
-                          <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Quantity</th>
-                            <th>Minimum</th>
-                            <th>Vendor</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {status.lowStockParts.map(part => (
-                            <tr key={part.part_id}>
-                              <td>{part.part_id}</td>
-                              <td>{part.name}</td>
-                              <td>{part.quantity}</td>
-                              <td>{part.minimum_quantity}</td>
-                              <td>{part.vendor_name}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-
-                {status.outOfStockParts.length > 0 && (
-                  <div className="mt-3">
-                    <h6>Out of Stock Parts</h6>
-                    <div className="table-responsive">
-                      <table className="table table-sm table-hover">
-                        <thead>
-                          <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Quantity</th>
-                            <th>Minimum</th>
-                            <th>Vendor</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {status.outOfStockParts.map(part => (
-                            <tr key={part.part_id}>
-                              <td>{part.part_id}</td>
-                              <td>{part.name}</td>
-                              <td>{part.quantity}</td>
-                              <td>{part.minimum_quantity}</td>
-                              <td>{part.vendor_name}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </>
-            )}
+            <Collapse in={showDetails}>
+              {status.lowStockParts.length > 0 && (
+                <StockTable parts={status.lowStockParts} title="Low Stock Parts" />
+              )}
+              {status.outOfStockParts.length > 0 && (
+                <>
+                  <Divider sx={{ my: 2 }} />
+                  <StockTable parts={status.outOfStockParts} title="Out of Stock Parts" />
+                </>
+              )}
+            </Collapse>
           </>
         )}
-      </Card.Body>
+      </CardContent>
     </Card>
   );
 };

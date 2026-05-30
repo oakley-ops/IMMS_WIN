@@ -1,5 +1,26 @@
 import React, { useState } from 'react';
 import { generatePurchaseOrderPDF } from '../../utils/pdfTemplates';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Grid,
+  FormControlLabel,
+  Checkbox,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Alert,
+  Divider,
+  Paper,
+} from '@mui/material';
+import { PRIMARY_ORANGE } from '../../theme';
 
 interface Supplier {
   name: string;
@@ -97,14 +118,14 @@ const POFormMockup: React.FC = () => {
       shipping_cost: 45.00,
       tax_amount: 123.75
     };
-    
+
     setPurchaseOrder(samplePurchaseOrder);
   };
 
   // Handle form changes for basic fields
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    
+
     if (name.includes('.')) {
       // Handle nested properties (e.g., supplier.name)
       const [parent, child] = name.split('.');
@@ -127,10 +148,10 @@ const POFormMockup: React.FC = () => {
   // Handle changes to the current item form
   const handleItemChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    const numericValue = ['quantity', 'price'].includes(name) 
-      ? parseFloat(value) || 0 
+    const numericValue = ['quantity', 'price'].includes(name)
+      ? parseFloat(value) || 0
       : value;
-    
+
     setCurrentItem({
       ...currentItem,
       [name]: numericValue
@@ -143,12 +164,12 @@ const POFormMockup: React.FC = () => {
       alert('Part name and part number are required.');
       return;
     }
-    
+
     setPurchaseOrder({
       ...purchaseOrder,
-      items: [...purchaseOrder.items, {...currentItem}]
+      items: [...purchaseOrder.items, { ...currentItem }]
     });
-    
+
     // Reset current item form
     setCurrentItem({
       name: '',
@@ -162,7 +183,7 @@ const POFormMockup: React.FC = () => {
   const removeItem = (index: number) => {
     const updatedItems = [...purchaseOrder.items];
     updatedItems.splice(index, 1);
-    setPurchaseOrder({...purchaseOrder, items: updatedItems});
+    setPurchaseOrder({ ...purchaseOrder, items: updatedItems });
   };
 
   // Calculate totals
@@ -182,17 +203,16 @@ const POFormMockup: React.FC = () => {
   // Preview PDF function
   const previewPO = async () => {
     try {
-      // Add validation here
       if (!purchaseOrder.poNumber || !purchaseOrder.supplier.name) {
         alert('PO Number and Supplier Name are required.');
         return;
       }
-      
+
       if (purchaseOrder.items.length === 0) {
         alert('At least one item is required.');
         return;
       }
-      
+
       console.log('Generating PDF for:', purchaseOrder);
       await generatePurchaseOrderPDF(purchaseOrder);
     } catch (error: any) {
@@ -201,357 +221,345 @@ const POFormMockup: React.FC = () => {
     }
   };
 
-  // Mock email function - won't actually send email in this mockup
+  // Mock email function
   const mockEmailPO = () => {
-    // Add validation here
     if (!purchaseOrder.poNumber || !purchaseOrder.supplier.name || !purchaseOrder.supplier.email) {
       alert('PO Number, Supplier Name, and Supplier Email are required for email.');
       return;
     }
-    
+
     if (purchaseOrder.items.length === 0) {
       alert('At least one item is required.');
       return;
     }
-    
+
     alert(`In a real implementation, an email would be sent to ${purchaseOrder.supplier.email} with the PO #${purchaseOrder.poNumber} as a PDF attachment.`);
   };
 
+  const sectionCard = (title: string, children: React.ReactNode) => (
+    <Card sx={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', mb: 3 }}>
+      <Box sx={{ px: 3, py: 1.5, backgroundColor: PRIMARY_ORANGE, borderRadius: '8px 8px 0 0' }}>
+        <Typography variant="h6" sx={{ color: '#fff', fontWeight: 600 }}>
+          {title}
+        </Typography>
+      </Box>
+      <CardContent sx={{ pt: 2 }}>
+        {children}
+      </CardContent>
+    </Card>
+  );
+
   return (
-    <div className="container mt-4">
-      <h2>Create Purchase Order (Mockup)</h2>
-      <p className="text-muted">This is a test form to verify PDF generation. Data is not saved to the database.</p>
-      
-      <div className="d-flex justify-content-end mb-3">
-        <button 
-          className="btn btn-secondary"
-          onClick={loadSampleData}
-        >
+    <Box sx={{ px: 3, py: 3 }}>
+      <Typography variant="h5" fontWeight={700} gutterBottom>
+        Create Purchase Order (Mockup)
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        This is a test form to verify PDF generation. Data is not saved to the database.
+      </Typography>
+
+      <Box display="flex" justifyContent="flex-end" sx={{ mb: 2 }}>
+        <Button variant="outlined" onClick={loadSampleData}>
           Load Sample Data
-        </button>
-      </div>
-      
-      <div className="card mb-4">
-        <div className="card-header bg-primary text-white">
-          <h4 className="mb-0">PO Information</h4>
-        </div>
-        <div className="card-body">
-          <div className="row">
-            <div className="col-md-4 mb-3">
-              <label htmlFor="poNumber">PO Number:</label>
-              <input 
-                type="text"
-                className="form-control" 
-                id="poNumber" 
-                name="poNumber"
-                value={purchaseOrder.poNumber} 
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="col-md-4 mb-3">
-              <label htmlFor="requestedBy">Requested By:</label>
-              <input 
-                type="text"
-                className="form-control" 
-                id="requestedBy" 
-                name="requestedBy"
-                value={purchaseOrder.requestedBy} 
-                onChange={handleChange}
-              />
-            </div>
-            <div className="col-md-4 mb-3">
-              <label htmlFor="approvedBy">Approved By:</label>
-              <input 
-                type="text"
-                className="form-control" 
-                id="approvedBy" 
-                name="approvedBy"
-                value={purchaseOrder.approvedBy} 
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-md-6 mb-3">
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="urgent"
+        </Button>
+      </Box>
+
+      {/* PO Information */}
+      {sectionCard('PO Information', (
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="PO Number"
+              name="poNumber"
+              value={purchaseOrder.poNumber}
+              onChange={handleChange}
+              required
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Requested By"
+              name="requestedBy"
+              value={purchaseOrder.requestedBy}
+              onChange={handleChange}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <TextField
+              fullWidth
+              label="Approved By"
+              name="approvedBy"
+              value={purchaseOrder.approvedBy}
+              onChange={handleChange}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControlLabel
+              control={
+                <Checkbox
                   name="urgent"
                   checked={purchaseOrder.urgent}
                   onChange={handleChange}
                 />
-                <label className="form-check-label" htmlFor="urgent">
-                  Urgent Order
-                </label>
-              </div>
-            </div>
-            <div className="col-md-6 mb-3">
-              <div className="form-check">
-                <input
-                  type="checkbox"
-                  className="form-check-input"
-                  id="nextDayShipping"
+              }
+              label="Urgent Order"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <FormControlLabel
+              control={
+                <Checkbox
                   name="nextDayShipping"
                   checked={purchaseOrder.nextDayShipping}
                   onChange={handleChange}
                 />
-                <label className="form-check-label" htmlFor="nextDayShipping">
-                  Next Day Shipping
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="card mb-4">
-        <div className="card-header bg-primary text-white">
-          <h4 className="mb-0">Supplier Information</h4>
-        </div>
-        <div className="card-body">
-          <div className="row">
-            <div className="col-md-6 mb-3">
-              <label htmlFor="supplier.name">Supplier Name:</label>
-              <input 
-                type="text"
-                className="form-control" 
-                id="supplier.name" 
-                name="supplier.name"
-                value={purchaseOrder.supplier.name} 
-                onChange={handleChange}
-                required
-              />
-            </div>
-            <div className="col-md-6 mb-3">
-              <label htmlFor="supplier.contactName">Contact Person:</label>
-              <input 
-                type="text"
-                className="form-control" 
-                id="supplier.contactName" 
-                name="supplier.contactName"
-                value={purchaseOrder.supplier.contactName} 
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-md-12 mb-3">
-              <label htmlFor="supplier.address">Address:</label>
-              <input 
-                type="text"
-                className="form-control" 
-                id="supplier.address" 
-                name="supplier.address"
-                value={purchaseOrder.supplier.address} 
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-md-6 mb-3">
-              <label htmlFor="supplier.email">Email:</label>
-              <input 
-                type="email"
-                className="form-control" 
-                id="supplier.email" 
-                name="supplier.email"
-                value={purchaseOrder.supplier.email} 
-                onChange={handleChange}
-              />
-            </div>
-            <div className="col-md-6 mb-3">
-              <label htmlFor="supplier.phone">Phone:</label>
-              <input 
-                type="text"
-                className="form-control" 
-                id="supplier.phone" 
-                name="supplier.phone"
-                value={purchaseOrder.supplier.phone} 
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="card mb-4">
-        <div className="card-header bg-primary text-white">
-          <h4 className="mb-0">Line Items</h4>
-        </div>
-        <div className="card-body">
-          <table className="table table-bordered">
-            <thead className="thead-light">
-              <tr>
-                <th>Part Name</th>
-                <th>Part Number</th>
-                <th>Quantity</th>
-                <th>Unit Price</th>
-                <th>Total</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {purchaseOrder.items.map((item, index) => (
-                <tr key={index}>
-                  <td>{item.name}</td>
-                  <td>{item.partNumber}</td>
-                  <td>{item.quantity}</td>
-                  <td>${item.price.toFixed(2)}</td>
-                  <td>${(item.price * item.quantity).toFixed(2)}</td>
-                  <td>
-                    <button 
-                      className="btn btn-sm btn-danger"
-                      onClick={() => removeItem(index)}
+              }
+              label="Next Day Shipping"
+            />
+          </Grid>
+        </Grid>
+      ))}
+
+      {/* Supplier Information */}
+      {sectionCard('Supplier Information', (
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Supplier Name"
+              name="supplier.name"
+              value={purchaseOrder.supplier.name}
+              onChange={handleChange}
+              required
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Contact Person"
+              name="supplier.contactName"
+              value={purchaseOrder.supplier.contactName}
+              onChange={handleChange}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Address"
+              name="supplier.address"
+              value={purchaseOrder.supplier.address}
+              onChange={handleChange}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              name="supplier.email"
+              value={purchaseOrder.supplier.email}
+              onChange={handleChange}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Phone"
+              name="supplier.phone"
+              value={purchaseOrder.supplier.phone}
+              onChange={handleChange}
+              size="small"
+            />
+          </Grid>
+        </Grid>
+      ))}
+
+      {/* Line Items */}
+      {sectionCard('Line Items', (
+        <>
+          <TableContainer component={Paper} variant="outlined" sx={{ mb: 2 }}>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Part Name</TableCell>
+                  <TableCell>Part Number</TableCell>
+                  <TableCell>Quantity</TableCell>
+                  <TableCell>Unit Price</TableCell>
+                  <TableCell>Total</TableCell>
+                  <TableCell>Action</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {purchaseOrder.items.map((item, index) => (
+                  <TableRow key={index}>
+                    <TableCell>{item.name}</TableCell>
+                    <TableCell>{item.partNumber}</TableCell>
+                    <TableCell>{item.quantity}</TableCell>
+                    <TableCell>${item.price.toFixed(2)}</TableCell>
+                    <TableCell>${(item.price * item.quantity).toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Button
+                        size="small"
+                        color="error"
+                        variant="outlined"
+                        onClick={() => removeItem(index)}
+                      >
+                        Remove
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {purchaseOrder.items.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center" sx={{ py: 2, color: 'text.secondary' }}>
+                      No items added
+                    </TableCell>
+                  </TableRow>
+                )}
+                {/* Add Item Row */}
+                <TableRow sx={{ backgroundColor: 'action.hover' }}>
+                  <TableCell>
+                    <TextField
+                      size="small"
+                      placeholder="Part Name"
+                      name="name"
+                      value={currentItem.name}
+                      onChange={handleItemChange}
+                      required
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      size="small"
+                      placeholder="Part #"
+                      name="partNumber"
+                      value={currentItem.partNumber}
+                      onChange={handleItemChange}
+                      required
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      size="small"
+                      type="number"
+                      placeholder="Qty"
+                      name="quantity"
+                      value={currentItem.quantity}
+                      onChange={handleItemChange}
+                      inputProps={{ min: 1 }}
+                      sx={{ width: 80 }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <TextField
+                      size="small"
+                      type="number"
+                      placeholder="Price"
+                      name="price"
+                      value={currentItem.price}
+                      onChange={handleItemChange}
+                      inputProps={{ min: 0, step: 0.01 }}
+                      sx={{ width: 100 }}
+                    />
+                  </TableCell>
+                  <TableCell>${(currentItem.price * currentItem.quantity).toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Button
+                      size="small"
+                      color="success"
+                      variant="contained"
+                      onClick={addItem}
                     >
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {purchaseOrder.items.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="text-center">No items added</td>
-                </tr>
-              )}
-              <tr>
-                <td>
-                  <input 
-                    type="text"
-                    className="form-control"
-                    placeholder="Part Name"
-                    name="name"
-                    value={currentItem.name}
-                    onChange={handleItemChange}
-                    required
-                  />
-                </td>
-                <td>
-                  <input 
-                    type="text"
-                    className="form-control"
-                    placeholder="Part #"
-                    name="partNumber"
-                    value={currentItem.partNumber}
-                    onChange={handleItemChange}
-                    required
-                  />
-                </td>
-                <td>
-                  <input 
-                    type="number"
-                    className="form-control"
-                    placeholder="Qty"
-                    name="quantity"
-                    value={currentItem.quantity}
-                    onChange={handleItemChange}
-                    min="1"
-                  />
-                </td>
-                <td>
-                  <input 
-                    type="number"
-                    className="form-control"
-                    placeholder="Price"
-                    name="price"
-                    value={currentItem.price}
-                    onChange={handleItemChange}
-                    min="0"
-                    step="0.01"
-                  />
-                </td>
-                <td>${(currentItem.price * currentItem.quantity).toFixed(2)}</td>
-                <td>
-                  <button 
-                    className="btn btn-sm btn-success"
-                    onClick={addItem}
-                  >
-                    Add Item
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      
-      <div className="card mb-4">
-        <div className="card-header bg-primary text-white">
-          <h4 className="mb-0">Order Totals</h4>
-        </div>
-        <div className="card-body">
-          <div className="row">
-            <div className="col-md-6">
-              <p>Items Subtotal: ${calculateSubtotal().toFixed(2)}</p>
-            </div>
-            <div className="col-md-6">
-              <div className="form-group">
-                <label htmlFor="shipping_cost">Shipping Cost:</label>
-                <input 
-                  type="number"
-                  className="form-control"
-                  id="shipping_cost"
-                  name="shipping_cost"
-                  value={purchaseOrder.shipping_cost}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="row">
-            <div className="col-md-6">
-              <p>Grand Total: ${calculateTotal().toFixed(2)}</p>
-            </div>
-            <div className="col-md-6">
-              <div className="form-group">
-                <label htmlFor="tax_amount">Tax Amount:</label>
-                <input 
-                  type="number"
-                  className="form-control"
-                  id="tax_amount"
-                  name="tax_amount"
-                  value={purchaseOrder.tax_amount}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      <div className="d-flex justify-content-end mb-5">
-        <button 
-          className="btn btn-primary me-2"
+                      Add Item
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </>
+      ))}
+
+      {/* Order Totals */}
+      {sectionCard('Order Totals', (
+        <Grid container spacing={2}>
+          <Grid item xs={12} md={6}>
+            <Typography variant="body1">
+              Items Subtotal: <strong>${calculateSubtotal().toFixed(2)}</strong>
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Shipping Cost"
+              type="number"
+              name="shipping_cost"
+              value={purchaseOrder.shipping_cost}
+              onChange={handleChange}
+              inputProps={{ min: 0, step: 0.01 }}
+              size="small"
+            />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <Typography variant="body1">
+              Grand Total: <strong>${calculateTotal().toFixed(2)}</strong>
+            </Typography>
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <TextField
+              fullWidth
+              label="Tax Amount"
+              type="number"
+              name="tax_amount"
+              value={purchaseOrder.tax_amount}
+              onChange={handleChange}
+              inputProps={{ min: 0, step: 0.01 }}
+              size="small"
+            />
+          </Grid>
+        </Grid>
+      ))}
+
+      <Box display="flex" justifyContent="flex-end" gap={1} sx={{ mb: 4 }}>
+        <Button
+          variant="contained"
+          color="primary"
           onClick={previewPO}
         >
           Preview PDF
-        </button>
-        <button 
-          className="btn btn-success"
+        </Button>
+        <Button
+          variant="contained"
+          color="success"
           onClick={mockEmailPO}
         >
           Simulate Email PO
-        </button>
-      </div>
-      
-      <div className="alert alert-info">
-        <h5>Mockup Testing Notes:</h5>
-        <ul>
+        </Button>
+      </Box>
+
+      <Alert severity="info">
+        <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+          Mockup Testing Notes:
+        </Typography>
+        <ul style={{ margin: 0, paddingLeft: '1.25rem' }}>
           <li>This is a mockup for testing PDF generation</li>
           <li>Data is not saved to any database</li>
           <li>Email functionality is simulated</li>
           <li>The PDF preview uses the actual PDF template from pdfTemplates.js</li>
           <li>Click "Load Sample Data" to quickly test with pre-filled information</li>
         </ul>
-      </div>
-    </div>
+      </Alert>
+    </Box>
   );
 };
 
-export default POFormMockup; 
+export default POFormMockup;

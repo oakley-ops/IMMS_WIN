@@ -1,5 +1,16 @@
 import React from 'react';
-import { Card, Table } from 'react-bootstrap';
+import {
+  Card,
+  CardContent,
+  Typography,
+  Box,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 import { CostAnalysis } from '../../services/analyticsService';
 
 interface CostAnalysisCardProps {
@@ -17,45 +28,59 @@ const CostAnalysisCard: React.FC<CostAnalysisCardProps> = ({ data }) => {
   };
 
   return (
-    <Card className="shadow-sm h-100">
-      <Card.Body>
-        <h5 className="card-title">Cost Analysis</h5>
-        
-        <div className="d-flex justify-content-between mb-4 mt-3">
-          <div className="text-center">
-            <div className="text-muted small mb-1">Total Value</div>
-            <h3 className="mb-0">{formatCurrency(data.total_inventory_value)}</h3>
-          </div>
-          <div className="text-center">
-            <div className="text-muted small mb-1">Avg Part Cost</div>
-            <h3 className="mb-0">{formatCurrency(data.average_part_cost)}</h3>
-          </div>
-        </div>
-        
-        <h6 className="mt-4 mb-2">Highest Value Parts</h6>
-        <Table responsive size="sm">
-          <thead>
-            <tr>
-              <th>Part Name</th>
-              <th>Quantity</th>
-              <th>Unit Cost</th>
-              <th>Total Value</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.highest_value_parts.map(part => (
-              <tr key={part.part_id}>
-                <td>{part.name}</td>
-                <td>{part.quantity}</td>
-                <td>{formatCurrency(part.unit_cost)}</td>
-                <td>{formatCurrency(part.total_value)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </Card.Body>
+    <Card sx={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', height: '100%' }}>
+      <CardContent>
+        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+          Cost Analysis
+        </Typography>
+
+        <Box display="flex" justifyContent="space-between" sx={{ mb: 3, mt: 1 }}>
+          <Box textAlign="center">
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+              Total Value
+            </Typography>
+            <Typography variant="h5" fontWeight={700}>
+              {formatCurrency(data.total_inventory_value)}
+            </Typography>
+          </Box>
+          <Box textAlign="center">
+            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+              Avg Part Cost
+            </Typography>
+            <Typography variant="h5" fontWeight={700}>
+              {formatCurrency(data.average_part_cost)}
+            </Typography>
+          </Box>
+        </Box>
+
+        <Typography variant="subtitle2" fontWeight={600} sx={{ mt: 2, mb: 1 }}>
+          Highest Value Parts
+        </Typography>
+        <TableContainer>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell>Part Name</TableCell>
+                <TableCell>Quantity</TableCell>
+                <TableCell>Unit Cost</TableCell>
+                <TableCell>Total Value</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.highest_value_parts.map(part => (
+                <TableRow key={part.part_id}>
+                  <TableCell>{part.name}</TableCell>
+                  <TableCell>{part.quantity}</TableCell>
+                  <TableCell>{formatCurrency(part.unit_cost)}</TableCell>
+                  <TableCell>{formatCurrency(part.total_value)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </CardContent>
     </Card>
   );
 };
 
-export default CostAnalysisCard; 
+export default CostAnalysisCard;

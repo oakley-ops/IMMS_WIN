@@ -1381,171 +1381,100 @@ const PartsList: React.FC = () => {
       <Box sx={{ my: 2 }}>
         {/* Search and Filters */}
         <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: '0.75rem', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
-          <div className="d-flex flex-column flex-md-row align-items-stretch gap-3">
-            <div className="flex-grow-1">
-              <label className="form-label" style={{ color: '#6c757d' }}>Search Parts Inventory</label>
-              <div className="search-container">
-                <input
-                  type="text"
-                  className="form-control"
+          <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, alignItems: 'stretch', gap: 2 }}>
+            <Box sx={{ flexGrow: 1 }}>
+              <Typography variant="caption" sx={{ color: '#6c757d', display: 'block', mb: 0.5, fontWeight: 600 }}>
+                Search Parts Inventory
+              </Typography>
+              <Box sx={{ position: 'relative' }}>
+                <TextField
+                  fullWidth
+                  size="small"
                   placeholder="Search by name, part number, location..."
                   value={searchTerm}
                   onChange={handleSearch}
+                  InputProps={{
+                    endAdornment: loading && searchTerm ? (
+                      <CircularProgress size={16} sx={{ mr: 1 }} />
+                    ) : undefined,
+                  }}
                 />
-                {loading && searchTerm && (
-                  <div className="spinner-border spinner-border-sm text-primary position-absolute" 
-                      style={{ right: '1rem', top: '0.75rem' }} 
-                      role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="d-flex flex-column align-items-stretch gap-2" style={{ minWidth: '250px' }}>
-              <label className="form-label" style={{ color: '#6c757d' }}>Actions</label>
-              <button
-                type="button"
-                className="btn w-100 mb-2"
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', gap: 1, minWidth: '250px' }}>
+              <Typography variant="caption" sx={{ color: '#6c757d', display: 'block', fontWeight: 600 }}>
+                Actions
+              </Typography>
+              <Button
+                variant="contained"
+                fullWidth
                 onClick={handleOpenAdd}
-                style={{ 
-                  backgroundColor: '#FF6600', 
-                  color: 'white',
-                  border: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  padding: '0.375rem 0.75rem',
-                  fontWeight: '600',
-                  fontSize: '0.9rem',
-                  boxShadow: '0 2px 4px rgba(255, 102, 0, 0.3)'
-                }}
+                startIcon={<AddIcon />}
+                sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontWeight: 600, mb: 0.5 }}
               >
-                <AddIcon sx={{ fontSize: 18, color: 'white' }} /> Add Part
-              </button>
-              
-              <div className="d-flex gap-2 mb-2">
-                <button
-                  type="button"
-                  className="btn flex-grow-1"
+                Add Part
+              </Button>
+
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="contained"
+                  sx={{ flexGrow: 1, backgroundColor: canRestockParts ? '#FF6600' : '#6c757d', '&:hover': { backgroundColor: canRestockParts ? '#e65c00' : '#5a6268' }, fontSize: '0.85rem' }}
                   onClick={() => canRestockParts && setOpenRestockForm(true)}
                   disabled={!canRestockParts}
-                  style={{ 
-                    backgroundColor: canRestockParts ? '#FF6600' : '#6c757d',
-                    color: 'white',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    padding: '0.375rem 0.75rem',
-                    fontSize: '0.85rem',
-                    cursor: canRestockParts ? 'pointer' : 'not-allowed',
-                    opacity: canRestockParts ? 1 : 0.6
-                  }}
                   title={canRestockParts ? 'Restock parts' : 'Only admin and purchasing users can restock parts'}
+                  startIcon={<AddCircleIcon sx={{ fontSize: 16 }} />}
                 >
-                  <AddCircleIcon sx={{ fontSize: 16, color: 'white' }} /> Restock
-                </button>
-                <button
-                  type="button"
-                  className="btn flex-grow-1"
+                  Restock
+                </Button>
+                <Button
+                  variant="contained"
+                  sx={{ flexGrow: 1, backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
                   onClick={() => setOpenUsageDialog(true)}
-                  style={{ 
-                    backgroundColor: '#FF6600',
-                    color: 'white',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    padding: '0.375rem 0.75rem',
-                    fontSize: '0.85rem'
-                  }}
+                  startIcon={<RemoveCircleIcon sx={{ fontSize: 16 }} />}
                 >
-                  <RemoveCircleIcon sx={{ fontSize: 16, color: 'white' }} /> Check Out
-                </button>
-              </div>
-              
-              <div className="d-flex gap-2 mb-2">
-                <button
-                  type="button"
-                  className="btn flex-grow-1"
+                  Check Out
+                </Button>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="contained"
+                  sx={{ flexGrow: 1, backgroundColor: '#2196f3', '&:hover': { backgroundColor: '#1976d2' }, fontSize: '0.85rem' }}
                   onClick={() => setOpenReturnDialog(true)}
-                  style={{ 
-                    backgroundColor: '#2196f3',
-                    color: 'white',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    padding: '0.375rem 0.75rem',
-                    fontSize: '0.85rem'
-                  }}
+                  startIcon={<UndoIcon sx={{ fontSize: 16 }} />}
                 >
-                  <UndoIcon sx={{ fontSize: 16, color: 'white' }} /> Return Parts
-                </button>
-              </div>
-              
-              <div className="d-flex gap-2">
-                <button
-                  type="button"
-                  className="btn flex-grow-1"
+                  Return Parts
+                </Button>
+              </Box>
+
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Button
+                  variant="contained"
+                  sx={{ flexGrow: 1, backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
                   onClick={() => setImportDialogOpen(true)}
-                  style={{ 
-                    backgroundColor: '#FF6600',
-                    color: 'white',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    padding: '0.375rem 0.75rem',
-                    fontSize: '0.85rem'
-                  }}
+                  startIcon={<CloudUploadIcon sx={{ fontSize: 16 }} />}
                 >
-                  <CloudUploadIcon sx={{ fontSize: 16, color: 'white' }} /> Import
-                </button>
-                <button
-                  type="button"
-                  className="btn flex-grow-1"
+                  Import
+                </Button>
+                <Button
+                  variant="contained"
+                  sx={{ flexGrow: 1, backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
                   onClick={() => setExportDialogOpen(true)}
-                  style={{ 
-                    backgroundColor: '#FF6600',
-                    color: 'white',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    padding: '0.375rem 0.75rem',
-                    fontSize: '0.85rem'
-                  }}
+                  startIcon={<DownloadIcon sx={{ fontSize: 16 }} />}
                 >
-                  <DownloadIcon sx={{ fontSize: 16, color: 'white' }} /> Export
-                </button>
-                <button
-                  type="button"
-                  className="btn"
+                  Export
+                </Button>
+                <Button
+                  variant="contained"
+                  sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, minWidth: 'auto', px: 1 }}
                   onClick={(e) => setColumnVisibilityMenuAnchor(e.currentTarget)}
-                  style={{ 
-                    backgroundColor: '#FF6600',
-                    color: '#e0e0e0',
-                    border: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '0.375rem 0.75rem',
-                    fontSize: '0.85rem'
-                  }}
                 >
-                  <ViewColumnIcon sx={{ fontSize: 16, color: '#e0e0e0' }} />
-                </button>
-              </div>
-            </div>
-          </div>
+                  <ViewColumnIcon sx={{ fontSize: 16 }} />
+                </Button>
+              </Box>
+            </Box>
+          </Box>
         </Paper>
 
         {/* Column Visibility Menu */}
@@ -1675,23 +1604,17 @@ const PartsList: React.FC = () => {
             boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)'
           }}
         >
-          <div className="d-flex align-items-center">
-            <span style={{ color: '#495057', marginRight: '1rem', fontWeight: 500 }}>
+          <Box display="flex" alignItems="center">
+            <Typography variant="body2" sx={{ color: '#495057', mr: 2, fontWeight: 500 }}>
               Total: {totalItems} parts
-            </span>
-            <div className="d-flex align-items-center">
-              <span style={{ color: '#495057', marginRight: '0.5rem' }}>
+            </Typography>
+            <Box display="flex" alignItems="center" gap={1}>
+              <Typography variant="body2" sx={{ color: '#495057' }}>
                 Rows per page:
-              </span>
-              <select
-                className="form-select"
-                style={{ 
-                  width: 'auto', 
-                  padding: '0.375rem 2rem 0.375rem 0.75rem',
-                  borderRadius: '0.5rem',
-                  border: '1px solid #ced4da',
-                  marginRight: '1rem'
-                }}
+              </Typography>
+              <TextField
+                select
+                size="small"
                 value={paginationModel.pageSize}
                 onChange={(e) => {
                   setPaginationModel({
@@ -1700,15 +1623,17 @@ const PartsList: React.FC = () => {
                     page: 0
                   });
                 }}
+                sx={{ width: 80 }}
+                SelectProps={{ native: true }}
               >
                 {[25, 50, 100].map((size) => (
                   <option key={size} value={size}>
                     {size}
                   </option>
                 ))}
-              </select>
-            </div>
-          </div>
+              </TextField>
+            </Box>
+          </Box>
           
           <Pagination
             count={Math.ceil(totalItems / paginationModel.pageSize)}
@@ -1735,8 +1660,8 @@ const PartsList: React.FC = () => {
 
       {/* Part Details Dialog */}
       <ModalPortal open={!!selectedPart && !openDialog}>
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content custom-dialog">
+        <div className="dialog-overlay-wrapper">
+          <div className="custom-dialog">
             <div className="dialog-header">
               <h5 className="dialog-title">Part Details</h5>
             </div>
@@ -1828,14 +1753,13 @@ const PartsList: React.FC = () => {
             </div>
             <div className="dialog-footer">
               <div className="d-flex gap-2 justify-content-end">
-                <button
-                  type="button"
-                  className="btn btn-outline-secondary"
+                <Button
+                  variant="outlined"
                   onClick={handleCloseDetails}
-                  style={{ fontSize: '0.875rem', padding: '0.375rem 0.75rem' }}
+                  size="small"
                 >
                   Close
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -1844,24 +1768,24 @@ const PartsList: React.FC = () => {
 
       {/* Add/Edit Part Dialog */}
       <ModalPortal open={openDialog}>
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content custom-dialog">
+        <div className="dialog-overlay-wrapper">
+          <div className="custom-dialog">
             <div className="dialog-header">
               <h5 className="dialog-title">{isEditing ? 'Edit Part' : 'Add Part'}</h5>
             </div>
             <form onSubmit={handleSubmit} className="needs-validation" noValidate>
               <div className="dialog-content">
                 {error && (
-                  <div className="alert alert-danger mb-4" role="alert">
+                  <Alert severity="error" sx={{ mb: 2 }}>
                     {error}
-                  </div>
+                  </Alert>
                 )}
                 <div className="grid-container grid-2-cols">
                   <div className="form-group">
                     <label className="form-label">Name *</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="dialog-input"
                       name="name"
                       value={formData.name}
                       onChange={handleInputChange}
@@ -1873,7 +1797,7 @@ const PartsList: React.FC = () => {
                     <label className="form-label">Manufacturer</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="dialog-input"
                       name="manufacturer"
                       value={formData.manufacturer}
                       onChange={handleInputChange}
@@ -1884,7 +1808,7 @@ const PartsList: React.FC = () => {
                     <label className="form-label">Manufacturer Part #</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="dialog-input"
                       name="manufacturer_part_number"
                       value={formData.manufacturer_part_number}
                       onChange={handleInputChange}
@@ -1895,7 +1819,7 @@ const PartsList: React.FC = () => {
                     <label className="form-label">Quantity *</label>
                     <input
                       type="number"
-                      className="form-control"
+                      className="dialog-input"
                       name="quantity"
                       min="0"
                       value={formData.quantity}
@@ -1908,7 +1832,7 @@ const PartsList: React.FC = () => {
                     <label className="form-label">Minimum Quantity *</label>
                     <input
                       type="number"
-                      className="form-control"
+                      className="dialog-input"
                       name="minimum_quantity"
                       min="0"
                       value={formData.minimum_quantity}
@@ -1923,7 +1847,7 @@ const PartsList: React.FC = () => {
                     <label className="form-label">Location</label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="dialog-input"
                       name="location"
                       autoComplete="off"
                       placeholder="Type or select a bin..."
@@ -1978,7 +1902,7 @@ const PartsList: React.FC = () => {
                 <div className="form-group">
                   <label className="form-label">Description</label>
                   <textarea
-                    className="form-control"
+                    className="dialog-input"
                     name="description"
                     value={formData.description}
                     onChange={handleInputChange}
@@ -1989,7 +1913,7 @@ const PartsList: React.FC = () => {
                 <div className="form-group">
                   <label className="form-label">Notes</label>
                   <textarea
-                    className="form-control"
+                    className="dialog-input"
                     name="notes"
                     value={formData.notes}
                     onChange={handleInputChange}
@@ -2000,11 +1924,11 @@ const PartsList: React.FC = () => {
                 {/* Part Image Upload Section */}
                 <div className="form-group mt-4">
                   <label className="form-label">Part Image</label>
-                  <div className="card border-primary">
-                    <div className="card-header bg-light">
+                  <Box sx={{ border: '1px solid', borderColor: 'primary.main', borderRadius: 1, overflow: 'hidden' }}>
+                    <Box sx={{ px: 2, py: 1, backgroundColor: 'grey.100', borderBottom: '1px solid', borderColor: 'divider' }}>
                       <strong>Upload Part Image</strong>
-                    </div>
-                    <div className="card-body">
+                    </Box>
+                    <Box sx={{ p: 2 }}>
                       {isEditing && selectedPart?.part_id ? (
                         <PartImageUpload
                           partId={selectedPart.part_id}
@@ -2013,8 +1937,8 @@ const PartsList: React.FC = () => {
                             if (selectedPart) {
                               setSelectedPart({ ...selectedPart, image_url: imageUrl });
                               // Update the parts list to reflect the change
-                              setParts(parts.map(p => 
-                                p.part_id === selectedPart.part_id 
+                              setParts(parts.map(p =>
+                                p.part_id === selectedPart.part_id
                                   ? { ...p, image_url: imageUrl }
                                   : p
                               ));
@@ -2022,34 +1946,34 @@ const PartsList: React.FC = () => {
                           }}
                         />
                       ) : (
-                        <div className="alert alert-info mb-0">
+                        <Alert severity="info" sx={{ mb: 0 }}>
                           <small>
                             <strong>Note:</strong> Save the part first, then you can upload an image.
                           </small>
-                        </div>
+                        </Alert>
                       )}
-                    </div>
-                  </div>
+                    </Box>
+                  </Box>
                 </div>
 
                 {/* Suppliers Section */}
                 <div className="mt-4 mb-2">
                   <h5 className="text-primary mb-2">Part Suppliers</h5>
-                  <div className="alert alert-info mb-3" role="alert">
+                  <Alert severity="info" sx={{ mb: 2 }}>
                     <small><strong>Important:</strong> Add one or more suppliers for this part. The first supplier added will be set as preferred.</small>
-                  </div>
-                  
+                  </Alert>
+
                   {/* Add Supplier Form */}
-                  <div className="card mb-3 border-primary">
-                    <div className="card-header bg-light">
+                  <Box sx={{ border: '1px solid', borderColor: 'primary.main', borderRadius: 1, overflow: 'hidden', mb: 2 }}>
+                    <Box sx={{ px: 2, py: 1, backgroundColor: 'grey.100', borderBottom: '1px solid', borderColor: 'divider' }}>
                       <strong>{editingSupplier ? 'Edit Supplier' : 'Add Supplier'}</strong>
-                    </div>
-                    <div className="card-body">
+                    </Box>
+                    <Box sx={{ p: 2 }}>
                       <div className="grid-container grid-3-cols">
                         <div className="form-group">
                           <label className="form-label">Supplier *</label>
                           <select
-                            className="form-select"
+                            className="dialog-select"
                             value={currentSupplierId}
                             onChange={(e) => setCurrentSupplierId(e.target.value)}
                             disabled={editingSupplier !== null}
@@ -2069,7 +1993,7 @@ const PartsList: React.FC = () => {
                             type="number"
                             step="0.01"
                             min="0"
-                            className="form-control"
+                            className="dialog-input"
                             value={currentUnitCost}
                             onChange={(e) => setCurrentUnitCost(e.target.value)}
                             placeholder="Leave blank for $0.00"
@@ -2081,18 +2005,16 @@ const PartsList: React.FC = () => {
                           <input
                             type="number"
                             min="0"
-                            className="form-control"
+                            className="dialog-input"
                             value={currentLeadTimeDays}
                             onChange={(e) => setCurrentLeadTimeDays(e.target.value)}
                           />
                         </div>
 
-
-
                         <div className="form-group">
                           <label className="form-label">Notes</label>
                           <textarea
-                            className="form-control"
+                            className="dialog-input"
                             value={currentSupplierNotes}
                             onChange={(e) => setCurrentSupplierNotes(e.target.value)}
                             rows={3}
@@ -2100,40 +2022,32 @@ const PartsList: React.FC = () => {
                         </div>
 
                         <div className="form-group d-flex align-items-end gap-2">
-                          <button
+                          <Button
                             type="button"
-                            className="btn btn-primary flex-grow-1"
+                            variant="contained"
                             onClick={handleAddSupplier}
-                            style={{ 
-                              padding: '0.375rem 0.75rem',
-                              fontSize: '0.875rem',
-                              backgroundColor: '#FF6600',
-                              borderColor: '#FF6600'
-                            }}
+                            sx={{ flexGrow: 1, backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.875rem' }}
                           >
                             {editingSupplier ? 'Update Supplier' : 'Add Supplier'}
-                          </button>
+                          </Button>
                           {editingSupplier && (
-                            <button
+                            <Button
                               type="button"
-                              className="btn btn-secondary"
+                              variant="outlined"
                               onClick={handleCancelEdit}
-                              style={{ 
-                                padding: '0.375rem 0.75rem',
-                                fontSize: '0.875rem'
-                              }}
+                              sx={{ fontSize: '0.875rem' }}
                             >
                               Cancel
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </div>
-                    </div>
-                  </div>
-                  
+                    </Box>
+                  </Box>
+
                   {/* Supplier List */}
                   {selectedSuppliers.length > 0 ? (
-                    <div className="table-responsive">
+                    <Box sx={{ overflowX: 'auto' }}>
                       <table className="table table-sm table-striped">
                         <thead className="table-light">
                           <tr>
@@ -2149,49 +2063,50 @@ const PartsList: React.FC = () => {
                           {selectedSuppliers.map((supplier) => (
                             <tr key={supplier.supplier_id}>
                               <td>{getSupplierName(supplier.supplier_id)}</td>
-                              <td>${typeof supplier.unit_cost === 'number' 
-                                  ? supplier.unit_cost.toFixed(2) 
+                              <td>${typeof supplier.unit_cost === 'number'
+                                  ? supplier.unit_cost.toFixed(2)
                                   : Number(supplier.unit_cost || 0).toFixed(2)}</td>
                               <td>{supplier.lead_time_days || '-'}</td>
                               <td>{supplier.minimum_order_quantity || '-'}</td>
                               <td>
-                                <div className="form-check">
-                                  <input
-                                    className="form-check-input"
-                                    type="radio"
-                                    checked={supplier.is_preferred}
-                                    onChange={() => handleSetPreferred(supplier.supplier_id)}
-                                  />
-                                </div>
+                                <input
+                                  type="radio"
+                                  checked={supplier.is_preferred}
+                                  onChange={() => handleSetPreferred(supplier.supplier_id)}
+                                />
                               </td>
                               <td>
-                                <button
+                                <Button
                                   type="button"
-                                  className="btn btn-sm btn-outline-primary me-1"
+                                  size="small"
+                                  variant="outlined"
+                                  color="primary"
                                   onClick={() => handleEditSupplier(supplier.supplier_id)}
-                                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                                  sx={{ fontSize: '0.75rem', mr: 0.5 }}
                                   disabled={editingSupplier === supplier.supplier_id}
                                 >
                                   Edit
-                                </button>
-                                <button
+                                </Button>
+                                <Button
                                   type="button"
-                                  className="btn btn-sm btn-outline-danger"
+                                  size="small"
+                                  variant="outlined"
+                                  color="error"
                                   onClick={() => handleRemoveSupplier(supplier.supplier_id)}
-                                  style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                                  sx={{ fontSize: '0.75rem' }}
                                 >
                                   Remove
-                                </button>
+                                </Button>
                               </td>
                             </tr>
                           ))}
                         </tbody>
                       </table>
-                    </div>
+                    </Box>
                   ) : (
-                    <div className="alert alert-warning">
+                    <Alert severity="warning">
                       <strong>No suppliers added yet.</strong> You must add at least one supplier for this part.
-                    </div>
+                    </Alert>
                   )}
                 </div>
 
@@ -2204,29 +2119,24 @@ const PartsList: React.FC = () => {
 
               <div className="dialog-footer">
                 <div className="d-flex gap-2 justify-content-end">
-                  <button
+                  <Button
                     type="button"
-                    className="btn btn-outline-secondary"
+                    variant="outlined"
                     onClick={() => setOpenDialog(false)}
-                    style={{ fontSize: '0.875rem', padding: '0.375rem 0.75rem' }}
+                    size="small"
                   >
                     Cancel
-                  </button>
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary"
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
                     disabled={loading}
-                    style={{ 
-                      backgroundColor: '#FF6600', 
-                      borderColor: '#FF6600', 
-                      fontSize: '0.875rem',
-                      padding: '0.375rem 0.75rem'
-                    }}
+                    size="small"
+                    startIcon={loading ? <CircularProgress size={14} color="inherit" /> : undefined}
+                    sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
                   >
-                    {loading ? (
-                      <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                    ) : isEditing ? 'Update Part' : 'Add Part'}
-                  </button>
+                    {loading ? 'Saving...' : isEditing ? 'Update Part' : 'Add Part'}
+                  </Button>
                 </div>
               </div>
             </form>
@@ -2292,8 +2202,8 @@ const PartsList: React.FC = () => {
 
       {/* Export Dialog */}
       <ModalPortal open={exportDialogOpen}>
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content custom-dialog">
+        <div className="dialog-overlay-wrapper">
+          <div className="custom-dialog">
             <div className="dialog-header">
               <h5 className="dialog-title">Export Inventory</h5>
             </div>
@@ -2304,10 +2214,13 @@ const PartsList: React.FC = () => {
                 </p>
                 <div className="form-group">
                   <label className="form-label">Location</label>
-                  <select
-                    className="form-select"
+                  <TextField
+                    select
+                    fullWidth
+                    size="small"
                     value={selectedLocation}
                     onChange={(e) => setSelectedLocation(e.target.value)}
+                    SelectProps={{ native: true }}
                   >
                     <option value="">All Locations</option>
                     {locations.map((location) => (
@@ -2315,44 +2228,31 @@ const PartsList: React.FC = () => {
                         {location}
                       </option>
                     ))}
-                  </select>
+                  </TextField>
                 </div>
               </div>
             </div>
             <div className="dialog-footer">
               <div className="d-flex gap-2 justify-content-end">
-                <button
+                <Button
                   type="button"
-                  className="btn btn-outline-secondary"
+                  variant="outlined"
                   onClick={() => setExportDialogOpen(false)}
-                  style={{ fontSize: '0.875rem', padding: '0.375rem 0.75rem' }}
+                  size="small"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn btn-primary"
+                  variant="contained"
                   onClick={handleExport}
                   disabled={exportLoading}
-                  style={{ 
-                    backgroundColor: '#FF6600', 
-                    borderColor: '#FF6600',
-                    fontSize: '0.875rem',
-                    padding: '0.375rem 0.75rem'
-                  }}
+                  size="small"
+                  startIcon={exportLoading ? <CircularProgress size={14} color="inherit" /> : <DownloadIcon sx={{ fontSize: 16 }} />}
+                  sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
                 >
-                  {exportLoading ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Exporting...
-                    </>
-                  ) : (
-                    <>
-                      <DownloadIcon sx={{ fontSize: 16, marginRight: '0.25rem' }} /> 
-                      Export
-                    </>
-                  )}
-                </button>
+                  {exportLoading ? 'Exporting...' : 'Export'}
+                </Button>
               </div>
             </div>
           </div>
@@ -2360,134 +2260,106 @@ const PartsList: React.FC = () => {
       </ModalPortal>
 
       {/* Snackbar for notifications */}
-      {(!!error || !!success) && (
-        <div className="toast-container position-fixed bottom-0 end-0 p-3">
-          <div 
-            className={`toast show ${error ? 'bg-danger' : 'bg-success'} text-white`}
-            role="alert"
-            style={{ 
-              borderRadius: '0.75rem',
-              boxShadow: '0 5px 15px rgba(0,0,0,0.1)',
-              minWidth: '300px'
-            }}
-          >
-            <div className="toast-header bg-transparent text-white border-0">
-              <strong className="me-auto">{error ? 'Error' : 'Success'}</strong>
-              <button 
-                type="button" 
-                className="btn-close btn-close-white" 
-                onClick={() => { 
-                  setError(null); 
-                  setSuccess(null); 
-                }}
-              ></button>
-            </div>
-            <div className="toast-body">
-              {error || success}
-            </div>
-          </div>
-        </div>
-      )}
+      <Snackbar
+        open={!!(error || success)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        autoHideDuration={5000}
+        onClose={() => { setError(null); setSuccess(null); }}
+      >
+        <Alert
+          severity={error ? 'error' : 'success'}
+          onClose={() => { setError(null); setSuccess(null); }}
+          sx={{ minWidth: '300px' }}
+        >
+          {error || success}
+        </Alert>
+      </Snackbar>
 
       {/* Part Edit Confirmation Dialog */}
       <ModalPortal open={openEditConfirm}>
-        <div className="modal-dialog modal-dialog-centered">
-          <div className="modal-content custom-dialog">
+        <div className="dialog-overlay-wrapper">
+          <div className="custom-dialog">
             <div className="dialog-header">
               <h5 className="dialog-title">Part Actions</h5>
             </div>
             <div className="dialog-content">
               <p>What would you like to do with this part?</p>
-              <div className="card mb-3 border-primary">
-                <div className="card-body">
-                  <h6 className="card-title">Selected Part: {selectedPart?.name}</h6>
-                  <p className="card-text">Mfg Part #: {selectedPart?.manufacturer_part_number || 'N/A'}</p>
-                  <div className="d-flex justify-content-between align-items-center mt-2">
-                    <span className="text-muted">Current Stock: {selectedPart?.quantity}</span>
-                    <span className={`badge ${(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'bg-warning' : 'bg-success'}`}>
-                      {(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'Low Stock' : 'In Stock'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <Box sx={{ border: '1px solid', borderColor: 'primary.main', borderRadius: 1, p: 2, mb: 2 }}>
+                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                  Selected Part: {selectedPart?.name}
+                </Typography>
+                <Typography variant="body2" gutterBottom>
+                  Mfg Part #: {selectedPart?.manufacturer_part_number || 'N/A'}
+                </Typography>
+                <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Current Stock: {selectedPart?.quantity}
+                  </Typography>
+                  <Chip
+                    label={(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'Low Stock' : 'In Stock'}
+                    color={(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'warning' : 'success'}
+                    size="small"
+                  />
+                </Box>
+              </Box>
             </div>
             <div className="dialog-footer">
               <div className="d-flex gap-2 justify-content-end">
-                <button
+                <Button
                   type="button"
-                  className="btn btn-outline-secondary"
+                  variant="outlined"
                   onClick={() => setOpenEditConfirm(false)}
-                  style={{ fontSize: '0.875rem', padding: '0.375rem 0.75rem' }}
+                  size="small"
                 >
                   Cancel
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn"
+                  variant="contained"
                   onClick={() => {
                     if (selectedPart) {
                       handleOpenEdit(selectedPart);
                     }
                     setOpenEditConfirm(false);
                   }}
-                  style={{ 
-                    backgroundColor: '#007bff', 
-                    color: 'white',
-                    border: 'none',
-                    fontSize: '0.875rem',
-                    padding: '0.375rem 0.75rem'
-                  }}
+                  size="small"
+                  sx={{ backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#115293' } }}
                 >
                   Edit Part
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn"
+                  variant="contained"
                   onClick={handleRestock}
-                  style={{ 
-                    backgroundColor: '#28a745', 
-                    color: 'white',
-                    border: 'none',
-                    fontSize: '0.875rem',
-                    padding: '0.375rem 0.75rem'
-                  }}
+                  size="small"
+                  color="success"
                 >
                   Restock
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn"
+                  variant="contained"
                   onClick={handleCheckOut}
-                  style={{ 
-                    backgroundColor: '#FF6600', 
-                    color: 'white',
-                    border: 'none',
-                    fontSize: '0.875rem',
-                    padding: '0.375rem 0.75rem'
-                  }}
+                  size="small"
+                  sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
                 >
                   Check Out
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
-                  className="btn"
+                  variant="contained"
                   onClick={() => {
                     if (selectedPart) {
                       setOpenReturnDialog(true);
                     }
                     setOpenEditConfirm(false);
                   }}
-                  style={{ 
-                    backgroundColor: '#007bff', 
-                    color: 'white',
-                    border: 'none',
-                    fontSize: '0.875rem',
-                    padding: '0.375rem 0.75rem'
-                  }}
+                  size="small"
+                  sx={{ backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#115293' } }}
+                  startIcon={<UndoIcon sx={{ fontSize: 16 }} />}
                 >
-                  <UndoIcon style={{ fontSize: '16px', marginRight: '4px' }} />
                   Return Part
-                </button>
+                </Button>
               </div>
             </div>
           </div>

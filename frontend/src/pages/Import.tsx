@@ -1,26 +1,30 @@
 import React from 'react';
-import { Container, Row, Col, Card } from 'react-bootstrap';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Grid,
+} from '@mui/material';
 import CSVUploadForm from '../components/CSVUploadForm';
 
 const Import: React.FC = () => {
   return (
-    <Container fluid>
-      <Row>
-        <Col>
-          <h1 className="my-4">Import Data</h1>
-        </Col>
-      </Row>
-      
-      <Row>
-        <Col md={8} lg={6}>
-          <Card>
-            <Card.Body>
+    <Box sx={{ px: 3, py: 3 }}>
+      <Typography variant="h4" fontWeight={700} sx={{ mb: 4 }}>
+        Import Data
+      </Typography>
+
+      <Grid container>
+        <Grid item xs={12} md={8} lg={6}>
+          <Card sx={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }}>
+            <CardContent>
               <CSVUploadForm />
-            </Card.Body>
+            </CardContent>
           </Card>
-        </Col>
-      </Row>
-    </Container>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 
