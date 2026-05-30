@@ -16,6 +16,11 @@ import {
   Divider,
   Paper,
   Grid,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  SelectChangeEvent,
   Badge,
   InputAdornment,
   LinearProgress,
@@ -44,6 +49,11 @@ import { getMachineDocuments } from '../services/machineDocumentsApi';
 
 interface MachineListProps {
   machinesData?: Machine[];
+  manufacturers?: string[];
+  selectedManufacturer?: string;
+  onManufacturerChange?: (value: string) => void;
+  getManufacturerCount?: (manufacturer: string) => number;
+  totalCount?: number;
 }
 
 // Custom CSS styles for app branding
@@ -74,7 +84,7 @@ const AppStyles = `
   }
 `;
 
-const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
+const MachineList: React.FC<MachineListProps> = ({ machinesData, manufacturers, selectedManufacturer = 'all', onManufacturerChange, getManufacturerCount, totalCount }) => {
   const [machines, setMachines] = useState<Machine[]>([]);
   const [filteredMachines, setFilteredMachines] = useState<Machine[]>([]);
   const [open, setOpen] = useState(false);
@@ -104,7 +114,6 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
     status: 'active',
     compatible_die_types: [] as string[]
   });
-  const [selectedManufacturer, setSelectedManufacturer] = useState('all');
 
   useEffect(() => {
     if (machinesData) {
@@ -459,7 +468,7 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
         {/* Search and Actions */}
         <Paper elevation={0} sx={{ p: 3, mb: 3, borderRadius: '0.75rem', boxShadow: '0 4px 10px rgba(0, 0, 0, 0.1)' }}>
           <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} md={8}>
+            <Grid item xs={12} md={5}>
               <TextField
                 fullWidth
                 placeholder="Search by name, model, serial number, location, or manufacturer..."
@@ -492,8 +501,46 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
               )}
             </Grid>
             
+            {manufacturers && onManufacturerChange && (
+              <Grid item xs={12} md={3}>
+                <FormControl fullWidth>
+                  <InputLabel id="manufacturer-select-label">Manufacturer</InputLabel>
+                  <Select
+                    labelId="manufacturer-select-label"
+                    value={selectedManufacturer}
+                    label="Manufacturer"
+                    onChange={(e: SelectChangeEvent) => onManufacturerChange(e.target.value)}
+                  >
+                    <MenuItem value="all">
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                        <span>All Manufacturers</span>
+                        {getManufacturerCount && (
+                          <Chip label={getManufacturerCount('all')} size="small" color="primary" sx={{ ml: 1 }} />
+                        )}
+                      </Box>
+                    </MenuItem>
+                    <Divider />
+                    {manufacturers.map((manufacturer) => (
+                      <MenuItem key={manufacturer} value={manufacturer}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                          <span>{manufacturer}</span>
+                          {getManufacturerCount && (
+                            <Chip
+                              label={getManufacturerCount(manufacturer)}
+                              size="small"
+                              color={selectedManufacturer === manufacturer ? 'primary' : 'default'}
+                            />
+                          )}
+                        </Box>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+            )}
+
             <Grid item xs={12} md={4}>
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
                 <Button
                   variant="contained"
                   onClick={handleOpen}
@@ -557,14 +604,22 @@ const MachineList: React.FC<MachineListProps> = ({ machinesData }) => {
                 backgroundColor: 'rgba(255, 102, 0, 0.04)'
               }}
             />
-            <Chip 
-              label={`${machines.length} total machines`} 
-              color="primary" 
-              sx={{ 
+            <Chip
+              label={`${totalCount ?? machines.length} total machines`}
+              color="primary"
+              sx={{
                 backgroundColor: PRIMARY_ORANGE,
                 color: 'white'
               }}
             />
+            {selectedManufacturer !== 'all' && onManufacturerChange && (
+              <Chip
+                label={`Filtered by: ${selectedManufacturer}`}
+                color="primary"
+                onDelete={() => onManufacturerChange('all')}
+                sx={{ backgroundColor: PRIMARY_ORANGE, color: 'white' }}
+              />
+            )}
             {searchTerm && (
               <Chip 
                 label={`Search: "${searchTerm}"`} 
