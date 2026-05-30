@@ -1268,7 +1268,7 @@ const PartsList: React.FC = () => {
               variant="contained"
               onClick={() => setOpenReturnDialog(true)}
               startIcon={<UndoIcon sx={{ fontSize: 18 }} />}
-              sx={{ backgroundColor: '#2196f3', '&:hover': { backgroundColor: '#1976d2' } }}
+              sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' } }}
             >
               Return Parts
             </Button>
