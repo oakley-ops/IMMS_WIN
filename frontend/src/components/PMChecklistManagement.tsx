@@ -39,27 +39,11 @@ import {
   Error as ErrorIcon,
   Build as BuildIcon,
 } from '@mui/icons-material';
-import { 
-  DataGrid, 
-  GridColDef, 
-  GridRenderCellParams,
-  GridPaginationModel,
-} from '@mui/x-data-grid';
-import { styled } from '@mui/material/styles';
 import * as XLSX from 'xlsx';
 import axiosInstance from '../utils/axios';
 import { PRIMARY_ORANGE } from '../theme';
 import PMCalendar, { PMCalendarRef } from './PMCalendar';
-
-
-const StyledDataGrid = styled(DataGrid, {
-  shouldForwardProp: (prop) => ![
-    'rowId',
-    'offsetLeft',
-    'columnsTotalWidth',
-    'paginationMeta'
-  ].includes(prop.toString()),
-})({});
+import DataTable, { ColumnDef } from './DataTable';
 
 interface PMChecklist {
   checklist_id: number;
@@ -71,6 +55,8 @@ interface PMChecklist {
   updated_at: string;
   tasks?: PMTask[];
 }
+
+type ChecklistRow = PMChecklist & { id: number };
 
 interface Machine {
   id?: number;
@@ -121,10 +107,6 @@ const PMChecklistManagement: React.FC = () => {
   const [notScheduledCount, setNotScheduledCount] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [exportLoading, setExportLoading] = useState(false);
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    page: 0,
-    pageSize: 25,
-  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -524,54 +506,50 @@ const PMChecklistManagement: React.FC = () => {
     );
   }
 
-  // Define DataGrid columns
-  const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Checklist Name', flex: 1.5 },
-    { field: 'description', headerName: 'Description', flex: 2 },
-    { field: 'machine_type', headerName: 'Machine Type', width: 150 },
-    { 
-      field: 'is_active', 
-      headerName: 'Status', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip 
-          label={params.value ? 'Active' : 'Inactive'} 
+  // Define DataTable columns
+  const columns: ColumnDef<ChecklistRow>[] = [
+    { key: 'name', label: 'Checklist Name' },
+    { key: 'description', label: 'Description' },
+    { key: 'machine_type', label: 'Machine Type' },
+    {
+      key: 'is_active',
+      label: 'Status',
+      render: (row) => (
+        <Chip
+          label={row.is_active ? 'Active' : 'Inactive'}
           size="small"
-          color={params.value ? 'success' : 'default'}
+          color={row.is_active ? 'success' : 'default'}
           variant="outlined"
         />
-      )
+      ),
     },
-    { 
-      field: 'tasks_count', 
-      headerName: 'Tasks', 
-      width: 100,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip 
-          label={params.row.tasks?.length || 0} 
+    {
+      key: 'tasks',
+      label: 'Tasks',
+      sortable: false,
+      render: (row) => (
+        <Chip
+          label={row.tasks?.length || 0}
           size="small"
           color="info"
           variant="outlined"
         />
-      )
-    },
-    { 
-      field: 'created_at', 
-      headerName: 'Created', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => 
-        new Date(params.value).toLocaleDateString()
+      ),
     },
     {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 200,
+      key: 'created_at',
+      label: 'Created',
+      render: (row) => new Date(row.created_at).toLocaleDateString(),
+    },
+    {
+      key: 'checklist_id',
+      label: 'Actions',
       sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
+      render: (row) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
             size="small"
-            onClick={() => handleEdit(params.row)}
+            onClick={(e) => { e.stopPropagation(); handleEdit(row); }}
             sx={{
               backgroundColor: PRIMARY_ORANGE,
               color: 'white',
@@ -583,8 +561,8 @@ const PMChecklistManagement: React.FC = () => {
           </IconButton>
           <IconButton
             size="small"
-            onClick={() => toggleShowTasks(params.row.checklist_id)}
-            sx={{ 
+            onClick={(e) => { e.stopPropagation(); toggleShowTasks(row.checklist_id); }}
+            sx={{
               backgroundColor: '#0066A1',
               color: 'white',
               '&:hover': { backgroundColor: '#004d7a' }
@@ -595,11 +573,12 @@ const PMChecklistManagement: React.FC = () => {
           </IconButton>
           <IconButton
             size="small"
-            onClick={() => {
-              setChecklistToDelete(params.row);
+            onClick={(e) => {
+              e.stopPropagation();
+              setChecklistToDelete(row);
               setDeleteConfirmOpen(true);
             }}
-            sx={{ 
+            sx={{
               backgroundColor: '#f44336',
               color: 'white',
               '&:hover': { backgroundColor: '#d32f2f' }
@@ -609,8 +588,8 @@ const PMChecklistManagement: React.FC = () => {
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Box>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -917,43 +896,11 @@ const PMChecklistManagement: React.FC = () => {
                 )}
               </Box>
             ) : (
-              <StyledDataGrid
+              <DataTable<ChecklistRow>
                 columns={columns}
-                rows={filteredChecklists}
-                getRowId={(row) => row.checklist_id}
-                paginationModel={paginationModel}
-                onPaginationModelChange={setPaginationModel}
-                pageSizeOptions={[25, 50, 100]}
-                disableRowSelectionOnClick
-                disableColumnMenu
-                sx={{
-                  '& .MuiDataGrid-cell': {
-                    py: 1.5,
-                    px: 2
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    bgcolor: 'action.hover',
-                    borderBottom: '2px solid #e9ecef',
-                    py: 1.5
-                  },
-                  '& .MuiDataGrid-row': {
-                    borderBottom: '1px solid #e9ecef',
-                  },
-                  '& .MuiDataGrid-row:hover': {
-                    bgcolor: 'rgba(0, 102, 161, 0.04)',
-                  },
-                  '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
-                    outline: 'none',
-                  },
-                  border: 'none',
-                  borderRadius: '0.75rem',
-                  '& .MuiDataGrid-columnSeparator': {
-                    display: 'none',
-                  },
-                  '& .MuiDataGrid-iconButtonContainer': {
-                    color: '#0066A1',
-                  }
-                }}
+                rows={filteredChecklists.map((c) => ({ ...c, id: c.checklist_id })) as ChecklistRow[]}
+                pageSize={25}
+                emptyMessage="No checklists found"
               />
             )}
           </Box>

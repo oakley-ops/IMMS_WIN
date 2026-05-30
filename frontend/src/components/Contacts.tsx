@@ -37,19 +37,15 @@ import {
   PersonAdd as PersonAddIcon,
   Visibility as VisibilityIcon,
 } from '@mui/icons-material';
-import {
-  DataGrid,
-  GridColDef,
-  GridRenderCellParams,
-  GridPaginationModel,
-} from '@mui/x-data-grid';
-import { styled } from '@mui/material/styles';
 import * as XLSX from 'xlsx';
 import CloseIcon from '@mui/icons-material/Close';
 import axiosInstance from '../utils/axios';
 import { Contact, ContactType, ContactStatus, ContactFormData } from '../types/contact';
 import { format } from 'date-fns';
 import { PRIMARY_ORANGE, COLOR_SUCCESS_BG, COLOR_ERROR_BG, COLOR_SUCCESS_TEXT, COLOR_ERROR_TEXT } from '../theme';
+import DataTable, { ColumnDef } from './DataTable';
+
+type ContactRow = Contact & { id: number };
 
 // Define contactsApi locally for now due to import issues - Updated
 const contactsApi = {
@@ -65,15 +61,6 @@ const contactsApi = {
   delete: (id: number) => axiosInstance.delete(`/api/v1/contacts/${id}`),
 };
 
-const StyledDataGrid = styled(DataGrid, {
-  shouldForwardProp: (prop) => ![
-    'rowId',
-    'offsetLeft',
-    'columnsTotalWidth',
-    'paginationMeta'
-  ].includes(prop.toString()),
-})({});
-
 const Contacts: React.FC = () => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [filteredContacts, setFilteredContacts] = useState<Contact[]>([]);
@@ -85,10 +72,6 @@ const Contacts: React.FC = () => {
   const [filterType, setFilterType] = useState<ContactType>('all');
   const [filterStatus, setFilterStatus] = useState<ContactStatus>('all');
   const [exportLoading, setExportLoading] = useState(false);
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    page: 0,
-    pageSize: 25,
-  });
   const [showActiveOnly, setShowActiveOnly] = useState<boolean>(true);
   const [openDialog, setOpenDialog] = useState<boolean>(false);
   const [isEditing, setIsEditing] = useState<boolean>(false);
@@ -404,94 +387,83 @@ const Contacts: React.FC = () => {
     }
   };
 
-  // Define DataGrid columns
-  const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', width: 150 },
-    { field: 'company', headerName: 'Company', width: 200 },
-    { 
-      field: 'type', 
-      headerName: 'Type', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => {
-        const getTypeColor = (type: string) => {
-          switch (type?.toLowerCase()) {
-            case 'vendor': return 'primary';
-            case 'contractor': return 'success';
-            case 'supplier': return 'info';
-            default: return 'default';
-          }
-        };
-        
-        return (
-          <Chip 
-            label={params.value?.charAt(0).toUpperCase() + params.value?.slice(1) || 'N/A'} 
-            size="small"
-            color={getTypeColor(params.value) as any}
-            variant="outlined"
-          />
-        );
-      }
-    },
-    { 
-      field: 'email', 
-      headerName: 'Email', 
-      width: 200,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <EmailIcon fontSize="small" sx={{ color: '#666' }} />
-          <a href={`mailto:${params.value}`} style={{ textDecoration: 'none', color: PRIMARY_ORANGE }}>
-            {params.value}
-          </a>
-        </Box>
-      )
-    },
-    { 
-      field: 'phone', 
-      headerName: 'Phone', 
-      width: 140,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <PhoneIcon fontSize="small" sx={{ color: '#666' }} />
-          <a href={`tel:${params.value}`} style={{ textDecoration: 'none', color: PRIMARY_ORANGE }}>
-            {params.value}
-          </a>
-        </Box>
-      )
-    },
-    { 
-      field: 'location', 
-      headerName: 'Location', 
-      width: 150,
-      renderCell: (params: GridRenderCellParams) => (
-        <span>{params.row.city && params.row.state ? `${params.row.city}, ${params.row.state}` : 'N/A'}</span>
-      )
-    },
-    { 
-      field: 'status', 
-      headerName: 'Status', 
-      width: 100,
-      renderCell: (params: GridRenderCellParams) => {
-        const isActive = params.value === 'active';
-        return (
-          <Chip 
-            label={params.value || 'inactive'} 
-            size="small"
-            color={isActive ? 'success' : 'error'}
-            variant="outlined"
-          />
-        );
-      }
+  const getTypeColor = (type?: string) => {
+    switch (type?.toLowerCase()) {
+      case 'vendor': return 'primary';
+      case 'contractor': return 'success';
+      case 'supplier': return 'info';
+      default: return 'default';
+    }
+  };
+
+  // Define DataTable columns
+  const columns: ColumnDef<ContactRow>[] = [
+    { key: 'name', label: 'Name' },
+    { key: 'company', label: 'Company' },
+    {
+      key: 'type',
+      label: 'Type',
+      render: (row) => (
+        <Chip
+          label={row.type?.charAt(0).toUpperCase() + row.type?.slice(1) || 'N/A'}
+          size="small"
+          color={getTypeColor(row.type) as any}
+          variant="outlined"
+        />
+      ),
     },
     {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 200,
+      key: 'email',
+      label: 'Email',
+      render: (row) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }} onClick={(e) => e.stopPropagation()}>
+          <EmailIcon fontSize="small" sx={{ color: '#666' }} />
+          <a href={`mailto:${row.email}`} style={{ textDecoration: 'none', color: PRIMARY_ORANGE }}>
+            {row.email}
+          </a>
+        </Box>
+      ),
+    },
+    {
+      key: 'phone',
+      label: 'Phone',
+      render: (row) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }} onClick={(e) => e.stopPropagation()}>
+          <PhoneIcon fontSize="small" sx={{ color: '#666' }} />
+          <a href={`tel:${row.phone}`} style={{ textDecoration: 'none', color: PRIMARY_ORANGE }}>
+            {row.phone}
+          </a>
+        </Box>
+      ),
+    },
+    {
+      key: 'city',
+      label: 'Location',
+      render: (row) => (
+        <span>{row.city && row.state ? `${row.city}, ${row.state}` : 'N/A'}</span>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (row) => (
+        <Chip
+          label={row.status || 'inactive'}
+          size="small"
+          color={row.status === 'active' ? 'success' : 'error'}
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      key: 'contact_id',
+      label: 'Actions',
       sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
+      render: (row) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
             size="small"
-            onClick={() => handleOpenDetailsDialog(params.row)}
+            onClick={(e) => { e.stopPropagation(); handleOpenDetailsDialog(row); }}
             sx={{
               backgroundColor: 'secondary.main',
               color: 'white',
@@ -503,7 +475,7 @@ const Contacts: React.FC = () => {
           </IconButton>
           <IconButton
             size="small"
-            onClick={() => handleOpenEditDialog(params.row)}
+            onClick={(e) => { e.stopPropagation(); handleOpenEditDialog(row); }}
             sx={{
               backgroundColor: PRIMARY_ORANGE,
               color: 'white',
@@ -515,7 +487,7 @@ const Contacts: React.FC = () => {
           </IconButton>
           <IconButton
             size="small"
-            onClick={() => handleDelete(params.row.contact_id)}
+            onClick={(e) => { e.stopPropagation(); handleDelete(row.contact_id); }}
             sx={{
               backgroundColor: 'error.main',
               color: 'white',
@@ -526,8 +498,8 @@ const Contacts: React.FC = () => {
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Box>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -741,45 +713,12 @@ const Contacts: React.FC = () => {
                 )}
               </Box>
             ) : (
-              <StyledDataGrid
+              <DataTable<ContactRow>
                 columns={columns}
-                rows={filteredContacts}
-                getRowId={(row) => row.contact_id}
-                paginationModel={paginationModel}
-                onPaginationModelChange={setPaginationModel}
-                pageSizeOptions={[25, 50, 100]}
-                disableRowSelectionOnClick
-                disableColumnMenu
-                onRowClick={(params) => handleOpenDetailsDialog(params.row)}
-                sx={{
-                  '& .MuiDataGrid-cell': {
-                    py: 1.5,
-                    px: 2
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    bgcolor: '#f8f9fa',
-                    borderBottom: '2px solid #e9ecef',
-                    py: 1.5
-                  },
-                  '& .MuiDataGrid-row': {
-                    borderBottom: '1px solid #e9ecef',
-                  },
-                  '& .MuiDataGrid-row:hover': {
-                    bgcolor: 'rgba(0, 102, 161, 0.04)',
-                    cursor: 'pointer',
-                  },
-                  '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
-                    outline: 'none',
-                  },
-                  border: 'none',
-                  borderRadius: '0.75rem',
-                  '& .MuiDataGrid-columnSeparator': {
-                    display: 'none',
-                  },
-                  '& .MuiDataGrid-iconButtonContainer': {
-                    color: 'secondary.main',
-                  }
-                }}
+                rows={filteredContacts.map((c) => ({ ...c, id: c.contact_id })) as ContactRow[]}
+                pageSize={25}
+                emptyMessage="No contacts found"
+                onRowClick={(row) => handleOpenDetailsDialog(row)}
               />
             )}
           </Box>

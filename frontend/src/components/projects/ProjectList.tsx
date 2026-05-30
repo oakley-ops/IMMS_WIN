@@ -35,13 +35,6 @@ import {
   Refresh as RefreshIcon,
   CalendarToday as CalendarIcon,
 } from '@mui/icons-material';
-import {
-  DataGrid,
-  GridColDef,
-  GridRenderCellParams,
-  GridPaginationModel,
-} from '@mui/x-data-grid';
-import { styled } from '@mui/material/styles';
 import * as XLSX from 'xlsx';
 import CloseIcon from '@mui/icons-material/Close';
 import { format } from 'date-fns';
@@ -57,15 +50,9 @@ import {
 import { Project } from '../../types/project';
 import ProjectCreationWizard from './ProjectCreationWizard';
 import { PRIMARY_ORANGE, COLOR_SUCCESS_BG, COLOR_ERROR_BG, COLOR_SUCCESS_TEXT, COLOR_ERROR_TEXT } from '../../theme';
+import DataTable, { ColumnDef } from '../DataTable';
 
-const StyledDataGrid = styled(DataGrid, {
-  shouldForwardProp: (prop) => ![
-    'rowId',
-    'offsetLeft',
-    'columnsTotalWidth',
-    'paginationMeta'
-  ].includes(prop.toString()),
-})({});
+type ProjectRow = Project & { id: number };
 
 const statusColors = {
   planning: 'default',
@@ -99,10 +86,6 @@ const ProjectList: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<StatusFilter>('all');
   const [filterPriority, setFilterPriority] = useState<PriorityFilter>('all');
   const [exportLoading, setExportLoading] = useState(false);
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    page: 0,
-    pageSize: 25,
-  });
   const [showActiveOnly, setShowActiveOnly] = useState<boolean>(true);
   const [projectProgress, setProjectProgress] = useState<Map<number, number>>(new Map());
   
@@ -382,23 +365,22 @@ const ProjectList: React.FC = () => {
     }
   };
 
-  // Define DataGrid columns
-  const columns: GridColDef[] = [
-    { 
-      field: 'name', 
-      headerName: 'Project Name', 
-      width: 250,
-      renderCell: (params: GridRenderCellParams) => {
-        const progress = projectProgress.get(params.row.project_id) || 0;
+  // Define DataTable columns
+  const columns: ColumnDef<ProjectRow>[] = [
+    {
+      key: 'name',
+      label: 'Project Name',
+      render: (row) => {
+        const progress = projectProgress.get(row.project_id) || 0;
         return (
           <Box sx={{ width: '100%' }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 'bold' }}>
-              {params.value}
+              {row.name}
             </Typography>
-            {params.row.description && (
+            {row.description && (
               <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
-                {params.row.description.substring(0, 40)}
-                {params.row.description.length > 40 ? '...' : ''}
+                {row.description.substring(0, 40)}
+                {row.description.length > 40 ? '...' : ''}
               </Typography>
             )}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
@@ -422,74 +404,69 @@ const ProjectList: React.FC = () => {
             </Box>
           </Box>
         );
-      }
-    },
-    { 
-      field: 'status', 
-      headerName: 'Status', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip 
-          label={params.value?.charAt(0).toUpperCase() + params.value?.slice(1) || 'N/A'} 
-          size="small"
-          color={statusColors[params.value as ProjectStatus] as any}
-          variant="outlined"
-        />
-      )
-    },
-    { 
-      field: 'priority', 
-      headerName: 'Priority', 
-      width: 100,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip 
-          label={params.value?.charAt(0).toUpperCase() + params.value?.slice(1) || 'N/A'} 
-          size="small"
-          color={priorityColors[params.value as ProjectPriority] as any}
-          variant="outlined"
-        />
-      )
-    },
-    { 
-      field: 'start_date', 
-      headerName: 'Start Date', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">
-          {params.value ? format(new Date(params.value), 'MMM d, yyyy') : 'N/A'}
-        </Typography>
-      )
-    },
-    { 
-      field: 'end_date', 
-      headerName: 'End Date', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">
-          {params.value ? format(new Date(params.value), 'MMM d, yyyy') : 'TBD'}
-        </Typography>
-      )
-    },
-    { 
-      field: 'budget', 
-      headerName: 'Budget', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => (
-        <Typography variant="body2">
-          ${typeof params.value === 'number' ? params.value.toLocaleString() : '0'}
-        </Typography>
-      )
+      },
     },
     {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 180,
+      key: 'status',
+      label: 'Status',
+      render: (row) => (
+        <Chip
+          label={row.status?.charAt(0).toUpperCase() + row.status?.slice(1) || 'N/A'}
+          size="small"
+          color={statusColors[row.status as ProjectStatus] as any}
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      key: 'priority',
+      label: 'Priority',
+      render: (row) => (
+        <Chip
+          label={row.priority?.charAt(0).toUpperCase() + row.priority?.slice(1) || 'N/A'}
+          size="small"
+          color={priorityColors[row.priority as ProjectPriority] as any}
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      key: 'start_date',
+      label: 'Start Date',
+      render: (row) => (
+        <Typography variant="body2">
+          {row.start_date ? format(new Date(row.start_date), 'MMM d, yyyy') : 'N/A'}
+        </Typography>
+      ),
+    },
+    {
+      key: 'end_date',
+      label: 'End Date',
+      render: (row) => (
+        <Typography variant="body2">
+          {row.end_date ? format(new Date(row.end_date), 'MMM d, yyyy') : 'TBD'}
+        </Typography>
+      ),
+    },
+    {
+      key: 'budget',
+      label: 'Budget',
+      align: 'right',
+      render: (row) => (
+        <Typography variant="body2">
+          ${typeof row.budget === 'number' ? row.budget.toLocaleString() : '0'}
+        </Typography>
+      ),
+    },
+    {
+      key: 'project_id',
+      label: 'Actions',
       sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
+      render: (row) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
             size="small"
-            onClick={() => navigate(`/projects/${params.row.project_id}/timeline`)}
+            onClick={(e) => { e.stopPropagation(); navigate(`/projects/${row.project_id}/timeline`); }}
             sx={{
               backgroundColor: 'secondary.main',
               color: 'white',
@@ -501,7 +478,7 @@ const ProjectList: React.FC = () => {
           </IconButton>
           <IconButton
             size="small"
-            onClick={() => handleOpenProjectDialog(params.row)}
+            onClick={(e) => { e.stopPropagation(); handleOpenProjectDialog(row); }}
             sx={{
               backgroundColor: PRIMARY_ORANGE,
               color: 'white',
@@ -513,7 +490,7 @@ const ProjectList: React.FC = () => {
           </IconButton>
           <IconButton
             size="small"
-            onClick={() => handleDelete(params.row.project_id)}
+            onClick={(e) => { e.stopPropagation(); handleDelete(row.project_id); }}
             sx={{
               backgroundColor: 'error.main',
               color: 'white',
@@ -524,8 +501,8 @@ const ProjectList: React.FC = () => {
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Box>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -758,44 +735,11 @@ const ProjectList: React.FC = () => {
                 )}
               </Box>
             ) : (
-              <StyledDataGrid
+              <DataTable<ProjectRow>
                 columns={columns}
-                rows={filteredProjects}
-                getRowId={(row) => row.project_id}
-                paginationModel={paginationModel}
-                onPaginationModelChange={setPaginationModel}
-                pageSizeOptions={[25, 50, 100]}
-                disableRowSelectionOnClick
-                disableColumnMenu
-                getRowHeight={() => 'auto'}
-                sx={{
-                  '& .MuiDataGrid-cell': {
-                    py: 2,
-                    px: 2
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    bgcolor: '#f8f9fa',
-                    borderBottom: '2px solid #e9ecef',
-                    py: 1.5
-                  },
-                  '& .MuiDataGrid-row': {
-                    borderBottom: '1px solid #e9ecef',
-                  },
-                  '& .MuiDataGrid-row:hover': {
-                    bgcolor: 'rgba(0, 102, 161, 0.04)',
-                  },
-                  '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
-                    outline: 'none',
-                  },
-                  border: 'none',
-                  borderRadius: '0.75rem',
-                  '& .MuiDataGrid-columnSeparator': {
-                    display: 'none',
-                  },
-                  '& .MuiDataGrid-iconButtonContainer': {
-                    color: '#0066A1',
-                  }
-                }}
+                rows={filteredProjects.map((p) => ({ ...p, id: p.project_id })) as ProjectRow[]}
+                pageSize={25}
+                emptyMessage="No projects found"
               />
             )}
           </Box>

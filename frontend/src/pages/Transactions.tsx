@@ -23,15 +23,9 @@ import {
   Refresh as RefreshIcon,
   CalendarToday as CalendarIcon,
 } from '@mui/icons-material';
-import { 
-  DataGrid, 
-  GridColDef, 
-  GridRenderCellParams,
-  GridPaginationModel,
-} from '@mui/x-data-grid';
-import { styled } from '@mui/material/styles';
 import ExcelJS from 'exceljs';
 import axios from 'axios';
+import DataTable, { ColumnDef } from '../components/DataTable';
 
 interface Transaction {
   transaction_id: number;
@@ -47,6 +41,8 @@ interface Transaction {
   reference_number: string;
   unit_cost: number;
 }
+
+type TxRow = Transaction & { id: number };
 
 // Custom CSS styles for IMMS branding
 const ImmsStyles = `
@@ -76,15 +72,6 @@ const ImmsStyles = `
   }
 `;
 
-const StyledDataGrid = styled(DataGrid, {
-  shouldForwardProp: (prop) => ![
-    'rowId',
-    'offsetLeft',
-    'columnsTotalWidth',
-    'paginationMeta'
-  ].includes(prop.toString()),
-})({});
-
 const Transactions = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
@@ -96,10 +83,6 @@ const Transactions = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    page: 0,
-    pageSize: 25,
-  });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -322,43 +305,41 @@ const Transactions = () => {
     }
   };
 
-  // Define DataGrid columns
-  const columns: GridColDef[] = [
-    { 
-      field: 'date', 
-      headerName: 'Date', 
-      width: 180,
-      renderCell: (params: GridRenderCellParams) => formatDateShort(params.value)
+  // Define DataTable columns
+  const columns: ColumnDef<TxRow>[] = [
+    {
+      key: 'date',
+      label: 'Date',
+      render: (row) => formatDateShort(row.date),
     },
-    { field: 'part_name', headerName: 'Part Name', flex: 2 },
-    { field: 'manufacturer_part_number', headerName: 'Mfg Part #', flex: 1.5 },
-    { field: 'machine_name', headerName: 'Machine', flex: 1.5 },
-    { 
-      field: 'quantity', 
-      headerName: 'Quantity', 
-      type: 'number', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => (
-        <Box sx={{ 
+    { key: 'part_name', label: 'Part Name' },
+    { key: 'manufacturer_part_number', label: 'Mfg Part #' },
+    { key: 'machine_name', label: 'Machine' },
+    {
+      key: 'quantity',
+      label: 'Quantity',
+      align: 'right',
+      render: (row) => (
+        <Box component="span" sx={{
           fontWeight: 'bold',
-          color: params.row.type === 'usage' ? '#f44336' : 
-                 params.row.type === 'return' ? '#2196f3' : '#4caf50'
+          color: row.type === 'usage' ? '#f44336' :
+                 row.type === 'return' ? '#2196f3' : '#4caf50'
         }}>
-          {params.row.type === 'usage' ? '-' : '+'}
-          {params.value}
-          {params.row.type === 'return' && ' (Returned)'}
-          {params.row.type === 'restock' && ' (Restocked)'}
-          {params.row.type === 'usage' && ' (Used)'}
+          {row.type === 'usage' ? '-' : '+'}
+          {row.quantity}
+          {row.type === 'return' && ' (Returned)'}
+          {row.type === 'restock' && ' (Restocked)'}
+          {row.type === 'usage' && ' (Used)'}
         </Box>
-      )
+      ),
     },
-    { 
-      field: 'unit_cost', 
-      headerName: 'Unit Cost', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => (
-        <span>${Number(params.value || 0).toFixed(2)}</span>
-      )
+    {
+      key: 'unit_cost',
+      label: 'Unit Cost',
+      align: 'right',
+      render: (row) => (
+        <span>${Number(row.unit_cost || 0).toFixed(2)}</span>
+      ),
     },
   ];
 
@@ -587,43 +568,11 @@ const Transactions = () => {
                 <Typography variant="body1" sx={{ mt: 2 }}>Loading transactions...</Typography>
               </Box>
             ) : (
-              <StyledDataGrid
+              <DataTable<TxRow>
                 columns={columns}
-                rows={filteredTransactions}
-                getRowId={(row) => row.transaction_id}
-                paginationModel={paginationModel}
-                onPaginationModelChange={setPaginationModel}
-                pageSizeOptions={[25, 50, 100]}
-                disableRowSelectionOnClick
-                disableColumnMenu
-                sx={{
-                  '& .MuiDataGrid-cell': {
-                    py: 1.5,
-                    px: 2
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    bgcolor: '#f8f9fa',
-                    borderBottom: '2px solid #e9ecef',
-                    py: 1.5
-                  },
-                  '& .MuiDataGrid-row': {
-                    borderBottom: '1px solid #e9ecef',
-                  },
-                  '& .MuiDataGrid-row:hover': {
-                    bgcolor: 'rgba(0, 102, 161, 0.04)',
-                  },
-                  '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
-                    outline: 'none',
-                  },
-                  border: 'none',
-                  borderRadius: '0.75rem',
-                  '& .MuiDataGrid-columnSeparator': {
-                    display: 'none',
-                  },
-                  '& .MuiDataGrid-iconButtonContainer': {
-                    color: '#0066A1',
-                  }
-                }}
+                rows={filteredTransactions.map((t) => ({ ...t, id: t.transaction_id })) as TxRow[]}
+                pageSize={25}
+                emptyMessage="No transactions found"
               />
             )}
           </Box>

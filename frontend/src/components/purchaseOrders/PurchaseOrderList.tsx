@@ -32,13 +32,6 @@ import {
   FilterList as FilterListIcon,
   Upload as UploadIcon,
 } from '@mui/icons-material';
-import { 
-  DataGrid, 
-  GridColDef, 
-  GridRenderCellParams,
-  GridPaginationModel,
-} from '@mui/x-data-grid';
-import { styled } from '@mui/material/styles';
 import * as XLSX from 'xlsx';
 import CloseIcon from '@mui/icons-material/Close';
 import { purchaseOrdersApi } from '../../services/api';
@@ -47,16 +40,9 @@ import { format } from 'date-fns';
 import SimplePODocuments from './SimplePODocuments';
 import POImportDialog from './POImportDialog';
 import socket from '../../services/socket'; // Import socket for real-time updates
+import DataTable, { ColumnDef } from '../DataTable';
 
-
-const StyledDataGrid = styled(DataGrid, {
-  shouldForwardProp: (prop) => ![
-    'rowId',
-    'offsetLeft',
-    'columnsTotalWidth',
-    'paginationMeta'
-  ].includes(prop.toString()),
-})({});
+type PoRow = PurchaseOrder & { id: number };
 
 const PurchaseOrderList: React.FC = () => {
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
@@ -68,10 +54,6 @@ const PurchaseOrderList: React.FC = () => {
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [exportLoading, setExportLoading] = useState(false);
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
-    page: 0,
-    pageSize: 25,
-  });
   // Add state for document dialog
   const [documentDialogOpen, setDocumentDialogOpen] = useState<boolean>(false);
   const [selectedPoId, setSelectedPoId] = useState<number | null>(null);
@@ -396,70 +378,62 @@ const PurchaseOrderList: React.FC = () => {
     }
   };
 
-  // Define DataGrid columns
-  const columns: GridColDef[] = [
-    { field: 'po_number', headerName: 'PO Number', width: 150 },
-    { 
-      field: 'supplier_name', 
-      headerName: 'Supplier', 
-      flex: 1,
-      renderCell: (params: GridRenderCellParams) => 
-        params.row.supplier_name || params.row.vendor_name || 'N/A'
-    },
-    { 
-      field: 'status', 
-      headerName: 'Status', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => {
-        const getStatusColor = (status: string) => {
-          switch (status?.toLowerCase()) {
-            case 'pending': return 'warning';
-            case 'submitted': return 'info';
-            case 'approved': return 'success';
-            case 'rejected': return 'error';
-            case 'received': return 'success';
-            case 'on_order': return 'info';
-            case 'canceled': return 'error';
-            default: return 'default';
-          }
-        };
-        
-        return (
-          <Chip 
-            label={params.value || 'pending'} 
-            size="small"
-            color={getStatusColor(params.value) as any}
-            variant="outlined"
-          />
-        );
-      }
-    },
-    { 
-      field: 'total_amount', 
-      headerName: 'Total Amount', 
-      width: 130,
-      renderCell: (params: GridRenderCellParams) => (
-        <span>${typeof params.value === 'number' ? params.value.toFixed(2) : Number(params.value || 0).toFixed(2)}</span>
-      )
-    },
-    { 
-      field: 'created_at', 
-      headerName: 'Created', 
-      width: 120,
-      renderCell: (params: GridRenderCellParams) => 
-        params.value ? new Date(params.value).toLocaleDateString() : 'N/A'
+  const getStatusColor = (status?: string) => {
+    switch (status?.toLowerCase()) {
+      case 'pending': return 'warning';
+      case 'submitted': return 'info';
+      case 'approved': return 'success';
+      case 'rejected': return 'error';
+      case 'received': return 'success';
+      case 'on_order': return 'info';
+      case 'canceled': return 'error';
+      default: return 'default';
+    }
+  };
+
+  // Define DataTable columns
+  const columns: ColumnDef<PoRow>[] = [
+    { key: 'po_number', label: 'PO Number' },
+    {
+      key: 'supplier_name',
+      label: 'Supplier',
+      render: (row) => row.supplier_name || row.vendor_name || 'N/A',
     },
     {
-      field: 'actions',
-      headerName: 'Actions',
-      width: 200,
+      key: 'status',
+      label: 'Status',
+      render: (row) => (
+        <Chip
+          label={row.status || 'pending'}
+          size="small"
+          color={getStatusColor(row.status) as any}
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      key: 'total_amount',
+      label: 'Total Amount',
+      align: 'right',
+      render: (row) => (
+        <span>${typeof row.total_amount === 'number' ? row.total_amount.toFixed(2) : Number(row.total_amount || 0).toFixed(2)}</span>
+      ),
+    },
+    {
+      key: 'created_at',
+      label: 'Created',
+      render: (row) => (row.created_at ? new Date(row.created_at).toLocaleDateString() : 'N/A'),
+    },
+    {
+      key: 'po_id',
+      label: 'Actions',
       sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
+      render: (row) => (
         <Box sx={{ display: 'flex', gap: 1 }}>
           <IconButton
             size="small"
-            onClick={() => navigate(`/purchase-orders/detail/${params.row.po_id}`)}
-            sx={{ 
+            onClick={(e) => { e.stopPropagation(); navigate(`/purchase-orders/detail/${row.po_id}`); }}
+            sx={{
               backgroundColor: PRIMARY_ORANGE,
               color: 'white',
               '&:hover': { backgroundColor: '#e65c00' }
@@ -470,8 +444,8 @@ const PurchaseOrderList: React.FC = () => {
           </IconButton>
           <IconButton
             size="small"
-            onClick={() => openDocumentDialog(params.row.po_id, params.row.po_number || '')}
-            sx={{ 
+            onClick={(e) => { e.stopPropagation(); openDocumentDialog(row.po_id, row.po_number || ''); }}
+            sx={{
               backgroundColor: '#0066A1',
               color: 'white',
               '&:hover': { backgroundColor: '#004d7a' }
@@ -482,8 +456,8 @@ const PurchaseOrderList: React.FC = () => {
           </IconButton>
           <IconButton
             size="small"
-            onClick={() => handleDelete(params.row.po_id)}
-            sx={{ 
+            onClick={(e) => { e.stopPropagation(); handleDelete(row.po_id); }}
+            sx={{
               backgroundColor: '#f44336',
               color: 'white',
               '&:hover': { backgroundColor: '#d32f2f' }
@@ -493,8 +467,8 @@ const PurchaseOrderList: React.FC = () => {
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Box>
-      )
-    }
+      ),
+    },
   ];
 
   return (
@@ -795,43 +769,11 @@ const PurchaseOrderList: React.FC = () => {
                 )}
               </Box>
             ) : (
-              <StyledDataGrid
+              <DataTable<PoRow>
                 columns={columns}
-                rows={filteredOrders}
-                getRowId={(row) => row.po_id}
-                paginationModel={paginationModel}
-                onPaginationModelChange={setPaginationModel}
-                pageSizeOptions={[25, 50, 100]}
-                disableRowSelectionOnClick
-                disableColumnMenu
-                sx={{
-                  '& .MuiDataGrid-cell': {
-                    py: 1.5,
-                    px: 2
-                  },
-                  '& .MuiDataGrid-columnHeaders': {
-                    bgcolor: '#f8f9fa',
-                    borderBottom: '2px solid #e9ecef',
-                    py: 1.5
-                  },
-                  '& .MuiDataGrid-row': {
-                    borderBottom: '1px solid #e9ecef',
-                  },
-                  '& .MuiDataGrid-row:hover': {
-                    bgcolor: 'rgba(0, 102, 161, 0.04)',
-                  },
-                  '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
-                    outline: 'none',
-                  },
-                  border: 'none',
-                  borderRadius: '0.75rem',
-                  '& .MuiDataGrid-columnSeparator': {
-                    display: 'none',
-                  },
-                  '& .MuiDataGrid-iconButtonContainer': {
-                    color: '#0066A1',
-                  }
-                }}
+                rows={filteredOrders.map((po) => ({ ...po, id: po.po_id ?? 0 })) as PoRow[]}
+                pageSize={25}
+                emptyMessage="No purchase orders found"
               />
             )}
           </Box>
