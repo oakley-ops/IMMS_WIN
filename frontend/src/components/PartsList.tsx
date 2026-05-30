@@ -18,7 +18,6 @@ import {
   Checkbox,
   ListItemText,
   LinearProgress,
-  Stack,
   Grid,
   InputAdornment,
   Collapse,
@@ -49,33 +48,9 @@ import ImportPartsDialog from './ImportPartsDialog';
 import ReturnPartButton from './ReturnPartButton';
 import ReturnPartsDialog from './ReturnPartsDialog';
 import { Part } from '../types';
-import { 
-  DataGrid, 
-  GridColDef, 
-  GridRenderCellParams,
-  GridPaginationModel,
-  GridRowClassNameParams,
-  DataGridProps,
-  GridPreProcessEditCellProps,
-  GridValueGetter
-} from '@mui/x-data-grid';
-import { styled } from '@mui/material/styles';
+import DataTable, { ColumnDef } from './DataTable';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-
-// Add this at the top of the component to force no caching
-// axios.defaults.headers.common['Cache-Control'] = 'no-cache, no-store, must-revalidate';
-// axios.defaults.headers.get['Cache-Control'] = 'no-cache, no-store, must-revalidate';
-// axios.defaults.headers.get['Pragma'] = 'no-cache';
-
-const StyledDataGrid = styled(DataGrid, {
-  shouldForwardProp: (prop) => ![
-    'rowId',
-    'offsetLeft',
-    'columnsTotalWidth',
-    'paginationMeta'
-  ].includes(prop.toString()),
-})({});
 
 interface BinLocation {
   location_id: number;
@@ -105,6 +80,9 @@ interface PartListItem {
   id?: number; // Alternative ID field
   [key: string]: any;
 }
+
+// DataTable requires a non-optional `id`; we derive it from part_id.
+type PartRow = PartListItem & { id: number };
 
 interface PartFormData {
   name: string;
@@ -148,64 +126,6 @@ const initialFormData: PartFormData = {
   status: 'active'
 };
 
-// Add this function outside the component
-const createCostColumn = (): GridColDef => {
-  return {
-    field: 'unit_cost',
-    headerName: 'Cost',
-    type: 'number',
-    flex: 0.5,
-    valueGetter: (params: { row: PartListItem | undefined; value: any }) => {
-      if (!params.row) return 0;
-      
-      const partId = params.row.part_id || 'unknown';
-      const partName = params.row.name || 'unknown';
-      
-      console.log(`💰 COST valueGetter for ${partName}:`, {
-        unit_cost: params.row.unit_cost,
-        unit_cost_type: typeof params.row.unit_cost
-      });
-      
-      // DIRECT TEST: Based on part ID, return hardcoded costs for the first few parts
-      // This is to test if our valueGetter is working at all
-      if (Number(partId) === 587) return 100.20;
-      if (Number(partId) === 586) return 15.50;
-      if (Number(partId) === 585) return 21.00;
-      if (Number(partId) === 584) return 26.50;
-      if (Number(partId) === 583) return 32.00;
-      
-      // Simple and direct approach
-      let costValue = 0;
-      
-      // Try to parse the unit_cost value, first making sure it's a number
-      if (params.row.unit_cost !== undefined && params.row.unit_cost !== null) {
-        // Force to number
-        costValue = Number(params.row.unit_cost);
-      }
-      
-      if (isNaN(costValue)) costValue = 0;
-      console.log(`💰 COST calculated for ${partName}:`, costValue);
-      
-      return costValue;
-    },
-    renderCell: (params: GridRenderCellParams) => {
-      const value = params.value;
-      
-      if (value === null || value === undefined) {
-        return <span>-</span>;
-      }
-      
-      const numValue = Number(value);
-      if (isNaN(numValue)) {
-        return <span>-</span>;
-      }
-      
-      const result = `$${numValue.toFixed(2)}`;
-      return <span>{result}</span>;
-    }
-  };
-};
-
 // Add these helper functions at the top of the file, outside the component
 const isTBDValue = (value: string): boolean => {
   return value.trim().toUpperCase() === 'TBD';
@@ -240,7 +160,7 @@ const PartsList: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   // Pagination state
-  const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({
+  const [paginationModel, setPaginationModel] = useState<{ page: number; pageSize: number }>({
     page: 0,
     pageSize: 25,
   });
@@ -285,82 +205,33 @@ const PartsList: React.FC = () => {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
 
-  const actionColumn: GridColDef = {
-    field: 'actions',
-    headerName: 'Actions',
-    flex: 0.8,
-    sortable: false,
-    renderCell: (params: GridRenderCellParams<PartListItem>) => (
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        <IconButton 
-          size="small" 
-          data-testid="edit-button"
-          onClick={() => handleOpenEdit(params.row)}
-        >
-          <EditIcon />
-        </IconButton>
-        {params.row.status !== 'discontinued' ? (
-          <IconButton 
-            data-testid="delete-button"
-            onClick={() => handleDiscontinue(params.row)} 
-            color="warning"
-            title="Mark as Discontinued"
-          >
-            <DeleteIcon />
-          </IconButton>
-        ) : (
-          <IconButton 
-            data-testid="delete-button"
-            disabled
-            title="Cannot delete discontinued parts to preserve history"
-          >
-            <DeleteIcon />
-          </IconButton>
-        )}
-        <IconButton 
-          size="small"
-          onClick={() => {
-            setSelectedPart(params.row);
-            setOpenReturnDialog(true);
-          }}
-          color="info"
-          title="Return parts to inventory"
-        >
-          <UndoIcon />
-        </IconButton>
-      </Box>
-    )
-  };
-
-  // Define base columns without the cost column
-  const baseColumns: GridColDef[] = [
-    { field: 'part_id', headerName: 'ID', width: 70 },
-    
-    // Image column
-    { 
-      field: 'image_url', 
-      headerName: 'Image', 
-      width: 80,
+  // Column definitions for the DataTable. `key` doubles as the column id used
+  // by the column-visibility menu and the `visibleColumns` filter below.
+  const columnsWithActions: ColumnDef<PartRow>[] = [
+    { key: 'part_id', label: 'ID' },
+    {
+      key: 'image_url',
+      label: 'Image',
       sortable: false,
-      renderCell: (params: GridRenderCellParams) => (
+      render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          {params.value ? (
+          {row.image_url ? (
             <IconButton
               size="small"
               onClick={(e) => {
                 e.stopPropagation(); // Prevent row click
-                setPreviewImage(params.value);
+                setPreviewImage(row.image_url);
                 setPreviewOpen(true);
               }}
               sx={{ p: 0.5 }}
             >
-              <img 
-                src={params.value} 
-                alt="Part" 
-                style={{ 
-                  width: 32, 
-                  height: 32, 
-                  objectFit: 'cover', 
+              <img
+                src={row.image_url}
+                alt="Part"
+                style={{
+                  width: 32,
+                  height: 32,
+                  objectFit: 'cover',
                   borderRadius: 4,
                   border: '1px solid #ddd'
                 }}
@@ -372,8 +243,7 @@ const PartsList: React.FC = () => {
               onClick={(e) => {
                 e.stopPropagation();
                 // Open edit dialog to upload image
-                const part = params.row as PartListItem;
-                handleOpenEdit(part);
+                handleOpenEdit(row);
               }}
               sx={{ p: 0.5, color: '#ccc' }}
             >
@@ -383,32 +253,85 @@ const PartsList: React.FC = () => {
         </Box>
       )
     },
-    
-    { field: 'name', headerName: 'Name', flex: 1 },
-    { field: 'description', headerName: 'Description', flex: 1.5 },
-    { field: 'manufacturer_part_number', headerName: 'Manufacturer Part #', flex: 1 },
-    { field: 'location', headerName: 'Location', flex: 0.7 },
-    { field: 'quantity', headerName: 'Quantity', type: 'number', flex: 0.5 },
-    { field: 'minimum_quantity', headerName: 'Min Quantity', type: 'number', flex: 0.5 },
-    { field: 'last_ordered_date', headerName: 'Last Ordered', type: 'date', flex: 1 },
-    { 
-      field: 'status', 
-      headerName: 'Status', 
-      flex: 0.7,
-      renderCell: (params: GridRenderCellParams) => (
-        <Chip 
-          label={params.value ? params.value.charAt(0).toUpperCase() + params.value.slice(1) : 'Unknown'} 
-          color={params.value === 'active' ? 'success' : 'error'}
+    { key: 'name', label: 'Name' },
+    { key: 'description', label: 'Description' },
+    { key: 'manufacturer_part_number', label: 'Manufacturer Part #' },
+    { key: 'location', label: 'Location' },
+    { key: 'quantity', label: 'Quantity', align: 'right' },
+    { key: 'minimum_quantity', label: 'Min Quantity', align: 'right' },
+    {
+      key: 'last_ordered_date',
+      label: 'Last Ordered',
+      render: (row) => (
+        <span>{row.last_ordered_date ? new Date(row.last_ordered_date).toLocaleDateString() : ''}</span>
+      )
+    },
+    {
+      key: 'status',
+      label: 'Status',
+      render: (row) => (
+        <Chip
+          label={row.status ? row.status.charAt(0).toUpperCase() + row.status.slice(1) : 'Unknown'}
+          color={row.status === 'active' ? 'success' : 'error'}
+          size="small"
         />
-      ) 
+      )
+    },
+    {
+      key: 'unit_cost',
+      label: 'Cost',
+      align: 'right',
+      render: (row) => {
+        const numValue = Number(row.unit_cost);
+        return <span>{isNaN(numValue) ? '-' : `$${numValue.toFixed(2)}`}</span>;
+      }
+    },
+    {
+      key: 'actions',
+      label: 'Actions',
+      sortable: false,
+      render: (row) => (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <IconButton
+            size="small"
+            data-testid="edit-button"
+            onClick={(e) => { e.stopPropagation(); handleOpenEdit(row); }}
+          >
+            <EditIcon />
+          </IconButton>
+          {row.status !== 'discontinued' ? (
+            <IconButton
+              data-testid="delete-button"
+              onClick={(e) => { e.stopPropagation(); handleDiscontinue(row); }}
+              color="warning"
+              title="Mark as Discontinued"
+            >
+              <DeleteIcon />
+            </IconButton>
+          ) : (
+            <IconButton
+              data-testid="delete-button"
+              disabled
+              title="Cannot delete discontinued parts to preserve history"
+            >
+              <DeleteIcon />
+            </IconButton>
+          )}
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedPart(row);
+              setOpenReturnDialog(true);
+            }}
+            color="info"
+            title="Return parts to inventory"
+          >
+            <UndoIcon />
+          </IconButton>
+        </Box>
+      )
     }
-  ];
-
-  // Add the cost column and action column
-  const columnsWithActions: GridColDef[] = [
-    ...baseColumns,
-    createCostColumn(),
-    actionColumn
   ];
 
   const fetchParts = useCallback(async () => {
@@ -972,37 +895,6 @@ const PartsList: React.FC = () => {
     }
   };
 
-  // Custom loading overlay component
-  const CustomLoadingOverlay = () => (
-    <Stack sx={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} alignItems="center" justifyContent="center">
-      <Box sx={{ width: '100%', position: 'absolute', top: 0 }}>
-        <LinearProgress />
-      </Box>
-    </Stack>
-  );
-
-  // Custom no rows overlay component
-  const CustomNoRowsOverlay = ({ error }: { error: string | null }) => (
-    <Stack height="100%" alignItems="center" justifyContent="center">
-      {error ? (
-        <Typography color="error">{error}</Typography>
-      ) : (
-        <Typography>No parts found</Typography>
-      )}
-    </Stack>
-  );
-
-  interface CustomDataGridProps extends DataGridProps {
-    rowId?: never;
-    offsetLeft?: never;
-    columnsTotalWidth?: never;
-  }
-
-  const filterProps = (props: CustomDataGridProps): DataGridProps => {
-    const { rowId, offsetLeft, columnsTotalWidth, ...cleanProps } = props;
-    return cleanProps;
-  };
-
   // Fetch bin locations with occupancy counts
   const fetchLocations = async () => {
     try {
@@ -1301,11 +1193,6 @@ const PartsList: React.FC = () => {
     return supplier ? supplier.name : 'Unknown Supplier';
   };
 
-  const handleRowClick = (params: any) => {
-    setSelectedPart(params.row);
-    setOpenEditConfirm(true);
-  };
-
   const handleRestock = () => {
     if (selectedPart) {
       // Pre-populate the restock form with the selected part
@@ -1445,14 +1332,14 @@ const PartsList: React.FC = () => {
         >
           {columnsWithActions.map((column) => (
             <MenuItem
-              key={column.field}
-              onClick={() => handleColumnVisibilityChange(column.field)}
+              key={String(column.key)}
+              onClick={() => handleColumnVisibilityChange(String(column.key))}
             >
               <Checkbox
-                checked={visibleColumns.includes(column.field)}
+                checked={visibleColumns.includes(String(column.key))}
                 onChange={() => {}}
               />
-              {column.headerName}
+              {column.label}
             </MenuItem>
           ))}
         </Menu>
@@ -1469,84 +1356,25 @@ const PartsList: React.FC = () => {
             backgroundColor: 'white'
           }}
         >
-          <Box sx={{ width: '100%', height: 650 }}>
-            {loading && searchTerm && parts.length === 0 && (
+          <Box sx={{ width: '100%', maxHeight: 650, overflow: 'auto' }}>
+            {loading && parts.length === 0 && (
               <LinearProgress sx={{ height: '3px', '& .MuiLinearProgress-bar': { backgroundColor: PRIMARY_ORANGE } }} />
             )}
-            <StyledDataGrid
-              key={`datagrid-${searchTerm}-${paginationModel.page}-${paginationModel.pageSize}`}
-              columns={columnsWithActions.filter(col => visibleColumns.includes(col.field)) as readonly GridColDef<any>[]}
-              rows={parts}
-              getRowId={(row) => {
-                // Ensure we have a consistent, stable row ID
-                if (row.part_id !== undefined && row.part_id !== null) {
-                  return `part-${row.part_id}`;
-                }
-                if (row.id !== undefined && row.id !== null) {
-                  return `part-${row.id}`;
-                }
-                // Fallback: use a combination of name and other fields to create a stable ID
-                const fallbackId = `fallback-${row.name || 'unknown'}-${row.manufacturer_part_number || 'no-part-num'}-${Date.now()}`;
-                console.warn('Using fallback row ID:', fallbackId, 'for row:', row);
-                return fallbackId;
-              }}
-              paginationModel={paginationModel}
-              onPaginationModelChange={(newModel: GridPaginationModel) => {
-                console.log('Pagination change:', newModel);
-                setPaginationModel(newModel);
+            <DataTable<PartRow>
+              columns={columnsWithActions.filter(col => visibleColumns.includes(String(col.key)))}
+              rows={parts.map(p => ({ ...p, id: p.part_id ?? p.id ?? 0 })) as PartRow[]}
+              pagination={false}
+              onRowClick={(row) => {
+                setSelectedPart(row);
+                setOpenEditConfirm(true);
                 setError(null);
               }}
-              paginationMode="server"
-              rowCount={totalItems}
-              loading={loading}
-              pageSizeOptions={[25, 50, 100]}
-              disableRowSelectionOnClick={false}
-              onRowClick={handleRowClick}
-              keepNonExistentRowsSelected={false}
-              disableColumnMenu={true}
-              disableVirtualization={true}
-              getRowClassName={(params) => {
-                const row = params.row as any;
-                if (row.quantity <= row.minimum_quantity) {
-                  return 'low-stock';
-                }
-                return '';
-              }}
-              sx={{
-                '& .low-stock': {
-                  bgcolor: 'rgba(255, 77, 79, 0.08)',
-                },
-                '& .MuiDataGrid-cell': {
-                  cursor: 'pointer',
-                  py: 1.5,
-                  px: 2
-                },
-                '& .MuiDataGrid-columnHeaders': {
-                  bgcolor: 'rgba(0,0,0,0.04)',
-                  borderBottom: '2px solid #e9ecef',
-                  py: 1.5
-                },
-                '& .MuiDataGrid-row': {
-                  borderBottom: '1px solid #e9ecef',
-                },
-                '& .MuiDataGrid-row:hover': {
-                  bgcolor: 'rgba(0, 102, 161, 0.04)',
-                },
-                '& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within': {
-                  outline: 'none',
-                },
-                '& .MuiDataGrid-cell:last-child': {
-                  pr: 2
-                },
-                border: 'none',
-                borderRadius: '0.75rem',
-                '& .MuiDataGrid-columnSeparator': {
-                  display: 'none',
-                },
-                '& .MuiDataGrid-iconButtonContainer': {
-                  color: '#0066A1',
-                }
-              }}
+              emptyMessage={error || 'No parts found'}
+              rowSx={(row) =>
+                row.quantity <= row.minimum_quantity
+                  ? { bgcolor: 'rgba(255, 77, 79, 0.08)' }
+                  : {}
+              }
             />
           </Box>
         </Paper>

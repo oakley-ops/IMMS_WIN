@@ -66,38 +66,33 @@ describe('PartsList Component', () => {
   });
 
   const waitForGridLoad = async () => {
-    // Wait for grid to exist
+    // Wait for the table to exist (MUI Table renders role="table")
     await waitFor(() => {
-      expect(screen.getByRole('grid')).toBeInTheDocument();
+      expect(screen.getByRole('table')).toBeInTheDocument();
     }, { timeout: 15000 });
 
-    // Wait for loading to complete
-    await waitFor(() => {
-      expect(screen.queryByRole('progressbar')).not.toBeInTheDocument();
-    }, { timeout: 15000 });
-
-    // Validate content states
+    // Validate content states: either data rows present, or the empty message
     await waitFor(() => {
       const rows = screen.queryAllByRole('row');
-      const noRows = screen.queryByText(/no rows/i);
+      const noRows = screen.queryByText(/no parts found/i);
       expect(rows.length > 1 || noRows).toBeTruthy();
     }, { timeout: 15000 });
   };
 
   const findCellByText = async (text: string) => {
     await waitForGridLoad();
-    
+
     return await waitFor(
       () => {
-        // First try to find by cell role
-        const cells = screen.queryAllByRole('gridcell');
+        // First try to find by cell role (MUI Table cells use role="cell")
+        const cells = screen.queryAllByRole('cell');
         const cell = cells.find(el => el.textContent?.includes(text));
-        
+
         if (cell) return cell;
 
         // If no cells found, try finding by text directly
         const textElement = screen.getByText(text);
-        return textElement.closest('[role="gridcell"]') || textElement;
+        return textElement.closest('[role="cell"]') || textElement;
       },
       { timeout: 15000 }
     );
@@ -140,7 +135,7 @@ describe('PartsList Component', () => {
     await user.type(searchInput, 'Resistor');
 
     await waitFor(async () => {
-      const cells = screen.queryAllByRole('gridcell');
+      const cells = screen.queryAllByRole('cell');
       expect(cells.some(cell => cell.textContent?.includes('Resistor'))).toBe(true);
     }, { timeout: 15000 });
   }, 20000);
@@ -200,11 +195,7 @@ describe('PartsList Component', () => {
     
     // Wait for the empty state message
     await waitFor(() => {
-      // Try multiple possible empty state messages
-      const noRowsElement = screen.queryByText(/no rows/i) || 
-                           screen.queryByText(/no data/i) ||
-                           screen.queryByText(/no results/i);
-      expect(noRowsElement).toBeInTheDocument();
+      expect(screen.getByText(/no parts found/i)).toBeInTheDocument();
     }, { timeout: 15000 });
   }, 20000);
 });
