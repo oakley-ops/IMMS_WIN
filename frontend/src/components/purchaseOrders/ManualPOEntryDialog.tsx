@@ -32,8 +32,6 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-import '../../styles/Dialog.css';
-
 // app color constants
 const IMMS_BLUE = '#0066A1';
 const IMMS_ORANGE = '#FF6200';
@@ -281,8 +279,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
       maxWidth="lg" 
       fullWidth
       PaperProps={{
-        className: 'custom-dialog',
-        sx: { maxHeight: '90vh' }
+        sx: { maxHeight: '90vh', borderRadius: '0.75rem', boxShadow: '0 10px 30px rgba(0,0,0,0.2)' }
       }}
     >
       <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '4px 4px 0 0' }}>

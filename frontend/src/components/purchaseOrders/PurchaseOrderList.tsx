@@ -43,7 +43,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import { purchaseOrdersApi } from '../../services/api';
 import { PurchaseOrder } from '../../types/purchaseOrder';
 import { format } from 'date-fns';
-import '../../styles/Dialog.css'; // Using the same styles as PartsUsageDialog
 import SimplePODocuments from './SimplePODocuments';
 import POImportDialog from './POImportDialog';
 import socket from '../../services/socket'; // Import socket for real-time updates

@@ -59,7 +59,6 @@ import {
   GridValueGetter
 } from '@mui/x-data-grid';
 import { styled } from '@mui/material/styles';
-import ModalPortal from './ModalPortal';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -1659,306 +1658,321 @@ const PartsList: React.FC = () => {
       </Box>
 
       {/* Part Details Dialog */}
-      <ModalPortal open={!!selectedPart && !openDialog}>
-        <div className="dialog-overlay-wrapper">
-          <div className="custom-dialog">
-            <div className="dialog-header">
-              <h5 className="dialog-title">Part Details</h5>
-            </div>
-            <div className="dialog-content">
-              {selectedPart && (
-                <div className="grid-container grid-2-cols">
-                  <div className="info-panel">
-                    <h6 className="fw-bold mb-3">Basic Information</h6>
-                    <div className="mb-3">
-                      <div className="info-text">Part Name</div>
-                      <div className="info-value">{selectedPart.name}</div>
-                    </div>
-                    <div className="mb-3">
-                      <div className="info-text">Manufacturer</div>
-                      <div className="info-value">{selectedPart.manufacturer || 'N/A'}</div>
-                    </div>
-                    <div className="mb-3">
-                      <div className="info-text">Manufacturer Part #</div>
-                      <div className="info-value">{selectedPart.manufacturer_part_number || 'N/A'}</div>
-                    </div>
-                    <div className="mb-3">
-                      <div className="info-text">Status</div>
-                      <div>
-                        <span className={`status-badge ${selectedPart.status === 'active' ? 'status-success' : 'status-danger'}`}>
-                          {selectedPart.status === 'active' ? 'Active' : 'Discontinued'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="info-panel">
-                    <h6 className="fw-bold mb-3">Inventory Details</h6>
-                    <div className="mb-3">
-                      <div className="info-text">Quantity</div>
-                      <div className="info-value">{selectedPart.quantity}</div>
-                    </div>
-                    <div className="mb-3">
-                      <div className="info-text">Minimum Quantity</div>
-                      <div className="info-value">{selectedPart.minimum_quantity}</div>
-                    </div>
-                    <div className="mb-3">
-                      <div className="info-text">Location</div>
-                      <div className="info-value">{selectedPart.location || 'N/A'}</div>
-                    </div>
-                    <div className="mb-3">
-                      <div className="info-text">Unit Cost</div>
-                      <div className="info-value">
-                        ${typeof selectedPart.unit_cost === 'number' 
-                          ? selectedPart.unit_cost.toFixed(2) 
-                          : Number(selectedPart.unit_cost || 0).toFixed(2)}
-                      </div>
-                    </div>
-                    <div className="mb-3">
-                      <div className="info-text">Stock Status</div>
-                      <div>
-                        <span className={`status-badge ${
-                          selectedPart.quantity === 0 
-                            ? 'status-danger'
-                            : selectedPart.quantity <= selectedPart.minimum_quantity
-                              ? 'status-warning'
-                              : 'status-success'
-                        }`}>
-                          {selectedPart.quantity === 0 
+      <Dialog
+        open={!!selectedPart && !openDialog}
+        onClose={handleCloseDetails}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '0.75rem' } }}
+      >
+        <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '0.75rem 0.75rem 0 0' }}>
+          Part Details
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          {selectedPart && (
+            <Grid container spacing={2} sx={{ mt: 0 }}>
+              <Grid item xs={12} md={6}>
+                <Paper variant="outlined" sx={{ p: 2, backgroundColor: '#f5f9fc', borderColor: '#d9e6ef' }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>Basic Information</Typography>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary">Part Name</Typography>
+                    <Typography variant="body2">{selectedPart.name}</Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary">Manufacturer</Typography>
+                    <Typography variant="body2">{selectedPart.manufacturer || 'N/A'}</Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary">Manufacturer Part #</Typography>
+                    <Typography variant="body2">{selectedPart.manufacturer_part_number || 'N/A'}</Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary">Status</Typography>
+                    <Box>
+                      <Chip
+                        label={selectedPart.status === 'active' ? 'Active' : 'Discontinued'}
+                        color={selectedPart.status === 'active' ? 'success' : 'error'}
+                        size="small"
+                      />
+                    </Box>
+                  </Box>
+                </Paper>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Paper variant="outlined" sx={{ p: 2, backgroundColor: '#f5f9fc', borderColor: '#d9e6ef' }}>
+                  <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>Inventory Details</Typography>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary">Quantity</Typography>
+                    <Typography variant="body2">{selectedPart.quantity}</Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary">Minimum Quantity</Typography>
+                    <Typography variant="body2">{selectedPart.minimum_quantity}</Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary">Location</Typography>
+                    <Typography variant="body2">{selectedPart.location || 'N/A'}</Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary">Unit Cost</Typography>
+                    <Typography variant="body2">
+                      ${typeof selectedPart.unit_cost === 'number'
+                        ? selectedPart.unit_cost.toFixed(2)
+                        : Number(selectedPart.unit_cost || 0).toFixed(2)}
+                    </Typography>
+                  </Box>
+                  <Box sx={{ mb: 1.5 }}>
+                    <Typography variant="caption" color="text.secondary">Stock Status</Typography>
+                    <Box>
+                      <Chip
+                        label={
+                          selectedPart.quantity === 0
                             ? 'Out of Stock'
                             : selectedPart.quantity <= selectedPart.minimum_quantity
                               ? 'Low Stock'
                               : 'In Stock'
-                          }
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                
-                  {selectedPart.description && (
-                    <div className="info-panel" style={{ gridColumn: "span 2" }}>
-                      <h6 className="fw-bold mb-3">Description</h6>
-                      <p>{selectedPart.description}</p>
-                    </div>
-                  )}
-                
-                  {selectedPart.notes && (
-                    <div className="info-panel" style={{ gridColumn: "span 2" }}>
-                      <h6 className="fw-bold mb-3">Notes</h6>
-                      <p>{selectedPart.notes}</p>
-                    </div>
-                  )}
-                </div>
+                        }
+                        color={
+                          selectedPart.quantity === 0
+                            ? 'error'
+                            : selectedPart.quantity <= selectedPart.minimum_quantity
+                              ? 'warning'
+                              : 'success'
+                        }
+                        size="small"
+                      />
+                    </Box>
+                  </Box>
+                </Paper>
+              </Grid>
+
+              {selectedPart.description && (
+                <Grid item xs={12}>
+                  <Paper variant="outlined" sx={{ p: 2, backgroundColor: '#f5f9fc', borderColor: '#d9e6ef' }}>
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>Description</Typography>
+                    <Typography variant="body2">{selectedPart.description}</Typography>
+                  </Paper>
+                </Grid>
               )}
-            </div>
-            <div className="dialog-footer">
-              <div className="d-flex gap-2 justify-content-end">
-                <Button
-                  variant="outlined"
-                  onClick={handleCloseDetails}
-                  size="small"
-                >
-                  Close
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ModalPortal>
+
+              {selectedPart.notes && (
+                <Grid item xs={12}>
+                  <Paper variant="outlined" sx={{ p: 2, backgroundColor: '#f5f9fc', borderColor: '#d9e6ef' }}>
+                    <Typography variant="subtitle2" fontWeight={600} sx={{ mb: 1.5 }}>Notes</Typography>
+                    <Typography variant="body2">{selectedPart.notes}</Typography>
+                  </Paper>
+                </Grid>
+              )}
+            </Grid>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={handleCloseDetails} size="small">
+            Close
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Add/Edit Part Dialog */}
-      <ModalPortal open={openDialog}>
-        <div className="dialog-overlay-wrapper">
-          <div className="custom-dialog">
-            <div className="dialog-header">
-              <h5 className="dialog-title">{isEditing ? 'Edit Part' : 'Add Part'}</h5>
-            </div>
-            <form onSubmit={handleSubmit} className="needs-validation" noValidate>
-              <div className="dialog-content">
-                {error && (
-                  <Alert severity="error" sx={{ mb: 2 }}>
-                    {error}
-                  </Alert>
-                )}
-                <div className="grid-container grid-2-cols">
-                  <div className="form-group">
-                    <label className="form-label">Name *</label>
-                    <input
-                      type="text"
-                      className="dialog-input"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '0.75rem', maxHeight: '90vh' } }}
+      >
+        <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '0.75rem 0.75rem 0 0' }}>
+          {isEditing ? 'Edit Part' : 'Add Part'}
+        </DialogTitle>
+        <form onSubmit={handleSubmit} noValidate>
+          <DialogContent sx={{ pt: 2 }}>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Name *"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  required
+                />
+              </Grid>
 
-                  <div className="form-group">
-                    <label className="form-label">Manufacturer</label>
-                    <input
-                      type="text"
-                      className="dialog-input"
-                      name="manufacturer"
-                      value={formData.manufacturer}
-                      onChange={handleInputChange}
-                    />
-                  </div>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Manufacturer"
+                  name="manufacturer"
+                  value={formData.manufacturer}
+                  onChange={handleInputChange}
+                />
+              </Grid>
 
-                  <div className="form-group">
-                    <label className="form-label">Manufacturer Part #</label>
-                    <input
-                      type="text"
-                      className="dialog-input"
-                      name="manufacturer_part_number"
-                      value={formData.manufacturer_part_number}
-                      onChange={handleInputChange}
-                    />
-                  </div>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Manufacturer Part #"
+                  name="manufacturer_part_number"
+                  value={formData.manufacturer_part_number}
+                  onChange={handleInputChange}
+                />
+              </Grid>
 
-                  <div className="form-group">
-                    <label className="form-label">Quantity *</label>
-                    <input
-                      type="number"
-                      className="dialog-input"
-                      name="quantity"
-                      min="0"
-                      value={formData.quantity}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Quantity *"
+                  name="quantity"
+                  inputProps={{ min: 0 }}
+                  value={formData.quantity}
+                  onChange={handleInputChange}
+                  required
+                />
+              </Grid>
 
-                  <div className="form-group">
-                    <label className="form-label">Minimum Quantity *</label>
-                    <input
-                      type="number"
-                      className="dialog-input"
-                      name="minimum_quantity"
-                      min="0"
-                      value={formData.minimum_quantity}
-                      onChange={handleInputChange}
-                      required
-                    />
-                  </div>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  type="number"
+                  label="Minimum Quantity *"
+                  name="minimum_quantity"
+                  inputProps={{ min: 0 }}
+                  value={formData.minimum_quantity}
+                  onChange={handleInputChange}
+                  required
+                />
+              </Grid>
 
-                  
-
-                  <div className="form-group" ref={locationRef} style={{ position: 'relative' }}>
-                    <label className="form-label">Location</label>
-                    <input
-                      type="text"
-                      className="dialog-input"
-                      name="location"
-                      autoComplete="off"
-                      placeholder="Type or select a bin..."
-                      value={formData.location}
-                      onChange={(e) => { handleInputChange(e); setShowLocationDropdown(true); }}
-                      onFocus={() => setShowLocationDropdown(true)}
-                    />
-                    {showLocationDropdown && (
-                      <div style={{
-                        position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
-                        maxHeight: '200px', overflowY: 'auto',
-                        border: '1px solid #dee2e6', borderRadius: '0 0 4px 4px',
-                        backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
-                      }}>
-                        {binLocations
-                          .filter(loc => loc.name.toLowerCase().includes(formData.location.toLowerCase()))
-                          .map(loc => (
-                            <div
-                              key={loc.location_id}
-                              onMouseDown={() => {
-                                handleInputChange({ target: { name: 'location', value: loc.name } } as any);
-                                setShowLocationDropdown(false);
-                              }}
-                              style={{
-                                padding: '8px 12px', cursor: 'pointer',
-                                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                borderBottom: '1px solid #f0f0f0'
-                              }}
-                              onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
-                              onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#fff')}
-                            >
-                              <span>{loc.name}</span>
-                              <span style={{
-                                fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '12px',
-                                backgroundColor: loc.part_count > 0 ? '#fff3cd' : '#d1e7dd',
-                                color: loc.part_count > 0 ? '#856404' : '#0a3622'
-                              }}>
-                                {loc.part_count > 0 ? `${loc.part_count} part${loc.part_count !== 1 ? 's' : ''}` : 'Available'}
-                              </span>
-                            </div>
-                          ))}
-                        {binLocations.filter(loc => loc.name.toLowerCase().includes(formData.location.toLowerCase())).length === 0 && formData.location && (
-                          <div style={{ padding: '8px 12px', color: '#6c757d', fontSize: '0.875rem' }}>
-                            New location: <strong>"{formData.location}"</strong> will be created
-                          </div>
-                        )}
+              <Grid item xs={12} sm={6} ref={locationRef} sx={{ position: 'relative' }}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Location"
+                  name="location"
+                  autoComplete="off"
+                  placeholder="Type or select a bin..."
+                  value={formData.location}
+                  onChange={(e) => { handleInputChange(e); setShowLocationDropdown(true); }}
+                  onFocus={() => setShowLocationDropdown(true)}
+                />
+                {showLocationDropdown && (
+                  <div style={{
+                    position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
+                    maxHeight: '200px', overflowY: 'auto',
+                    border: '1px solid #dee2e6', borderRadius: '0 0 4px 4px',
+                    backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+                  }}>
+                    {binLocations
+                      .filter(loc => loc.name.toLowerCase().includes(formData.location.toLowerCase()))
+                      .map(loc => (
+                        <div
+                          key={loc.location_id}
+                          onMouseDown={() => {
+                            handleInputChange({ target: { name: 'location', value: loc.name } } as any);
+                            setShowLocationDropdown(false);
+                          }}
+                          style={{
+                            padding: '8px 12px', cursor: 'pointer',
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            borderBottom: '1px solid #f0f0f0'
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                          onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#fff')}
+                        >
+                          <span>{loc.name}</span>
+                          <span style={{
+                            fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '12px',
+                            backgroundColor: loc.part_count > 0 ? '#fff3cd' : '#d1e7dd',
+                            color: loc.part_count > 0 ? '#856404' : '#0a3622'
+                          }}>
+                            {loc.part_count > 0 ? `${loc.part_count} part${loc.part_count !== 1 ? 's' : ''}` : 'Available'}
+                          </span>
+                        </div>
+                      ))}
+                    {binLocations.filter(loc => loc.name.toLowerCase().includes(formData.location.toLowerCase())).length === 0 && formData.location && (
+                      <div style={{ padding: '8px 12px', color: '#6c757d', fontSize: '0.875rem' }}>
+                        New location: <strong>"{formData.location}"</strong> will be created
                       </div>
                     )}
                   </div>
-                </div>
+                )}
+              </Grid>
 
-                <div className="form-group">
-                  <label className="form-label">Description</label>
-                  <textarea
-                    className="dialog-input"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    rows={3}
-                  />
-                </div>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Description"
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={3}
+                />
+              </Grid>
 
-                <div className="form-group">
-                  <label className="form-label">Notes</label>
-                  <textarea
-                    className="dialog-input"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleInputChange}
-                    rows={3}
-                  />
-                </div>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  size="small"
+                  label="Notes"
+                  name="notes"
+                  value={formData.notes}
+                  onChange={handleInputChange}
+                  multiline
+                  rows={3}
+                />
+              </Grid>
 
-                {/* Part Image Upload Section */}
-                <div className="form-group mt-4">
-                  <label className="form-label">Part Image</label>
-                  <Box sx={{ border: '1px solid', borderColor: 'primary.main', borderRadius: 1, overflow: 'hidden' }}>
-                    <Box sx={{ px: 2, py: 1, backgroundColor: 'grey.100', borderBottom: '1px solid', borderColor: 'divider' }}>
-                      <strong>Upload Part Image</strong>
-                    </Box>
-                    <Box sx={{ p: 2 }}>
-                      {isEditing && selectedPart?.part_id ? (
-                        <PartImageUpload
-                          partId={selectedPart.part_id}
-                          currentImageUrl={selectedPart.image_url}
-                          onImageUpdate={(imageUrl) => {
-                            if (selectedPart) {
-                              setSelectedPart({ ...selectedPart, image_url: imageUrl });
-                              // Update the parts list to reflect the change
-                              setParts(parts.map(p =>
-                                p.part_id === selectedPart.part_id
-                                  ? { ...p, image_url: imageUrl }
-                                  : p
-                              ));
-                            }
-                          }}
-                        />
-                      ) : (
-                        <Alert severity="info" sx={{ mb: 0 }}>
-                          <small>
-                            <strong>Note:</strong> Save the part first, then you can upload an image.
-                          </small>
-                        </Alert>
-                      )}
-                    </Box>
+              {/* Part Image Upload Section */}
+              <Grid item xs={12}>
+                <Box sx={{ border: '1px solid', borderColor: 'primary.main', borderRadius: 1, overflow: 'hidden' }}>
+                  <Box sx={{ px: 2, py: 1, backgroundColor: 'grey.100', borderBottom: '1px solid', borderColor: 'divider' }}>
+                    <Typography component="span" fontWeight={600}>Upload Part Image</Typography>
                   </Box>
-                </div>
+                  <Box sx={{ p: 2 }}>
+                    {isEditing && selectedPart?.part_id ? (
+                      <PartImageUpload
+                        partId={selectedPart.part_id}
+                        currentImageUrl={selectedPart.image_url}
+                        onImageUpdate={(imageUrl) => {
+                          if (selectedPart) {
+                            setSelectedPart({ ...selectedPart, image_url: imageUrl });
+                            setParts(parts.map(p =>
+                              p.part_id === selectedPart.part_id
+                                ? { ...p, image_url: imageUrl }
+                                : p
+                            ));
+                          }
+                        }}
+                      />
+                    ) : (
+                      <Alert severity="info" sx={{ mb: 0 }}>
+                        <small>
+                          <strong>Note:</strong> Save the part first, then you can upload an image.
+                        </small>
+                      </Alert>
+                    )}
+                  </Box>
+                </Box>
+              </Grid>
 
-                {/* Suppliers Section */}
-                <div className="mt-4 mb-2">
-                  <h5 className="text-primary mb-2">Part Suppliers</h5>
+              {/* Suppliers Section */}
+              <Grid item xs={12}>
+                <Box sx={{ mt: 1, mb: 0.5 }}>
+                  <Typography variant="h6" color="primary" sx={{ mb: 1 }}>Part Suppliers</Typography>
                   <Alert severity="info" sx={{ mb: 2 }}>
                     <small><strong>Important:</strong> Add one or more suppliers for this part. The first supplier added will be set as preferred.</small>
                   </Alert>
@@ -1966,17 +1980,20 @@ const PartsList: React.FC = () => {
                   {/* Add Supplier Form */}
                   <Box sx={{ border: '1px solid', borderColor: 'primary.main', borderRadius: 1, overflow: 'hidden', mb: 2 }}>
                     <Box sx={{ px: 2, py: 1, backgroundColor: 'grey.100', borderBottom: '1px solid', borderColor: 'divider' }}>
-                      <strong>{editingSupplier ? 'Edit Supplier' : 'Add Supplier'}</strong>
+                      <Typography component="span" fontWeight={600}>{editingSupplier ? 'Edit Supplier' : 'Add Supplier'}</Typography>
                     </Box>
                     <Box sx={{ p: 2 }}>
-                      <div className="grid-container grid-3-cols">
-                        <div className="form-group">
-                          <label className="form-label">Supplier *</label>
-                          <select
-                            className="dialog-select"
+                      <Grid container spacing={2}>
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            select
+                            fullWidth
+                            size="small"
+                            label="Supplier *"
                             value={currentSupplierId}
                             onChange={(e) => setCurrentSupplierId(e.target.value)}
                             disabled={editingSupplier !== null}
+                            SelectProps={{ native: true }}
                           >
                             <option value="">Select a supplier</option>
                             {suppliers.map((supplier) => (
@@ -1984,98 +2001,100 @@ const PartsList: React.FC = () => {
                                 {supplier.name}
                               </option>
                             ))}
-                          </select>
-                        </div>
+                          </TextField>
+                        </Grid>
 
-                        <div className="form-group">
-                          <label className="form-label">Unit Cost ($)</label>
-                          <input
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            fullWidth
+                            size="small"
                             type="number"
-                            step="0.01"
-                            min="0"
-                            className="dialog-input"
+                            label="Unit Cost ($)"
                             value={currentUnitCost}
                             onChange={(e) => setCurrentUnitCost(e.target.value)}
                             placeholder="Leave blank for $0.00"
+                            inputProps={{ step: 0.01, min: 0 }}
                           />
-                        </div>
+                        </Grid>
 
-                        <div className="form-group">
-                          <label className="form-label">Lead Time (Days)</label>
-                          <input
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            fullWidth
+                            size="small"
                             type="number"
-                            min="0"
-                            className="dialog-input"
+                            label="Lead Time (Days)"
                             value={currentLeadTimeDays}
                             onChange={(e) => setCurrentLeadTimeDays(e.target.value)}
+                            inputProps={{ min: 0 }}
                           />
-                        </div>
+                        </Grid>
 
-                        <div className="form-group">
-                          <label className="form-label">Notes</label>
-                          <textarea
-                            className="dialog-input"
+                        <Grid item xs={12} sm={8}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Notes"
                             value={currentSupplierNotes}
                             onChange={(e) => setCurrentSupplierNotes(e.target.value)}
+                            multiline
                             rows={3}
                           />
-                        </div>
+                        </Grid>
 
-                        <div className="form-group d-flex align-items-end gap-2">
-                          <Button
-                            type="button"
-                            variant="contained"
-                            onClick={handleAddSupplier}
-                            sx={{ flexGrow: 1, backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.875rem' }}
-                          >
-                            {editingSupplier ? 'Update Supplier' : 'Add Supplier'}
-                          </Button>
-                          {editingSupplier && (
+                        <Grid item xs={12} sm={4}>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-end', gap: 1, height: '100%', pb: 0.5 }}>
                             <Button
                               type="button"
-                              variant="outlined"
-                              onClick={handleCancelEdit}
-                              sx={{ fontSize: '0.875rem' }}
+                              variant="contained"
+                              onClick={handleAddSupplier}
+                              sx={{ flexGrow: 1, backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.875rem' }}
                             >
-                              Cancel
+                              {editingSupplier ? 'Update Supplier' : 'Add Supplier'}
                             </Button>
-                          )}
-                        </div>
-                      </div>
+                            {editingSupplier && (
+                              <Button
+                                type="button"
+                                variant="outlined"
+                                onClick={handleCancelEdit}
+                                sx={{ fontSize: '0.875rem' }}
+                              >
+                                Cancel
+                              </Button>
+                            )}
+                          </Box>
+                        </Grid>
+                      </Grid>
                     </Box>
                   </Box>
 
                   {/* Supplier List */}
                   {selectedSuppliers.length > 0 ? (
                     <Box sx={{ overflowX: 'auto' }}>
-                      <table className="table table-sm table-striped">
-                        <thead className="table-light">
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                        <thead style={{ backgroundColor: '#f8f9fa' }}>
                           <tr>
-                            <th>Supplier</th>
-                            <th>Unit Cost</th>
-                            <th>Lead Time</th>
-                            <th>Min Order</th>
-                            <th>Preferred</th>
-                            <th>Actions</th>
+                            {['Supplier', 'Unit Cost', 'Lead Time', 'Min Order', 'Preferred', 'Actions'].map(h => (
+                              <th key={h} style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 600 }}>{h}</th>
+                            ))}
                           </tr>
                         </thead>
                         <tbody>
-                          {selectedSuppliers.map((supplier) => (
-                            <tr key={supplier.supplier_id}>
-                              <td>{getSupplierName(supplier.supplier_id)}</td>
-                              <td>${typeof supplier.unit_cost === 'number'
+                          {selectedSuppliers.map((supplier, idx) => (
+                            <tr key={supplier.supplier_id} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f8f9fa' }}>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>{getSupplierName(supplier.supplier_id)}</td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>${typeof supplier.unit_cost === 'number'
                                   ? supplier.unit_cost.toFixed(2)
                                   : Number(supplier.unit_cost || 0).toFixed(2)}</td>
-                              <td>{supplier.lead_time_days || '-'}</td>
-                              <td>{supplier.minimum_order_quantity || '-'}</td>
-                              <td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>{supplier.lead_time_days || '-'}</td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>{supplier.minimum_order_quantity || '-'}</td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>
                                 <input
                                   type="radio"
                                   checked={supplier.is_preferred}
                                   onChange={() => handleSetPreferred(supplier.supplier_id)}
                                 />
                               </td>
-                              <td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>
                                 <Button
                                   type="button"
                                   size="small"
@@ -2108,41 +2127,39 @@ const PartsList: React.FC = () => {
                       <strong>No suppliers added yet.</strong> You must add at least one supplier for this part.
                     </Alert>
                   )}
-                </div>
+                </Box>
+              </Grid>
 
-                <input
-                  type="hidden"
-                  name="status"
-                  value={formData.status}
-                />
-              </div>
+              <input
+                type="hidden"
+                name="status"
+                value={formData.status}
+              />
+            </Grid>
+          </DialogContent>
 
-              <div className="dialog-footer">
-                <div className="d-flex gap-2 justify-content-end">
-                  <Button
-                    type="button"
-                    variant="outlined"
-                    onClick={() => setOpenDialog(false)}
-                    size="small"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    disabled={loading}
-                    size="small"
-                    startIcon={loading ? <CircularProgress size={14} color="inherit" /> : undefined}
-                    sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
-                  >
-                    {loading ? 'Saving...' : isEditing ? 'Update Part' : 'Add Part'}
-                  </Button>
-                </div>
-              </div>
-            </form>
-          </div>
-        </div>
-      </ModalPortal>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button
+              type="button"
+              variant="outlined"
+              onClick={() => setOpenDialog(false)}
+              size="small"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={loading}
+              size="small"
+              startIcon={loading ? <CircularProgress size={14} color="inherit" /> : undefined}
+              sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
+            >
+              {loading ? 'Saving...' : isEditing ? 'Update Part' : 'Add Part'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
 
       {/* Restock Form Dialog */}
       <RestockForm
@@ -2201,63 +2218,61 @@ const PartsList: React.FC = () => {
       />
 
       {/* Export Dialog */}
-      <ModalPortal open={exportDialogOpen}>
-        <div className="dialog-overlay-wrapper">
-          <div className="custom-dialog">
-            <div className="dialog-header">
-              <h5 className="dialog-title">Export Inventory</h5>
-            </div>
-            <div className="dialog-content">
-              <div className="mt-2">
-                <p className="mb-3">
-                  Select a location to filter the export, or leave empty to export all inventory items.
-                </p>
-                <div className="form-group">
-                  <label className="form-label">Location</label>
-                  <TextField
-                    select
-                    fullWidth
-                    size="small"
-                    value={selectedLocation}
-                    onChange={(e) => setSelectedLocation(e.target.value)}
-                    SelectProps={{ native: true }}
-                  >
-                    <option value="">All Locations</option>
-                    {locations.map((location) => (
-                      <option key={location} value={location}>
-                        {location}
-                      </option>
-                    ))}
-                  </TextField>
-                </div>
-              </div>
-            </div>
-            <div className="dialog-footer">
-              <div className="d-flex gap-2 justify-content-end">
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={() => setExportDialogOpen(false)}
-                  size="small"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={handleExport}
-                  disabled={exportLoading}
-                  size="small"
-                  startIcon={exportLoading ? <CircularProgress size={14} color="inherit" /> : <DownloadIcon sx={{ fontSize: 16 }} />}
-                  sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
-                >
-                  {exportLoading ? 'Exporting...' : 'Export'}
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ModalPortal>
+      <Dialog
+        open={exportDialogOpen}
+        onClose={() => setExportDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '0.75rem' } }}
+      >
+        <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '0.75rem 0.75rem 0 0' }}>
+          Export Inventory
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="body2" sx={{ mb: 1.5 }}>
+              Select a location to filter the export, or leave empty to export all inventory items.
+            </Typography>
+            <TextField
+              select
+              fullWidth
+              size="small"
+              label="Location"
+              value={selectedLocation}
+              onChange={(e) => setSelectedLocation(e.target.value)}
+              SelectProps={{ native: true }}
+            >
+              <option value="">All Locations</option>
+              {locations.map((location) => (
+                <option key={location} value={location}>
+                  {location}
+                </option>
+              ))}
+            </TextField>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => setExportDialogOpen(false)}
+            size="small"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={handleExport}
+            disabled={exportLoading}
+            size="small"
+            startIcon={exportLoading ? <CircularProgress size={14} color="inherit" /> : <DownloadIcon sx={{ fontSize: 16 }} />}
+            sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
+          >
+            {exportLoading ? 'Exporting...' : 'Export'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar for notifications */}
       <Snackbar
@@ -2276,95 +2291,95 @@ const PartsList: React.FC = () => {
       </Snackbar>
 
       {/* Part Edit Confirmation Dialog */}
-      <ModalPortal open={openEditConfirm}>
-        <div className="dialog-overlay-wrapper">
-          <div className="custom-dialog">
-            <div className="dialog-header">
-              <h5 className="dialog-title">Part Actions</h5>
-            </div>
-            <div className="dialog-content">
-              <p>What would you like to do with this part?</p>
-              <Box sx={{ border: '1px solid', borderColor: 'primary.main', borderRadius: 1, p: 2, mb: 2 }}>
-                <Typography variant="subtitle2" fontWeight={600} gutterBottom>
-                  Selected Part: {selectedPart?.name}
-                </Typography>
-                <Typography variant="body2" gutterBottom>
-                  Mfg Part #: {selectedPart?.manufacturer_part_number || 'N/A'}
-                </Typography>
-                <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    Current Stock: {selectedPart?.quantity}
-                  </Typography>
-                  <Chip
-                    label={(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'Low Stock' : 'In Stock'}
-                    color={(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'warning' : 'success'}
-                    size="small"
-                  />
-                </Box>
-              </Box>
-            </div>
-            <div className="dialog-footer">
-              <div className="d-flex gap-2 justify-content-end">
-                <Button
-                  type="button"
-                  variant="outlined"
-                  onClick={() => setOpenEditConfirm(false)}
-                  size="small"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => {
-                    if (selectedPart) {
-                      handleOpenEdit(selectedPart);
-                    }
-                    setOpenEditConfirm(false);
-                  }}
-                  size="small"
-                  sx={{ backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#115293' } }}
-                >
-                  Edit Part
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={handleRestock}
-                  size="small"
-                  color="success"
-                >
-                  Restock
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={handleCheckOut}
-                  size="small"
-                  sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
-                >
-                  Check Out
-                </Button>
-                <Button
-                  type="button"
-                  variant="contained"
-                  onClick={() => {
-                    if (selectedPart) {
-                      setOpenReturnDialog(true);
-                    }
-                    setOpenEditConfirm(false);
-                  }}
-                  size="small"
-                  sx={{ backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#115293' } }}
-                  startIcon={<UndoIcon sx={{ fontSize: 16 }} />}
-                >
-                  Return Part
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </ModalPortal>
+      <Dialog
+        open={openEditConfirm}
+        onClose={() => setOpenEditConfirm(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: '0.75rem' } }}
+      >
+        <DialogTitle sx={{ backgroundColor: '#0066A1', color: 'white', borderRadius: '0.75rem 0.75rem 0 0' }}>
+          Part Actions
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Typography variant="body2" sx={{ mb: 1.5 }}>What would you like to do with this part?</Typography>
+          <Box sx={{ border: '1px solid', borderColor: 'primary.main', borderRadius: 1, p: 2, mb: 2 }}>
+            <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+              Selected Part: {selectedPart?.name}
+            </Typography>
+            <Typography variant="body2" gutterBottom>
+              Mfg Part #: {selectedPart?.manufacturer_part_number || 'N/A'}
+            </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
+              <Typography variant="body2" color="text.secondary">
+                Current Stock: {selectedPart?.quantity}
+              </Typography>
+              <Chip
+                label={(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'Low Stock' : 'In Stock'}
+                color={(selectedPart?.quantity || 0) <= (selectedPart?.minimum_quantity || 0) ? 'warning' : 'success'}
+                size="small"
+              />
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, flexWrap: 'wrap', gap: 1 }}>
+          <Button
+            type="button"
+            variant="outlined"
+            onClick={() => setOpenEditConfirm(false)}
+            size="small"
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={() => {
+              if (selectedPart) {
+                handleOpenEdit(selectedPart);
+              }
+              setOpenEditConfirm(false);
+            }}
+            size="small"
+            sx={{ backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#115293' } }}
+          >
+            Edit Part
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={handleRestock}
+            size="small"
+            color="success"
+          >
+            Restock
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={handleCheckOut}
+            size="small"
+            sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
+          >
+            Check Out
+          </Button>
+          <Button
+            type="button"
+            variant="contained"
+            onClick={() => {
+              if (selectedPart) {
+                setOpenReturnDialog(true);
+              }
+              setOpenEditConfirm(false);
+            }}
+            size="small"
+            sx={{ backgroundColor: '#1976d2', '&:hover': { backgroundColor: '#115293' } }}
+            startIcon={<UndoIcon sx={{ fontSize: 16 }} />}
+          >
+            Return Part
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Image Preview Dialog */}
       <Dialog 
