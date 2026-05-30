@@ -698,7 +698,7 @@ const PurchaseOrderList: React.FC = () => {
             backgroundColor: 'white'
           }}
         >
-          <Box sx={{ width: '100%', height: 650 }}>
+          <Box sx={{ width: '100%' }}>
             {loading ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
                 <CircularProgress sx={{ color: PRIMARY_ORANGE }} />
