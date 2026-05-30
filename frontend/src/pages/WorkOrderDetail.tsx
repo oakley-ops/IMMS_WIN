@@ -19,6 +19,7 @@ import {
   Grid,
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
+import { PRIMARY_ORANGE } from '../theme';
 import workOrderService from '../services/workOrderService';
 import {
   WorkOrderDetail as WorkOrderDetailType,
@@ -211,7 +212,7 @@ const WorkOrderDetail: React.FC = () => {
               </Grid>
 
               {workOrder.notes && (
-                <Box mt={3} p={2} sx={{ backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                <Box mt={3} p={2} sx={{ bgcolor: 'action.hover', borderRadius: 1 }}>
                   <Typography variant="subtitle2">Notes:</Typography>
                   <Typography variant="body2" mt={0.5}>{workOrder.notes}</Typography>
                 </Box>
@@ -279,7 +280,7 @@ const WorkOrderDetail: React.FC = () => {
               ) : (
                 <Box mb={3}>
                   {workOrder.comments.map((comment) => (
-                    <Box key={comment.comment_id} mb={2} p={2} sx={{ backgroundColor: '#f8f9fa', borderRadius: 1 }}>
+                    <Box key={comment.comment_id} mb={2} p={2} sx={{ bgcolor: 'action.hover', borderRadius: 1 }}>
                       <Box display="flex" justifyContent="space-between" mb={0.5}>
                         <Typography variant="subtitle2">{comment.technician_name || 'User'}</Typography>
                         <Typography variant="caption" color="text.secondary">
@@ -328,7 +329,7 @@ const WorkOrderDetail: React.FC = () => {
                   fullWidth
                   onClick={handleExportPDF}
                   disabled={exportingPDF}
-                  sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontWeight: 600 }}
+                  sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontWeight: 600 }}
                   startIcon={exportingPDF ? <CircularProgress size={18} color="inherit" /> : undefined}
                 >
                   {exportingPDF ? 'Generating PDF...' : '📄 Print Work Order'}

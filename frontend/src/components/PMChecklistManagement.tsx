@@ -48,6 +48,7 @@ import {
 import { styled } from '@mui/material/styles';
 import * as XLSX from 'xlsx';
 import axiosInstance from '../utils/axios';
+import { PRIMARY_ORANGE } from '../theme';
 import PMCalendar, { PMCalendarRef } from './PMCalendar';
 
 
@@ -571,8 +572,8 @@ const PMChecklistManagement: React.FC = () => {
           <IconButton
             size="small"
             onClick={() => handleEdit(params.row)}
-            sx={{ 
-              backgroundColor: '#FF6600',
+            sx={{
+              backgroundColor: PRIMARY_ORANGE,
               color: 'white',
               '&:hover': { backgroundColor: '#e65c00' }
             }}
@@ -624,7 +625,7 @@ const PMChecklistManagement: React.FC = () => {
         backgroundSize: '20px 20px'
       }}
     >
-      <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
+      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
         PM Management System
       </Typography>
 
@@ -686,7 +687,7 @@ const PMChecklistManagement: React.FC = () => {
             elevation={3}
             sx={{ 
               borderRadius: '0.75rem',
-              borderLeft: '4px solid #FF6600',
+              borderLeft: `4px solid ${PRIMARY_ORANGE}`,
               transition: 'transform 0.2s',
               '&:hover': { transform: 'translateY(-2px)' }
             }}
@@ -697,11 +698,11 @@ const PMChecklistManagement: React.FC = () => {
                   <Typography variant="body2" color="text.secondary" gutterBottom>
                     Checklists
                   </Typography>
-                  <Typography variant="h5" sx={{ color: '#FF6600', fontWeight: 'bold' }}>
+                  <Typography variant="h5" sx={{ color: PRIMARY_ORANGE, fontWeight: 'bold' }}>
                     {checklists.length}
                   </Typography>
                 </Box>
-                <AssignmentIcon sx={{ fontSize: '1.8rem', color: '#FF6600' }} />
+                <AssignmentIcon sx={{ fontSize: '1.8rem', color: PRIMARY_ORANGE }} />
               </Box>
             </CardContent>
           </Card>
@@ -757,16 +758,16 @@ const PMChecklistManagement: React.FC = () => {
                     borderColor: '#e0e0e0',
                   },
                   '&:hover fieldset': {
-                    borderColor: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
                   },
                   '&.Mui-focused fieldset': {
-                    borderColor: '#FF6600',
+                    borderColor: PRIMARY_ORANGE,
                   },
                 },
               }}
             />
             {loading && searchTerm && (
-              <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
+              <LinearProgress sx={{ mt: 1, height: '2px', '& .MuiLinearProgress-bar': { backgroundColor: PRIMARY_ORANGE } }} />
             )}
           </Grid>
           
@@ -792,9 +793,9 @@ const PMChecklistManagement: React.FC = () => {
                 variant="contained"
                 onClick={handleCreateNew}
                 startIcon={<AddIcon />}
-                sx={{ 
-                  backgroundColor: '#FF6600', 
-                  borderColor: '#FF6600',
+                sx={{
+                  backgroundColor: PRIMARY_ORANGE,
+                  borderColor: PRIMARY_ORANGE,
                   '&:hover': { backgroundColor: '#e65c00' },
                   minWidth: '160px'
                 }}
@@ -806,10 +807,10 @@ const PMChecklistManagement: React.FC = () => {
                 onClick={handleExport}
                 disabled={exportLoading}
                 startIcon={exportLoading ? <CircularProgress size={16} color="inherit" /> : <DownloadIcon />}
-                sx={{ 
-                  borderColor: '#FF6600',
-                  color: '#FF6600',
-                  '&:hover': { 
+                sx={{
+                  borderColor: PRIMARY_ORANGE,
+                  color: PRIMARY_ORANGE,
+                  '&:hover': {
                     borderColor: '#e65c00',
                     backgroundColor: 'rgba(255, 102, 0, 0.04)'
                   },
@@ -830,10 +831,10 @@ const PMChecklistManagement: React.FC = () => {
             onClick={() => setActiveTab(0)}
             color={activeTab === 0 ? "primary" : "default"}
             variant={activeTab === 0 ? "filled" : "outlined"}
-            sx={{ 
-              backgroundColor: activeTab === 0 ? '#FF6600' : 'transparent',
-              color: activeTab === 0 ? 'white' : '#FF6600',
-              borderColor: '#FF6600',
+            sx={{
+              backgroundColor: activeTab === 0 ? PRIMARY_ORANGE : 'transparent',
+              color: activeTab === 0 ? 'white' : PRIMARY_ORANGE,
+              borderColor: PRIMARY_ORANGE,
               '&:hover': { backgroundColor: activeTab === 0 ? '#e65c00' : 'rgba(255, 102, 0, 0.04)' }
             }}
           />
@@ -856,9 +857,9 @@ const PMChecklistManagement: React.FC = () => {
               label={`${filteredChecklists.length} checklists showing`} 
               color="primary" 
               variant="outlined"
-              sx={{ 
-                borderColor: '#FF6600',
-                color: '#FF6600',
+              sx={{
+                borderColor: PRIMARY_ORANGE,
+                color: PRIMARY_ORANGE,
                 backgroundColor: 'rgba(255, 102, 0, 0.04)'
               }}
             />
@@ -906,8 +907,8 @@ const PMChecklistManagement: React.FC = () => {
                     variant="contained"
                     onClick={handleCreateNew}
                     startIcon={<AddIcon />}
-                    sx={{ 
-                      backgroundColor: '#FF6600',
+                    sx={{
+                      backgroundColor: PRIMARY_ORANGE,
                       '&:hover': { backgroundColor: '#e65c00' }
                     }}
                   >
@@ -931,7 +932,7 @@ const PMChecklistManagement: React.FC = () => {
                     px: 2
                   },
                   '& .MuiDataGrid-columnHeaders': {
-                    bgcolor: '#f8f9fa',
+                    bgcolor: 'action.hover',
                     borderBottom: '2px solid #e9ecef',
                     py: 1.5
                   },
@@ -1303,7 +1304,7 @@ const PMChecklistManagement: React.FC = () => {
             variant="contained"
             disabled={isSubmitting || !scheduleData.machineId || !scheduleData.checklistId || !scheduleData.nextMaintenanceDate || !!scheduleValidationError}
             sx={{
-              backgroundColor: '#FF6600',
+              backgroundColor: PRIMARY_ORANGE,
               '&:hover': { backgroundColor: '#e65c00' }
             }}
           >

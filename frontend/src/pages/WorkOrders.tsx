@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useNavigate } from 'react-router-dom';
+import { PRIMARY_ORANGE, COLOR_WARNING_BG } from '../theme';
 import workOrderService from '../services/workOrderService';
 import {
   WorkOrder,
@@ -126,7 +127,7 @@ const WorkOrders: React.FC = () => {
         <Button
           variant="contained"
           onClick={() => navigate('/work-orders/new')}
-          sx={{ backgroundColor: '#0066A1', '&:hover': { backgroundColor: '#004d7a' } }}
+          sx={{ backgroundColor: 'primary.main', '&:hover': { backgroundColor: 'primary.dark' } }}
         >
           + Create Work Order
         </Button>
@@ -218,7 +219,7 @@ const WorkOrders: React.FC = () => {
         ) : (
           <TableContainer>
             <Table>
-              <TableHead sx={{ backgroundColor: '#f8f9fa' }}>
+              <TableHead sx={{ backgroundColor: 'action.hover' }}>
                 <TableRow>
                   <TableCell>WO Number</TableCell>
                   <TableCell>Title</TableCell>
@@ -238,7 +239,7 @@ const WorkOrders: React.FC = () => {
                     key={wo.work_order_id}
                     hover
                     sx={{
-                      backgroundColor: isOverdue(wo) ? '#fff3cd' : 'transparent',
+                      backgroundColor: isOverdue(wo) ? COLOR_WARNING_BG : 'transparent',
                       cursor: 'pointer'
                     }}
                     onClick={() => navigate(`/work-orders/${wo.work_order_id}`)}
@@ -278,7 +279,7 @@ const WorkOrders: React.FC = () => {
                           <LinearProgress
                             variant="determinate"
                             value={(wo.completed_tasks! / wo.total_tasks) * 100}
-                            sx={{ width: 60, height: 8, borderRadius: 4, '& .MuiLinearProgress-bar': { backgroundColor: '#0066A1' } }}
+                            sx={{ width: 60, height: 8, borderRadius: 4 }}
                           />
                           <Typography variant="caption">{wo.completed_tasks}/{wo.total_tasks}</Typography>
                         </Box>

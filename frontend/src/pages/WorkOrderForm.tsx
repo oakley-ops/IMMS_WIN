@@ -328,7 +328,7 @@ const WorkOrderForm: React.FC = () => {
             type="submit"
             variant="contained"
             disabled={submitting}
-            sx={{ backgroundColor: '#0066A1', '&:hover': { backgroundColor: '#004d7a' } }}
+            sx={{ backgroundColor: 'primary.main', '&:hover': { backgroundColor: 'primary.dark' } }}
             startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : undefined}
           >
             {submitting ? 'Saving...' : (isEdit ? 'Update Work Order' : 'Create Work Order')}

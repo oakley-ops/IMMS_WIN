@@ -2,6 +2,7 @@ import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'rea
 import './PMCalendar.css';
 import { format as formatDate, addMonths, subMonths } from 'date-fns';
 import axiosInstance from '../utils/axios';
+import { PRIMARY_ORANGE } from '../theme';
 import {
   Dialog,
   DialogTitle,
@@ -427,7 +428,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
     <div className="pm-calendar-container">
       <div className="pm-calendar-header">
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
-          <Typography variant="subtitle1" sx={{ color: '#FF6200', fontWeight: 600, fontSize: '1.1rem' }}>
+          <Typography variant="subtitle1" sx={{ color: PRIMARY_ORANGE, fontWeight: 600, fontSize: '1.1rem' }}>
             Preventive Maintenance
           </Typography>
           <Box display="flex" alignItems="center" gap={1}>
@@ -498,7 +499,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
                   >
                     <td className="date-column">
                       {isNotScheduled ? (
-                        <span style={{ color: '#999' }}>Not Set</span>
+                        <Box component="span" sx={{ color: 'text.disabled' }}>Not Set</Box>
                       ) : (
                         formatDate(event.start, 'EEE MMM dd')
                       )}
@@ -510,7 +511,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
                       <div style={{ display: 'flex', alignItems: 'center' }}>
                         <span className={`status-indicator ${event.resource.status}`} style={{ marginRight: '8px' }}></span>
                         <span>{event.title}</span>
-                        <span className={`ms-2 badge ${event.resource.status}`} style={{ marginLeft: '8px' }}>
+                        <span className={`badge ${event.resource.status}`} style={{ marginLeft: '8px' }}>
                           {event.resource.status === 'not_scheduled' ? 'not scheduled' : event.resource.status.replace('_', ' ')}
                         </span>
                       </div>
@@ -521,7 +522,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
                           {event.resource.technicianName}
                         </span>
                       ) : (
-                        <span style={{ color: '#999' }}>-</span>
+                        <Box component="span" sx={{ color: 'text.disabled' }}>-</Box>
                       )}
                     </td>
                   </tr>
@@ -529,7 +530,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
               })
             ) : (
               <tr>
-                <td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
+                <td colSpan={4} style={{ textAlign: 'center', padding: '2rem' }}>
                   No maintenance schedules found. Make sure machines have next maintenance dates set.
                 </td>
               </tr>
