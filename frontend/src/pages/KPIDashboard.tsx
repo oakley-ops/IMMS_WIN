@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { Container, Alert, Spinner, Button } from 'react-bootstrap';
+import {
+  Box,
+  Alert,
+  CircularProgress,
+  Button,
+  Typography,
+  Grid,
+} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import StockLevelChart from '../components/StockLevelChart';
-import TopUsedPartsChart from '../components/TopUsedPartsChart';
 import InventoryHealthCard from '../components/analytics/InventoryHealthCard';
 import CostAnalysisCard from '../components/analytics/CostAnalysisCard';
 import UsagePatternsCard from '../components/analytics/UsagePatternsCard';
 import axiosInstance from '../utils/axios';
 import { DashboardData } from '../types';
 import { analyticsService, InventoryHealth, UsagePatterns, CostAnalysis } from '../services/analyticsService';
+import { PAGE_BG, PRIMARY_ORANGE } from '../theme';
 
 const KPIDashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -30,7 +36,7 @@ const KPIDashboard: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Fetch regular dashboard data
       const response = await axiosInstance.get<DashboardData>('/api/v1/dashboard');
       setDashboardData(response.data);
@@ -69,7 +75,7 @@ const KPIDashboard: React.FC = () => {
     try {
       console.log('Requesting PDF export (Puppeteer - Chrome rendering)...');
       const pdfBlob = await analyticsService.exportAnalyticsPDFPuppeteer();
-      
+
       // Create download link
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
@@ -80,8 +86,8 @@ const KPIDashboard: React.FC = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
-      console.log('✅ PDF downloaded successfully!');
+
+      console.log('PDF downloaded successfully!');
     } catch (error) {
       console.error('Error exporting PDF:', error);
       alert('Failed to export PDF. Please try again or check the console for details.');
@@ -92,25 +98,24 @@ const KPIDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <Container fluid className="px-4 py-4">
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-          <Spinner animation="border" role="status" variant="primary">
-            <span className="visually-hidden">Loading...</span>
-          </Spinner>
-        </div>
-      </Container>
+      <Box sx={{ px: 4, py: 4 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" sx={{ minHeight: '60vh' }}>
+          <CircularProgress color="primary" />
+        </Box>
+      </Box>
     );
   }
 
   if (error) {
     return (
-      <Container fluid className="px-4 py-4">
-        <Alert variant="danger">
-          {error}
-          <div className="mt-2">
-            <button 
-              className="btn btn-outline-danger" 
-              style={{ backgroundColor: '#0066A1', borderColor: '#0066A1', color: 'white' }}
+      <Box sx={{ px: 4, py: 4 }}>
+        <Alert
+          severity="error"
+          action={
+            <Button
+              color="error"
+              variant="outlined"
+              size="small"
               onClick={() => {
                 setError(null);
                 setLoading(true);
@@ -118,78 +123,76 @@ const KPIDashboard: React.FC = () => {
               }}
             >
               Try Again
-            </button>
-          </div>
+            </Button>
+          }
+        >
+          {error}
         </Alert>
-      </Container>
+      </Box>
     );
   }
 
   if (!dashboardData) {
     return (
-      <Container fluid className="px-4 py-4">
-        <Alert variant="warning">No dashboard data available</Alert>
-      </Container>
+      <Box sx={{ px: 4, py: 4 }}>
+        <Alert severity="warning">No dashboard data available</Alert>
+      </Box>
     );
   }
 
   return (
-    <div className="kpi-dashboard-page px-3 py-3" style={{ backgroundColor: '#f8f9fb' }}>
-      <div className="mb-4 d-flex justify-content-between align-items-center">
-        <h1 className="h2 mb-0">KPI Dashboard</h1>
-        <div className="d-flex gap-2">
-          <Button 
-            variant="success"
+    <Box sx={{ px: 3, py: 3, backgroundColor: PAGE_BG, minHeight: '100%' }}>
+      {/* Header */}
+      <Box display="flex" justifyContent="space-between" alignItems="center" sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight={700}>
+          KPI Dashboard
+        </Typography>
+        <Box display="flex" gap={1}>
+          <Button
+            variant="contained"
             onClick={handleExportPDF}
             disabled={exportingPDF || !analyticsData.inventoryHealth}
-            style={{ 
-              backgroundColor: '#FF6600', 
-              borderColor: '#FF6600',
-              fontWeight: 600
+            sx={{
+              backgroundColor: PRIMARY_ORANGE,
+              '&:hover': { backgroundColor: PRIMARY_ORANGE, filter: 'brightness(0.9)' },
+              fontWeight: 600,
             }}
+            startIcon={exportingPDF ? <CircularProgress size={16} color="inherit" /> : undefined}
           >
-            {exportingPDF ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" />
-                Generating PDF...
-              </>
-            ) : (
-              <>
-                📄 Export PDF Report
-              </>
-            )}
+            {exportingPDF ? 'Generating PDF...' : '📄 Export PDF Report'}
           </Button>
-          <Button 
-            variant="outline-primary" 
+          <Button
+            variant="outlined"
+            color="primary"
             onClick={() => navigate('/dashboard')}
           >
             Back to Dashboard
           </Button>
-        </div>
-      </div>
-      
+        </Box>
+      </Box>
+
       {/* Analytics Cards Row */}
-      <div className="row g-4 mb-4">
-        <div className="col-md-4">
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} md={4}>
           {analyticsData.inventoryHealth && (
             <InventoryHealthCard data={analyticsData.inventoryHealth} />
           )}
-        </div>
-        <div className="col-md-4">
+        </Grid>
+        <Grid item xs={12} md={4}>
           {analyticsData.usagePatterns && (
             <UsagePatternsCard data={analyticsData.usagePatterns} />
           )}
-        </div>
-        <div className="col-md-4">
+        </Grid>
+        <Grid item xs={12} md={4}>
           {analyticsData.costAnalysis && (
             <CostAnalysisCard data={analyticsData.costAnalysis} />
           )}
-        </div>
-      </div>
+        </Grid>
+      </Grid>
 
       {/* Charts Row - Removed */}
-    </div>
+    </Box>
   );
 };
 
-export default KPIDashboard; 
+export default KPIDashboard;

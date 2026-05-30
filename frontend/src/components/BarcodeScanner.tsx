@@ -1,7 +1,18 @@
 // src/components/BarcodeScanner.tsx
 import React, { useEffect, useState } from 'react';
 import { Html5QrcodeScanner } from 'html5-qrcode';
-import { Button, Alert, Card } from 'react-bootstrap';
+import {
+  Box,
+  Button,
+  Alert,
+  Card,
+  CardContent,
+  Typography,
+} from '@mui/material';
+import {
+  QrCodeScanner as QrCodeScannerIcon,
+  Stop as StopIcon,
+} from '@mui/icons-material';
 
 interface BarcodeScannerProps {
   onScan?: (result: string) => void;
@@ -9,8 +20,8 @@ interface BarcodeScannerProps {
   onBarcodeScanned?: (scannedBarcode: string) => void; // For backward compatibility
 }
 
-const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ 
-  onScan, 
+const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
+  onScan,
   onError,
   onBarcodeScanned // For backward compatibility
 }) => {
@@ -84,41 +95,46 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({
   };
 
   return (
-    <Card className="mb-3">
-      <Card.Body>
-        <Card.Title>Barcode Scanner</Card.Title>
-        
+    <Card sx={{ borderRadius: 2, boxShadow: '0 1px 3px rgba(0,0,0,0.08)', mb: 2 }}>
+      <CardContent>
+        <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+          Barcode Scanner
+        </Typography>
+
         {error && (
-          <Alert variant="danger" className="mb-3">
+          <Alert severity="error" sx={{ mb: 2 }}>
             {error}
           </Alert>
         )}
 
-        <div id="reader" className="mb-3"></div>
+        <Box id="reader" sx={{ mb: 2 }} />
 
         {!scanning ? (
-          <Button 
-            variant="primary" 
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<QrCodeScannerIcon />}
             onClick={startScanning}
-            className="me-2"
+            sx={{ mr: 1 }}
           >
             Start Scanner
           </Button>
         ) : (
-          <Button 
-            variant="secondary" 
+          <Button
+            variant="outlined"
+            startIcon={<StopIcon />}
             onClick={stopScanning}
           >
             Stop Scanner
           </Button>
         )}
 
-        <div className="mt-3">
-          <small className="text-muted">
+        <Box sx={{ mt: 2 }}>
+          <Typography variant="caption" color="text.secondary">
             Supports most common barcode formats including EAN, UPC, Code 128, and Code 39
-          </small>
-        </div>
-      </Card.Body>
+          </Typography>
+        </Box>
+      </CardContent>
     </Card>
   );
 };

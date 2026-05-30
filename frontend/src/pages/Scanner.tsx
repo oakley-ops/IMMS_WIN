@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { Container, Row, Col, Alert } from 'react-bootstrap';
+import {
+  Box,
+  Typography,
+  Alert,
+  Grid,
+} from '@mui/material';
 import BarcodeScanner from '../components/BarcodeScanner';
 import axios from 'axios';
 import { API_URL } from '../config';
+
 const Scanner: React.FC = () => {
   const [scannedCode, setScannedCode] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +22,7 @@ const Scanner: React.FC = () => {
 
       // You can implement your logic here to handle the scanned code
       // For example, looking up a part by its barcode:
-      const response = await axios.get(`${API_URL}/api/v1/parts/barcode/${result}`);      
+      const response = await axios.get(`${API_URL}/api/v1/parts/barcode/${result}`);
       if (response.data) {
         setSuccess(`Found part: ${response.data.name}`);
       } else {
@@ -38,43 +44,43 @@ const Scanner: React.FC = () => {
   };
 
   return (
-    <Container>
-      <Row className="my-4">
-        <Col>
-          <h1>Barcode Scanner</h1>
-          <p className="text-muted">
-            Use this scanner to quickly look up parts by their barcode.
-          </p>
-        </Col>
-      </Row>
+    <Box sx={{ px: 3, py: 3 }}>
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" fontWeight={700} gutterBottom>
+          Barcode Scanner
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Use this scanner to quickly look up parts by their barcode.
+        </Typography>
+      </Box>
 
-      <Row>
-        <Col md={8} lg={6}>
-          <BarcodeScanner 
+      <Grid container>
+        <Grid item xs={12} md={8} lg={6}>
+          <BarcodeScanner
             onScan={handleScan}
             onError={handleError}
           />
 
           {error && (
-            <Alert variant="danger" className="mt-3">
+            <Alert severity="error" sx={{ mt: 2 }}>
               {error}
             </Alert>
           )}
 
           {success && (
-            <Alert variant="success" className="mt-3">
+            <Alert severity="success" sx={{ mt: 2 }}>
               {success}
             </Alert>
           )}
 
           {scannedCode && (
-            <Alert variant="info" className="mt-3">
+            <Alert severity="info" sx={{ mt: 2 }}>
               Last scanned code: {scannedCode}
             </Alert>
           )}
-        </Col>
-      </Row>
-    </Container>
+        </Grid>
+      </Grid>
+    </Box>
   );
 };
 
