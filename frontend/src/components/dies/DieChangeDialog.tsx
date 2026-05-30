@@ -22,11 +22,29 @@ const API_URL = process.env.REACT_APP_API_URL
   ? `${process.env.REACT_APP_API_URL}/api/v1`
   : 'http://localhost:4000/api/v1';
 
+interface Die {
+  die_id: number;
+  die_number: string;
+  die_type: string;
+  status: string;
+}
+
+interface Machine {
+  machine_id: number;
+  name: string;
+  location?: string;
+}
+
+interface Technician {
+  technician_id: number;
+  name: string;
+}
+
 interface DieChangeDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  die: any;
+  die: Die;
   action: 'install' | 'remove';
 }
 
@@ -51,11 +69,10 @@ const DieChangeDialog: React.FC<DieChangeDialogProps> = ({
 }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [machines, setMachines] = useState<any[]>([]);
-  const [technicians, setTechnicians] = useState<any[]>([]);
+  const [machines, setMachines] = useState<Machine[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [formData, setFormData] = useState({
     machine_id: '',
-    technician_id: '',
     technician_name: '',
     change_reason_code: '',
     change_reason_notes: '',
@@ -81,7 +98,6 @@ const DieChangeDialog: React.FC<DieChangeDialogProps> = ({
   const resetForm = () => {
     setFormData({
       machine_id: '',
-      technician_id: '',
       technician_name: '',
       change_reason_code: '',
       change_reason_notes: '',
@@ -120,7 +136,7 @@ const DieChangeDialog: React.FC<DieChangeDialogProps> = ({
     }
   };
 
-  const handleChange = (field: string, value: any) => {
+  const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -142,10 +158,10 @@ const DieChangeDialog: React.FC<DieChangeDialogProps> = ({
       const token = localStorage.getItem('token');
       const headers = { Authorization: `Bearer ${token}` };
 
-      const payload: any = {
+      // TODO: add technician_id UI field if needed by the backend
+      const payload: Record<string, unknown> = {
         change_reason_code: formData.change_reason_code,
         change_reason_notes: formData.change_reason_notes,
-        technician_id: formData.technician_id ? parseInt(formData.technician_id) : null,
         technician_name: formData.technician_name,
       };
 
@@ -182,8 +198,6 @@ const DieChangeDialog: React.FC<DieChangeDialogProps> = ({
       setLoading(false);
     }
   };
-
-  const reasonCodes = ALL_REASON_CODES;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -236,7 +250,7 @@ const DieChangeDialog: React.FC<DieChangeDialogProps> = ({
                   required
                 >
                   <MenuItem value="">Select a reason...</MenuItem>
-                  {reasonCodes.map((reason: { value: string; label: string }) => (
+                  {ALL_REASON_CODES.map((reason: { value: string; label: string }) => (
                     <MenuItem key={reason.value} value={reason.value}>
                       {reason.label}
                     </MenuItem>

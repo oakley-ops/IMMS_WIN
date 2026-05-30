@@ -31,11 +31,20 @@ interface Machine {
   machine_type?: string;
 }
 
+interface Die {
+  die_id: number;
+  die_number: string;
+  die_type: string;
+  notes?: string;
+  status: string;
+  compatible_machine_ids?: number[];
+}
+
 interface AddEditDieDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  die?: any;
+  die?: Die;
 }
 
 const AddEditDieDialog: React.FC<AddEditDieDialogProps> = ({
