@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { Container, Row, Col, Card, Form, Button, Alert, Spinner } from 'react-bootstrap';
+import {
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  CircularProgress,
+  Alert,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+  Container,
+  Typography,
+  Grid,
+} from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import workOrderService from '../services/workOrderService';
 import { CreateWorkOrderRequest, WorkType, WorkOrderPriority } from '../types/workOrder';
@@ -57,7 +74,7 @@ const WorkOrderForm: React.FC = () => {
     try {
       setLoading(true);
       const wo = await workOrderService.getWorkOrderById(workOrderId);
-      
+
       setFormData({
         title: wo.title,
         description: wo.description,
@@ -111,242 +128,215 @@ const WorkOrderForm: React.FC = () => {
 
   if (loading) {
     return (
-      <Container fluid className="px-4 py-4">
-        <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-          <Spinner animation="border" />
-        </div>
+      <Container maxWidth={false} sx={{ px: 4, py: 4 }}>
+        <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
+          <CircularProgress />
+        </Box>
       </Container>
     );
   }
 
   return (
-    <Container fluid className="px-4 py-4">
-      <Row className="mb-4">
-        <Col>
-          <div className="d-flex justify-content-between align-items-center">
-            <div>
-              <h1 className="h2 mb-0">{isEdit ? 'Edit Work Order' : 'Create Work Order'}</h1>
-              <p className="text-muted mb-0">Fill in the details below</p>
-            </div>
-            <Button variant="outline-secondary" onClick={() => navigate('/work-orders')}>
-              Cancel
-            </Button>
-          </div>
-        </Col>
-      </Row>
+    <Container maxWidth={false} sx={{ px: 4, py: 4 }}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <Box>
+          <Typography variant="h4" component="h1" mb={0}>
+            {isEdit ? 'Edit Work Order' : 'Create Work Order'}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">Fill in the details below</Typography>
+        </Box>
+        <Button variant="outlined" color="secondary" onClick={() => navigate('/work-orders')}>
+          Cancel
+        </Button>
+      </Box>
 
       {error && (
-        <Alert variant="danger" dismissible onClose={() => setError(null)}>
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
 
-      <Form onSubmit={handleSubmit}>
-        <Card className="mb-4">
-          <Card.Header>
-            <h5 className="mb-0">Basic Information</h5>
-          </Card.Header>
-          <Card.Body>
-            <Row className="g-3">
-              <Col md={12}>
-                <Form.Group>
-                  <Form.Label>Title *</Form.Label>
-                  <Form.Control
-                    type="text"
-                    required
-                    value={formData.title}
-                    onChange={(e) => handleChange('title', e.target.value)}
-                    placeholder="e.g., Replace conveyor belt"
-                  />
-                </Form.Group>
-              </Col>
+      <Box component="form" onSubmit={handleSubmit}>
+        {/* Basic Information */}
+        <Card sx={{ mb: 4 }}>
+          <CardHeader title="Basic Information" titleTypographyProps={{ variant: 'h6' }} />
+          <CardContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  label="Title *"
+                  fullWidth
+                  required
+                  value={formData.title}
+                  onChange={(e) => handleChange('title', e.target.value)}
+                  placeholder="e.g., Replace conveyor belt"
+                />
+              </Grid>
 
-              <Col md={12}>
-                <Form.Group>
-                  <Form.Label>Description</Form.Label>
-                  <Form.Control
-                    as="textarea"
-                    rows={3}
-                    value={formData.description}
-                    onChange={(e) => handleChange('description', e.target.value)}
-                    placeholder="Detailed description of the work to be done..."
-                  />
-                </Form.Group>
-              </Col>
+              <Grid item xs={12}>
+                <TextField
+                  label="Description"
+                  fullWidth
+                  multiline
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) => handleChange('description', e.target.value)}
+                  placeholder="Detailed description of the work to be done..."
+                />
+              </Grid>
 
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Work Type *</Form.Label>
-                  <Form.Select
-                    required
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth required>
+                  <InputLabel>Work Type</InputLabel>
+                  <Select
                     value={formData.work_type}
+                    label="Work Type"
                     onChange={(e) => handleChange('work_type', e.target.value as WorkType)}
                   >
-                    <option value="preventive">Preventive Maintenance</option>
-                    <option value="corrective">Corrective</option>
-                    <option value="inspection">Inspection</option>
-                    <option value="emergency">Emergency</option>
-                    <option value="installation">Installation</option>
-                    <option value="calibration">Calibration</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
+                    <MenuItem value="preventive">Preventive Maintenance</MenuItem>
+                    <MenuItem value="corrective">Corrective</MenuItem>
+                    <MenuItem value="inspection">Inspection</MenuItem>
+                    <MenuItem value="emergency">Emergency</MenuItem>
+                    <MenuItem value="installation">Installation</MenuItem>
+                    <MenuItem value="calibration">Calibration</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
 
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Priority *</Form.Label>
-                  <Form.Select
-                    required
+              <Grid item xs={12} md={4}>
+                <FormControl fullWidth required>
+                  <InputLabel>Priority</InputLabel>
+                  <Select
                     value={formData.priority}
+                    label="Priority"
                     onChange={(e) => handleChange('priority', e.target.value as WorkOrderPriority)}
                   >
-                    <option value="low">🟢 Low</option>
-                    <option value="medium">🟡 Medium</option>
-                    <option value="high">🟠 High</option>
-                    <option value="critical">🔴 Critical</option>
-                  </Form.Select>
-                </Form.Group>
-              </Col>
+                    <MenuItem value="low">🟢 Low</MenuItem>
+                    <MenuItem value="medium">🟡 Medium</MenuItem>
+                    <MenuItem value="high">🟠 High</MenuItem>
+                    <MenuItem value="critical">🔴 Critical</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
 
-              <Col md={4}>
-                <Form.Group>
-                  <Form.Label>Estimated Hours</Form.Label>
-                  <Form.Control
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    value={formData.estimated_hours || ''}
-                    onChange={(e) => handleChange('estimated_hours', e.target.value ? parseFloat(e.target.value) : undefined)}
-                    placeholder="e.g., 4"
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-          </Card.Body>
+              <Grid item xs={12} md={4}>
+                <TextField
+                  label="Estimated Hours"
+                  fullWidth
+                  type="number"
+                  inputProps={{ step: 0.5, min: 0 }}
+                  value={formData.estimated_hours || ''}
+                  onChange={(e) => handleChange('estimated_hours', e.target.value ? parseFloat(e.target.value) : undefined)}
+                  placeholder="e.g., 4"
+                />
+              </Grid>
+            </Grid>
+          </CardContent>
         </Card>
 
-        <Card className="mb-4">
-          <Card.Header>
-            <h5 className="mb-0">Assignment & Scheduling</h5>
-          </Card.Header>
-          <Card.Body>
-            <Row className="g-3">
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Machine Name (Optional)</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={formData.machine_name || ''}
-                    onChange={(e) => handleChange('machine_name', e.target.value)}
-                    placeholder="e.g., Conveyor Belt #3"
-                  />
-                  <Form.Text className="text-muted">
-                    Leave blank if not related to a specific machine
-                  </Form.Text>
-                </Form.Group>
-              </Col>
+        {/* Assignment & Scheduling */}
+        <Card sx={{ mb: 4 }}>
+          <CardHeader title="Assignment & Scheduling" titleTypographyProps={{ variant: 'h6' }} />
+          <CardContent>
+            <Grid container spacing={3}>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Machine Name (Optional)"
+                  fullWidth
+                  value={formData.machine_name || ''}
+                  onChange={(e) => handleChange('machine_name', e.target.value)}
+                  placeholder="e.g., Conveyor Belt #3"
+                  helperText="Leave blank if not related to a specific machine"
+                />
+              </Grid>
 
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Machine Location (Optional)</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={formData.machine_location || ''}
-                    onChange={(e) => handleChange('machine_location', e.target.value)}
-                    placeholder="e.g., Building A, Floor 2"
-                  />
-                  <Form.Text className="text-muted">
-                    Where is the machine located?
-                  </Form.Text>
-                </Form.Group>
-              </Col>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Machine Location (Optional)"
+                  fullWidth
+                  value={formData.machine_location || ''}
+                  onChange={(e) => handleChange('machine_location', e.target.value)}
+                  placeholder="e.g., Building A, Floor 2"
+                  helperText="Where is the machine located?"
+                />
+              </Grid>
 
-              <Col md={12}>
-                <Form.Group>
-                  <Form.Label>Assign to Technician (Optional)</Form.Label>
-                  <Form.Select
+              <Grid item xs={12}>
+                <FormControl fullWidth>
+                  <InputLabel>Assign to Technician (Optional)</InputLabel>
+                  <Select
                     value={formData.technician_name || ''}
+                    label="Assign to Technician (Optional)"
                     onChange={(e) => handleChange('technician_name', e.target.value)}
                   >
-                    <option value="">-- Select a technician --</option>
+                    <MenuItem value="">-- Select a technician --</MenuItem>
                     {technicians.map((tech) => (
-                      <option key={tech.technician_id} value={tech.name}>
+                      <MenuItem key={tech.technician_id} value={tech.name}>
                         {tech.name}
-                      </option>
+                      </MenuItem>
                     ))}
-                  </Form.Select>
-                  <Form.Text className="text-muted">
-                    Select the technician who will handle this work order
-                  </Form.Text>
-                </Form.Group>
-              </Col>
+                  </Select>
+                  <FormHelperText>Select the technician who will handle this work order</FormHelperText>
+                </FormControl>
+              </Grid>
 
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Scheduled Date</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={formData.scheduled_date}
-                    onChange={(e) => handleChange('scheduled_date', e.target.value)}
-                  />
-                </Form.Group>
-              </Col>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Scheduled Date"
+                  fullWidth
+                  type="date"
+                  value={formData.scheduled_date}
+                  onChange={(e) => handleChange('scheduled_date', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
 
-              <Col md={6}>
-                <Form.Group>
-                  <Form.Label>Due Date</Form.Label>
-                  <Form.Control
-                    type="date"
-                    value={formData.due_date}
-                    onChange={(e) => handleChange('due_date', e.target.value)}
-                  />
-                </Form.Group>
-              </Col>
-            </Row>
-          </Card.Body>
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Due Date"
+                  fullWidth
+                  type="date"
+                  value={formData.due_date}
+                  onChange={(e) => handleChange('due_date', e.target.value)}
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Grid>
+            </Grid>
+          </CardContent>
         </Card>
 
-        <Card className="mb-4">
-          <Card.Header>
-            <h5 className="mb-0">Additional Notes</h5>
-          </Card.Header>
-          <Card.Body>
-            <Form.Group>
-              <Form.Control
-                as="textarea"
-                rows={3}
-                value={formData.notes}
-                onChange={(e) => handleChange('notes', e.target.value)}
-                placeholder="Any additional notes or instructions..."
-              />
-            </Form.Group>
-          </Card.Body>
+        {/* Additional Notes */}
+        <Card sx={{ mb: 4 }}>
+          <CardHeader title="Additional Notes" titleTypographyProps={{ variant: 'h6' }} />
+          <CardContent>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              value={formData.notes}
+              onChange={(e) => handleChange('notes', e.target.value)}
+              placeholder="Any additional notes or instructions..."
+            />
+          </CardContent>
         </Card>
 
-        <div className="d-flex justify-content-end gap-2">
-          <Button variant="outline-secondary" onClick={() => navigate('/work-orders')}>
+        <Box display="flex" justifyContent="flex-end" gap={2}>
+          <Button variant="outlined" color="secondary" onClick={() => navigate('/work-orders')}>
             Cancel
           </Button>
-          <Button 
-            type="submit" 
-            variant="primary"
+          <Button
+            type="submit"
+            variant="contained"
             disabled={submitting}
-            style={{ backgroundColor: '#0066A1', borderColor: '#0066A1' }}
+            sx={{ backgroundColor: '#0066A1', '&:hover': { backgroundColor: '#004d7a' } }}
+            startIcon={submitting ? <CircularProgress size={18} color="inherit" /> : undefined}
           >
-            {submitting ? (
-              <>
-                <Spinner animation="border" size="sm" className="me-2" />
-                Saving...
-              </>
-            ) : (
-              isEdit ? 'Update Work Order' : 'Create Work Order'
-            )}
+            {submitting ? 'Saving...' : (isEdit ? 'Update Work Order' : 'Create Work Order')}
           </Button>
-        </div>
-      </Form>
+        </Box>
+      </Box>
     </Container>
   );
 };
 
 export default WorkOrderForm;
-

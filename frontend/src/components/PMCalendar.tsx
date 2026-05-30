@@ -2,7 +2,22 @@ import React, { useState, useEffect, useImperativeHandle, forwardRef } from 'rea
 import './PMCalendar.css';
 import { format as formatDate, addMonths, subMonths } from 'date-fns';
 import axiosInstance from '../utils/axios';
-import { Modal, Button, Form } from 'react-bootstrap';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+  Box,
+  Typography,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Alert,
+  CircularProgress,
+} from '@mui/material';
 import PMChecklistDialog from './PMChecklistDialog';
 
 // Interface for PM events
@@ -49,7 +64,7 @@ interface PMCalendarProps {
   defaultDate?: Date;
 }
 
-const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({ 
+const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
   onDateChange,
   defaultDate
 }, ref) => {
@@ -131,9 +146,9 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
     try {
       setLoading(true);
       const response = await axiosInstance.get<PMEvent[]>('/api/v1/machines/pm-schedule');
-      
+
       console.log('PM schedule API response:', response.data);
-      
+
       const formattedEvents = response.data.map((event: any) => ({
         ...event,
         start: new Date(event.start),
@@ -146,14 +161,14 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
           technicianName: event.technician_name || null // Map technician_name from API
         }
       }));
-      
+
       // Debug counts for status types
       const overdueCount = formattedEvents.filter(e => e.resource.status === 'overdue').length;
       const dueCount = formattedEvents.filter(e => e.resource.status === 'due').length;
       const scheduledCount = formattedEvents.filter(e => e.resource.status === 'scheduled').length;
-      
+
       console.log(`Frontend status counts - Overdue: ${overdueCount}, Due: ${dueCount}, Scheduled: ${scheduledCount}`);
-      
+
       setEvents(formattedEvents);
       setError(null);
     } catch (err: any) {
@@ -184,39 +199,36 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
       setStatusUpdateMessage('Error: No machine selected');
       return;
     }
-    
+
     try {
       setUpdatingStatus(true);
       setStatusUpdateMessage('');
-      
+
       console.log('Updating maintenance status for machine:', selectedMachine.id, 'to', status);
-      
+
       // Make sure id is a valid number
-      const machineId = typeof selectedMachine.id === 'number' 
-        ? selectedMachine.id 
+      const machineId = typeof selectedMachine.id === 'number'
+        ? selectedMachine.id
         : parseInt(String(selectedMachine.id), 10);
-      
+
       if (isNaN(machineId)) {
         throw new Error(`Invalid machine ID: ${selectedMachine.id}`);
       }
-      
+
       // Call API to update the maintenance status
       const response = await axiosInstance.post(`/api/v1/machines/${machineId}/maintenance-status`, {
         status,
         maintenanceDate: status === 'completed' ? new Date() : null
       });
-      
+
       console.log('Maintenance status update response:', response.data);
-      
+
       setStatusUpdateMessage(`Maintenance status updated to ${status === 'completed' ? 'Completed' : 'In Progress'}`);
-      
+
       // If completed, remove it from the UI immediately
       if (status === 'completed') {
         setEvents(prev => prev.filter(event => event.id !== machineId));
       } else if (response.data.updatedMachine) {
-        // For in-progress, update the event with the new status
-        // const updatedMachine = response.data.updatedMachine;
-        
         setEvents(prev => {
           // Find and update the specific event
           return prev.map(event => {
@@ -233,20 +245,20 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
           });
         });
       }
-      
+
       // Also refresh from the server after a short delay
       setTimeout(async () => {
         await fetchPMSchedule();
       }, 1000);
-      
+
       // Close the modal after a delay
       setTimeout(() => {
         closeModal();
       }, 1500);
-      
+
     } catch (err: any) {
       console.error('Error updating maintenance status:', err);
-      
+
       // Extract the most useful error message
       let errorMessage = 'Unknown error';
       if (err.response?.data?.error) {
@@ -254,7 +266,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setStatusUpdateMessage(`Error updating status: ${errorMessage}`);
     } finally {
       setUpdatingStatus(false);
@@ -271,45 +283,45 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
     if (!window.confirm(`Are you sure you want to cancel the scheduled maintenance for ${selectedMachine.title}?`)) {
       return;
     }
-    
+
     try {
       setUpdatingStatus(true);
       setStatusUpdateMessage('');
-      
+
       console.log('Deleting scheduled maintenance for machine:', selectedMachine.id);
-      
+
       // Make sure id is a valid number
-      const machineId = typeof selectedMachine.id === 'number' 
-        ? selectedMachine.id 
+      const machineId = typeof selectedMachine.id === 'number'
+        ? selectedMachine.id
         : parseInt(String(selectedMachine.id), 10);
-      
+
       if (isNaN(machineId)) {
         throw new Error(`Invalid machine ID: ${selectedMachine.id}`);
       }
-      
+
       // Call API to delete the scheduled maintenance
       const response = await axiosInstance.delete(`/api/v1/machines/${machineId}/scheduled-maintenance`);
-      
+
       console.log('Delete scheduled maintenance response:', response.data);
-      
+
       setStatusUpdateMessage('Scheduled maintenance cancelled successfully');
-      
+
       // Remove it from the UI immediately
       setEvents(prev => prev.filter(event => event.id !== machineId));
-      
+
       // Also refresh from the server after a short delay
       setTimeout(async () => {
         await fetchPMSchedule();
       }, 1000);
-      
+
       // Close the modal after a delay
       setTimeout(() => {
         closeModal();
       }, 1500);
-      
+
     } catch (err: any) {
       console.error('Error deleting scheduled maintenance:', err);
-      
+
       // Extract the most useful error message
       let errorMessage = 'Unknown error';
       if (err.response?.data?.error) {
@@ -317,7 +329,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setStatusUpdateMessage(`Error cancelling maintenance: ${errorMessage}`);
     } finally {
       setUpdatingStatus(false);
@@ -414,20 +426,22 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
   return (
     <div className="pm-calendar-container">
       <div className="pm-calendar-header">
-        <div className="d-flex justify-content-between align-items-center mb-2">
-          <h2 className="pm-calendar-title" style={{ color: '#FF6200', fontSize: '1.1rem' }}>Preventive Maintenance</h2>
-          <div className="calendar-controls d-flex align-items-center">
-            <div className="current-month">
+        <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+          <Typography variant="subtitle1" sx={{ color: '#FF6200', fontWeight: 600, fontSize: '1.1rem' }}>
+            Preventive Maintenance
+          </Typography>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography variant="body2" className="current-month">
               {formatDate(currentDate, 'MMMM yyyy')}
-            </div>
+            </Typography>
             <div className="calendar-nav-buttons">
               <button className="calendar-nav-button today btn-sm" onClick={() => handleNavigate('today')}>Today</button>
               <button className="calendar-nav-button btn-sm" onClick={() => handleNavigate('back')}>«</button>
               <button className="calendar-nav-button btn-sm" onClick={() => handleNavigate('next')}>»</button>
             </div>
-          </div>
-        </div>
-        
+          </Box>
+        </Box>
+
         <div className="pm-status-indicators">
           <div className="status-indicator-item">
             <span className="status-count overdue">{events.filter(event => event.resource.status === 'overdue').length}</span>
@@ -453,9 +467,13 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
       </div>
 
       {loading ? (
-        <div className="text-center py-4">Loading...</div>
+        <Box display="flex" justifyContent="center" py={4}>
+          <CircularProgress size={32} />
+        </Box>
       ) : error ? (
-        <div className="text-center py-4 text-danger">{error}</div>
+        <Box textAlign="center" py={4}>
+          <Typography color="error">{error}</Typography>
+        </Box>
       ) : (
         <table className="pm-calendar-table">
           <thead>
@@ -468,10 +486,9 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
           </thead>
           <tbody>
             {events.length > 0 ? (
-              events.map((event, index) => {
+              events.map((event) => {
                 const isCurrentDay = formatDate(event.start, 'yyyy-MM-dd') === formatDate(new Date(), 'yyyy-MM-dd');
                 const isNotScheduled = event.resource.status === 'not_scheduled';
-                // const statusClass = `status-${event.resource.status}`;
                 return (
                   <tr
                     key={event.id}
@@ -481,7 +498,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
                   >
                     <td className="date-column">
                       {isNotScheduled ? (
-                        <span className="text-muted">Not Set</span>
+                        <span style={{ color: '#999' }}>Not Set</span>
                       ) : (
                         formatDate(event.start, 'EEE MMM dd')
                       )}
@@ -490,10 +507,10 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
                       {isNotScheduled ? '-' : (event.allDay ? 'all day' : formatDate(event.start, 'HH:mm'))}
                     </td>
                     <td className="event-column">
-                      <div className="d-flex align-items-center">
-                        <span className={`status-indicator ${event.resource.status} me-2`}></span>
+                      <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <span className={`status-indicator ${event.resource.status}`} style={{ marginRight: '8px' }}></span>
                         <span>{event.title}</span>
-                        <span className={`ms-2 badge ${event.resource.status}`}>
+                        <span className={`ms-2 badge ${event.resource.status}`} style={{ marginLeft: '8px' }}>
                           {event.resource.status === 'not_scheduled' ? 'not scheduled' : event.resource.status.replace('_', ' ')}
                         </span>
                       </div>
@@ -504,7 +521,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
                           {event.resource.technicianName}
                         </span>
                       ) : (
-                        <span className="text-muted">-</span>
+                        <span style={{ color: '#999' }}>-</span>
                       )}
                     </td>
                   </tr>
@@ -512,7 +529,7 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
               })
             ) : (
               <tr>
-                <td colSpan={4} className="text-center py-4 text-muted">
+                <td colSpan={4} style={{ textAlign: 'center', padding: '2rem', color: '#999' }}>
                   No maintenance schedules found. Make sure machines have next maintenance dates set.
                 </td>
               </tr>
@@ -522,177 +539,177 @@ const PMCalendar = forwardRef<PMCalendarRef, PMCalendarProps>(({
       )}
 
       {/* Maintenance Status Update Modal */}
-      <Modal show={showModal} onHide={closeModal} className="maintenance-modal">
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {selectedMachine?.resource.status === 'not_scheduled'
-              ? 'Schedule Maintenance'
-              : 'Update Maintenance Status'}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
+      <Dialog open={showModal} onClose={closeModal} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {selectedMachine?.resource.status === 'not_scheduled'
+            ? 'Schedule Maintenance'
+            : 'Update Maintenance Status'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
           {selectedMachine && (
-            <div>
-              <h5>{selectedMachine.title}</h5>
-              <p><strong>Location:</strong> {selectedMachine.resource.location}</p>
-              <p><strong>Machine Type:</strong> {selectedMachine.resource.machineType || 'Default'}</p>
-              <p>
+            <Box>
+              <Typography variant="h6" gutterBottom>{selectedMachine.title}</Typography>
+              <Typography variant="body2" mb={0.5}><strong>Location:</strong> {selectedMachine.resource.location}</Typography>
+              <Typography variant="body2" mb={0.5}><strong>Machine Type:</strong> {selectedMachine.resource.machineType || 'Default'}</Typography>
+              <Typography variant="body2" mb={0.5}>
                 <strong>Status:</strong>{' '}
                 <span className={`badge ${selectedMachine.resource.status}`}>
                   {selectedMachine.resource.status === 'not_scheduled'
                     ? 'not scheduled'
                     : selectedMachine.resource.status.replace('_', ' ')}
                 </span>
-              </p>
+              </Typography>
               {selectedMachine.resource.status !== 'not_scheduled' && (
-                <p><strong>Scheduled Date:</strong> {formatDate(selectedMachine.start, 'MMMM dd, yyyy')}</p>
+                <Typography variant="body2" mb={0.5}><strong>Scheduled Date:</strong> {formatDate(selectedMachine.start, 'MMMM dd, yyyy')}</Typography>
               )}
               {selectedMachine.resource.lastMaintenance && (
-                <p><strong>Last Maintenance:</strong> {formatDate(new Date(selectedMachine.resource.lastMaintenance), 'MMMM dd, yyyy')}</p>
+                <Typography variant="body2" mb={0.5}><strong>Last Maintenance:</strong> {formatDate(new Date(selectedMachine.resource.lastMaintenance), 'MMMM dd, yyyy')}</Typography>
               )}
 
               {selectedMachine.resource.status === 'not_scheduled' && (
-                <div className="alert alert-info mt-3">
+                <Alert severity="info" sx={{ mt: 2 }}>
                   This machine has no scheduled maintenance. Click "Schedule" to set up a maintenance schedule.
-                </div>
+                </Alert>
               )}
 
               {selectedMachine.resource.technicianName && (
-                <p><strong>Assigned Technician:</strong> {selectedMachine.resource.technicianName}</p>
+                <Typography variant="body2" mb={0.5}><strong>Assigned Technician:</strong> {selectedMachine.resource.technicianName}</Typography>
               )}
 
               {statusUpdateMessage && (
-                <div className={`alert ${statusUpdateMessage.includes('Error') ? 'alert-danger' : 'alert-success'} mt-3`}>
+                <Alert severity={statusUpdateMessage.includes('Error') ? 'error' : 'success'} sx={{ mt: 2 }}>
                   {statusUpdateMessage}
-                </div>
+                </Alert>
               )}
-            </div>
+            </Box>
           )}
-        </Modal.Body>
-        <Modal.Footer className="d-flex justify-content-between flex-wrap">
-          <div>
-            <Button variant="secondary" onClick={closeModal} className="me-2">
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
+          <Box display="flex" gap={1}>
+            <Button variant="outlined" color="secondary" onClick={closeModal}>
               Close
             </Button>
             {selectedMachine?.resource.status !== 'not_scheduled' && (
               <Button
-                variant="outline-danger"
+                variant="outlined"
+                color="error"
                 onClick={deleteScheduledMaintenance}
                 disabled={updatingStatus}
-                className="me-2"
               >
                 {updatingStatus ? 'Cancelling...' : 'Cancel Schedule'}
               </Button>
             )}
-          </div>
-          <div>
+          </Box>
+          <Box display="flex" gap={1}>
             <Button
-              variant="outline-primary"
+              variant="outlined"
               onClick={openEditScheduleModal}
               disabled={updatingStatus}
-              className="me-2"
             >
               {selectedMachine?.resource.status === 'not_scheduled' ? 'Schedule' : 'Edit Schedule'}
             </Button>
             {selectedMachine?.resource.status !== 'not_scheduled' && (
               <Button
-                variant="primary"
+                variant="contained"
                 onClick={startPMSession}
                 disabled={updatingStatus}
               >
                 Start PM Now
               </Button>
             )}
-          </div>
-        </Modal.Footer>
-      </Modal>
+          </Box>
+        </DialogActions>
+      </Dialog>
 
       {/* Edit/Schedule Maintenance Modal */}
-      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} className="edit-schedule-modal">
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {selectedMachine?.resource.status === 'not_scheduled'
-              ? 'Schedule Maintenance'
-              : 'Edit Schedule'}
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
+      <Dialog open={showEditModal} onClose={() => setShowEditModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {selectedMachine?.resource.status === 'not_scheduled'
+            ? 'Schedule Maintenance'
+            : 'Edit Schedule'}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
           {selectedMachine && (
-            <div>
-              <h5 className="mb-3">{selectedMachine.title}</h5>
-              <p className="text-muted mb-3">Type: {selectedMachine.resource.machineType || 'Default'}</p>
+            <Box>
+              <Typography variant="h6" mb={0.5}>{selectedMachine.title}</Typography>
+              <Typography variant="body2" color="text.secondary" mb={2}>
+                Type: {selectedMachine.resource.machineType || 'Default'}
+              </Typography>
 
-              <Form.Group className="mb-3">
-                <Form.Label>Maintenance Date *</Form.Label>
-                <Form.Control
-                  type="date"
-                  value={editScheduleDate}
-                  onChange={(e) => setEditScheduleDate(e.target.value)}
-                  min={formatDate(new Date(), 'yyyy-MM-dd')}
-                />
-              </Form.Group>
+              <TextField
+                type="date"
+                label="Maintenance Date *"
+                fullWidth
+                sx={{ mb: 2 }}
+                value={editScheduleDate}
+                onChange={(e) => setEditScheduleDate(e.target.value)}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ min: formatDate(new Date(), 'yyyy-MM-dd') }}
+              />
 
-              <Form.Group className="mb-3">
-                <Form.Label>Checklist *</Form.Label>
-                <Form.Select
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Checklist *</InputLabel>
+                <Select
                   value={editChecklistId}
+                  label="Checklist *"
                   onChange={(e) => setEditChecklistId(e.target.value ? Number(e.target.value) : '')}
                 >
-                  <option value="">Select a checklist...</option>
+                  <MenuItem value="">Select a checklist...</MenuItem>
                   {checklists
                     .filter(c => c.machine_type === selectedMachine.resource.machineType || c.machine_type === 'Default')
                     .map(checklist => (
-                      <option key={checklist.checklist_id} value={checklist.checklist_id}>
+                      <MenuItem key={checklist.checklist_id} value={checklist.checklist_id}>
                         {checklist.name} ({checklist.machine_type})
-                      </option>
+                      </MenuItem>
                     ))}
                   {/* Show all other checklists as well */}
                   {checklists
                     .filter(c => c.machine_type !== selectedMachine.resource.machineType && c.machine_type !== 'Default')
                     .map(checklist => (
-                      <option key={checklist.checklist_id} value={checklist.checklist_id}>
+                      <MenuItem key={checklist.checklist_id} value={checklist.checklist_id}>
                         {checklist.name} ({checklist.machine_type})
-                      </option>
+                      </MenuItem>
                     ))}
-                </Form.Select>
-              </Form.Group>
+                </Select>
+              </FormControl>
 
-              <Form.Group className="mb-3">
-                <Form.Label>Assign Technician (Optional)</Form.Label>
-                <Form.Select
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Assign Technician (Optional)</InputLabel>
+                <Select
                   value={editTechnicianName}
+                  label="Assign Technician (Optional)"
                   onChange={(e) => setEditTechnicianName(e.target.value)}
                 >
-                  <option value="">No technician assigned</option>
+                  <MenuItem value="">No technician assigned</MenuItem>
                   {technicians.map(tech => (
-                    <option key={tech.technician_id} value={tech.name}>
+                    <MenuItem key={tech.technician_id} value={tech.name}>
                       {tech.name}
-                    </option>
+                    </MenuItem>
                   ))}
-                </Form.Select>
-              </Form.Group>
+                </Select>
+              </FormControl>
 
               {statusUpdateMessage && (
-                <div className={`alert ${statusUpdateMessage.includes('Error') ? 'alert-danger' : 'alert-success'} mt-3`}>
+                <Alert severity={statusUpdateMessage.includes('Error') ? 'error' : 'success'} sx={{ mt: 1 }}>
                   {statusUpdateMessage}
-                </div>
+                </Alert>
               )}
-            </div>
+            </Box>
           )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" color="secondary" onClick={() => setShowEditModal(false)}>
             Cancel
           </Button>
           <Button
-            variant="primary"
+            variant="contained"
             onClick={saveEditedSchedule}
             disabled={updatingStatus || !editScheduleDate || !editChecklistId}
           >
             {updatingStatus ? 'Saving...' : 'Save Schedule'}
           </Button>
-        </Modal.Footer>
-      </Modal>
+        </DialogActions>
+      </Dialog>
 
       {/* New PM Checklist Dialog */}
       {selectedMachine && (

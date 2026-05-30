@@ -50,33 +50,6 @@ import * as XLSX from 'xlsx';
 import axiosInstance from '../utils/axios';
 import PMCalendar, { PMCalendarRef } from './PMCalendar';
 
-// Custom CSS styles for app branding
-const AppStyles = `
-  .text-primary {
-    color: #FF6600 !important;
-  }
-  
-  .bg-primary {
-    background-color: #0066A1 !important;
-  }
-  
-  .form-check-input:checked {
-    background-color: #FF6600;
-    border-color: #FF6600;
-  }
-  
-  .border-primary {
-    border-color: #FF6600 !important;
-  }
-  
-  a {
-    color: #FF6600;
-  }
-  
-  a:hover {
-    color: #e65c00;
-  }
-`;
 
 const StyledDataGrid = styled(DataGrid, {
   shouldForwardProp: (prop) => ![
@@ -544,11 +517,9 @@ const PMChecklistManagement: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center p-4">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
-        </div>
-      </div>
+      <Box display="flex" justifyContent="center" p={4}>
+        <CircularProgress />
+      </Box>
     );
   }
 
@@ -653,9 +624,6 @@ const PMChecklistManagement: React.FC = () => {
         backgroundSize: '20px 20px'
       }}
     >
-      {/* Apply app brand styling */}
-      <style>{AppStyles}</style>
-      
       <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
         PM Management System
       </Typography>
