@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { API_URL } from '../../config';
@@ -32,9 +32,7 @@ import {
   Add as AddIcon,
   Delete as DeleteIcon,
 } from '@mui/icons-material';
-// app color constants
-const IMMS_BLUE = '#0066A1';
-const IMMS_ORANGE = '#FF6200';
+import { PRIMARY_ORANGE } from '../../theme';
 
 interface LineItem {
   id: string;
@@ -323,7 +321,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                 <Typography 
                   variant="h6" 
                   sx={{ 
-                    color: IMMS_ORANGE, 
+                    color: PRIMARY_ORANGE, 
                     fontWeight: 600, 
                     mb: 2,
                     fontSize: '1.1rem'
@@ -332,7 +330,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                   Basic Information
                 </Typography>
                 <div style={{ 
-                  border: `2px solid ${IMMS_ORANGE}`, 
+                  border: `2px solid ${PRIMARY_ORANGE}`, 
                   borderRadius: '0.75rem', 
                   padding: '1.25rem' 
                 }}>
@@ -390,7 +388,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                   <Typography 
                     variant="h6" 
                     sx={{ 
-                      color: IMMS_ORANGE, 
+                      color: PRIMARY_ORANGE, 
                       fontWeight: 600,
                       fontSize: '1.1rem'
                     }}
@@ -408,7 +406,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                 </Box>
 
                 <div style={{ 
-                  border: `2px solid ${IMMS_ORANGE}`, 
+                  border: `2px solid ${PRIMARY_ORANGE}`, 
                   borderRadius: '0.75rem', 
                   padding: '1.5rem' 
                 }}>
@@ -480,7 +478,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                                   >
                                     <Typography
                                       variant="body2"
-                                      sx={{ color: IMMS_ORANGE, fontWeight: 600 }}
+                                      sx={{ color: PRIMARY_ORANGE, fontWeight: 600 }}
                                     >
                                       + Create New Part "{item.description}"
                                     </Typography>
@@ -511,10 +509,10 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                                     startIcon={<AddIcon />}
                                     onClick={() => handleCreatePart(item.description)}
                                     sx={{
-                                      borderColor: IMMS_ORANGE,
-                                      color: IMMS_ORANGE,
+                                      borderColor: PRIMARY_ORANGE,
+                                      color: PRIMARY_ORANGE,
                                       '&:hover': {
-                                        borderColor: IMMS_ORANGE,
+                                        borderColor: PRIMARY_ORANGE,
                                         bgcolor: 'rgba(255, 102, 0, 0.1)'
                                       }
                                     }}
@@ -570,7 +568,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                 <Typography 
                   variant="h6" 
                   sx={{ 
-                    color: IMMS_ORANGE, 
+                    color: PRIMARY_ORANGE, 
                     fontWeight: 600, 
                     mb: 2,
                     fontSize: '1.1rem'
@@ -579,7 +577,7 @@ const ManualPOEntryDialog: React.FC<ManualPOEntryDialogProps> = ({
                   Totals & Notes
                 </Typography>
                 <div style={{ 
-                  border: `2px solid ${IMMS_ORANGE}`, 
+                  border: `2px solid ${PRIMARY_ORANGE}`, 
                   borderRadius: '0.75rem', 
                   padding: '1.5rem' 
                 }}>

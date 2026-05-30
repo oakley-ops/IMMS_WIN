@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { PRIMARY_ORANGE, COLOR_WARNING_BG, COLOR_WARNING_TEXT, COLOR_SUCCESS_BG, COLOR_SUCCESS_TEXT } from '../theme';
 import {
   Container,
   Typography,
@@ -215,43 +216,6 @@ const generateUniqueTBD = (): string => {
   const random = Math.floor(Math.random() * 10000);
   return `TBD-${timestamp}-${random}`;
 };
-
-// Custom CSS styles for IMMS branding
-const ImmsStyles = `
-  .text-primary {
-    color: #FF6600 !important;
-  }
-  
-  .bg-primary {
-    background-color: #0066A1 !important;
-  }
-  
-  .table-primary, .table-primary > td, .table-primary > th {
-    background-color: rgba(0, 102, 161, 0.1);
-  }
-  
-  .form-check-input:checked {
-    background-color: #FF6600;
-    border-color: #FF6600;
-  }
-  
-  .border-primary {
-    border-color: #FF6600 !important;
-  }
-  
-  a {
-    color: #FF6600;
-  }
-  
-  a:hover {
-    color: #e65c00;
-  }
-  
-  .card-header.bg-light {
-    background-color: #f8f9fa !important;
-    border-bottom: 1px solid #e9ecef;
-  }
-`;
 
 const PartsList: React.FC = () => {
   const navigate = useNavigate();
@@ -1370,10 +1334,7 @@ const PartsList: React.FC = () => {
         backgroundSize: '20px 20px'
       }}
     >
-      {/* Apply IMMS brand styling */}
-      <style>{ImmsStyles}</style>
-      
-      <Typography variant="h4" sx={{ color: '#FF6600', mb: 3, fontWeight: 'bold' }}>
+      <Typography variant="h4" sx={{ color: PRIMARY_ORANGE, mb: 3, fontWeight: 'bold' }}>
         Parts Inventory
       </Typography>
       
@@ -1410,7 +1371,7 @@ const PartsList: React.FC = () => {
                 fullWidth
                 onClick={handleOpenAdd}
                 startIcon={<AddIcon />}
-                sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontWeight: 600, mb: 0.5 }}
+                sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontWeight: 600, mb: 0.5 }}
               >
                 Add Part
               </Button>
@@ -1418,7 +1379,7 @@ const PartsList: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
                   variant="contained"
-                  sx={{ flexGrow: 1, backgroundColor: canRestockParts ? '#FF6600' : '#6c757d', '&:hover': { backgroundColor: canRestockParts ? '#e65c00' : '#5a6268' }, fontSize: '0.85rem' }}
+                  sx={{ flexGrow: 1, backgroundColor: canRestockParts ? PRIMARY_ORANGE : '#6c757d', '&:hover': { backgroundColor: canRestockParts ? '#e65c00' : '#5a6268' }, fontSize: '0.85rem' }}
                   onClick={() => canRestockParts && setOpenRestockForm(true)}
                   disabled={!canRestockParts}
                   title={canRestockParts ? 'Restock parts' : 'Only admin and purchasing users can restock parts'}
@@ -1428,7 +1389,7 @@ const PartsList: React.FC = () => {
                 </Button>
                 <Button
                   variant="contained"
-                  sx={{ flexGrow: 1, backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
+                  sx={{ flexGrow: 1, backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
                   onClick={() => setOpenUsageDialog(true)}
                   startIcon={<RemoveCircleIcon sx={{ fontSize: 16 }} />}
                 >
@@ -1450,7 +1411,7 @@ const PartsList: React.FC = () => {
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
                   variant="contained"
-                  sx={{ flexGrow: 1, backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
+                  sx={{ flexGrow: 1, backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
                   onClick={() => setImportDialogOpen(true)}
                   startIcon={<CloudUploadIcon sx={{ fontSize: 16 }} />}
                 >
@@ -1458,7 +1419,7 @@ const PartsList: React.FC = () => {
                 </Button>
                 <Button
                   variant="contained"
-                  sx={{ flexGrow: 1, backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
+                  sx={{ flexGrow: 1, backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.85rem' }}
                   onClick={() => setExportDialogOpen(true)}
                   startIcon={<DownloadIcon sx={{ fontSize: 16 }} />}
                 >
@@ -1466,7 +1427,7 @@ const PartsList: React.FC = () => {
                 </Button>
                 <Button
                   variant="contained"
-                  sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, minWidth: 'auto', px: 1 }}
+                  sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, minWidth: 'auto', px: 1 }}
                   onClick={(e) => setColumnVisibilityMenuAnchor(e.currentTarget)}
                 >
                   <ViewColumnIcon sx={{ fontSize: 16 }} />
@@ -1510,7 +1471,7 @@ const PartsList: React.FC = () => {
         >
           <Box sx={{ width: '100%', height: 650 }}>
             {loading && searchTerm && parts.length === 0 && (
-              <LinearProgress sx={{ height: '3px', '& .MuiLinearProgress-bar': { backgroundColor: '#FF6600' } }} />
+              <LinearProgress sx={{ height: '3px', '& .MuiLinearProgress-bar': { backgroundColor: PRIMARY_ORANGE } }} />
             )}
             <StyledDataGrid
               key={`datagrid-${searchTerm}-${paginationModel.page}-${paginationModel.pageSize}`}
@@ -1561,7 +1522,7 @@ const PartsList: React.FC = () => {
                   px: 2
                 },
                 '& .MuiDataGrid-columnHeaders': {
-                  bgcolor: '#f8f9fa',
+                  bgcolor: 'rgba(0,0,0,0.04)',
                   borderBottom: '2px solid #e9ecef',
                   py: 1.5
                 },
@@ -1646,7 +1607,7 @@ const PartsList: React.FC = () => {
                 color: '#495057'
               },
               '& .Mui-selected': {
-                background: '#FF6600',
+                background: PRIMARY_ORANGE,
                 color: 'white',
                 '&:hover': {
                   background: '#e65c00',
@@ -1871,7 +1832,7 @@ const PartsList: React.FC = () => {
                   <div style={{
                     position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 1050,
                     maxHeight: '200px', overflowY: 'auto',
-                    border: '1px solid #dee2e6', borderRadius: '0 0 4px 4px',
+                    border: '1px solid rgba(0,0,0,0.12)', borderRadius: '0 0 4px 4px',
                     backgroundColor: '#fff', boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
                   }}>
                     {binLocations
@@ -1888,14 +1849,14 @@ const PartsList: React.FC = () => {
                             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                             borderBottom: '1px solid #f0f0f0'
                           }}
-                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = '#f8f9fa')}
+                          onMouseEnter={e => (e.currentTarget.style.backgroundColor = 'rgba(0,0,0,0.04)')}
                           onMouseLeave={e => (e.currentTarget.style.backgroundColor = '#fff')}
                         >
                           <span>{loc.name}</span>
                           <span style={{
                             fontSize: '0.75rem', fontWeight: 600, padding: '2px 8px', borderRadius: '12px',
-                            backgroundColor: loc.part_count > 0 ? '#fff3cd' : '#d1e7dd',
-                            color: loc.part_count > 0 ? '#856404' : '#0a3622'
+                            backgroundColor: loc.part_count > 0 ? COLOR_WARNING_BG : COLOR_SUCCESS_BG,
+                            color: loc.part_count > 0 ? COLOR_WARNING_TEXT : COLOR_SUCCESS_TEXT
                           }}>
                             {loc.part_count > 0 ? `${loc.part_count} part${loc.part_count !== 1 ? 's' : ''}` : 'Available'}
                           </span>
@@ -2047,7 +2008,7 @@ const PartsList: React.FC = () => {
                               type="button"
                               variant="contained"
                               onClick={handleAddSupplier}
-                              sx={{ flexGrow: 1, backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.875rem' }}
+                              sx={{ flexGrow: 1, backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' }, fontSize: '0.875rem' }}
                             >
                               {editingSupplier ? 'Update Supplier' : 'Add Supplier'}
                             </Button>
@@ -2071,30 +2032,30 @@ const PartsList: React.FC = () => {
                   {selectedSuppliers.length > 0 ? (
                     <Box sx={{ overflowX: 'auto' }}>
                       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-                        <thead style={{ backgroundColor: '#f8f9fa' }}>
+                        <thead style={{ backgroundColor: 'rgba(0,0,0,0.04)' }}>
                           <tr>
                             {['Supplier', 'Unit Cost', 'Lead Time', 'Min Order', 'Preferred', 'Actions'].map(h => (
-                              <th key={h} style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid #dee2e6', fontWeight: 600 }}>{h}</th>
+                              <th key={h} style={{ padding: '8px 12px', textAlign: 'left', borderBottom: '1px solid rgba(0,0,0,0.12)', fontWeight: 600 }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
                         <tbody>
                           {selectedSuppliers.map((supplier, idx) => (
-                            <tr key={supplier.supplier_id} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : '#f8f9fa' }}>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>{getSupplierName(supplier.supplier_id)}</td>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>${typeof supplier.unit_cost === 'number'
+                            <tr key={supplier.supplier_id} style={{ backgroundColor: idx % 2 === 0 ? '#fff' : 'rgba(0,0,0,0.04)' }}>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid rgba(0,0,0,0.12)' }}>{getSupplierName(supplier.supplier_id)}</td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid rgba(0,0,0,0.12)' }}>${typeof supplier.unit_cost === 'number'
                                   ? supplier.unit_cost.toFixed(2)
                                   : Number(supplier.unit_cost || 0).toFixed(2)}</td>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>{supplier.lead_time_days || '-'}</td>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>{supplier.minimum_order_quantity || '-'}</td>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid rgba(0,0,0,0.12)' }}>{supplier.lead_time_days || '-'}</td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid rgba(0,0,0,0.12)' }}>{supplier.minimum_order_quantity || '-'}</td>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid rgba(0,0,0,0.12)' }}>
                                 <input
                                   type="radio"
                                   checked={supplier.is_preferred}
                                   onChange={() => handleSetPreferred(supplier.supplier_id)}
                                 />
                               </td>
-                              <td style={{ padding: '8px 12px', borderBottom: '1px solid #dee2e6' }}>
+                              <td style={{ padding: '8px 12px', borderBottom: '1px solid rgba(0,0,0,0.12)' }}>
                                 <Button
                                   type="button"
                                   size="small"
@@ -2153,7 +2114,7 @@ const PartsList: React.FC = () => {
               disabled={loading}
               size="small"
               startIcon={loading ? <CircularProgress size={14} color="inherit" /> : undefined}
-              sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
+              sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' } }}
             >
               {loading ? 'Saving...' : isEditing ? 'Update Part' : 'Add Part'}
             </Button>
@@ -2267,7 +2228,7 @@ const PartsList: React.FC = () => {
             disabled={exportLoading}
             size="small"
             startIcon={exportLoading ? <CircularProgress size={14} color="inherit" /> : <DownloadIcon sx={{ fontSize: 16 }} />}
-            sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
+            sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' } }}
           >
             {exportLoading ? 'Exporting...' : 'Export'}
           </Button>
@@ -2359,7 +2320,7 @@ const PartsList: React.FC = () => {
             variant="contained"
             onClick={handleCheckOut}
             size="small"
-            sx={{ backgroundColor: '#FF6600', '&:hover': { backgroundColor: '#e65c00' } }}
+            sx={{ backgroundColor: PRIMARY_ORANGE, '&:hover': { backgroundColor: '#e65c00' } }}
           >
             Check Out
           </Button>
