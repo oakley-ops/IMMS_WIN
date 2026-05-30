@@ -17,7 +17,7 @@ import {
 } from '@mui/material';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
 import { suppliersApi, partsApi } from '../../services/api';
-import { Part, Supplier, PartSupplier } from '../../types/purchaseOrder';
+import { Part, Supplier } from '../../types/purchaseOrder';
 
 interface SupplierPartWithDetails extends Part {
   supplier_unit_cost: number;

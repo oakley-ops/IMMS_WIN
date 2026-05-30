@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -68,7 +67,6 @@ const TechnicianManagement: React.FC = () => {
     active: true
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchTechnicians();
@@ -217,9 +215,9 @@ const TechnicianManagement: React.FC = () => {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
-                <PersonIcon sx={{ color: '#4caf50', mr: 2 }} />
+                <PersonIcon sx={{ color: 'success.main', mr: 2 }} />
                 <Box>
-                  <Typography variant="h4" sx={{ color: '#4caf50', fontWeight: 'bold' }}>
+                  <Typography variant="h4" sx={{ color: 'success.main', fontWeight: 'bold' }}>
                     {activeTechnicians.length}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
@@ -235,9 +233,9 @@ const TechnicianManagement: React.FC = () => {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
-                <CancelIcon sx={{ color: '#f44336', mr: 2 }} />
+                <CancelIcon sx={{ color: 'error.main', mr: 2 }} />
                 <Box>
-                  <Typography variant="h4" sx={{ color: '#f44336', fontWeight: 'bold' }}>
+                  <Typography variant="h4" sx={{ color: 'error.main', fontWeight: 'bold' }}>
                     {inactiveTechnicians.length}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
@@ -253,9 +251,9 @@ const TechnicianManagement: React.FC = () => {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
-                <PersonAddIcon sx={{ color: '#2196f3', mr: 2 }} />
+                <PersonAddIcon sx={{ color: 'info.main', mr: 2 }} />
                 <Box>
-                  <Typography variant="h4" sx={{ color: '#2196f3', fontWeight: 'bold' }}>
+                  <Typography variant="h4" sx={{ color: 'info.main', fontWeight: 'bold' }}>
                     {technicians.length}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">
@@ -271,9 +269,9 @@ const TechnicianManagement: React.FC = () => {
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
-                <BuildIcon sx={{ color: '#ff9800', mr: 2 }} />
+                <BuildIcon sx={{ color: 'warning.main', mr: 2 }} />
                 <Box>
-                  <Typography variant="h4" sx={{ color: '#ff9800', fontWeight: 'bold' }}>
+                  <Typography variant="h4" sx={{ color: 'warning.main', fontWeight: 'bold' }}>
                     {activeTechnicians.length}
                   </Typography>
                   <Typography variant="body2" color="textSecondary">

@@ -643,9 +643,9 @@ const ProjectList: React.FC = () => {
                   checked={showActiveOnly}
                   onChange={(e) => setShowActiveOnly(e.target.checked)}
                   sx={{
-                    color: '#FF6600',
+                    color: PRIMARY_ORANGE,
                     '&.Mui-checked': {
-                      color: '#FF6600',
+                      color: PRIMARY_ORANGE,
                     },
                   }}
                 />

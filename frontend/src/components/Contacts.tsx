@@ -1014,8 +1014,6 @@ const Contacts: React.FC = () => {
               value={formData.notes}
               onChange={(e) => setFormData({...formData, notes: e.target.value})}
               placeholder="Add any additional notes about this contact..."
-              sx={{
-              }}
             />
           </Box>
         </DialogContent>
