@@ -1094,7 +1094,7 @@ const PurchaseOrderDetail: React.FC = () => {
         };
       }
       
-      await purchaseOrdersApi.addPartToPO(parseInt(id), partData);
+      await purchaseOrdersApi.addItemToPO(parseInt(id), partData);
       
       // Refresh purchase order data
       await fetchPurchaseOrder();

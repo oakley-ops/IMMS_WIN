@@ -85,29 +85,25 @@ export const suppliersApi = {
 // Purchase Orders API
 export const purchaseOrdersApi = {
   // Use public routes temporarily until auth is fixed
-  getAll: (includeHistoricalReceived?: boolean, search?: string) => {
-    const params: any = { 
-      includeHistoricalReceived: includeHistoricalReceived ? 'true' : 'false' 
+  // limit defaults high so the list shows the full working set; DataTable paginates
+  // client-side. Without it the backend defaults to 10, silently hiding older POs.
+  getAll: (includeHistoricalReceived?: boolean, search?: string, limit: number = 1000) => {
+    const params: any = {
+      includeHistoricalReceived: includeHistoricalReceived ? 'true' : 'false',
+      limit,
     };
     if (search) {
       params.search = search;
     }
-    console.log('🔍 API Call Debug:');
-    console.log('  includeHistoricalReceived:', includeHistoricalReceived);
-    console.log('  search parameter:', search);
-    console.log('  final params:', params);
-    console.log('  URL will be:', '/api/v1/purchase-orders');
     return api.get('/api/v1/purchase-orders', { params });
   },
   getById: (id: number) => api.get(`/api/v1/purchase-orders/${id}`),
   create: (poData: any) => api.post('/api/v1/purchase-orders', poData),
-  createBlank: (poData: any) => api.post('/api/v1/purchase-orders/blank', poData),
   updateStatus: (id: number, status: string) => api.put(`/api/v1/purchase-orders/${id}/status`, { status }),
   update: (id: number, poData: any) => api.put(`/api/v1/purchase-orders/${id}`, poData),
   delete: (id: number) => api.delete(`/api/v1/purchase-orders/${id}`),
   generateForParts: (data: any) => api.post('/api/v1/purchase-orders/generate-for-low-stock', data),
   getPartsWithPendingOrders: () => api.get('/api/v1/purchase-orders/parts-with-pending-orders'),
-  addPartToPO: (id: number, partData: any) => api.post(`/api/v1/purchase-orders/${id}/items`, partData),
   removePartFromPO: (id: number, itemId: number) => api.delete(`/api/v1/purchase-orders/${id}/items/${itemId}`),
   updatePartInPO: (id: number, itemId: number, partData: any) => api.put(`/api/v1/purchase-orders/${id}/items/${itemId}`, partData),
   // Partial receipt functionality
