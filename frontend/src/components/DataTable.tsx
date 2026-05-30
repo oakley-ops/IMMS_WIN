@@ -33,6 +33,7 @@ interface DataTableProps<T extends { id: number | string }> {
   onPageChange?: (page: number) => void;
   onSearchChange?: (search: string) => void;
   onSortChange?: (key: keyof T, dir: SortDir) => void;
+  rowSx?: (row: T) => Record<string, any>;
 }
 
 type SortDir = 'asc' | 'desc';
@@ -53,6 +54,7 @@ export default function DataTable<T extends { id: number | string }>({
   onPageChange,
   onSearchChange,
   onSortChange,
+  rowSx,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<keyof T | null>(null);
@@ -186,6 +188,7 @@ export default function DataTable<T extends { id: number | string }>({
                     '&:hover': { bgcolor: `rgba(255,107,53,0.04)` },
                     borderBottom: '1px solid',
                     borderColor: 'divider',
+                    ...(rowSx ? rowSx(row) : {}),
                   }}
                 >
                   {columns.map((col) => (

@@ -86,6 +86,13 @@ describe('DataTable', () => {
     expect(screen.getAllByTestId('status')[1]).toHaveTextContent('Low');
   });
 
+  test('applies rowSx to every rendered row', () => {
+    const rowSx = jest.fn(() => ({}));
+    render(<DataTable columns={columns} rows={rows} rowSx={rowSx} />);
+    expect(rowSx).toHaveBeenCalledTimes(3);
+    expect(rowSx).toHaveBeenCalledWith(rows[0]);
+  });
+
   describe('server mode', () => {
     test('does not filter rows client-side; emits onSearchChange', () => {
       const onSearchChange = jest.fn();
