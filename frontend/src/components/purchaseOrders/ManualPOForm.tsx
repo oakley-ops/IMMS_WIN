@@ -250,7 +250,7 @@ const ManualPOForm: React.FC = () => {
       const pdfBlob = await generatePurchaseOrderPDF({
         ...purchaseOrder,
         supplier: selectedSupplier || { name: manualSupplierName }
-      });
+      }, true);
       if (pdfBlob && pdfBlob instanceof Blob) {
         const pdfUrl = URL.createObjectURL(pdfBlob);
         window.open(pdfUrl, '_blank');
@@ -275,7 +275,7 @@ const ManualPOForm: React.FC = () => {
         ...purchaseOrder,
         poNumber,
         supplier: selectedSupplier || { name: manualSupplierName }
-      });
+      }, true);
       if (!pdfBlob || !(pdfBlob instanceof Blob)) {
         throw new Error('Failed to generate PDF');
       }
