@@ -379,7 +379,7 @@ const TechnicianManagement: React.FC = () => {
       {/* Inactive Technicians Table
       {inactiveTechnicians.length > 0 && (
         <Paper>
-          <Box sx={{ p: 3, backgroundColor: '#f44336', color: 'white' }}>
+          <Box sx={{ p: 3, backgroundColor: 'error.main', color: 'white' }}>
             <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center' }}>
               <CancelIcon sx={{ mr: 1 }} />
               Inactive Technicians ({inactiveTechnicians.length})
