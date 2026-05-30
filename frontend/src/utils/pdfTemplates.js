@@ -338,7 +338,6 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
           
 
           
-          ${!returnBlob ? `<button class="print-button" onclick="window.print()">Print / Save as PDF</button>` : ''}
         </div>
       </body>
       </html>
