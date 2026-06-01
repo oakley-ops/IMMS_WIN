@@ -229,22 +229,39 @@ Off — it defaults off already; stays off in demo.
 
 ## 10. Deployment
 
-Reuses existing deployment pipeline (see `docs/deployment/`), adding a demo target:
+### How clients reach the demo
+
+1. **Register a domain** — e.g. `imms.app`, `immsystem.io`, or `tryimms.com` (~$12/yr via Namecheap or Cloudflare Registrar). No domain exists yet; this is a one-time prerequisite.
+2. **Deploy to Render** — backend as a web service + Postgres database add-on. Use the **Starter plan ($7/mo)** for the web service so it stays always-on; the free tier spins down after 15 minutes of inactivity which is a bad look mid-demo. Render's free Postgres add-on (256 MB) is sufficient for demo data.
+3. **Point a subdomain** — add a `CNAME` record on your domain registrar pointing `demo.yourdomain.com` → the Render service URL. Render's dashboard guides this step. TLS cert is provisioned automatically.
+4. **Share the URL** — hand `demo.yourdomain.com` to a client on-site verbally, or drop it in a follow-up email.
+
+### Estimated ongoing cost
+| Item | Cost |
+|---|---|
+| Domain registration | ~$12/yr |
+| Render Starter web service | $7/mo |
+| Render Postgres (free tier) | $0 |
+| **Total** | **~$96/yr** |
+
+### Environment variables
 
 ```env
 DEMO_MODE=true
-DATABASE_URL=postgres://...demo-db...
-JWT_SECRET=<demo-only secret>
+DATABASE_URL=postgres://...render-demo-db...
+JWT_SECRET=<demo-only secret, not shared with any real deploy>
 REACT_APP_DEMO_MODE=true
-CORS_ORIGIN=https://demo.yourapp.com
+CORS_ORIGIN=https://demo.yourdomain.com
 PORT=4000
 ```
 
-One-time setup:
-1. Provision demo Postgres database
-2. Run `npm run migrate`
-3. Run `npm run seed:demo`
-4. Deploy with demo env vars
+### One-time setup sequence
+1. Register domain
+2. Create Render web service (connect GitHub repo, set env vars above)
+3. Add Render Postgres add-on, copy `DATABASE_URL` into env vars
+4. Run `npm run migrate` via Render shell
+5. Run `npm run seed:demo` via Render shell
+6. Add custom domain `demo.yourdomain.com` in Render dashboard, update DNS CNAME
 
 ---
 
