@@ -15,7 +15,11 @@ import {
   Button,
   CssBaseline,
   Tooltip,
+  useMediaQuery,
+  useTheme,
+  IconButton,
 } from '@mui/material';
+import SwipeableDrawer from '@mui/material/SwipeableDrawer';
 import {
   Logout,
   Dashboard,
@@ -33,9 +37,15 @@ import {
   Campaign,
   OpenInNew,
   Inventory2,
+  Menu as MenuIcon,
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { theme, DARK_BG, DARK_SURFACE, PRIMARY_ORANGE } from '../theme';
+import DemoBanner from './demo/DemoBanner';
+import DemoRoleSwitcher from './demo/DemoRoleSwitcher';
+import DemoResetButton from './demo/DemoResetButton';
+
+const IS_DEMO = process.env.REACT_APP_DEMO_MODE === 'true';
 
 const MINI_WIDTH = 64;
 const FULL_WIDTH = 240;
@@ -64,6 +74,9 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
   const navigate = useNavigate();
   const { logout, user, hasPermission } = useAuth();
   const [expanded, setExpanded] = useState(false);
+  const muiTheme = useTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const MCS_BASE = process.env.REACT_APP_MCS_URL || 'http://localhost:3003';
 
@@ -165,6 +178,16 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
           }}
         >
           <Toolbar variant="dense" sx={{ minHeight: APPBAR_HEIGHT }}>
+            {isMobile && (
+              <IconButton
+                color="inherit"
+                edge="start"
+                onClick={() => setMobileOpen(true)}
+                sx={{ mr: 1, color: PRIMARY_ORANGE }}
+              >
+                <MenuIcon />
+              </IconButton>
+            )}
             <Inventory2 sx={{ color: PRIMARY_ORANGE, mr: 1 }} />
             <Typography
               variant="h6"
@@ -174,9 +197,11 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
             >
               IMMS
             </Typography>
-            <Typography variant="body2" sx={{ color: 'grey.400', mr: 2 }}>
+            <Typography variant="body2" sx={{ color: 'grey.400', mr: 2, display: { xs: 'none', sm: 'block' } }}>
               {user?.username}
             </Typography>
+            {IS_DEMO && <DemoRoleSwitcher currentRole={user?.role ?? null} />}
+            {IS_DEMO && user?.role === 'admin' && <DemoResetButton />}
             <Button
               color="inherit"
               startIcon={<Logout />}
@@ -189,105 +214,128 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
           </Toolbar>
         </AppBar>
 
-        {/* ── Mini Sidebar ────────────────────────────────────────────────── */}
-        <Drawer
-          variant="permanent"
-          onMouseEnter={() => setExpanded(true)}
-          onMouseLeave={() => setExpanded(false)}
-          sx={{
-            width: expanded ? FULL_WIDTH : MINI_WIDTH,
-            flexShrink: 0,
-            '& .MuiDrawer-paper': {
-              width: expanded ? FULL_WIDTH : MINI_WIDTH,
-              overflowX: 'hidden',
-              overflowY: 'auto',
-              transition: 'width 0.2s ease',
-              bgcolor: DARK_SURFACE,
-              color: 'white',
-              mt: `${APPBAR_HEIGHT}px`,
-              height: `calc(100vh - ${APPBAR_HEIGHT}px)`,
-              borderRight: 'none',
-              position: 'fixed',
-              zIndex: (t) => t.zIndex.drawer,
-            },
-          }}
-        >
-          {navSections.map((section, si) => {
-            const visibleItems = section.items.filter(
-              (item) => !item.requiredPermission || hasPermission(item.requiredPermission)
-            );
-            if (visibleItems.length === 0) return null;
-
-            return (
-              <React.Fragment key={section.label}>
-                {si > 0 && (
-                  <Divider sx={{ bgcolor: '#333', mx: expanded ? 1 : 0, my: 0.5 }} />
-                )}
-                {expanded && (
-                  <Typography
-                    sx={{
-                      color: '#666',
-                      fontSize: '10px',
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                      px: 2,
-                      pt: 1,
-                      pb: 0.25,
-                    }}
-                  >
-                    {section.label}
-                  </Typography>
-                )}
-                <List dense disablePadding>
-                  {visibleItems.map((item) => {
-                    const active = isActive(item);
-                    const listItem = (
-                      <ListItem
-                        key={item.label}
-                        component={item.external ? 'a' : Link}
-                        {...(item.external
-                          ? { href: item.href, target: '_blank', rel: 'noopener noreferrer' }
-                          : { to: item.path ?? '/' }
-                        )}
-                        sx={itemSx(active)}
-                        disablePadding={false}
+        {/* ── Sidebar nav list (shared content) ─────────────────────── */}
+        {(() => {
+          const navContent = (
+            <Box sx={{ pt: isMobile ? 0 : `${APPBAR_HEIGHT}px`, height: isMobile ? '100%' : `calc(100vh - ${APPBAR_HEIGHT}px)`, overflowY: 'auto', bgcolor: DARK_SURFACE }}>
+              {navSections.map((section, si) => {
+                const visibleItems = section.items.filter(
+                  (item) => !item.requiredPermission || hasPermission(item.requiredPermission)
+                );
+                if (visibleItems.length === 0) return null;
+                return (
+                  <React.Fragment key={section.label}>
+                    {si > 0 && (
+                      <Divider sx={{ bgcolor: '#333', mx: 1, my: 0.5 }} />
+                    )}
+                    {(expanded || isMobile) && (
+                      <Typography
+                        sx={{
+                          color: '#666',
+                          fontSize: '10px',
+                          textTransform: 'uppercase',
+                          letterSpacing: '1px',
+                          px: 2,
+                          pt: 1,
+                          pb: 0.25,
+                        }}
                       >
-                        <ListItemIcon sx={iconSx(active)}>
-                          {item.icon}
-                        </ListItemIcon>
-                        <ListItemText
-                          primary={item.label}
-                          primaryTypographyProps={{
-                            fontSize: '13px',
-                            fontWeight: active ? 600 : 400,
-                            color: active ? PRIMARY_ORANGE : '#CCCCCC',
-                            noWrap: true,
-                          }}
-                          sx={{
-                            overflow: 'hidden',
-                            maxWidth: expanded ? 'none' : 0,
-                            opacity: expanded ? 1 : 0,
-                            transition: 'opacity 0.2s ease',
-                            whiteSpace: 'nowrap',
-                          }}
-                        />
-                        {item.external && (
-                          <OpenInNew sx={{ fontSize: 12, color: '#666', ml: 0.5, display: expanded ? 'block' : 'none' }} />
-                        )}
-                      </ListItem>
-                    );
+                        {section.label}
+                      </Typography>
+                    )}
+                    <List dense disablePadding>
+                      {visibleItems.map((item) => {
+                        const active = isActive(item);
+                        const listItem = (
+                          <ListItem
+                            key={item.label}
+                            component={item.external ? 'a' : Link}
+                            {...(item.external
+                              ? { href: item.href, target: '_blank', rel: 'noopener noreferrer' }
+                              : { to: item.path ?? '/' }
+                            )}
+                            sx={itemSx(active)}
+                            disablePadding={false}
+                            onClick={() => isMobile && setMobileOpen(false)}
+                          >
+                            <ListItemIcon sx={iconSx(active)}>
+                              {item.icon}
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={item.label}
+                              primaryTypographyProps={{
+                                fontSize: '13px',
+                                fontWeight: active ? 600 : 400,
+                                color: active ? PRIMARY_ORANGE : '#CCCCCC',
+                                noWrap: true,
+                              }}
+                              sx={{
+                                overflow: 'hidden',
+                                maxWidth: (expanded || isMobile) ? 'none' : 0,
+                                opacity: (expanded || isMobile) ? 1 : 0,
+                                transition: 'opacity 0.2s ease',
+                                whiteSpace: 'nowrap',
+                              }}
+                            />
+                            {item.external && (
+                              <OpenInNew sx={{ fontSize: 12, color: '#666', ml: 0.5, display: (expanded || isMobile) ? 'block' : 'none' }} />
+                            )}
+                          </ListItem>
+                        );
+                        return (expanded || isMobile) ? listItem : (
+                          <Tooltip key={item.label} title={item.label} placement="right">
+                            {listItem}
+                          </Tooltip>
+                        );
+                      })}
+                    </List>
+                  </React.Fragment>
+                );
+              })}
+            </Box>
+          );
 
-                    return expanded ? listItem : (
-                      <Tooltip key={item.label} title={item.label} placement="right">
-                        {listItem}
-                      </Tooltip>
-                    );
-                  })}
-                </List>
-              </React.Fragment>
+          if (isMobile) {
+            return (
+              <SwipeableDrawer
+                anchor="left"
+                open={mobileOpen}
+                onOpen={() => setMobileOpen(true)}
+                onClose={() => setMobileOpen(false)}
+                sx={{ '& .MuiDrawer-paper': { width: FULL_WIDTH, bgcolor: DARK_SURFACE, color: 'white' } }}
+              >
+                {navContent}
+              </SwipeableDrawer>
             );
-          })}
-        </Drawer>
+          }
+
+          return (
+            <Drawer
+              variant="permanent"
+              onMouseEnter={() => setExpanded(true)}
+              onMouseLeave={() => setExpanded(false)}
+              sx={{
+                width: expanded ? FULL_WIDTH : MINI_WIDTH,
+                flexShrink: 0,
+                '& .MuiDrawer-paper': {
+                  width: expanded ? FULL_WIDTH : MINI_WIDTH,
+                  overflowX: 'hidden',
+                  overflowY: 'auto',
+                  transition: 'width 0.2s ease',
+                  bgcolor: DARK_SURFACE,
+                  color: 'white',
+                  mt: `${APPBAR_HEIGHT}px`,
+                  height: `calc(100vh - ${APPBAR_HEIGHT}px)`,
+                  borderRight: 'none',
+                  position: 'fixed',
+                  zIndex: (t) => t.zIndex.drawer,
+                },
+              }}
+            >
+              {navContent}
+            </Drawer>
+          );
+        })()}
 
         {/* ── Main Content ────────────────────────────────────────────────── */}
         <Box
@@ -295,14 +343,16 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
           sx={{
             flexGrow: 1,
             mt: `${APPBAR_HEIGHT}px`,
-            ml: `${MINI_WIDTH}px`,
+            ml: isMobile ? 0 : `${MINI_WIDTH}px`,
             bgcolor: 'background.default',
             minHeight: `calc(100vh - ${APPBAR_HEIGHT}px)`,
             overflow: 'auto',
-            p: 2,
           }}
         >
-          {children}
+          {IS_DEMO && <DemoBanner />}
+          <Box sx={{ p: 2 }}>
+            {children}
+          </Box>
         </Box>
       </Box>
     </ThemeProvider>
