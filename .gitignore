@@ -75,6 +75,9 @@ nul
 # Playwright MCP scratch dir
 .playwright-mcp/
 
+# Superpowers brainstorm scratch (visual companion mockups)
+.superpowers/
+
 # Misplaced sibling project (kept outside the repo)
 UsersFiserCQM/
 
