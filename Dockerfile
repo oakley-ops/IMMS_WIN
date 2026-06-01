@@ -3,7 +3,7 @@
 FROM node:22-alpine AS frontend-build
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
-RUN npm ci --legacy-peer-deps
+RUN npm install --legacy-peer-deps
 COPY frontend/ ./
 ARG REACT_APP_DEMO_MODE=true
 ARG REACT_APP_API_URL=
