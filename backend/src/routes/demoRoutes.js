@@ -10,9 +10,9 @@ const path = require('path');
 
 const VALID_ROLES = ['admin', 'purchaser', 'viewer'];
 const DEMO_USERNAMES = {
-  admin: 'demo-admin',
-  purchaser: 'demo-purchaser',
-  viewer: 'demo-viewer',
+  admin:     'demo-admin',
+  purchaser: 'demo-purchaser',  // stored role: purchasing
+  viewer:    'demo-viewer',     // stored role: tech
 };
 
 // GET /api/v1/demo/config

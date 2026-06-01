@@ -38,8 +38,8 @@ async function seedUsers(client) {
   await client.query(`
     INSERT INTO users (username, password_hash, role) VALUES
       ('demo-admin',     $1, 'admin'),
-      ('demo-purchaser', $1, 'purchaser'),
-      ('demo-viewer',    $1, 'viewer')
+      ('demo-purchaser', $1, 'purchasing'),
+      ('demo-viewer',    $1, 'tech')
   `, [hash]);
 }
 
@@ -65,11 +65,11 @@ async function seedTechnicians(client) {
 
 async function seedContacts(client) {
   await client.query(`
-    INSERT INTO contacts (name, company, email, phone, role) VALUES
-      ('Tom Reyes',   'Apex Hydraulics Inc.',   'tom.reyes@apex-hydraulics.demo.invalid',   '555-0101', 'Supplier'),
-      ('Lisa Chen',   'MidWest Bearings Co.',   'lisa.chen@mwbearings.demo.invalid',         '555-0102', 'Supplier'),
-      ('Bob Keller',  'Keller Manufacturing',   'bkeller@kellermfg.demo.invalid',            '555-2001', 'Customer'),
-      ('Dana Park',   'Facilities Dept',        'dpark@facilities.demo.invalid',             '555-2002', 'Internal')
+    INSERT INTO contacts (name, company, type, email, phone) VALUES
+      ('Tom Reyes',   'Apex Hydraulics Inc.',   'supplier',   'tom.reyes@apex-hydraulics.demo.invalid',   '555-0101'),
+      ('Lisa Chen',   'MidWest Bearings Co.',   'supplier',   'lisa.chen@mwbearings.demo.invalid',         '555-0102'),
+      ('Bob Keller',  'Keller Manufacturing',   'vendor',     'bkeller@kellermfg.demo.invalid',            '555-2001'),
+      ('Dana Park',   'Facilities Dept',        'contractor', 'dpark@facilities.demo.invalid',             '555-2002')
   `);
 }
 
@@ -166,83 +166,81 @@ async function seedPurchaseOrders(client) {
 
   const po1 = await client.query(`
     INSERT INTO purchase_orders
-      (po_number, supplier_id, status, approval_status, requested_by, approved_by, created_at, updated_at)
+      (po_number, supplier_id, status, requested_by, approved_by, created_at, updated_at)
     VALUES
-      ('PO-2026-0041', $1, 'received', 'approved', 'demo-purchaser', 'demo-admin', $2, $3)
+      ('PO-2026-0041', $1, 'received', 'demo-purchaser', 'demo-admin', $2, $3)
     RETURNING po_id`,
     [apexId, daysAgo(5), daysAgo(3)]
   );
   await client.query(`
-    INSERT INTO purchase_order_items (po_id, part_id, quantity_ordered, quantity_received, unit_price)
-    VALUES ($1, $2, 20, 8, 28.50)`,
+    INSERT INTO purchase_order_items (po_id, part_id, quantity, unit_price)
+    VALUES ($1, $2, 20, 28.50)`,
     [po1.rows[0].po_id, hydSeal.rows[0].part_id]
   );
 
   const po2 = await client.query(`
     INSERT INTO purchase_orders
-      (po_number, supplier_id, status, approval_status, requested_by, created_at, updated_at)
+      (po_number, supplier_id, status, requested_by, created_at, updated_at)
     VALUES
-      ('PO-2026-0042', 3, 'pending', 'pending_approval', 'demo-purchaser', $1, $1)
+      ('PO-2026-0042', 3, 'pending', 'demo-purchaser', $1, $1)
     RETURNING po_id`,
     [daysAgo(1)]
   );
   await client.query(`
-    INSERT INTO purchase_order_items (po_id, part_id, quantity_ordered, quantity_received, unit_price)
-    VALUES ($1, $2, 12, 0, 9.75)`,
+    INSERT INTO purchase_order_items (po_id, part_id, quantity, unit_price)
+    VALUES ($1, $2, 12, 9.75)`,
     [po2.rows[0].po_id, filtOil.rows[0].part_id]
   );
 
   await client.query(`
     INSERT INTO purchase_orders
-      (po_number, supplier_id, status, approval_status, requested_by, created_at, updated_at)
+      (po_number, supplier_id, status, requested_by, created_at, updated_at)
     VALUES
-      ('PO-2026-0043', 2, 'draft', 'draft', 'demo-purchaser', $1, $1)`,
+      ('PO-2026-0043', 2, 'submitted', 'demo-purchaser', $1, $1)`,
     [daysAgo(0)]
   );
 
   const po4 = await client.query(`
     INSERT INTO purchase_orders
-      (po_number, supplier_id, status, approval_status, requested_by, approved_by, created_at, updated_at)
+      (po_number, supplier_id, status, requested_by, approved_by, created_at, updated_at)
     VALUES
-      ('PO-2026-0038', 2, 'received', 'approved', 'demo-purchaser', 'demo-admin', $1, $2)
+      ('PO-2026-0038', 2, 'received', 'demo-purchaser', 'demo-admin', $1, $2)
     RETURNING po_id`,
     [daysAgo(21), daysAgo(18)]
   );
   await client.query(`
-    INSERT INTO purchase_order_items (po_id, part_id, quantity_ordered, quantity_received, unit_price)
-    VALUES ($1, $2, 30, 30, 12.40)`,
+    INSERT INTO purchase_order_items (po_id, part_id, quantity, unit_price)
+    VALUES ($1, $2, 30, 12.40)`,
     [po4.rows[0].po_id, brg6205.rows[0].part_id]
   );
 }
 
 async function seedWorkOrders(client) {
-  const press3 = await client.query(`SELECT machine_id FROM machines WHERE name='Press #3'`);
-  const press7 = await client.query(`SELECT machine_id FROM machines WHERE name='Press #7'`);
-  const tech1   = await client.query(`SELECT technician_id FROM technicians WHERE name='J. Martinez'`);
-  const tech2   = await client.query(`SELECT technician_id FROM technicians WHERE name='A. Thompson'`);
+  const tech1 = await client.query(`SELECT technician_id FROM technicians WHERE name='J. Martinez'`);
+  const tech2 = await client.query(`SELECT technician_id FROM technicians WHERE name='A. Thompson'`);
 
   await client.query(`
     INSERT INTO work_orders
-      (title, description, machine_id, technician_id, status, priority, created_at, completed_at)
+      (work_order_number, title, description, machine_name, technician_id, status, priority, created_at, completed_at)
     VALUES
-      ('Hydraulic Seal Replacement', 'Replace worn cylinder seals on Press #3 — units taken from PO-2026-0041 partial receipt.',
-       $1, $2, 'completed', 'high', $3, $4)`,
-    [press3.rows[0].machine_id, tech1.rows[0].technician_id, daysAgo(2), daysAgo(1)]
+      ('WO-2026-00001', 'Hydraulic Seal Replacement', 'Replace worn cylinder seals on Press #3 — units taken from PO-2026-0041 partial receipt.',
+       'Press #3', $1, 'completed', 'high', $2, $3)`,
+    [tech1.rows[0].technician_id, daysAgo(2), daysAgo(1)]
   );
 
   await client.query(`
     INSERT INTO work_orders
-      (title, description, machine_id, technician_id, status, priority, created_at)
+      (work_order_number, title, description, machine_name, technician_id, status, priority, created_at)
     VALUES
-      ('Quarterly PM — Press #7', 'Quarterly preventive maintenance. Check hydraulics, lubricate guide rods, inspect die seat.',
-       $1, $2, 'in_progress', 'medium', $3)`,
-    [press7.rows[0].machine_id, tech1.rows[0].technician_id, daysAgo(1)]
+      ('WO-2026-00002', 'Quarterly PM — Press #7', 'Quarterly preventive maintenance. Check hydraulics, lubricate guide rods, inspect die seat.',
+       'Press #7', $1, 'in_progress', 'medium', $2)`,
+    [tech1.rows[0].technician_id, daysAgo(1)]
   );
 
   await client.query(`
-    INSERT INTO work_orders (title, machine_id, technician_id, status, priority, created_at)
-    VALUES ('Replace Motor Belt', $1, $2, 'open', 'low', $3)`,
-    [press3.rows[0].machine_id, tech2.rows[0].technician_id, daysAgo(0)]
+    INSERT INTO work_orders (work_order_number, title, machine_name, technician_id, status, priority, created_at)
+    VALUES ('WO-2026-00003', 'Replace Motor Belt', 'Press #3', $1, 'open', 'low', $2)`,
+    [tech2.rows[0].technician_id, daysAgo(0)]
   );
 }
 
@@ -250,31 +248,30 @@ async function seedDies(client) {
   const press7 = await client.query(`SELECT machine_id FROM machines WHERE name='Press #7'`);
 
   await client.query(`
-    INSERT INTO dies (die_number, description, status, current_machine_id, sharpening_count, max_sharpenings, strokes_since_sharpening, strokes_per_sharpening_limit)
-    VALUES ('DIE-1042', 'Progressive Stamp Die 4"', 'active', $1, 3, 10, 48000, 50000)`,
+    INSERT INTO dies (die_number, die_name, die_type, status, machine_id, sharpenings_count, max_sharpenings, total_cycles, max_cycles_before_sharpening)
+    VALUES ('DIE-1042', 'Progressive Stamp Die 4"', 'progressive', 'INSTALLED', $1, 3, 10, 48000, 50000)`,
     [press7.rows[0].machine_id]
   );
 
   await client.query(`
-    INSERT INTO dies (die_number, description, status, sharpening_count, max_sharpenings)
-    VALUES ('DIE-0897', 'Blanking Die 6"', 'sharpening', 5, 10)`
+    INSERT INTO dies (die_number, die_name, die_type, status, sharpenings_count, max_sharpenings)
+    VALUES ('DIE-0897', 'Blanking Die 6"', 'blanking', 'OUT_FOR_SHARPENING', 5, 10)`
   );
 
   await client.query(`
-    INSERT INTO dies (die_number, description, status, sharpening_count, max_sharpenings, strokes_since_sharpening, strokes_per_sharpening_limit)
-    VALUES ('DIE-0654', 'Forming Die 3"', 'active', 1, 10, 12000, 50000)`
+    INSERT INTO dies (die_number, die_name, die_type, status, sharpenings_count, max_sharpenings, total_cycles, max_cycles_before_sharpening)
+    VALUES ('DIE-0654', 'Forming Die 3"', 'forming', 'AVAILABLE', 1, 10, 12000, 50000)`
   );
 }
 
 async function seedTransactions(client) {
   const hydSeal = await client.query(`SELECT part_id FROM parts WHERE manufacturer_part_number='HYD-SEAL-04'`);
   const filtOil = await client.query(`SELECT part_id FROM parts WHERE manufacturer_part_number='FILT-OIL-12'`);
-  const press3  = await client.query(`SELECT machine_id FROM machines WHERE name='Press #3'`);
 
   await client.query(`
-    INSERT INTO transactions (part_id, machine_id, quantity, type, notes, created_at)
-    VALUES ($1, $2, 8, 'usage', 'Used for hydraulic seal replacement WO — PO-2026-0041 receipt', $3)`,
-    [hydSeal.rows[0].part_id, press3.rows[0].machine_id, daysAgo(1)]
+    INSERT INTO transactions (part_id, quantity, type, notes, created_at)
+    VALUES ($1, 8, 'usage', 'Used for hydraulic seal replacement WO — PO-2026-0041 receipt', $2)`,
+    [hydSeal.rows[0].part_id, daysAgo(1)]
   );
   await client.query(`
     INSERT INTO transactions (part_id, quantity, type, notes, created_at)
