@@ -13,7 +13,8 @@
     "test:integration": "jest __tests__/integration --coverage",
     "test:e2e": "jest __tests__/e2e --coverage",
     "test:watch": "jest --watch",
-    "migrate": "node migrations/run-migrations.js"
+    "migrate": "node migrations/run-migrations.js",
+    "seed:demo": "node src/scripts/seedDemo.js"
   },
   "keywords": [],
   "author": "",
