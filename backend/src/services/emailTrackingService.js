@@ -30,14 +30,10 @@ class EmailTrackingService {
       // Example: 'admin@company.com',
     ].filter(Boolean); // Remove any undefined/null values
 
-    // Use individual parameters for better control and debugging
+    // Use DATABASE_URL for hosted deployments
     this.pool = new Pool({
-      user: process.env.DB_USER,
-      host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
-      database: process.env.DB_NAME,
-      password: process.env.DB_PASSWORD,
-      ssl: process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
     });
 
     // Test the connection
