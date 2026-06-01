@@ -80,16 +80,9 @@ app.use((err, req, res, next) => {
 // Serve uploaded files statically
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
-// Handle production
-if (process.env.NODE_ENV === 'production') {
-  // Static folder (served from backend/public in Docker)
-  app.use(express.static(path.join(__dirname, '../public')));
-
-  // Handle SPA
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, '../public', 'index.html'));
-  });
-}
+// NOTE: Static file serving and SPA fallback are handled in index.js
+// AFTER all API routes are registered. Do not add a wildcard catch-all
+// here — it would intercept API requests before they are mounted.
 
 // Comment out this section as it's creating a duplicate server
 // const PORT = process.env.PORT || 4000;
