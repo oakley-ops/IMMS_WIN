@@ -36,6 +36,11 @@ import {
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { theme, DARK_BG, DARK_SURFACE, PRIMARY_ORANGE } from '../theme';
+import DemoBanner from './demo/DemoBanner';
+import DemoRoleSwitcher from './demo/DemoRoleSwitcher';
+import DemoResetButton from './demo/DemoResetButton';
+
+const IS_DEMO = process.env.REACT_APP_DEMO_MODE === 'true';
 
 const MINI_WIDTH = 64;
 const FULL_WIDTH = 240;
@@ -177,6 +182,8 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
             <Typography variant="body2" sx={{ color: 'grey.400', mr: 2 }}>
               {user?.username}
             </Typography>
+            {IS_DEMO && <DemoRoleSwitcher currentRole={user?.role ?? null} />}
+            {IS_DEMO && user?.role === 'admin' && <DemoResetButton />}
             <Button
               color="inherit"
               startIcon={<Logout />}
@@ -299,10 +306,12 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
             bgcolor: 'background.default',
             minHeight: `calc(100vh - ${APPBAR_HEIGHT}px)`,
             overflow: 'auto',
-            p: 2,
           }}
         >
-          {children}
+          {IS_DEMO && <DemoBanner />}
+          <Box sx={{ p: 2 }}>
+            {children}
+          </Box>
         </Box>
       </Box>
     </ThemeProvider>
