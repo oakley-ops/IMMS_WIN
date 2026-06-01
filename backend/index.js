@@ -28,6 +28,7 @@ const diesRouter = require('./src/routes/dies');
 const dieSharpeningRouter = require('./src/routes/dieSharpening');
 const dieDocumentsRouter = require('./src/routes/dieDocuments');
 const maintenanceCallsRouter = require('./src/routes/maintenanceCalls');
+const demoRouter = require('./src/routes/demoRoutes');
 const http = require('http');
 const { Server } = require('socket.io');
 const app = require('./src/app');
@@ -61,6 +62,13 @@ const io = new Server(server, {
 
 // Enable trust proxy before any middleware
 app.set('trust proxy', true);
+
+if (process.env.DEMO_MODE === 'true') {
+  app.use((req, res, next) => {
+    res.setHeader('X-Robots-Tag', 'noindex, nofollow');
+    next();
+  });
+}
 
 const port = process.env.PORT || 4000;
 
@@ -223,6 +231,7 @@ app.use('/api/v1/dies', diesRouter);
 app.use('/api/v1/die-sharpening', dieSharpeningRouter);
 app.use('/api/v1/die-documents', dieDocumentsRouter);
 app.use('/api/v1/maintenance-calls', maintenanceCallsRouter);
+app.use('/api/v1/demo', demoRouter);
 
 // Comment out the original parts usage controller since we're using our custom route
 // app.post('/api/v1/parts/usage', (req, res) => partsUsageController.recordUsage(req, res));
@@ -492,11 +501,11 @@ app.use((err, req, res, next) => {
 // Handle static files and React app routing
 if (process.env.NODE_ENV === 'production') {
   // Production: Serve static files from the React app
-  app.use(express.static(path.join(__dirname, '../frontend/build')));
+  app.use(express.static(path.join(__dirname, 'public')));
 
   // Handle React routing, return all requests to React app
   app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
   });
 } else {
   // Development: API-only, frontend served separately
@@ -520,6 +529,25 @@ io.on('connection', (socket) => {
 
 // Make socket.io available globally
 global.io = io;
+
+// Register nightly reseed cron
+if (process.env.DEMO_MODE === 'true') {
+  const cron = require('node-cron');
+  cron.schedule('0 3 * * *', () => {
+    console.log('[Demo] Nightly reseed starting...');
+    try {
+      const { execSync } = require('child_process');
+      execSync(`node ${path.join(__dirname, 'src/scripts/seedDemo.js')}`, {
+        stdio: 'inherit',
+        env: { ...process.env },
+      });
+      console.log('[Demo] Nightly reseed complete.');
+    } catch (err) {
+      console.error('[Demo] Nightly reseed failed:', err.message);
+    }
+  });
+  console.log('[Demo] Nightly reseed scheduled at 3 AM.');
+}
 
 // Start server
 server.listen(port, '0.0.0.0', () => {

@@ -469,25 +469,67 @@ class EmailService {
     }
   }
 
+  async sendEmailWithAttachment(subject, htmlContent, recipient, attachments = []) {
+    // Demo mode: capture instead of send
+    if (process.env.DEMO_MODE === 'true') {
+      const pdfAttachment = attachments.find(a => a.contentType === 'application/pdf');
+      const pdfBase64 = pdfAttachment
+        ? (pdfAttachment.content instanceof Buffer
+            ? pdfAttachment.content.toString('base64')
+            : pdfAttachment.content)
+        : null;
+      const poNumberMatch = subject.match(/PO[- ]?([\w-]+)/i);
+      const poNumber = poNumberMatch ? poNumberMatch[0] : subject;
+      await this.pool.query(
+        `INSERT INTO demo_sent_emails (po_number, recipient, subject, html_body, pdf_base64)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [poNumber, recipient, subject, htmlContent, pdfBase64]
+      );
+      console.log(`[Demo] Email captured (not sent): ${subject} → ${recipient}`);
+      return { demo: true, captured: true };
+    }
+
+    // Standard implementation for non-demo mode
+    // This would contain the normal email sending logic
+    try {
+      console.log(`Sending email with attachment to: ${recipient}`);
+
+      const mailOptions = {
+        from: process.env.SMTP_FROM || '"IMMS" <ftenashville@gmail.com>',
+        to: recipient,
+        subject,
+        html: htmlContent,
+        attachments
+      };
+
+      const info = await this.transporter.sendMail(mailOptions);
+      console.log('Email with attachment sent:', info.messageId);
+      return info;
+    } catch (error) {
+      console.error('Error sending email with attachment:', error);
+      throw error;
+    }
+  }
+
   async sendEmail(subject, html, recipient = null) {
     // Use provided recipient or fall back to notification recipients
     const emailRecipients = recipient || this.notificationRecipients;
-    
+
     if (!emailRecipients || (Array.isArray(emailRecipients) && emailRecipients.length === 0)) {
       console.warn('No notification recipients configured');
       return;
     }
 
     const to = Array.isArray(emailRecipients) ? emailRecipients.join(', ') : emailRecipients;
-    
+
     try {
       console.log(`Sending email to: ${to}`);
       console.log(`Email configuration: ${process.env.SMTP_HOST}:${process.env.SMTP_PORT} (${process.env.SMTP_USER})`);
-      
+
       // Implement retry logic
       let retries = 3;
       let lastError = null;
-      
+
       while (retries > 0) {
         try {
           const info = await this.transporter.sendMail({
@@ -496,21 +538,21 @@ class EmailService {
             subject,
             html,
           });
-          
+
           console.log('Email sent:', info.messageId);
           return info;
         } catch (err) {
           lastError = err;
           console.warn(`Email attempt failed (${retries} retries left):`, err.code || err.message);
           retries--;
-          
+
           if (retries > 0) {
             // Wait 2 seconds before retrying
             await new Promise(resolve => setTimeout(resolve, 2000));
           }
         }
       }
-      
+
       // If we reach here, all retries failed
       throw lastError;
     } catch (error) {

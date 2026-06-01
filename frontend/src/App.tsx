@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -30,20 +30,37 @@ import WorkOrderDetail from './pages/WorkOrderDetail';
 import DieTracker from './pages/DieTracker';
 import DieDetail from './pages/DieDetail';
 import DieReports from './pages/DieReports';
+import DemoLandingPage from './pages/DemoLandingPage';
+
+const IS_DEMO = process.env.REACT_APP_DEMO_MODE === 'true';
 
 const App: React.FC = () => {
+  useEffect(() => {
+    if (IS_DEMO) {
+      const meta = document.createElement('meta');
+      meta.name = 'robots';
+      meta.content = 'noindex, nofollow';
+      document.head.appendChild(meta);
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <Router>
         <Routes>
+          {/* Demo landing page */}
+          {IS_DEMO && (
+            <Route path="/demo" element={<DemoLandingPage />} />
+          )}
+
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/unauthorized" element={<Unauthorized />} />
           
           {/* Root path - redirect to dashboard which will check auth */}
-          <Route 
-            path="/" 
-            element={<Navigate to="/dashboard" replace />} 
+          <Route
+            path="/"
+            element={<Navigate to={IS_DEMO ? '/demo' : '/dashboard'} replace />}
           />
           
           {/* Dashboard Route - accessible to all authenticated users */}
