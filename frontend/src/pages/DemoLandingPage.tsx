@@ -64,7 +64,7 @@ const DemoLandingPage: React.FC = () => {
       </Box>
 
       {/* Hero */}
-      <Box sx={{ px: { xs: 3, md: 6 }, py: { xs: 5, md: 7 }, display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+      <Box sx={{ px: { xs: 3, md: 6 }, py: { xs: 4, md: 7 }, display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: { xs: 4, md: 6 }, alignItems: { xs: 'stretch', md: 'center' } }}>
         <Box flex={1} minWidth={280}>
           <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0.05}>
             <Typography sx={{ fontSize: 11, letterSpacing: 1.8, textTransform: 'uppercase', color: PRIMARY, fontWeight: 700 }}>
@@ -86,7 +86,7 @@ const DemoLandingPage: React.FC = () => {
           </motion.div>
 
           <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0.35}>
-            <Box sx={{ mt: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ mt: 3, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, gap: 2, flexWrap: 'wrap' }}>
               <Button
                 variant="contained"
                 onClick={() => enterAs('admin')}
@@ -124,7 +124,7 @@ const DemoLandingPage: React.FC = () => {
 
         {/* Mini app preview */}
         <motion.div variants={fadeUp} initial="hidden" animate="visible" custom={0.45} style={{ flexShrink: 0 }}>
-          <Box sx={{ width: 260, border: '1px solid #2a2a2a', borderRadius: 2, overflow: 'hidden', boxShadow: '0 20px 48px rgba(0,0,0,.6)' }}>
+          <Box sx={{ width: 260, display: { xs: 'none', md: 'block' }, border: '1px solid #2a2a2a', borderRadius: 2, overflow: 'hidden', boxShadow: '0 20px 48px rgba(0,0,0,.6)' }}>
             <Box sx={{ height: 28, bgcolor: '#1a1a1a', borderBottom: '1px solid #2a2a2a', display: 'flex', alignItems: 'center', px: 1, gap: 0.5 }}>
               {['#ff5f57','#febc2e','#28c840'].map(c => <Box key={c} sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: c }} />)}
             </Box>
@@ -165,10 +165,10 @@ const DemoLandingPage: React.FC = () => {
       </Box>
 
       {/* Stats strip */}
-      <Box sx={{ display: 'flex', bgcolor: DARK_STRIP, borderTop: '1px solid #1e1e1e', borderBottom: '1px solid #1e1e1e' }}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', bgcolor: DARK_STRIP, borderTop: '1px solid #1e1e1e', borderBottom: '1px solid #1e1e1e' }}>
         {STATS.map(({ value, label }, i) => (
           <motion.div key={label} variants={fadeUp} initial="hidden" animate="visible" custom={0.5 + i * 0.07} style={{ flex: 1 }}>
-            <Box sx={{ px: 3, py: 2, borderRight: i < STATS.length - 1 ? '1px solid #1e1e1e' : 'none' }}>
+            <Box sx={{ px: 3, py: 2, minWidth: '120px', borderRight: i < STATS.length - 1 ? '1px solid #1e1e1e' : 'none' }}>
               <Typography fontWeight={800} fontSize={20} color={PRIMARY}>{value}</Typography>
               <Typography fontSize={10} color="#555" textTransform="uppercase" letterSpacing={0.4}>{label}</Typography>
             </Box>
