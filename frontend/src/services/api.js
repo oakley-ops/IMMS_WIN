@@ -1,9 +1,15 @@
 import axios from 'axios';
 import axiosRetry from 'axios-retry';
 
+// In production the frontend is served from the same origin as the API,
+// so use a relative base URL. Only fall back to localhost in development.
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL ||
+  (process.env.NODE_ENV === 'production' ? '' : 'http://localhost:4000');
+
 // Create axios instance with base URL
 const axiosInstance = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000',
+  baseURL: API_BASE_URL,
   timeout: 60000, // Increase default timeout to 60 seconds
   headers: {
     'Content-Type': 'application/json'
@@ -259,7 +265,7 @@ const api = {
       try {
         // Create a new axios instance with longer timeout for this specific request
         const statusAxios = axios.create({
-          baseURL: process.env.REACT_APP_API_URL || 'http://localhost:4000',
+          baseURL: API_BASE_URL,
           timeout: 180000, // 3 minutes for status updates
           headers: {
             'Content-Type': 'application/json'
