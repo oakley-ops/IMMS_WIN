@@ -1,5 +1,7 @@
 // backend/src/scripts/seedDemo.js
 require('dotenv').config({ path: require('path').join(__dirname, '../../.env') });
+const fs = require('fs');
+const path = require('path');
 const { Pool } = require('pg');
 const bcrypt = require('bcrypt');
 
@@ -8,15 +10,29 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const now = () => new Date();
 const daysAgo = (n) => new Date(Date.now() - n * 86400000);
 
+async function ensureSchema(client) {
+  // Create/patch tables the app routes expect but the base migrations miss
+  const sql = fs.readFileSync(path.join(__dirname, '../../migrations/demo_extra_schema.sql'), 'utf8');
+  await client.query(sql);
+}
+
 async function truncateDemoTables(client) {
   await client.query(`
     TRUNCATE TABLE
       demo_sent_emails,
+      pm_task_completions,
+      pm_sessions,
+      pm_tasks,
+      pm_checklists,
+      pm_intervals,
       die_sharpening_records,
       die_change_history,
       die_documents,
       die_maintenance_schedule,
       transactions,
+      work_order_parts,
+      work_order_tasks,
+      work_order_comments,
       purchase_order_items,
       purchase_orders,
       work_orders,
@@ -26,6 +42,7 @@ async function truncateDemoTables(client) {
       technicians,
       suppliers,
       parts,
+      part_locations,
       dies,
       machines,
       users
@@ -267,11 +284,12 @@ async function seedDies(client) {
 async function seedTransactions(client) {
   const hydSeal = await client.query(`SELECT part_id FROM parts WHERE manufacturer_part_number='HYD-SEAL-04'`);
   const filtOil = await client.query(`SELECT part_id FROM parts WHERE manufacturer_part_number='FILT-OIL-12'`);
+  const press3  = await client.query(`SELECT machine_id FROM machines WHERE name='Press #3'`);
 
   await client.query(`
-    INSERT INTO transactions (part_id, quantity, type, notes, created_at)
-    VALUES ($1, 8, 'usage', 'Used for hydraulic seal replacement WO — PO-2026-0041 receipt', $2)`,
-    [hydSeal.rows[0].part_id, daysAgo(1)]
+    INSERT INTO transactions (part_id, machine_id, quantity, type, notes, created_at)
+    VALUES ($1, $2, 8, 'usage', 'Used for hydraulic seal replacement WO — PO-2026-0041 receipt', $3)`,
+    [hydSeal.rows[0].part_id, press3.rows[0].machine_id, daysAgo(1)]
   );
   await client.query(`
     INSERT INTO transactions (part_id, quantity, type, notes, created_at)
@@ -324,8 +342,8 @@ async function seed() {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-    // Ensure demo-required columns the app expects exist (idempotent)
-    await client.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS approval_status VARCHAR(50)`);
+    console.log('Ensuring demo schema (extra tables/columns)...');
+    await ensureSchema(client);
     console.log('Truncating demo tables...');
     await truncateDemoTables(client);
     console.log('Seeding users...');
