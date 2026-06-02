@@ -12,6 +12,8 @@ import html2pdf from 'html2pdf.js';
  */
 export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false) => {
   try {
+    // In demo mode, show "IMMS" text instead of the Fiserv logo
+    const isDemo = process.env.REACT_APP_DEMO_MODE === 'true';
     // Format dates
     const formatDate = (dateString) => {
       if (!dateString) return 'N/A';
@@ -133,6 +135,12 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
             max-width: 80px;
             height: auto;
           }
+          .logo-text {
+            font-size: 24px;
+            font-weight: bold;
+            color: ${immsOrange};
+            letter-spacing: 1px;
+          }
           .header-title {
             color: ${immsOrange};
             font-size: 16px;
@@ -249,7 +257,7 @@ export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false
       <body>
         <div class="container">
           <div class="header">
-            <img src="/assets/fiserv_logo_orange_rgb.png" alt="Fiserv Logo" class="logo" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSIzMCI+PHRleHQgeD0iMCIgeT0iMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiNGRjYyMDAiPmZpc2VydjwvdGV4dD48L3N2Zz4=';">
+            ${isDemo ? '<div class="logo-text">IMMS</div>' : `<img src="/assets/fiserv_logo_orange_rgb.png" alt="Fiserv Logo" class="logo" onerror="this.onerror=null; this.src='data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSIzMCI+PHRleHQgeD0iMCIgeT0iMjAiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC13ZWlnaHQ9ImJvbGQiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiNGRjYyMDAiPmZpc2VydjwvdGV4dD48L3N2Zz4=';">`}
             <div class="header-title">PURCHASE ORDER REQUEST</div>
           </div>
           <div class="header-border"></div>
