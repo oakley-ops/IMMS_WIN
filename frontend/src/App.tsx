@@ -31,6 +31,7 @@ import DieTracker from './pages/DieTracker';
 import DieDetail from './pages/DieDetail';
 import DieReports from './pages/DieReports';
 import DemoLandingPage from './pages/DemoLandingPage';
+import DemoMaintenanceOverview from './pages/DemoMaintenanceOverview';
 
 const IS_DEMO = process.env.REACT_APP_DEMO_MODE === 'true';
 
@@ -51,6 +52,20 @@ const App: React.FC = () => {
           {/* Demo landing page */}
           {IS_DEMO && (
             <Route path="/demo" element={<DemoLandingPage />} />
+          )}
+
+          {/* Demo MCS overview (in-app presentation; MCS app isn't deployed in demo) */}
+          {IS_DEMO && (
+            <Route
+              path="/maintenance-overview"
+              element={
+                <ProtectedRoute requiredPermission="CAN_VIEW_MACHINES">
+                  <Navigation>
+                    <DemoMaintenanceOverview />
+                  </Navigation>
+                </ProtectedRoute>
+              }
+            />
           )}
 
           {/* Public routes */}

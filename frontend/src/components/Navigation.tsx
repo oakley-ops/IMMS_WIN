@@ -126,7 +126,10 @@ const Navigation: React.FC<NavigationProps> = ({ children }) => {
       {
         label: 'External',
         items: [
-          { href: mcsUrl, external: true, label: 'MAINTENANCE SYSTEM', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' },
+          // In the hosted demo, MCS isn't deployed — link to the in-app overview instead of the external app
+          IS_DEMO
+            ? { path: '/maintenance-overview', label: 'MAINTENANCE SYSTEM', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' }
+            : { href: mcsUrl, external: true, label: 'MAINTENANCE SYSTEM', icon: <Campaign />, requiredPermission: 'CAN_VIEW_MACHINES' },
         ],
       },
     ];
