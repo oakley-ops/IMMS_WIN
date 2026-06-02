@@ -19,6 +19,10 @@ const allowedOrigins = process.env.CORS_ORIGINS
 
 const corsOptions = {
   origin: function (origin, callback) {
+    // Public demo deployments accept any origin (no real/sensitive data)
+    if (process.env.DEMO_MODE === 'true') {
+      return callback(null, true);
+    }
     // Allow requests with no origin (mobile apps, Postman, etc.) in development
     if (!origin && process.env.NODE_ENV !== 'production') {
       return callback(null, true);
