@@ -3,7 +3,7 @@ import React from 'react';
 import { Box, Typography, Button, Chip, Grid } from '@mui/material';
 import { motion, Variants } from 'framer-motion';
 import {
-  Layers, Settings, ShoppingCart, Wrench, Diamond, BarChart2, Package,
+  Layers, Settings, ShoppingCart, Wrench, Diamond, BarChart2, Package, Megaphone,
 } from 'lucide-react';
 import axiosInstance from '../utils/axios';
 
@@ -27,6 +27,7 @@ const FEATURES = [
   { icon: <Wrench size={17} />,      title: 'Work Orders',        desc: 'Assign, track & complete maintenance jobs' },
   { icon: <Diamond size={17} />,     title: 'Die Management',     desc: 'Die tracking, press fit & usage history' },
   { icon: <BarChart2 size={17} />,   title: 'Analytics',          desc: 'KPIs, low-stock alerts & inventory insights' },
+  { icon: <Megaphone size={17} />,   title: 'Maintenance Calls',  desc: 'Real-time dispatch, badge stations & downtime tracking' },
 ];
 
 const STATS = [

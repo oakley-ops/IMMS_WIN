@@ -9,8 +9,10 @@ import {
 } from 'lucide-react';
 
 const PRIMARY = '#FF6B35';
-const SURFACE = '#1E1E1E';
-const BORDER = '#2a2a2a';
+// This page renders inside the IMMS light content area — use light surfaces so
+// text stays readable (dark cards here made dark text unreadable).
+const SURFACE = '#ffffff';
+const BORDER = '#e5e7eb';
 
 type ArrowDir = 'up' | 'down' | 'left' | 'right';
 
