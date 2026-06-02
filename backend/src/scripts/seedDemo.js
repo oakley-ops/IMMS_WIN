@@ -166,9 +166,9 @@ async function seedPurchaseOrders(client) {
 
   const po1 = await client.query(`
     INSERT INTO purchase_orders
-      (po_number, supplier_id, status, requested_by, approved_by, created_at, updated_at)
+      (po_number, supplier_id, status, approval_status, requested_by, approved_by, created_at, updated_at)
     VALUES
-      ('PO-2026-0041', $1, 'received', 'demo-purchaser', 'demo-admin', $2, $3)
+      ('PO-2026-0041', $1, 'received', 'approved', 'demo-purchaser', 'demo-admin', $2, $3)
     RETURNING po_id`,
     [apexId, daysAgo(5), daysAgo(3)]
   );
@@ -180,9 +180,9 @@ async function seedPurchaseOrders(client) {
 
   const po2 = await client.query(`
     INSERT INTO purchase_orders
-      (po_number, supplier_id, status, requested_by, created_at, updated_at)
+      (po_number, supplier_id, status, approval_status, requested_by, created_at, updated_at)
     VALUES
-      ('PO-2026-0042', 3, 'pending', 'demo-purchaser', $1, $1)
+      ('PO-2026-0042', 3, 'pending', 'pending', 'demo-purchaser', $1, $1)
     RETURNING po_id`,
     [daysAgo(1)]
   );
@@ -194,17 +194,17 @@ async function seedPurchaseOrders(client) {
 
   await client.query(`
     INSERT INTO purchase_orders
-      (po_number, supplier_id, status, requested_by, created_at, updated_at)
+      (po_number, supplier_id, status, approval_status, requested_by, created_at, updated_at)
     VALUES
-      ('PO-2026-0043', 2, 'submitted', 'demo-purchaser', $1, $1)`,
+      ('PO-2026-0043', 2, 'submitted', 'pending', 'demo-purchaser', $1, $1)`,
     [daysAgo(0)]
   );
 
   const po4 = await client.query(`
     INSERT INTO purchase_orders
-      (po_number, supplier_id, status, requested_by, approved_by, created_at, updated_at)
+      (po_number, supplier_id, status, approval_status, requested_by, approved_by, created_at, updated_at)
     VALUES
-      ('PO-2026-0038', 2, 'received', 'demo-purchaser', 'demo-admin', $1, $2)
+      ('PO-2026-0038', 2, 'received', 'approved', 'demo-purchaser', 'demo-admin', $1, $2)
     RETURNING po_id`,
     [daysAgo(21), daysAgo(18)]
   );
@@ -324,6 +324,8 @@ async function seed() {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
+    // Ensure demo-required columns the app expects exist (idempotent)
+    await client.query(`ALTER TABLE purchase_orders ADD COLUMN IF NOT EXISTS approval_status VARCHAR(50)`);
     console.log('Truncating demo tables...');
     await truncateDemoTables(client);
     console.log('Seeding users...');
