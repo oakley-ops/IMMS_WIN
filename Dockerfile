@@ -14,6 +14,13 @@ RUN npm run build
 # Stage 2: production backend
 FROM node:22-alpine
 WORKDIR /app
+
+# Chromium for Puppeteer (server-side PDF generation: work orders, analytics)
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
+ENV PUPPETEER_SKIP_DOWNLOAD=true \
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
 COPY backend/package*.json ./
 RUN npm ci --omit=dev
 COPY backend/ ./
