@@ -5,7 +5,6 @@ import { motion, Variants } from 'framer-motion';
 import {
   Layers, Settings, ShoppingCart, Wrench, Diamond, BarChart2, Package,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import axiosInstance from '../utils/axios';
 
 const PRIMARY = '#FF6B35';
@@ -40,14 +39,18 @@ const STATS = [
 type DemoRole = 'admin' | 'purchaser' | 'viewer';
 
 const DemoLandingPage: React.FC = () => {
-  const navigate = useNavigate();
-
   const enterAs = async (role: DemoRole) => {
-    const res = await axiosInstance.post(`/api/v1/demo/login?role=${role}`);
-    const { token } = res.data;
-    localStorage.setItem('token', token);
-    axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-    navigate(role === 'purchaser' ? '/purchase-orders' : '/dashboard');
+    try {
+      const res = await axiosInstance.post(`/api/v1/demo/login?role=${role}`);
+      const { token } = res.data;
+      localStorage.setItem('token', token);
+      axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      // Full page load so AuthProvider re-initializes and picks up the new token
+      window.location.href = role === 'purchaser' ? '/purchase-orders' : '/dashboard';
+    } catch (err) {
+      console.error('Enter demo failed', err);
+      alert('Could not start the demo — the server may still be waking up. Please try again in a few seconds.');
+    }
   };
 
   return (
