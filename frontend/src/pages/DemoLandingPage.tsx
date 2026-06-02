@@ -44,6 +44,9 @@ const DemoLandingPage: React.FC = () => {
       const res = await axiosInstance.post(`/api/v1/demo/login?role=${role}`);
       const { token } = res.data;
       localStorage.setItem('token', token);
+      // Keep the token across the full-page reload (AuthContext wipes it on
+      // unload unless rememberMe is set — desktop fires beforeunload, mobile often doesn't)
+      localStorage.setItem('rememberMe', 'true');
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       // Full page load so AuthProvider re-initializes and picks up the new token
       window.location.href = role === 'purchaser' ? '/purchase-orders' : '/dashboard';

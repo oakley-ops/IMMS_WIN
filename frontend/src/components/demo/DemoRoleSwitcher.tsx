@@ -28,6 +28,8 @@ const DemoRoleSwitcher: React.FC<Props> = ({ currentRole }) => {
       const res = await axiosInstance.post(`/api/v1/demo/login?role=${role}`);
       const { token } = res.data;
       localStorage.setItem('token', token);
+      // Persist across the reload — AuthContext wipes the token on unload unless rememberMe is set
+      localStorage.setItem('rememberMe', 'true');
       axiosInstance.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       window.location.href = location.pathname;
     } catch (err) {
