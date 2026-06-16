@@ -530,6 +530,20 @@ io.on('connection', (socket) => {
 // Make socket.io available globally
 global.io = io;
 
+// Notification layer (inventory + PO email/SMS)
+if (process.env.NOTIFICATIONS_ENABLED !== 'false') {
+  try {
+    const { createNotifications } = require('./src/services/notifications');
+    const { pool } = require('./db');
+    const notifications = createNotifications(pool);
+    global.notifications = notifications.service; // used by PO status-change triggers
+    notifications.startSchedulers();
+    console.log('[notifications] layer initialized');
+  } catch (e) {
+    console.error('[notifications] failed to initialize:', e.message);
+  }
+}
+
 // Register nightly reseed cron
 if (process.env.DEMO_MODE === 'true') {
   const cron = require('node-cron');
