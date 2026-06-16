@@ -93,10 +93,16 @@ router.get('/events', authenticateToken, roleAuthorization(ROLES.ALL), (req, res
 
 // Helper function to notify clients of inventory changes
 const notifyInventoryChange = () => {
-  const data = JSON.stringify({ type: 'inventory_change', timestamp: new Date().toISOString() });
+  const payload = { type: 'inventory_change', timestamp: new Date().toISOString() };
+  const data = JSON.stringify(payload);
+  // Notify SSE clients connected to /events
   clients.forEach(client => {
     client.write(`data: ${data}\n\n`);
   });
+  // Notify Socket.io clients (e.g. the dashboard) so inventory alerts refresh in real time
+  if (global.io) {
+    global.io.emit('stock-update', payload);
+  }
 };
 
 // Get all parts with pagination and filtering - accessible to all authenticated users
@@ -476,6 +482,7 @@ router.post('/', authenticateToken, roleAuthorization(ROLES.MODIFY_PARTS), async
     );
     
     await executeWithRetry('COMMIT');
+    notifyInventoryChange();
     res.status(201).json(result.rows[0]);
   } catch (error) {
     await executeWithRetry('ROLLBACK');
@@ -599,6 +606,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
     }
     
     await executeWithRetry('COMMIT');
+    notifyInventoryChange();
     console.log('Updated part result:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (error) {
@@ -893,6 +901,7 @@ router.post('/bulk', async (req, res) => {
     }
 
     await client.query('COMMIT');
+    notifyInventoryChange();
     console.log('Successfully imported parts:', results.length);
     res.json({
       message: `Successfully imported ${results.length} parts`,
