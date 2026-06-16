@@ -6,7 +6,7 @@ function makeService(channels) {
   const pool = {
     query: jest.fn(async (text, params) => {
       queries.push({ text, params });
-      if (/FROM users/i.test(text)) {
+      if (/auth\.users/i.test(text)) {
         return { rows: [
           { email: 'admin@x.com', phone: '+15555550001' },
           { email: 'buyer@x.com', phone: null },

@@ -16,8 +16,12 @@ class NotificationService {
   }
 
   async resolveRecipients() {
+    // Email lives in auth.users; role + phone live in public.users (joined on user_id).
     const { rows } = await this.pool.query(
-      `SELECT email, phone FROM users WHERE role = ANY($1) AND email IS NOT NULL`,
+      `SELECT a.email, p.phone
+       FROM public.users p
+       JOIN auth.users a ON a.user_id = p.user_id
+       WHERE p.role = ANY($1) AND a.email IS NOT NULL`,
       [RECIPIENT_ROLES]
     );
     return rows;
