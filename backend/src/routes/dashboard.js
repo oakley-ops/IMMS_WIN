@@ -23,7 +23,7 @@ router.get('/', authMiddleware, async (req, res) => {
         m.name as machine_name,
         CASE 
           WHEN p.quantity = 0 THEN 'out_of_stock'
-          WHEN p.quantity < p.minimum_quantity THEN 'low_stock'
+          WHEN p.quantity <= p.minimum_quantity THEN 'low_stock'
           ELSE 'in_stock'
         END as stock_status
       FROM parts p
@@ -36,8 +36,8 @@ router.get('/', authMiddleware, async (req, res) => {
     const lowStockQuery = `
       SELECT COUNT(*)
       FROM parts
-      WHERE quantity > 0 
-      AND quantity < minimum_quantity
+      WHERE quantity > 0
+      AND quantity <= minimum_quantity
       AND status = 'active'
     `;
     
@@ -69,7 +69,7 @@ router.get('/', authMiddleware, async (req, res) => {
       SELECT 
         (SELECT COUNT(*) FROM parts WHERE status = 'active') as total_parts,
         (SELECT COUNT(*) FROM machines) as total_machines,
-        (SELECT COUNT(*) FROM parts WHERE quantity > 0 AND quantity < minimum_quantity AND status = 'active') as low_stock_count,
+        (SELECT COUNT(*) FROM parts WHERE quantity > 0 AND quantity <= minimum_quantity AND status = 'active') as low_stock_count,
         (SELECT COUNT(*) FROM parts WHERE quantity = 0 AND status = 'active') as out_of_stock_count
     `;
 
