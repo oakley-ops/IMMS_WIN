@@ -70,6 +70,7 @@ import { partsApi } from '../../services/api';
 import { Part } from '../../types/purchaseOrder';
 import { Autocomplete } from '@mui/material';
 import axios from 'axios';
+import axiosInstance from '../../utils/axios';
 
 // Define interface for email tracking records
 interface EmailTrackingRecord {
@@ -817,48 +818,25 @@ const PurchaseOrderDetail: React.FC = () => {
             throw new Error('Failed to convert PDF to base64');
           }
           
-          // Send to backend
-          const response = await fetch('/api/v1/email/send-email', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              pdfBase64: base64data,
-              recipient: recipientEmail,
-              poNumber: purchaseOrder.po_number,
-              poId: purchaseOrder.po_id,
-              notes: emailNotes
-            }),
+          // Send to backend via the configured axios instance (direct to the API, with auth).
+          // A relative fetch() routes through the CRA dev proxy, which rewrites the Origin
+          // header to the proxy target and trips the backend CORS check (500 "Something broke!").
+          await axiosInstance.post('/api/v1/email/send-email', {
+            pdfBase64: base64data,
+            recipient: recipientEmail,
+            poNumber: purchaseOrder.po_number,
+            poId: purchaseOrder.po_id,
+            notes: emailNotes
           });
-          
-          // Store the response text first before attempting to parse it
-          const responseText = await response.text();
-          console.log('Raw response:', responseText);
-          
-          let result;
-          try {
-            // Now parse the stored text as JSON
-            result = JSON.parse(responseText);
-          } catch (err) {
-            console.error('Failed to parse response as JSON:', err);
-            console.error('Response text:', responseText);
-            throw new Error('Server returned invalid JSON response');
-          }
-          
-          if (response.ok) {
-            setSnackbarMessage('Purchase order PDF sent successfully');
-            setSnackbarSeverity('success');
-          } else {
-            console.error('Server responded with error:', result);
-            throw new Error(result.error || 'Failed to send email');
-          }
-        } catch (error: unknown) {
+
+          setSnackbarMessage('Purchase order PDF sent successfully');
+          setSnackbarSeverity('success');
+        } catch (error: any) {
           console.error('Error in email sending process:', error);
-          let errorMessage = 'Unknown error';
-          if (error instanceof Error) {
-            errorMessage = error.message;
-          }
+          const errorMessage = error?.response?.data?.error
+            || error?.response?.data?.details
+            || error?.message
+            || 'Unknown error';
           setSnackbarMessage(`Failed to send email: ${errorMessage}`);
           setSnackbarSeverity('error');
         } finally {
