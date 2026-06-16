@@ -673,6 +673,18 @@ class PurchaseOrderController {
         // Don't fail the whole request if document generation fails
       }
 
+      // Fire notification for this status change (fire-and-forget)
+      try {
+        const { poEventForStatus } = require('../services/notifications/poEvents');
+        const evt = poEventForStatus(status);
+        if (evt && global.notifications) {
+          global.notifications.notify(evt, { po_id: poId, po_number: result.rows[0].po_number })
+            .catch(e => console.error('[notifications] PO notify failed:', e.message));
+        }
+      } catch (e) {
+        console.error('[notifications] PO trigger error:', e.message);
+      }
+
       res.json(result.rows[0]);
     } catch (error) {
       console.error(error);

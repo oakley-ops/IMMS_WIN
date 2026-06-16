@@ -384,7 +384,7 @@ class EmailTrackingService {
       
       // Get current purchase order status
       const poResult = await client.query(
-        'SELECT status, approval_status FROM purchase_orders WHERE po_id = $1',
+        'SELECT status, approval_status, po_number FROM purchase_orders WHERE po_id = $1',
         [poId]
       );
       
@@ -394,6 +394,7 @@ class EmailTrackingService {
       
       const currentStatus = poResult.rows[0].status;
       const currentApprovalStatus = poResult.rows[0].approval_status;
+      const poNumber = poResult.rows[0].po_number;
       
       // Define final statuses that should not be overridden by email processing
       const finalStatuses = ['received', 'canceled', 'on_order'];
@@ -463,6 +464,18 @@ class EmailTrackingService {
         );
         
         console.log('PO update result:', updateResult.rows[0]);
+
+        // Fire notification for this email-driven status change (fire-and-forget)
+        try {
+          const { poEventForStatus } = require('./notifications/poEvents');
+          const evt = poEventForStatus(poApprovalStatus);
+          if (evt && global.notifications) {
+            global.notifications.notify(evt, { po_id: poId, po_number: poNumber })
+              .catch(e => console.error('[notifications] PO email-trigger failed:', e.message));
+          }
+        } catch (e) {
+          console.error('[notifications] PO email-trigger error:', e.message);
+        }
       } else {
         console.log(`PO ${poId} already has status='${currentStatus}' and approval_status='${currentApprovalStatus}' - skipping update`);
       }
