@@ -669,7 +669,8 @@ class PurchaseOrderController {
           await this.documentService.generateApprovalDocument(po, username);
         }
       } catch (docError) {
-        console.error(`Error generating document for status ${status}:`, docError);
+        const docType = status === 'received' ? 'receipt' : status === 'approved' ? 'approval' : status;
+        console.error(`Error generating ${docType} document:`, docError);
         // Don't fail the whole request if document generation fails
       }
 
