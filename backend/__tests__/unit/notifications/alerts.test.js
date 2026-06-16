@@ -36,3 +36,45 @@ describe('computeAlerts', () => {
     ]);
   });
 });
+
+const InventoryReconciler = require('../../../src/services/notifications/InventoryReconciler');
+
+function reconcilerPool({ parts, state }) {
+  const upserts = [];
+  const pool = {
+    query: jest.fn(async (text, params) => {
+      if (/FROM parts/i.test(text)) return { rows: parts };
+      if (/COUNT\(\*\)/i.test(text)) return { rows: [{ count: String(state.length) }] };
+      if (/FROM part_alert_state/i.test(text)) return { rows: state };
+      if (/INSERT INTO part_alert_state/i.test(text)) { upserts.push(params); return { rows: [] }; }
+      return { rows: [] };
+    }),
+  };
+  return { pool, upserts };
+}
+
+describe('InventoryReconciler', () => {
+  test('reconcile fires notify on worsening transition and upserts state', async () => {
+    const { pool, upserts } = reconcilerPool({
+      parts: [{ part_id: 1, name: 'A', quantity: 0, minimum_quantity: 2 }],
+      state: [{ part_id: 1, last_status: 'in_stock' }],
+    });
+    const notify = jest.fn().mockResolvedValue();
+    const r = new InventoryReconciler({ pool, notificationService: { notify } });
+    await r.reconcile();
+    expect(notify).toHaveBeenCalledWith('inventory.out', expect.objectContaining({ part_id: 1 }));
+    expect(upserts).toEqual([[1, 'out_of_stock']]);
+  });
+
+  test('seedIfEmpty seeds silently when table empty', async () => {
+    const { pool, upserts } = reconcilerPool({
+      parts: [{ part_id: 1, name: 'A', quantity: 0, minimum_quantity: 2 }],
+      state: [],
+    });
+    const notify = jest.fn();
+    const r = new InventoryReconciler({ pool, notificationService: { notify } });
+    await r.seedIfEmpty();
+    expect(notify).not.toHaveBeenCalled();      // seeding does not alert
+    expect(upserts).toEqual([[1, 'out_of_stock']]);
+  });
+});
