@@ -6,16 +6,17 @@ require('dotenv').config();
 
 const app = express();
 
-// CORS Configuration - restrict to allowed origins
-const allowedOrigins = process.env.CORS_ORIGINS
-  ? process.env.CORS_ORIGINS.split(',')
-  : [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'http://10.1.10.50:3001',
-      'http://10.1.10.171:3001'
-    ];
+// CORS Configuration - single source of truth for allowed origins
+const { allowedOrigins } = require('./config/corsOrigins');
+
+// Distinct error type so the error handler can return a clear 403 instead of a generic 500
+class CorsError extends Error {
+  constructor(origin) {
+    super(`Origin ${origin || '(none)'} is not allowed by CORS`);
+    this.name = 'CorsError';
+    this.status = 403;
+  }
+}
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -31,7 +32,7 @@ const corsOptions = {
       callback(null, true);
     } else {
       console.warn(`CORS blocked request from origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      callback(new CorsError(origin));
     }
   },
   credentials: true,
@@ -77,6 +78,10 @@ app.use('/api/v1/work-orders', workOrdersRouter);  // Mount work orders routes
 
 // Error handling middleware
 app.use((err, req, res, next) => {
+  // CORS rejections get a clear, specific 403 instead of a generic 500
+  if (err instanceof CorsError) {
+    return res.status(403).json({ error: err.message });
+  }
   console.error(err.stack);
   res.status(500).json({ error: 'Something broke!' });
 });

@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const { allowedOrigins } = require('./src/config/corsOrigins');
 const multer = require('multer');
 const { parse } = require('csv-parse');
 const fs = require('fs');
@@ -39,18 +40,7 @@ const db = require('./db');
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: [
-      'http://localhost:3000', 
-      'http://localhost:3002',
-      'http://10.1.10.171:3000',
-      'http://10.1.10.171:3002',
-      'http://10.1.10.50:3000',
-      'http://10.1.10.50:3001',
-      'http://10.1.10.50:3002',
-      'http://192.168.50.1:3000',
-      'http://192.168.50.1:3001',
-      'http://192.168.50.1:3002'
-    ],
+    origin: allowedOrigins,
     methods: ['GET', 'POST'],
     credentials: true,
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -77,18 +67,7 @@ app.use(morgan('dev'));
 
 // Apply CORS middleware before other route handlers
 app.use(cors({
-  origin: [
-    "http://localhost:3000", 
-    "http://localhost:3001",
-    "http://localhost:3002",
-    "http://10.1.10.171:3000",
-    "http://10.1.10.171:3002",
-    "http://10.1.10.50:3000",
-    "http://10.1.10.50:3001",
-    "http://10.1.10.50:3002",
-    "http://192.168.50.1:3000",
-    "http://192.168.50.1:3002"
-  ],
+  origin: allowedOrigins,
   methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
