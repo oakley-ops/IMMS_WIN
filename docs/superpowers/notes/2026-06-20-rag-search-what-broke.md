@@ -64,7 +64,10 @@ failure modes hit while building, not just the happy path. These are the real on
   unauthenticated → 401. Note: `index.js` remounts routes but imports `./src/app`, so the
   `/api/v1/search` mount there is what serves.
 
+## Done since (browser E2E + pgvector)
+- **Browser E2E** verified: Smart Search on `/parts` returns ranked results in the real UI (screenshot delivered).
+- **pgvector enabled via Docker** (chosen because the native EDB PG 17 has no pgvector and the MSVC source build needs VS Build Tools, which weren't installed). `pgvector/pgvector:pg17` container `imms-pgvector` on `:5433`; native DB migrated in via `pg_dump`/`pg_restore` (619 parts, clean). `search_documents.embedding` is now `vector(384)` with an **HNSW cosine index** (`search_documents_vec_idx`); the indexer casts `::vector` and `vectorSearch.js` uses `<=>` kNN. The app's `.env` `DATABASE_URL` points at the container (native URL preserved commented in `.env`). Verified over HTTP (`q=ball bearing` → ranked results, `degraded:null`) and all 9 search tests pass against it.
+
 ## Still open (optional / future)
-- Install pgvector for a real ANN index (swap `real[]` → `vector(384)` + HNSW).
 - Phase-2 corpus: work-order notes, then PDF chunking with page-level citations.
-- Browser/E2E test of the Smart Search panel.
+- The app now depends on the `imms-pgvector` container being up (`docker start imms-pgvector`). The email-tracking sub-service still uses `DB_*` env vars → native `:5432`; point those at the container too for a full switch, or add an adaptive `vector`/`real[]` fallback so the code also runs on a non-pgvector PG.
