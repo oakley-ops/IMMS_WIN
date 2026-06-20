@@ -70,6 +70,8 @@ Expected: two rows (`vector`, `pg_trgm`) with a non-null `default_version`.
 - `pg_trgm` present, `vector` missing → install pgvector (prebuilt Windows binary for the PG major version, or build from source), re-run Step 1.
 - `vector` not installable at all → switch the vector column to `real[]` and compute cosine in SQL/JS per the spec's fallback (changes Task 2 DDL + Task 8 query only; everything else holds). Note the deviation in the plan and continue.
 
+**Outcome (2026-06-20):** `pg_trgm` available (v1.6); **pgvector NOT available** on PostgreSQL 17.4 (EDB Windows) — absent from `pg_available_extensions`, and enabling it needs an MSVC source build. Per the user's call, proceeding with the **`real[]` + in-SQL cosine fallback**: Task 2 uses `embedding real[]` (no HNSW index), Task 8 `vectorSearch` computes cosine via `unnest(embedding, $query)` dot-product. Revisit pgvector when the corpus grows or on a Linux deploy. Everything else in the plan is unchanged.
+
 No commit (no files changed).
 
 ---
