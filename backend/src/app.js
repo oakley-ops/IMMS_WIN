@@ -60,6 +60,7 @@ const analyticsRouter = require('./routes/analytics');
 const milestonesRouter = require('./routes/milestones');
 const tasksRouter = require('./routes/tasks');
 const workOrdersRouter = require('./routes/workOrders');
+const searchRouter = require('./routes/search');
 
 // Routes
 app.use('/api/v1/parts', partsRouter);
@@ -75,6 +76,7 @@ app.use('/api/v1/analytics', analyticsRouter);  // Mount analytics routes
 app.use('/api/v1/milestones', milestonesRouter);  // Mount milestones routes
 app.use('/api/v1/tasks', tasksRouter);  // Mount tasks routes
 app.use('/api/v1/work-orders', workOrdersRouter);  // Mount work orders routes
+app.use('/api/v1/search', searchRouter);  // Mount hybrid search route
 
 // Error handling middleware
 app.use((err, req, res, next) => {
