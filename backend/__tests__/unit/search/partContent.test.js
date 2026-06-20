@@ -6,7 +6,7 @@ describe('buildPartContent', () => {
       name: 'Hydraulic Fitting',
       description: '1/4" NPT brass',
       manufacturer_part_number: 'BR-14NPT',
-      internal_part_number: null,
+      barcode: null,
       supplier: 'Acme',
       location: 'Bin A3',
       notes: null,
@@ -14,9 +14,9 @@ describe('buildPartContent', () => {
     expect(content).toContain('Hydraulic Fitting');
     expect(content).toContain('MPN: BR-14NPT');
     expect(content).toContain('Supplier: Acme');
-    // internal_part_number was null -> no "PN: " line (must not false-match "MPN:")
-    expect(content.split('\n').some((l) => l.startsWith('PN:'))).toBe(false);
-    expect(content).not.toContain('Notes:');
+    expect(content).toContain('Location: Bin A3');
+    expect(content).not.toContain('Barcode:'); // barcode was null
+    expect(content).not.toContain('Notes:'); // notes was null
   });
 });
 
