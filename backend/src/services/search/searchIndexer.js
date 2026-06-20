@@ -29,16 +29,17 @@ async function indexPartById(partId) {
   );
   if (existing.rows[0] && existing.rows[0].content_hash === hash) return; // unchanged
 
-  const vec = await embed(content); // JS number[] -> bound to real[] column
+  const vec = await embed(content);
+  const vecLiteral = `[${vec.join(',')}]`; // pgvector text input format
   await executeWithRetry(
     `INSERT INTO search_documents
        (tenant_id, source_type, source_id, content, tsv, embedding, content_hash, updated_at)
-     VALUES ($1,$2,$3,$4, to_tsvector('english',$4), $5, $6, now())
+     VALUES ($1,$2,$3,$4, to_tsvector('english',$4), $5::vector, $6, now())
      ON CONFLICT (tenant_id, source_type, source_id)
      DO UPDATE SET content=EXCLUDED.content, tsv=EXCLUDED.tsv,
                    embedding=EXCLUDED.embedding, content_hash=EXCLUDED.content_hash,
                    updated_at=now()`,
-    [tenantId, SOURCE, partId, content, vec, hash]
+    [tenantId, SOURCE, partId, content, vecLiteral, hash]
   );
 }
 
