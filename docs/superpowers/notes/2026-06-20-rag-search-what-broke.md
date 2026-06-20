@@ -52,8 +52,19 @@ failure modes hit while building, not just the happy path. These are the real on
 - "green belt" → HOTSTAMP GREEN BELT, then other belts (semantic neighbors).
 - `degraded: null` on all — full lexical + vector + rerank pipeline healthy.
 
-## Still open
-- **Frontend UI wiring** — typed client `frontend/src/services/searchApi.ts` is in place;
-  surfacing it in the UI is the remaining step (placement is a UX decision; frontend
-  component layout differs from the documented `pages/`+`components/` `.tsx` structure and
-  needs mapping before a safe edit).
+## Done since (frontend + live verification)
+- **Frontend wired.** The orphaned `components/PartSearch.tsx` (it fetched ALL parts and
+  filtered client-side with `.includes()`, and referenced the dropped `internal_part_number`)
+  was rewritten to call the hybrid endpoint via `services/searchApi.ts`, and mounted as a
+  "Smart Search" panel above the existing list on the Parts page (`pages/Parts.tsx`, `/` route,
+  additive — feature parity kept). The search hydrate was enriched to return the card fields
+  (`minimum_quantity`, `unit_cost`, `supplier`, `image_url`). `tsc --noEmit`: 0 errors.
+- **HTTP route verified live** (ran on port 4099 with a minted JWT): authed
+  `GET /api/v1/search?q=bearing` → 200, `degraded:null`, ranked results with enriched fields;
+  unauthenticated → 401. Note: `index.js` remounts routes but imports `./src/app`, so the
+  `/api/v1/search` mount there is what serves.
+
+## Still open (optional / future)
+- Install pgvector for a real ANN index (swap `real[]` → `vector(384)` + HNSW).
+- Phase-2 corpus: work-order notes, then PDF chunking with page-level citations.
+- Browser/E2E test of the Smart Search panel.
