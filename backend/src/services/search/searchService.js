@@ -12,7 +12,8 @@ async function hydrate(sourceIds, tenantId) {
   if (!sourceIds.length) return [];
   const { rows } = await executeWithRetry(
     `SELECT sd.source_id, sd.content, p.part_id, p.name, p.description,
-            p.manufacturer_part_number, p.barcode, p.quantity,
+            p.manufacturer_part_number, p.barcode, p.quantity, p.minimum_quantity,
+            p.unit_cost, p.supplier, p.image_url,
             COALESCE(pl.name, p.location) AS location
      FROM search_documents sd
      JOIN parts p ON p.part_id = sd.source_id
@@ -62,6 +63,10 @@ async function search({ q, tenantId, limit = 10 }) {
       manufacturer_part_number: c.manufacturer_part_number,
       barcode: c.barcode,
       quantity: c.quantity,
+      minimum_quantity: c.minimum_quantity,
+      unit_cost: c.unit_cost,
+      supplier: c.supplier,
+      image_url: c.image_url,
       location: c.location,
       citation: { type: 'part', id: c.part_id, href: `/parts/${c.part_id}` },
     })),

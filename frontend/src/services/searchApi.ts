@@ -10,6 +10,10 @@ export interface SearchHit {
   manufacturer_part_number?: string;
   barcode?: string;
   quantity?: number;
+  minimum_quantity?: number;
+  unit_cost?: string | number;
+  supplier?: string;
+  image_url?: string;
   location?: string;
   citation: { type: string; id: number; href: string };
 }
