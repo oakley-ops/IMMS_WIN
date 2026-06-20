@@ -8,6 +8,7 @@ const { executeWithRetry, pool } = require('../../db');
 const EventEmitter = require('events');
 const PartController = require('../controllers/PartController');
 const PartImageService = require('../services/PartImageService');
+const searchIndexer = require('../services/search/searchIndexer');
 
 // Define role permissions
 const ROLES = {
@@ -483,6 +484,9 @@ router.post('/', authenticateToken, roleAuthorization(ROLES.MODIFY_PARTS), async
     
     await executeWithRetry('COMMIT');
     notifyInventoryChange();
+    // keep the hybrid-search index fresh; indexing failure must not fail the write
+    searchIndexer.indexPartById(result.rows[0].part_id)
+      .catch((e) => console.error('search index (create) failed:', e.message));
     res.status(201).json(result.rows[0]);
   } catch (error) {
     await executeWithRetry('ROLLBACK');
@@ -607,6 +611,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
     
     await executeWithRetry('COMMIT');
     notifyInventoryChange();
+    searchIndexer.indexPartById(result.rows[0].part_id)
+      .catch((e) => console.error('search index (update) failed:', e.message));
     console.log('Updated part result:', result.rows[0]);
     res.json(result.rows[0]);
   } catch (error) {
@@ -630,6 +636,8 @@ router.delete('/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Part not found' });
     }
     
+    searchIndexer.removePart(parseInt(id, 10))
+      .catch((e) => console.error('search index (delete) failed:', e.message));
     res.json({ message: 'Part deleted successfully' });
   } catch (error) {
     console.error('Error deleting part:', error);
