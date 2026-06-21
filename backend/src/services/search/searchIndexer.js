@@ -2,6 +2,7 @@ const { executeWithRetry } = require('../../../db');
 const { logger } = require('../../utils/logger');
 const { embed } = require('./embedder');
 const { buildPartContent, contentHash } = require('./partContent');
+const { pgvectorAvailable } = require('./vectorMode');
 
 const SOURCE = 'part';
 
@@ -30,16 +31,20 @@ async function indexPartById(partId) {
   if (existing.rows[0] && existing.rows[0].content_hash === hash) return; // unchanged
 
   const vec = await embed(content);
-  const vecLiteral = `[${vec.join(',')}]`; // pgvector text input format
+  // pgvector wants a '[...]' literal cast to ::vector; a real[] column takes the JS array directly.
+  const usePg = await pgvectorAvailable();
+  const embeddingParam = usePg ? `[${vec.join(',')}]` : vec;
+  const embeddingExpr = usePg ? '$5::vector' : '$5';
+
   await executeWithRetry(
     `INSERT INTO search_documents
        (tenant_id, source_type, source_id, content, tsv, embedding, content_hash, updated_at)
-     VALUES ($1,$2,$3,$4, to_tsvector('english',$4), $5::vector, $6, now())
+     VALUES ($1,$2,$3,$4, to_tsvector('english',$4), ${embeddingExpr}, $6, now())
      ON CONFLICT (tenant_id, source_type, source_id)
      DO UPDATE SET content=EXCLUDED.content, tsv=EXCLUDED.tsv,
                    embedding=EXCLUDED.embedding, content_hash=EXCLUDED.content_hash,
                    updated_at=now()`,
-    [tenantId, SOURCE, partId, content, vecLiteral, hash]
+    [tenantId, SOURCE, partId, content, embeddingParam, hash]
   );
 }
 
