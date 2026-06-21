@@ -338,6 +338,26 @@ async function seedProjects(client) {
   );
 }
 
+async function buildSearchIndex() {
+  // Build the Smart Search index for the freshly-seeded demo parts. Non-fatal:
+  // a search-index hiccup must never break the demo reseed.
+  try {
+    const { pool: appPool } = require('../../db');
+    const { reindexAll } = require('../services/search/searchIndexer');
+    const migrationSql = fs.readFileSync(
+      path.join(__dirname, '../../migrations/20260620_create_search_documents.sql'),
+      'utf8'
+    );
+    console.log('Building Smart Search index...');
+    await appPool.query(migrationSql); // ensure search_documents exists (adaptive: vector(384) or real[])
+    await appPool.query("DELETE FROM search_documents WHERE source_type = 'part'");
+    const n = await reindexAll(1);
+    console.log(`Smart Search index built: ${n} parts.`);
+  } catch (e) {
+    console.error('WARNING: Smart Search index build failed (demo still seeded):', e.message);
+  }
+}
+
 async function seed() {
   const client = await pool.connect();
   try {
@@ -378,6 +398,8 @@ async function seed() {
     client.release();
     await pool.end();
   }
+  await buildSearchIndex();
+  process.exit(0);
 }
 
 seed();
