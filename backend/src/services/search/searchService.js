@@ -25,7 +25,8 @@ async function hydrate(sourceIds, tenantId) {
   return sourceIds.map((id) => byId.get(id)).filter(Boolean); // preserve fused order
 }
 
-async function search({ q, tenantId, limit = 10 }) {
+// channels -> RRF -> cross-encoder rerank. Returns { ordered: hydrated rows (best first), degraded }.
+async function rankCandidates({ q, tenantId }) {
   const degraded = [];
   const [lex, vec] = await Promise.all([
     lexicalSearch({ q, tenantId, limit: CANDIDATES }).catch((e) => {
@@ -41,22 +42,34 @@ async function search({ q, tenantId, limit = 10 }) {
   ]);
 
   const fusedIds = rrfFuse([lex, vec]).slice(0, RERANK_POOL).map((f) => f.source_id);
-  let candidates = await hydrate(fusedIds, tenantId); // already in fused order
+  let candidates = await hydrate(fusedIds, tenantId);
 
   if (q && candidates.length) {
     try {
       const scores = await reranker.score(q, candidates.map((c) => c.content));
       candidates = candidates
-        .map((c, i) => ({ ...c, rerank_score: scores[i] }))
-        .sort((a, b) => b.rerank_score - a.rerank_score);
+        .map((c, i) => ({ ...c, _rerank: scores[i] }))
+        .sort((a, b) => b._rerank - a._rerank);
     } catch (e) {
       logger.error('search.rerank failed', { error: e.message });
       degraded.push('rerank'); // keep RRF order
     }
   }
 
+  return { ordered: candidates, degraded: degraded.length ? degraded : null };
+}
+
+// Ordered part_id[] for a query (used by the Parts list to rank the table).
+async function rankPartIds({ q, tenantId, limit = 25 }) {
+  const { ordered, degraded } = await rankCandidates({ q, tenantId });
+  return { ids: ordered.slice(0, limit).map((c) => c.part_id), degraded };
+}
+
+// Card-shaped results for GET /api/v1/search.
+async function search({ q, tenantId, limit = 10 }) {
+  const { ordered, degraded } = await rankCandidates({ q, tenantId });
   return {
-    results: candidates.slice(0, limit).map((c) => ({
+    results: ordered.slice(0, limit).map((c) => ({
       part_id: c.part_id,
       name: c.name,
       description: c.description,
@@ -70,8 +83,8 @@ async function search({ q, tenantId, limit = 10 }) {
       location: c.location,
       citation: { type: 'part', id: c.part_id, href: `/parts/${c.part_id}` },
     })),
-    degraded: degraded.length ? degraded : null,
+    degraded,
   };
 }
 
-module.exports = { search };
+module.exports = { search, rankPartIds };

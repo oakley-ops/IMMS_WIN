@@ -9,6 +9,8 @@ const EventEmitter = require('events');
 const PartController = require('../controllers/PartController');
 const PartImageService = require('../services/PartImageService');
 const searchIndexer = require('../services/search/searchIndexer');
+const { rankPartIds } = require('../services/search/searchService');
+const { currentTenantId } = require('../middleware/tenantScope');
 
 // Define role permissions
 const ROLES = {
@@ -121,6 +123,40 @@ router.get('/', authenticateToken, roleAuthorization(ROLES.ALL), async (req, res
     const location = req.query.location || '';
     const minQuantity = req.query.minQuantity ? parseInt(req.query.minQuantity) : null;
     const maxQuantity = req.query.maxQuantity ? parseInt(req.query.maxQuantity) : null;
+
+    // Smart search: when a free-text query is present, rank via the hybrid search
+    // module and return parts in the table's shape (relevance order). Falls back to
+    // the ILIKE path below on any error so search never hard-fails.
+    if (search) {
+      try {
+        const tenantId = currentTenantId(req);
+        const { ids } = await rankPartIds({ q: search, tenantId, limit: 100 });
+        const total = ids.length;
+        const pageIds = ids.slice(page * limit, page * limit + limit);
+        if (pageIds.length === 0) {
+          return res.json({ items: [], total, page, limit, totalPages: Math.ceil(total / limit), queryTime: Date.now() - startTime });
+        }
+        const ranked = await executeWithRetry(
+          `SELECT
+             p.part_id, p.name, p.description, p.manufacturer_part_number,
+             p.quantity::integer, p.minimum_quantity::integer,
+             pl.name as location, CAST(p.unit_cost AS NUMERIC) as unit_cost,
+             CAST(p.unit_cost AS NUMERIC) as cost, p.supplier as manufacturer,
+             p.image_url, p.created_at as last_ordered_date, p.updated_at,
+             COALESCE(p.status, 'active') as status, p.notes
+           FROM parts p
+           LEFT JOIN part_locations pl ON p.location_id = pl.location_id
+           WHERE p.part_id = ANY($1)`,
+          [pageIds]
+        );
+        const byId = new Map(ranked.rows.map((r) => [r.part_id, r]));
+        const items = pageIds.map((id) => byId.get(id)).filter(Boolean);
+        return res.json({ items, total, page, limit, totalPages: Math.ceil(total / limit), queryTime: Date.now() - startTime });
+      } catch (e) {
+        console.error('Smart search failed; falling back to ILIKE:', e.message);
+        // fall through to the existing ILIKE path
+      }
+    }
 
     // Build the WHERE clause based on filters
     const whereConditions = ['p.status = $1'];

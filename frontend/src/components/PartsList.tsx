@@ -1223,7 +1223,7 @@ const PartsList: React.FC = () => {
           <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>
             <TextField
               size="small"
-              placeholder="Search by name, part number, location..."
+              placeholder="Search by description, part number, or what it's used for…"
               value={searchTerm}
               onChange={handleSearch}
               sx={{ flexGrow: 1, minWidth: 280 }}

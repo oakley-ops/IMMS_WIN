@@ -6,7 +6,6 @@ import { Provider } from 'react-redux';
 import { store } from '../store/store';
 import PartsList from '../components/PartsList';
 import EditPartForm from '../components/EditPartForm';
-import PartSearch from '../components/PartSearch';
 
 interface Part {
   part_id: number;
@@ -25,7 +24,7 @@ const Parts: React.FC = () => {
     <Box>
       <Provider store={store}>
         <Routes>
-          <Route path="/" element={<><PartSearch /><PartsList /></>} />
+          <Route path="/" element={<PartsList />} />
           <Route path="/:id/edit" element={<EditPartForm />} />
           <Route path="/add" element={<EditPartForm />} />
         </Routes>
