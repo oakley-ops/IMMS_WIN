@@ -64,10 +64,11 @@ failure modes hit while building, not just the happy path. These are the real on
   unauthenticated → 401. Note: `index.js` remounts routes but imports `./src/app`, so the
   `/api/v1/search` mount there is what serves.
 
-## Done since (browser E2E + pgvector)
+## Done since (browser E2E; pgvector trial → reverted to native)
 - **Browser E2E** verified: Smart Search on `/parts` returns ranked results in the real UI (screenshot delivered).
-- **pgvector enabled via Docker** (chosen because the native EDB PG 17 has no pgvector and the MSVC source build needs VS Build Tools, which weren't installed). `pgvector/pgvector:pg17` container `imms-pgvector` on `:5433`; native DB migrated in via `pg_dump`/`pg_restore` (619 parts, clean). `search_documents.embedding` is now `vector(384)` with an **HNSW cosine index** (`search_documents_vec_idx`); the indexer casts `::vector` and `vectorSearch.js` uses `<=>` kNN. The app's `.env` `DATABASE_URL` points at the container (native URL preserved commented in `.env`). Verified over HTTP (`q=ball bearing` → ranked results, `degraded:null`) and all 9 search tests pass against it.
+- **Tried pgvector via Docker, then reverted to native — on purpose.** A `pgvector/pgvector:pg17` container was stood up and the DB migrated in (pg_dump/restore, 619 parts), proving the pgvector path works. But pointing the *app* at the container decoupled it from the native 3-2-1 backups/DR and added a Docker runtime dependency — the wrong trade for a system whose data + DR live on the native PG, especially since at ~600 parts the `real[]` brute-force scan is already single-digit ms (pgvector's ANN index only matters at much larger scale). **Decision: keep the app on the native PG** and make the code **adaptive** — `vectorMode.js` detects pgvector and uses `vector(384)`+HNSW kNN when present, else `real[]` brute-force cosine. The container is stopped (kept, auto-restart off) as an optional dev/demo of the ANN path; `.env` is back on native. Verified on native end-to-end (exact + semantic, `degraded:null`); all 9 tests pass.
+- **Demo wired:** `seedDemo.js` rebuilds the Smart Search index after each reseed (non-fatal), so the demo deployment ships with working Smart Search. `start-app.bat` left unchanged (no container dependency).
 
 ## Still open (optional / future)
 - Phase-2 corpus: work-order notes, then PDF chunking with page-level citations.
-- The app now depends on the `imms-pgvector` container being up (`docker start imms-pgvector`). The email-tracking sub-service still uses `DB_*` env vars → native `:5432`; point those at the container too for a full switch, or add an adaptive `vector`/`real[]` fallback so the code also runs on a non-pgvector PG.
+- pgvector "for real" comes free on a Linux/Docker deploy (`apt install`/the container image) — the adaptive code uses it automatically there, no change needed.
