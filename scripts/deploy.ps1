@@ -64,7 +64,10 @@ Write-Host "`nIncoming commits (HEAD..$Ref):" -ForegroundColor Yellow
 Exec "git log --oneline HEAD..$Ref"
 $prevTag = ''
 Push-Location $ProdRoot
-try { $prevTag = (& git tag --list 'deploy-*' | Sort-Object | Select-Object -Last 1) } finally { Pop-Location }
+try {
+    $prevTag = (& git tag --list 'deploy-*' | Sort-Object | Select-Object -Last 1)
+    if ($LASTEXITCODE -ne 0) { throw "git tag --list failed (exit $LASTEXITCODE)" }
+} finally { Pop-Location }
 if (-not $Yes) {
     $answer = Read-Host "Deploy '$Ref' to production? Old code keeps running until the reload step. (y/N)"
     if ($answer -ne 'y') { Write-Host 'Aborted.'; exit 1 }
@@ -79,7 +82,10 @@ foreach ($root in $Roots) {
     if ($prevTag) {
         $gitPath = $root -replace '\\', '/'
         Push-Location $ProdRoot
-        try { $changed = (& git diff --name-only $prevTag HEAD -- "$gitPath/package-lock.json") } finally { Pop-Location }
+        try {
+            $changed = (& git diff --name-only $prevTag HEAD -- "$gitPath/package-lock.json")
+            if ($LASTEXITCODE -ne 0) { throw "git diff failed (exit $LASTEXITCODE) for $gitPath/package-lock.json" }
+        } finally { Pop-Location }
         $needInstall = [bool]$changed
     }
     if ($needInstall) { Exec 'npm ci' (Join-Path $ProdRoot $root) }

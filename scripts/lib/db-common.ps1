@@ -27,7 +27,7 @@ function Set-PgEnvFromUrl {
 }
 
 function Invoke-DbBackup {
-    # pg_dump -Fc of the database in $Url into $OutDir; prunes to newest 30 dumps.
+    # pg_dump -Fc of the database in $Url into $OutDir; prunes to newest 30 dumps per prefix.
     param(
         [Parameter(Mandatory = $true)][string]$Url,
         [Parameter(Mandatory = $true)][string]$OutDir,
@@ -39,7 +39,7 @@ function Invoke-DbBackup {
     $file = Join-Path $OutDir "$Prefix-$dbName-$stamp.dump"
     & (Join-Path $script:PgBin 'pg_dump.exe') -Fc -d $dbName -f $file
     if ($LASTEXITCODE -ne 0) { throw "pg_dump failed (exit $LASTEXITCODE) for $dbName" }
-    Get-ChildItem (Join-Path $OutDir '*.dump') |
+    Get-ChildItem (Join-Path $OutDir "$Prefix-*.dump") |
         Sort-Object LastWriteTime -Descending |
         Select-Object -Skip 30 |
         Remove-Item -Force -Confirm:$false
