@@ -252,14 +252,26 @@ const searchParts = async (db, q) => {
 };
 
 const insertCallParts = async (db, callId, parts) => {
-  const rows = await Promise.all(parts.map(p =>
-    db.query(
-      `INSERT INTO maintenance_call_parts (call_id, part_id, part_name, part_number, quantity)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [callId, p.part_id, p.part_name, p.part_number, p.quantity || 1]
-    )
-  ));
-  return rows.map(r => r.rows[0]);
+  const client = await db.getClient();
+  try {
+    await client.query('BEGIN');
+    const rows = [];
+    for (const p of parts) {
+      const result = await client.query(
+        `INSERT INTO maintenance_call_parts (call_id, part_id, part_name, part_number, quantity)
+           VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [callId, p.part_id, p.part_name, p.part_number, p.quantity || 1]
+      );
+      rows.push(result.rows[0]);
+    }
+    await client.query('COMMIT');
+    return rows;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
 };
 
 const listCallParts = async (db, callId) => {

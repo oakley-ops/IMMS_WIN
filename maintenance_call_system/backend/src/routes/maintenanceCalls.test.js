@@ -204,6 +204,57 @@ describe('GET /parts/search', () => {
   });
 });
 
+describe('POST /:id/parts', () => {
+  let client;
+
+  beforeEach(() => {
+    client = { query: vi.fn(), release: vi.fn() };
+    db.getClient = vi.fn().mockResolvedValue(client);
+    global.fetch = vi.fn();
+  });
+
+  it('logs the parts and reports the IMMS inventory decrement for each one', async () => {
+    client.query
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ call_id: 1, part_id: 10, quantity: 2 }] })
+      .mockResolvedValueOnce({}); // COMMIT
+    global.fetch.mockResolvedValue({ ok: true, json: async () => ({}) });
+
+    const res = await request(app)
+      .post('/1/parts')
+      .send({ parts: [{ part_id: 10, part_name: 'Bearing', part_number: 'B-1', quantity: 2 }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.parts).toEqual([{ call_id: 1, part_id: 10, quantity: 2 }]);
+    expect(res.body.inventory).toEqual([{ part_id: 10, decremented: true }]);
+  });
+
+  it('still logs the part when the IMMS decrement fails, but flags it in inventory', async () => {
+    client.query
+      .mockResolvedValueOnce({}) // BEGIN
+      .mockResolvedValueOnce({ rows: [{ call_id: 1, part_id: 10, quantity: 9 }] })
+      .mockResolvedValueOnce({}); // COMMIT
+    global.fetch.mockResolvedValue({
+      ok: false,
+      status: 400,
+      json: async () => ({ error: 'Insufficient quantity' }),
+    });
+
+    const res = await request(app)
+      .post('/1/parts')
+      .send({ parts: [{ part_id: 10, part_name: 'Bearing', part_number: 'B-1', quantity: 9 }] });
+
+    expect(res.status).toBe(200);
+    expect(res.body.parts).toHaveLength(1);
+    expect(res.body.inventory).toEqual([{ part_id: 10, decremented: false, error: 'Insufficient quantity' }]);
+  });
+
+  it('returns 400 when parts is empty', async () => {
+    const res = await request(app).post('/1/parts').send({ parts: [] });
+    expect(res.status).toBe(400);
+  });
+});
+
 describe('GET /board-status', () => {
   it('returns one row per machine with derived status', async () => {
     db.query.mockResolvedValueOnce({

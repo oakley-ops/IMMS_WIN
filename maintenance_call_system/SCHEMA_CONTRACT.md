@@ -59,6 +59,37 @@ the contract:
 | `part_id` | INTEGER PK | FK from `maintenance_call_parts` |
 | `name`, `manufacturer_part_number` | VARCHAR | Display in resolve dialog |
 
+## Inventory contract (MCS → IMMS)
+
+MCS never writes to `parts` or `transactions` directly — those are
+IMMS-owned. Instead, when a technician logs parts used on a call, MCS's
+`backend/src/services/callPartsService.js` calls IMMS's existing
+unauthenticated endpoint:
+
+```
+POST /api/v1/parts/usage
+Body: { part_id, quantity, reason?, work_order_number? }
+```
+
+(defined directly on the Express app in IMMS's `backend/index.js`, not
+under a router — it predates MCS and is also used elsewhere in IMMS).
+IMMS does the quantity check, decrement, and `transactions` insert
+transactionally and returns the created transaction row, or a 400 with
+`{ error, available, requested }` on insufficient stock.
+
+MCS calls this once per logged part (`reason: 'Maintenance call
+resolution'`, `work_order_number: 'MC-<call_id>'`), with a 3s timeout.
+Because this is a second HTTP round trip with no shared transaction, a
+decrement can fail (insufficient stock, IMMS down) independently of the
+call-parts log succeeding — MCS treats that as a soft per-part failure and
+surfaces it to the user (`inventory[]` on the `POST
+/maintenance-calls/:id/parts` response), it does not roll back the log.
+
+**Rule:** if you change `/api/v1/parts/usage`'s request or response shape,
+update `callPartsService.js` in the same change. This is the only
+backend-to-backend HTTP call between the two apps — everything else in
+this document is either shared-DB or browser-mediated.
+
 ## Auth contract
 
 IMMS is the **sole authority** for user login. MCS does not own a login

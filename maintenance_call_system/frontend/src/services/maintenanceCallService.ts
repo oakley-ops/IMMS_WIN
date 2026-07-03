@@ -117,6 +117,17 @@ export interface PartResult {
   quantity: number;
 }
 
+export interface InventoryDecrementResult {
+  part_id: number;
+  decremented: boolean;
+  error?: string;
+}
+
+export interface LogPartsResult {
+  parts: { call_id: number; part_id: number; part_name: string; part_number: string | null; quantity: number }[];
+  inventory: InventoryDecrementResult[];
+}
+
 export interface BadgeReader {
   reader_id: number;
   reader_key: string;
@@ -256,7 +267,7 @@ const svc = {
     api.get<PartResult[]>('/parts/search', { params: { q } }).then(r => r.data),
 
   logParts: (id: number, parts: { part_id: number; part_name: string; part_number: string; quantity: number }[]) =>
-    api.post(`/${id}/parts`, { parts }).then(r => r.data),
+    api.post<LogPartsResult>(`/${id}/parts`, { parts }).then(r => r.data),
 
   getMetrics: (params?: MetricsFilters) =>
     api.get<CallMetrics>('/stats/metrics', { params }).then(r => r.data),
