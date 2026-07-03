@@ -59,6 +59,8 @@ backend/logs/
 # Frontend specific
 frontend/node_modules/
 frontend/build/
+frontend/build-localhost/
+frontend/build-network/
 frontend/dist/
 
 # Next.js build output (used by maintenance_call_system/frontend)
