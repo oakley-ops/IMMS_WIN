@@ -19,7 +19,7 @@ const SOCKET_URL = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4001'
 
 const CallBoard: React.FC = () => {
   const [entries, setEntries] = useState<BoardStatusEntry[]>([]);
-  const [now, setNow] = useState(Date.now());
+  const [now, setNow] = useState<number | null>(null);
   const [connected, setConnected] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
@@ -31,7 +31,11 @@ const CallBoard: React.FC = () => {
   const [suspendTarget, setSuspendTarget] = useState<{ call_id: number; machine_name: string } | null>(null);
   const [suspendNotes, setSuspendNotes] = useState('');
 
-  const isAuthed = typeof window !== 'undefined' && !!localStorage.getItem('mcs_token');
+  const [isAuthed, setIsAuthed] = useState(false);
+
+  useEffect(() => {
+    setIsAuthed(!!localStorage.getItem('mcs_token'));
+  }, []);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -87,6 +91,7 @@ const CallBoard: React.FC = () => {
     socket.on('maintenance_call_resolved', fetchBoard);
     socket.on('call_board_layout_updated', fetchLayouts);
 
+    setNow(Date.now());
     const tick = setInterval(() => setNow(Date.now()), 1000);
     const poll = setInterval(fetchBoard, 30000);
 
@@ -251,8 +256,8 @@ const CallBoard: React.FC = () => {
             )}
           </>
         )}
-        <Typography variant="h6" color="grey.300" sx={{ fontFamily: '"Roboto Mono", monospace', ml: 1 }}>
-          {new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+        <Typography variant="h6" color="grey.300" sx={{ fontFamily: '"Roboto Mono", monospace', ml: 1 }} suppressHydrationWarning>
+          {now !== null ? new Date(now).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : ''}
         </Typography>
         <Tooltip title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>
           <IconButton onClick={toggleFullscreen} sx={{ color: 'grey.300', '&:hover': { color: 'white' } }}>
@@ -302,7 +307,7 @@ const CallBoard: React.FC = () => {
             }}>
               <MachineTile
                 entry={entry}
-                now={now}
+                now={now ?? Date.now()}
                 onSuspend={isAuthed ? handleSuspendRequest : undefined}
                 onResume={isAuthed ? handleResume : undefined}
               />
@@ -323,7 +328,7 @@ const CallBoard: React.FC = () => {
         <Box key={e.machine_id} sx={{ minHeight: 140 }}>
           <MachineTile
             entry={e}
-            now={now}
+            now={now ?? Date.now()}
             onSuspend={isAuthed ? handleSuspendRequest : undefined}
             onResume={isAuthed ? handleResume : undefined}
           />
@@ -342,7 +347,7 @@ const CallBoard: React.FC = () => {
           layout={layout}
           statusByMachine={statusByMachine}
           allMachines={entries.map(e => ({ machine_id: e.machine_id, name: e.name, location: e.location }))}
-          now={now}
+          now={now ?? Date.now()}
           saving={saving}
           onSave={handleSaveTiles}
           onCancel={() => setEditMode(false)}

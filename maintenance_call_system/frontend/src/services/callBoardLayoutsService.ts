@@ -4,6 +4,8 @@ import {
 } from './maintenanceCallService';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4001/api/v1';
+const IMMS_LOGIN_URL =
+  process.env.NEXT_PUBLIC_IMMS_LOGIN_URL || 'http://localhost:3000/login';
 
 const api = axios.create({ baseURL: `${API}/call-board-layouts` });
 
@@ -12,6 +14,19 @@ api.interceptors.request.use((config) => {
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
+
+api.interceptors.response.use(
+  (res) => res,
+  (err) => {
+    if (err.response?.status === 401 && typeof window !== 'undefined') {
+      localStorage.removeItem('mcs_token');
+      localStorage.removeItem('mcs_user');
+      const returnTo = encodeURIComponent(window.location.href);
+      window.location.href = `${IMMS_LOGIN_URL}?returnTo=${returnTo}`;
+    }
+    return Promise.reject(err);
+  }
+);
 
 const layoutsService = {
   list: () =>
