@@ -7,8 +7,8 @@ node_modules/
 coverage/
 .coverage/
 
-# Deploy state marker (scripts/deploy.ps1 writes this in C:\imms\prod only)
-.deployed-ref
+# Install-state marker (scripts/deploy.ps1 writes this in C:\imms\prod only)
+.installed-ref
 
 # Production
 /build

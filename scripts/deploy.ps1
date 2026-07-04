@@ -22,7 +22,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'lib\db-common.ps1')
 
 $ProdRoot  = 'C:\imms\prod'
-$DeployedRefFile = Join-Path $ProdRoot '.deployed-ref'
+$InstalledRefFile = Join-Path $ProdRoot '.installed-ref'
 $BackupDir = 'C:\imms\backups'
 $Pm2Bin    = 'C:\Users\Fiser\AppData\Roaming\npm\node_modules\pm2\bin\pm2'
 $Roots     = @('backend', 'frontend', 'maintenance_call_system\backend', 'maintenance_call_system\frontend')
@@ -70,10 +70,14 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "git tag --list failed (exit $LASTEXITCODE)" }
 } finally { Pop-Location }
 
-# Lockfile diffs compare against the last SUCCESSFULLY deployed ref (marker file),
-# so a rollback after a failed deploy still reinstalls that deploy's dependency changes.
+# Lockfile diffs compare against the ref node_modules were last fully installed
+# for (.installed-ref), so both a rollback after a failed deploy and a re-run
+# after a mid-install failure reinstall correctly.
 $baseRef = ''
-if (Test-Path $DeployedRefFile) { $baseRef = (Get-Content $DeployedRefFile | Select-Object -First 1).Trim() }
+if (Test-Path $InstalledRefFile) {
+    $markerLine = Get-Content $InstalledRefFile | Select-Object -First 1
+    if ($markerLine) { $baseRef = $markerLine.Trim() }
+}
 if (-not $baseRef) { $baseRef = $prevTag }
 if ($baseRef) {
     Push-Location $ProdRoot
@@ -121,6 +125,16 @@ foreach ($root in $Roots) {
     else { Write-Host "npm ci skipped (lockfile unchanged): $root" }
 }
 
+# ---- Record installed ref (node_modules now fully aligned to this checkout) ----
+# Written here, not after the health gate: a later failure must still leave the
+# marker at this ref so the next run (rollback or retry) diffs lockfiles correctly.
+Push-Location $ProdRoot
+try {
+    $installedSha = (& git rev-parse HEAD)
+    if ($LASTEXITCODE -ne 0) { throw "git rev-parse HEAD failed (exit $LASTEXITCODE)" }
+} finally { Pop-Location }
+Set-Content -Path $InstalledRefFile -Value $installedSha -Encoding ascii
+
 # ---- Migrate -------------------------------------------------------------------
 # IMMS migrate is an idempotent no-op on an existing DB (applies db/schema.sql once).
 Exec 'npm run migrate' (Join-Path $ProdRoot 'backend')
@@ -149,14 +163,6 @@ try {
     }
     throw
 }
-
-# ---- Record deployed ref (for the next run's lockfile-diff base) --------------
-Push-Location $ProdRoot
-try {
-    $deployedSha = (& git rev-parse HEAD)
-    if ($LASTEXITCODE -ne 0) { throw "git rev-parse HEAD failed (exit $LASTEXITCODE)" }
-} finally { Pop-Location }
-Set-Content -Path $DeployedRefFile -Value $deployedSha -Encoding ascii
 
 # ---- Tag ------------------------------------------------------------------------
 $newTag = 'deploy-' + (Get-Date -Format 'yyyyMMdd-HHmm')
