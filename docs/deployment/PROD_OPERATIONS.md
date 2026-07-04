@@ -113,6 +113,19 @@ Known follow-ups (not blockers; deploys of non-frontend-dep changes work today):
   as the same user that ran `pm2 save`; check `schtasks /Query /TN "IMMS Prod Resurrect"`.
 - **Env file edits ignored** → check encoding; save as UTF-8 (PS 5.1 writes
   UTF-16 by default).
+- **Login returns no data / `API URL:` blank in console / socket.io hits
+  `ws://localhost:3002/...` and fails the handshake** → the frontend build was
+  compiled without an absolute backend URL. The frontend code assumes a
+  reverse-proxy (same-origin) production setup: with no `REACT_APP_API_URL` it
+  uses relative API URLs and `window.location.origin` for sockets. But prod
+  serves the frontend standalone on :3001/:3002, separate from the API on
+  :4000 (no proxy), so those resolve to the static server. Both `build:localhost`
+  and `build:network` (frontend/package.json) MUST bake `REACT_APP_API_URL`
+  (localhost:4000 / 10.1.10.50:4000) and `REACT_APP_MCS_URL`. After changing a
+  build script, rebuild and `pm2 restart imms-web-local imms-web-network`, then
+  HARD-refresh the browser (old index.html is cached). Longer-term cleaner
+  option: put nginx in front so frontend+API share one origin (see
+  maintenance_call_system/NEXTJS_NGINX_ROADMAP.md) — then no baked URLs/CORS.
 - **White screen on :3001/:3002 with 403 on `/static/*` assets** → was caused
   by PM2's built-in `serve` (Windows backslash-vs-`/` root check 403s nested
   paths). Fixed 2026-07-04 by serving the CRA builds with
