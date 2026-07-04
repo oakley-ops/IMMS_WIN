@@ -15,7 +15,7 @@
 - Branch: all commits on `feat/monthly-analytics-email`.
 - **IMMS backend only.** No changes to the MCS app or to MCS's endpoints.
 - **No new npm dependencies.** Use global `fetch`, existing `node-cron`, `jsonwebtoken`, and the existing `emailService`.
-- Service token: `jwt.sign({ id: 0, username: 'imms-scheduler', role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '5m' })`. `role: admin` passes MCS's `analytics_view` check.
+- Service token: `jwt.sign({ id: -1, username: 'imms-scheduler', role: 'admin' }, process.env.JWT_SECRET, { expiresIn: '5m' })` (id must be truthy — MCS rejects falsy id before the admin bypass). `role: admin` passes MCS's `analytics_view` check.
 - MCS endpoint paths (mounted in `maintenance_call_system/backend/index.js`): metrics `/api/v1/maintenance-calls/stats/metrics`, PDF `/api/v1/mcs/analytics/pdf`. `MCS_BASE_URL` defaults to `http://localhost:4001/api/v1`, so client paths are `/maintenance-calls/stats/metrics` and `/mcs/analytics/pdf`.
 - New env vars: `ANALYTICS_RECIPIENTS` (comma-separated, empty → no-op), `MCS_BASE_URL` (default `http://localhost:4001/api/v1`), `MONTHLY_ANALYTICS_CRON` (default `0 7 1-5 * *`).
 - Reporting period: previous full calendar month. Schedule: cron fires in the window, handler sends only if `isFirstBusinessDay(now)`. "Business day" = weekday (Mon–Fri); holidays not considered.
@@ -320,9 +320,11 @@ const baseUrl = () => process.env.MCS_BASE_URL || 'http://localhost:4001/api/v1'
 
 // Short-lived admin service token, signed with the shared JWT_SECRET.
 // role:admin passes MCS's requirePermission('analytics_view') admin bypass.
+// id must be truthy — MCS requirePermission rejects a falsy id before the
+// admin-role bypass; -1 is a non-DB sentinel.
 function mintToken() {
   return jwt.sign(
-    { id: 0, username: 'imms-scheduler', role: 'admin' },
+    { id: -1, username: 'imms-scheduler', role: 'admin' },
     process.env.JWT_SECRET,
     { expiresIn: '5m' }
   );

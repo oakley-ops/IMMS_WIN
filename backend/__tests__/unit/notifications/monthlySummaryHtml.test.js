@@ -21,3 +21,9 @@ test('is null-safe: empty metrics render dashes without throwing', () => {
   expect(html).toContain('—');
   expect(html).toContain('None');
 });
+
+test('escapes HTML in technician-entered fields', () => {
+  const html = buildSummaryHtml({ repeat_failures: [{ machine_name: 'A<b>', reason_category: 'x', occurrences: '1' }] }, 'June 2026');
+  expect(html).toContain('A&lt;b&gt;');
+  expect(html).not.toContain('<b>');
+});

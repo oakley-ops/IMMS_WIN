@@ -49,7 +49,8 @@ One new monthly job in IMMS's existing `notifications` scheduler. Per run:
 1. Compute the previous calendar month `[from, to]` (ISO datetimes; handles the
    January → December-of-previous-year boundary).
 2. Mint a short-lived service JWT with the shared `JWT_SECRET`:
-   `{ id: 0, username: 'imms-scheduler', role: 'admin' }`, `expiresIn: '5m'`.
+   `{ id: -1, username: 'imms-scheduler', role: 'admin' }` (id must be truthy —
+   MCS rejects falsy id before the admin bypass), `expiresIn: '5m'`.
    `role: admin` passes MCS's `requirePermission('analytics_view')` admin
    bypass without needing a `mcs_user_permissions` row.
 3. With that token, call two **existing, unmodified** MCS endpoints:

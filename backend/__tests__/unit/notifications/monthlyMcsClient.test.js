@@ -11,6 +11,8 @@ test('mintToken signs an admin token verifiable with the shared secret', () => {
   const decoded = jwt.verify(client.mintToken(), 'test-secret');
   expect(decoded.role).toBe('admin');
   expect(decoded.username).toBe('imms-scheduler');
+  expect(decoded.id).toBeTruthy(); // MCS rejects a falsy id before the admin bypass
+  expect(decoded.id).toBe(-1);
 });
 
 test('fetchMetrics calls the metrics endpoint with a bearer token and returns JSON', async () => {
