@@ -13,6 +13,7 @@ export type FeedbackState =
   | 'already_in_progress'
   | 'no_active_call'
   | 'unknown_badge'
+  | 'parts_low_stock'
   | 'error';
 
 const FEEDBACK: Record<Exclude<FeedbackState, 'idle'>, { label: string; bg: string; icon: React.ReactNode }> = {
@@ -23,6 +24,7 @@ const FEEDBACK: Record<Exclude<FeedbackState, 'idle'>, { label: string; bg: stri
   already_in_progress: { label: 'TECH ALREADY IN PROGRESS',       bg: '#4a2700', icon: <Engineering sx={{ fontSize: 100, color: STATUS_IN_PROGRESS }} /> },
   no_active_call:      { label: 'NO ACTIVE CALL',                 bg: '#1a2a1a', icon: <ErrorOutline sx={{ fontSize: 100, color: '#66BB6A' }} /> },
   unknown_badge:       { label: 'BADGE NOT REGISTERED — SEE ADMIN', bg: '#1a1a1a', icon: <ErrorOutline sx={{ fontSize: 100, color: '#9E9E9E' }} /> },
+  parts_low_stock:     { label: 'RESOLVED — PART NOT DEDUCTED, TELL A LEAD', bg: '#4a3200', icon: <Warning sx={{ fontSize: 100, color: '#FFB74D' }} /> },
   error:               { label: 'ERROR — TRY AGAIN',              bg: '#1a1a1a', icon: <ErrorOutline sx={{ fontSize: 100, color: '#9E9E9E' }} /> },
 };
 

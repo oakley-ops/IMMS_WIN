@@ -53,6 +53,7 @@ function CallsTab() {
   const [partSearch, setPartSearch] = useState('');
   const [partResults, setPartResults] = useState<PartResult[]>([]);
   const [partsUsed, setPartsUsed] = useState<{ part_id: number; part_name: string; part_number: string; quantity: number }[]>([]);
+  const [inventoryWarning, setInventoryWarning] = useState<string | null>(null);
   const searchTimer = React.useRef<NodeJS.Timeout | null>(null);
 
   const fetchCalls = useCallback(async () => {
@@ -104,7 +105,14 @@ function CallsTab() {
     setSaving(true);
     try {
       await svc.resolveCall(resolving.call_id, { reason_category: reason || undefined, resolution_notes: resNotes });
-      if (partsUsed.length > 0) await svc.logParts(resolving.call_id, partsUsed);
+      if (partsUsed.length > 0) {
+        const { inventory } = await svc.logParts(resolving.call_id, partsUsed);
+        const failed = inventory.filter(i => !i.decremented);
+        if (failed.length > 0) {
+          const names = failed.map(f => partsUsed.find(p => p.part_id === f.part_id)?.part_name || `#${f.part_id}`);
+          setInventoryWarning(`Logged, but inventory was not updated for: ${names.join(', ')}. Check stock manually.`);
+        }
+      }
       clearResolveDialog();
       fetchCalls();
     } finally { setSaving(false); }
@@ -183,6 +191,12 @@ function CallsTab() {
             )}
           </Grid>
         </Box>
+      )}
+
+      {inventoryWarning && (
+        <Alert severity="warning" sx={{ mb: 2 }} onClose={() => setInventoryWarning(null)}>
+          {inventoryWarning}
+        </Alert>
       )}
 
       <Paper>

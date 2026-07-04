@@ -74,10 +74,14 @@ const CallStation: React.FC = () => {
       reason_category: reason || undefined,
       resolution_notes: notes,
     });
-    if (parts.length > 0) await svc.logParts(activeCall.call_id, parts);
+    let inventoryIssue = false;
+    if (parts.length > 0) {
+      const { inventory } = await svc.logParts(activeCall.call_id, parts);
+      inventoryIssue = inventory.some((i) => !i.decremented);
+    }
     setResolveOpen(false);
     setActiveCall(null);
-    showFeedback('idle');
+    showFeedback(inventoryIssue ? 'parts_low_stock' : 'idle');
   };
 
   const handleSuspend = async (reason: string) => {

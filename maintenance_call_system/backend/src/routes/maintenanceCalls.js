@@ -9,6 +9,7 @@ const { errors } = require('../middleware/errors');
 const S = require('../schemas/maintenanceCalls');
 const repo = require('../repositories/maintenanceCallsRepo');
 const { handleBadgeSwipe, DomainError } = require('../services/badgeSwipeService');
+const { logCallParts } = require('../services/callPartsService');
 
 const log = (req) => req.log || logger;
 
@@ -170,7 +171,7 @@ router.post(
   '/:id/parts',
   validate({ params: S.idParam, body: S.logPartsBody }),
   handler(async (req, res) =>
-    res.json(await repo.insertCallParts(db, req.params.id, req.body.parts))
+    res.json(await logCallParts(db, req.params.id, req.body.parts))
   )
 );
 

@@ -115,7 +115,19 @@ Multi-device setup (production, served from C:\imms\prod):
 - Backend binds to `0.0.0.0:4000`
 Dev ports (this folder): 4100/4101/3100/3103 — invisible to floor devices.
 
+## Maintenance Call System (MCS)
+
+`maintenance_call_system/` is a **separate app** in this repo (Express `:4001`, Next.js `:3003`, own node_modules, started via `maintenance_call_system\start-mcs.bat`). It shares the IMMS PostgreSQL database and `JWT_SECRET`; the only backend-to-backend HTTP call is MCS → IMMS `POST /api/v1/parts/usage` (inventory decrement when parts are logged on a call — see `docs/IMMS_MCS_ARCHITECTURE.md` §4.2).
+
+Rules when working across the seam:
+1. **Schema ownership**: each table has one owner (`maintenance_call_system/SCHEMA_CONTRACT.md`). IMMS owns `users`/`machines`/`technicians`/`parts`/`pm_sessions`; MCS owns `maintenance_calls*`, `badge_*`, `call_board_*`, and the `v_maintenance_calls_enriched` view. Add columns only via the owning project's migrations.
+2. **Auth**: IMMS is the sole login authority. MCS redirects to the IMMS login page with `?returnTo=` and receives the JWT back in a URL fragment. JWT payload/secret changes must land on both apps in lockstep.
+3. **Never write to an IMMS-owned table from MCS directly** (or vice versa) — go through an IMMS-owned endpoint instead, as MCS's `callPartsService.js` does for `parts/usage`. There is no legacy duplicate maintenance-calls route in IMMS anymore; `maintenance_call_system/backend/src/routes/maintenanceCalls.js` is the only maintenance-calls API.
+4. Full architecture, endpoint map, and audit findings: `docs/IMMS_MCS_ARCHITECTURE.md`.
+
 ## References
 
 - `maintenance_call_system/PROGRAMMING_PRINCIPLES.md` — SOLID, layered architecture, naming, error handling, security, testing pyramid, anti-patterns, pre-merge checklist. Consult before designing new features, adding abstractions, or reviewing code.
 - `maintenance_call_system/TESTING.md` — Vitest testing plan and proper-unit-testing guide for backend and frontend. Consult before writing tests or setting up a test suite.
+- `docs/IMMS_MCS_ARCHITECTURE.md` — IMMS↔MCS runtime architecture, integration seams, endpoint map, audit findings, and pre-merge change checklist. Consult before touching anything both apps share (schema, auth, sockets, maintenance-calls endpoints).
+- `maintenance_call_system/SCHEMA_CONTRACT.md` — authoritative schema-ownership and auth contract between IMMS and MCS.
