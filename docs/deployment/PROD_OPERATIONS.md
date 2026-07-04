@@ -113,6 +113,16 @@ Known follow-ups (not blockers; deploys of non-frontend-dep changes work today):
   as the same user that ran `pm2 save`; check `schtasks /Query /TN "IMMS Prod Resurrect"`.
 - **Env file edits ignored** → check encoding; save as UTF-8 (PS 5.1 writes
   UTF-16 by default).
+- **White screen on :3001/:3002 with 403 on `/static/*` assets** → was caused
+  by PM2's built-in `serve` (Windows backslash-vs-`/` root check 403s nested
+  paths). Fixed 2026-07-04 by serving the CRA builds with
+  `scripts/static-serve.js` (see ecosystem.prod.config.js). If it recurs,
+  confirm the two web apps point at `static-serve.js`, not `script: 'serve'`.
+  NOTE: a static-serve health check must fetch a real hashed asset
+  (`/static/js/main.<hash>.js`) — a plain `GET /` returns 200 via SPA
+  fallback even when every asset is 403, which is why the cutover health gate
+  (which only checks `/`) did not catch this. Consider strengthening the
+  deploy.ps1 gate to fetch index.html and probe one referenced asset.
 - **Stray idle `nodemon` processes after stopping the dev stack** → killing a dev backend's listening PID leaves nodemon's parent supervisor resident (idle, no port). Prefer closing the four `start-dev.bat` windows; if killing by port, also check for residual `node ... nodemon.js` processes (identify by command line, never `taskkill /IM`).
 - **`npm ci` fails with EPERM/EBUSY on backend during a deploy** → a running API holds native modules (bcrypt/sharp) locked. deploy.ps1 stops the affected API before backend installs; if hit anyway: `node <pm2> stop imms-api`, re-run the same deploy command — the reload step restarts it. A failed deploy may leave the stopped API down — re-running the deploy restarts it via the reload step.
 - **`npm ci` fails in `frontend` with `notsup ... @esbuild/*` platform error** → the committed `frontend/package-lock.json` records esbuild platform packages in a form `npm ci` won't skip. `deploy.ps1` avoids this by skipping the frontend install when the lockfile is unchanged (the `.installed-ref` marker). If a deploy legitimately changes frontend deps and hits this: in `C:\imms\prod\frontend` run `npm install --no-audit --no-fund` (lenient; reproduces the running tree), `git checkout -- package-lock.json` to keep the tree clean, then re-run the deploy (it will skip the now-satisfied frontend install). Permanent fix: regenerate a `ci`-clean lockfile and commit it (test the build + app afterward — deliberate change, not a mid-deploy one). `frontend/.npmrc` already sets `legacy-peer-deps=true` for the MUI peer conflict.
