@@ -53,16 +53,14 @@ trigger that says "do it now," and the first concrete step in this repo.
   un-quarantine the 3 DB suites; fix/remove the broken `integration/api.test.js`
   import; move the Selenium e2e suite to its own opt-in workflow; regenerate the
   IMMS frontend lockfile so it can use `npm ci`.
-- **First steps:**
-  1. Fix or quarantine the 5 known-failing IMMS suites first — CI that is
-     always red is worse than no CI. Options: provide a Postgres service
-     container in the workflow for the DB-dependent suites, and move the
-     Selenium e2e suite behind an `npm run test:e2e` script excluded from CI
-     (`testPathIgnorePatterns`).
-  2. `.github/workflows/ci.yml`: two jobs (imms-backend, mcs-backend) on
-     `windows-latest` or `ubuntu-latest` + Postgres service; cache npm.
-  3. Turn on branch protection for `main`: require the checks + no direct
-     pushes once CI is trustworthy.
+- **How it was done:** quarantined the 5 red suites via a `backend` `test:ci`
+  script (rather than a Postgres service up front) to get a green gate fast;
+  three jobs (`imms-backend`, `mcs-backend`, `frontends`) on `ubuntu-latest` +
+  Node 22 with npm caching on the backend jobs; branch protection on `main`
+  requires the three checks with admin bypass left on. Design/plan:
+  `docs/superpowers/specs/2026-07-04-ci-pipeline-design.md`. The un-quarantine
+  work (Postgres service, e2e workflow, broken-import fix, frontend lockfile) is
+  the follow-up list above.
 
 ### 2.2 Error tracking + uptime monitoring
 - **What:** Sentry (or GlitchTip, self-hosted) in both backends and both
