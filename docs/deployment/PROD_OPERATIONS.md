@@ -28,6 +28,9 @@ Production = `C:\imms\prod` under PM2. Dev = this repo folder, ports
    `maintenance_call_system\frontend\.env`.
    Re-save each as **UTF-8** (`frontend\.env` is UTF-16 today; PS 5.1's
    `Out-File` default is UTF-16 — use an editor or `-Encoding utf8`).
+   Note: `frontend\.env` has been UTF-16 and therefore inert (CRA never
+   parsed it); re-saving as UTF-8 makes its values live in prod builds —
+   confirm they match intent first (today they equal the code defaults).
 3. `npm ci` in all four package roots (backend, frontend,
    maintenance_call_system\backend, maintenance_call_system\frontend).
 4. Builds: `npm run build` (mcs frontend), `npm run build:localhost` and
@@ -36,6 +39,11 @@ Production = `C:\imms\prod` under PM2. Dev = this repo folder, ports
    C:\imms\prod; uses the prod clone's backend\.env now).
 6. MCS migration baseline (records already-applied SQL without executing):
    `npm run migrate:baseline` from `C:\imms\prod\maintenance_call_system\backend`.
+   Also baseline IMMS migrations so the first deploy's migrate step is a
+   no-op: with PG env set (see Restore section), run
+   `psql -d fiservinventory -c "CREATE TABLE IF NOT EXISTS migrations (id SERIAL PRIMARY KEY, name VARCHAR(255) NOT NULL, executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"`
+   then
+   `psql -d fiservinventory -c "INSERT INTO migrations (name) SELECT 'initial_schema' WHERE NOT EXISTS (SELECT 1 FROM migrations WHERE name = 'initial_schema');"`
 7. Stop the five old processes BY PID (never `taskkill /IM node.exe`):
    `Get-NetTCPConnection -LocalPort 4000,4001,3001,3002,3003 -State Listen | Select LocalPort,OwningProcess`
    then `Stop-Process -Id <pid> -Force` for each.
@@ -46,7 +54,9 @@ Production = `C:\imms\prod` under PM2. Dev = this repo folder, ports
     (must be the same user account that ran `pm2 save`).
 11. Convert the dev folder:
     - `backend\.env`: `PORT=4100`, `DATABASE_URL=...\/fiservinventory_dev`,
-      `CORS_ORIGIN` add `http://localhost:3100`, NEW dev-only `JWT_SECRET`.
+      `CORS_ORIGINS` add `http://localhost:3100` (comma-separated; note IMMS
+      uses the plural name — MCS uses singular `CORS_ORIGIN`), NEW dev-only
+      `JWT_SECRET`.
     - `maintenance_call_system\backend\.env`: `PORT=4101`, dev DATABASE_URL,
       `CORS_ORIGIN=http://localhost:3103`, same dev `JWT_SECRET`,
       `IMMS_API_URL=http://localhost:4100/api/v1`.
@@ -67,7 +77,7 @@ Production = `C:\imms\prod` under PM2. Dev = this repo folder, ports
 
 1. Stop the two APIs: `node <pm2> stop imms-api mcs-api`.
 2. From `C:\Program Files\PostgreSQL\17\bin` (credentials from backend\.env):
-   Set connection env vars first (values from the prod clone's `backend\.env` `DATABASE_URL`): in PowerShell, `$env:PGHOST='localhost'; $env:PGPORT='5432'; $env:PGUSER='<user>'; $env:PGPASSWORD='<password>'` — or dot-source `scripts\lib\db-common.ps1` and call `Set-PgEnvFromUrl (Get-DatabaseUrl 'C:\imms\prod\backend\.env')`.
+   Set connection env vars first (values from the prod clone's `backend\.env` `DATABASE_URL`): in PowerShell, `$env:PGHOST='localhost'; $env:PGPORT='5432'; $env:PGUSER='<user>'; $env:PGPASSWORD='<password>'` — or dot-source `C:\imms\prod\scripts\lib\db-common.ps1` and call `Set-PgEnvFromUrl (Get-DatabaseUrl 'C:\imms\prod\backend\.env')`.
    `pg_restore --clean --if-exists --no-owner -d fiservinventory <dump>`.
 3. `node <pm2> start imms-api mcs-api`; verify health endpoints.
 
@@ -83,3 +93,4 @@ Production = `C:\imms\prod` under PM2. Dev = this repo folder, ports
 - **Env file edits ignored** → check encoding; save as UTF-8 (PS 5.1 writes
   UTF-16 by default).
 - **Stray idle `nodemon` processes after stopping the dev stack** → killing a dev backend's listening PID leaves nodemon's parent supervisor resident (idle, no port). Prefer closing the four `start-dev.bat` windows; if killing by port, also check for residual `node ... nodemon.js` processes (identify by command line, never `taskkill /IM`).
+- **`npm ci` fails with EPERM/EBUSY on backend during a deploy** → a running API holds native modules (bcrypt/sharp) locked. deploy.ps1 stops the affected API before backend installs; if hit anyway: `node <pm2> stop imms-api`, re-run the same deploy command — the reload step restarts it.

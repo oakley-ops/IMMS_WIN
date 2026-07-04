@@ -34,7 +34,7 @@ echo.
 echo ===============================================
 echo Next Steps:
 echo ===============================================
-echo 1. If ports 3000/4000 are not listening, run: start-app.bat
+echo 1. If ports 3000/4000 are not listening: run start-dev.bat for the dev stack, or see docs\deployment\PROD_OPERATIONS.md for production.
 echo 2. If firewall rules are missing, run as Administrator:
 echo    netsh advfirewall firewall add rule name="Fiserv Inventory Frontend" dir=in action=allow protocol=TCP localport=3000
 echo    netsh advfirewall firewall add rule name="Fiserv Inventory Backend" dir=in action=allow protocol=TCP localport=4000

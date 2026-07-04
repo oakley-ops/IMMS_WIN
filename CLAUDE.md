@@ -101,7 +101,7 @@ Required in `.env`:
 - `DATABASE_URL` - PostgreSQL connection string
 - `JWT_SECRET`, `SESSION_SECRET` - Security keys
 - `PORT` - Server port (default 4000)
-- `CORS_ORIGIN` - Frontend URL for CORS
+- `CORS_ORIGINS` - comma-separated allowed frontend origins (IMMS backend; MCS backend uses singular `CORS_ORIGIN`)
 
 Optional:
 - `IMAP_USER`, `IMAP_PASSWORD`, `IMAP_HOST` - Email monitoring

@@ -239,8 +239,11 @@ cd maintenance_call_system/backend  && npm install && npm run dev   # :4001
 cd maintenance_call_system/frontend && npm install && npm run dev   # :3003
 # Windows helpers:
 .\start-dev.bat                     # from repo root — full dev stack incl. MCS on :4101/:3103
-maintenance_call_system\stop-mcs.bat
 ```
+
+To stop the dev stack: close the four start-dev.bat windows (see
+docs/deployment/PROD_OPERATIONS.md troubleshooting for nodemon residue).
+Production is managed only via PM2 per the runbook.
 
 ---
 
