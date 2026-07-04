@@ -50,23 +50,24 @@ module.exports = {
     },
     {
       ...common,
+      // Custom static server (scripts/static-serve.js) instead of PM2's built-in
+      // `serve`, which 403s nested paths on Windows (backslash vs forward-slash
+      // root check). SPA fallback + correct MIME + traversal guard.
       name: 'imms-web-local',
-      script: 'serve', // PM2 built-in static server
+      script: path.join(__dirname, 'scripts', 'static-serve.js'),
       env: {
-        PM2_SERVE_PATH: path.join(__dirname, 'frontend', 'build-localhost'),
-        PM2_SERVE_PORT: 3002,
-        PM2_SERVE_SPA: 'true',
+        SERVE_PATH: path.join(__dirname, 'frontend', 'build-localhost'),
+        SERVE_PORT: 3002,
       },
       max_memory_restart: '150M',
     },
     {
       ...common,
       name: 'imms-web-network',
-      script: 'serve',
+      script: path.join(__dirname, 'scripts', 'static-serve.js'),
       env: {
-        PM2_SERVE_PATH: path.join(__dirname, 'frontend', 'build-network'),
-        PM2_SERVE_PORT: 3001,
-        PM2_SERVE_SPA: 'true',
+        SERVE_PATH: path.join(__dirname, 'frontend', 'build-network'),
+        SERVE_PORT: 3001,
       },
       max_memory_restart: '150M',
     },
