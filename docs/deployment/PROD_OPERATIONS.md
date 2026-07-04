@@ -1,0 +1,84 @@
+# Production Operations Runbook
+
+Production = `C:\imms\prod` under PM2. Dev = this repo folder, ports
+4100/4101/3100/3103, database `fiservinventory_dev`. Floor URLs never change:
+4000/4001/3001/3002/3003.
+
+## Daily operations
+
+| I want to… | Command (from `C:\imms\prod`) |
+|---|---|
+| Deploy latest main | `powershell -File scripts\deploy.ps1` |
+| Roll back | `powershell -File scripts\deploy.ps1 -Ref <previous deploy-* tag> -Yes` |
+| Ad-hoc DB backup | `powershell -File scripts\deploy.ps1 -BackupOnly` |
+| Tail logs | `node <pm2> logs imms-api` (apps: imms-api, mcs-api, mcs-web, imms-web-local, imms-web-network) |
+| Process status | `node <pm2> status` |
+| Refresh dev DB | `powershell -File scripts\refresh-dev-db.ps1` (add `-Fresh` for a new dump first) |
+| Stop the dev stack | Close the four start-dev.bat windows (see Troubleshooting: nodemon residue) |
+
+`<pm2>` = `C:\Users\Fiser\AppData\Roaming\npm\node_modules\pm2\bin\pm2`
+
+## One-time cutover (quiet window, ~30 min)
+
+1. `git clone https://github.com/oakley-ops/IMMS_WIN.git C:\imms\prod` and
+   `cd C:\imms\prod`, then `git checkout main` (after this branch merges).
+2. Copy the four env files from the dev folder into the same relative paths in
+   `C:\imms\prod`: `backend\.env`, `frontend\.env`, 
+   `maintenance_call_system\backend\.env`,
+   `maintenance_call_system\frontend\.env`.
+   Re-save each as **UTF-8** (`frontend\.env` is UTF-16 today; PS 5.1's
+   `Out-File` default is UTF-16 — use an editor or `-Encoding utf8`).
+3. `npm ci` in all four package roots (backend, frontend,
+   maintenance_call_system\backend, maintenance_call_system\frontend).
+4. Builds: `npm run build` (mcs frontend), `npm run build:localhost` and
+   `npm run build:network` (frontend).
+5. First backup: `powershell -File scripts\deploy.ps1 -BackupOnly` (from
+   C:\imms\prod; uses the prod clone's backend\.env now).
+6. MCS migration baseline (records already-applied SQL without executing):
+   `npm run migrate:baseline` from `C:\imms\prod\maintenance_call_system\backend`.
+7. Stop the five old processes BY PID (never `taskkill /IM node.exe`):
+   `Get-NetTCPConnection -LocalPort 4000,4001,3001,3002,3003 -State Listen | Select LocalPort,OwningProcess`
+   then `Stop-Process -Id <pid> -Force` for each.
+8. Start production: from `C:\imms\prod`: first clean stale PM2 registrations from earlier testing: `node <pm2> delete all` (safe here — PM2 manages nothing legitimate before this moment; NEVER run this after cutover). Then `node <pm2> startOrReload ecosystem.prod.config.js` and `node <pm2> save`. One-time check: `node <pm2> env 0` (or `node <pm2> env imms-api`) — confirm imms-api's environment does NOT contain `NODE_ENV=production` (see the SSL note in ecosystem.prod.config.js).
+9. Health: 200s from :4000/health, :4001/health, :3001/, :3002/, :3003/board.
+10. Boot persistence (run once, elevated):
+    `schtasks /Create /TN "IMMS Prod Resurrect" /SC ONSTART /RU <windows-user> /RP /TR "\"C:\Program Files\nodejs\node.exe\" \"C:\Users\Fiser\AppData\Roaming\npm\node_modules\pm2\bin\pm2\" resurrect"`
+    (must be the same user account that ran `pm2 save`).
+11. Convert the dev folder:
+    - `backend\.env`: `PORT=4100`, `DATABASE_URL=...\/fiservinventory_dev`,
+      `CORS_ORIGIN` add `http://localhost:3100`, NEW dev-only `JWT_SECRET`.
+    - `maintenance_call_system\backend\.env`: `PORT=4101`, dev DATABASE_URL,
+      `CORS_ORIGIN=http://localhost:3103`, same dev `JWT_SECRET`,
+      `IMMS_API_URL=http://localhost:4100/api/v1`.
+    - (MCS/IMMS frontend dev URLs are injected by `start-dev.bat`; .env edits
+      are only needed for the two backends.)
+    - Refresh dev data: `powershell -File scripts\refresh-dev-db.ps1`.
+12. Acceptance tests:
+    - Edit any dev frontend file → :3003/:3002/:3001 pages provably unchanged.
+    - Reboot the PC → all five PM2 apps return (`node <pm2> status`).
+    - Deploy a trivial commit; roll back to the prior deploy tag.
+13. Cutover rollback (if PM2 misbehaves): stop PM2 apps
+    (`node <pm2> delete all`) and relaunch the old way from the dev folder:
+    backend `set PORT=4000&& set HOST=0.0.0.0&& npm start`, MCS backend
+    `npm start`, MCS frontend `npm run dev`, frontend
+    `npm run start:localhost-3002` and `npm run start:network-pi`.
+
+## Restore production from a dump (last resort)
+
+1. Stop the two APIs: `node <pm2> stop imms-api mcs-api`.
+2. From `C:\Program Files\PostgreSQL\17\bin` (credentials from backend\.env):
+   `pg_restore --clean --if-exists --no-owner -d fiservinventory <dump>`.
+3. `node <pm2> start imms-api mcs-api`; verify health endpoints.
+
+## Troubleshooting
+
+- **imms-api crash-loops with an SSL/connection error** → something set
+  `NODE_ENV=production` for it; `backend/db.js` forces SSL then. Remove the
+  override (see comment in ecosystem.prod.config.js).
+- **Half-styled page right after a deploy** → hard-refresh; builds swap in
+  place during the deploy window.
+- **`pm2 resurrect` did nothing after reboot** → Task Scheduler job must run
+  as the same user that ran `pm2 save`; check `schtasks /Query /TN "IMMS Prod Resurrect"`.
+- **Env file edits ignored** → check encoding; save as UTF-8 (PS 5.1 writes
+  UTF-16 by default).
+- **Stray idle `nodemon` processes after stopping the dev stack** → killing a dev backend's listening PID leaves nodemon's parent supervisor resident (idle, no port). Prefer closing the four `start-dev.bat` windows; if killing by port, also check for residual `node ... nodemon.js` processes (identify by command line, never `taskkill /IM`).

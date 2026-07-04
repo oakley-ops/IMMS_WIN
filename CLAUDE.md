@@ -10,8 +10,10 @@ IMMS (Inventory Management System) - A full-stack application for tracking parts
 
 ### Quick Start (Windows)
 ```bash
-.\start-app.bat    # Starts backend:4000, frontend-localhost:3002, frontend-network:3001
+.\start-dev.bat    # DEV stack only: IMMS API :4100, MCS API :4101, IMMS UI :3100, MCS UI :3103
 ```
+
+**Production** runs separately from `C:\imms\prod` under PM2 (ports 4000/4001/3001/3002/3003 — the floor-facing URLs). Never edit or run servers there directly; deploy with `powershell -File scripts\deploy.ps1` and see `docs/deployment/PROD_OPERATIONS.md` for cutover/rollback/restore. Dev uses the `fiservinventory_dev` database (refresh via `scripts/refresh-dev-db.ps1`).
 
 ### Backend (from /backend)
 ```bash
@@ -107,10 +109,11 @@ Optional:
 
 ## Network Configuration
 
-Multi-device setup:
+Multi-device setup (production, served from C:\imms\prod):
 - `localhost:3002` - PC with camera
 - `10.1.10.50:3001` - Raspberry Pi ethernet
 - Backend binds to `0.0.0.0:4000`
+Dev ports (this folder): 4100/4101/3100/3103 — invisible to floor devices.
 
 ## References
 
