@@ -39,7 +39,7 @@ Production = `C:\imms\prod` under PM2. Dev = this repo folder, ports
 7. Stop the five old processes BY PID (never `taskkill /IM node.exe`):
    `Get-NetTCPConnection -LocalPort 4000,4001,3001,3002,3003 -State Listen | Select LocalPort,OwningProcess`
    then `Stop-Process -Id <pid> -Force` for each.
-8. Start production: from `C:\imms\prod`: first clean stale PM2 registrations from earlier testing: `node <pm2> delete all` (safe here — PM2 manages nothing legitimate before this moment; NEVER run this after cutover). Then `node <pm2> startOrReload ecosystem.prod.config.js` and `node <pm2> save`. One-time check: `node <pm2> env 0` (or `node <pm2> env imms-api`) — confirm imms-api's environment does NOT contain `NODE_ENV=production` (see the SSL note in ecosystem.prod.config.js).
+8. Start production: from `C:\imms\prod`: first clean stale PM2 registrations from earlier testing: `node <pm2> delete all` (safe here — PM2 manages nothing legitimate before this moment; NEVER run this once the stack is live in Daily Operations — step 13's cutover rollback is the one sanctioned exception while still inside this cutover window). Then `node <pm2> startOrReload ecosystem.prod.config.js` and `node <pm2> save`. One-time check: `node <pm2> env 0` (or `node <pm2> env imms-api`) — confirm imms-api's environment does NOT contain `NODE_ENV=production` (see the SSL note in ecosystem.prod.config.js).
 9. Health: 200s from :4000/health, :4001/health, :3001/, :3002/, :3003/board.
 10. Boot persistence (run once, elevated):
     `schtasks /Create /TN "IMMS Prod Resurrect" /SC ONSTART /RU <windows-user> /RP /TR "\"C:\Program Files\nodejs\node.exe\" \"C:\Users\Fiser\AppData\Roaming\npm\node_modules\pm2\bin\pm2\" resurrect"`
@@ -67,6 +67,7 @@ Production = `C:\imms\prod` under PM2. Dev = this repo folder, ports
 
 1. Stop the two APIs: `node <pm2> stop imms-api mcs-api`.
 2. From `C:\Program Files\PostgreSQL\17\bin` (credentials from backend\.env):
+   Set connection env vars first (values from the prod clone's `backend\.env` `DATABASE_URL`): in PowerShell, `$env:PGHOST='localhost'; $env:PGPORT='5432'; $env:PGUSER='<user>'; $env:PGPASSWORD='<password>'` — or dot-source `scripts\lib\db-common.ps1` and call `Set-PgEnvFromUrl (Get-DatabaseUrl 'C:\imms\prod\backend\.env')`.
    `pg_restore --clean --if-exists --no-owner -d fiservinventory <dump>`.
 3. `node <pm2> start imms-api mcs-api`; verify health endpoints.
 
