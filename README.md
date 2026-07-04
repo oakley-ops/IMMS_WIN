@@ -76,7 +76,7 @@ fiservinventory_win/
 - **See** `maintenance_call_system/README.md` for the full breakdown.
 
 ### Infrastructure
-- **Process manager**: PM2 (`ecosystem.config.js` at repo root and inside MCS)
+- **Process manager**: PM2 — all five production services (IMMS API, MCS API, MCS web, two IMMS web builds) are defined in the repo-root `ecosystem.prod.config.js` and run from the dedicated production clone `C:\imms\prod` (see `docs/deployment/PROD_OPERATIONS.md`)
 - **Reverse proxy**: nginx (`nginx/`, `camera-setup/`)
 - **CI**: Jenkins (`Jenkinsfile`, `jenkins/setup.groovy`)
 - **Containers**: Dockerfiles in both `backend/` and `frontend/`
@@ -209,15 +209,17 @@ npm run migrate                          # runs backend/migrations/run-migration
 # or apply backend/schema.sql / init.sql manually
 ```
 
-### Run — quickstart on Windows
+### Run — quickstart on Windows (dev stack)
 ```bat
-.\start-app.bat
+.\start-dev.bat
 ```
-This kills any stray Node processes, starts:
-- Backend on `http://0.0.0.0:4000`
-- Frontend (localhost, camera-enabled) on `http://localhost:3002`
-- Frontend (network, Pi-targeted) on `http://10.1.10.50:3001`
-…and opens the localhost URL in a browser.
+Starts the DEV stack only (never touches production):
+- IMMS backend on `http://localhost:4100`
+- MCS backend on `http://localhost:4101`
+- IMMS frontend on `http://localhost:3100`
+- MCS frontend on `http://localhost:3103`
+
+Production (ports 4000/4001/3001/3002/3003) runs from the dedicated clone `C:\imms\prod` under PM2 (`ecosystem.prod.config.js`); deploy with `scripts\deploy.ps1` — see `docs/deployment/PROD_OPERATIONS.md`.
 
 ### Run — manual
 ```bash
@@ -236,7 +238,7 @@ cd frontend && npm run start:network-pi        # bound to 0.0.0.0:3001, API → 
 cd maintenance_call_system/backend  && npm install && npm run dev   # :4001
 cd maintenance_call_system/frontend && npm install && npm run dev   # :3003
 # Windows helpers:
-maintenance_call_system\start-mcs.bat
+.\start-dev.bat                     # from repo root — full dev stack incl. MCS on :4101/:3103
 maintenance_call_system\stop-mcs.bat
 ```
 
@@ -294,7 +296,7 @@ Real-time: Socket.io shares the HTTP server; events fire on parts usage and stoc
 - **CORS allow-list** is hard-coded for `localhost:3000/3001/3002` and the Pi IPs (`10.1.10.50`, `10.1.10.171`); override with `CORS_ORIGINS`.
 - **Raspberry Pi kiosk** — `camera-setup/`, plus dozens of `RASPBERRY_PI_*.md` guides cover DHCP, kiosk mode, HTTPS proxy for camera access, and WebSocket fixes.
 - **Reverse proxy** — `nginx/imms-inventory.conf` for production; `imms-inventory-local.conf` for dev.
-- **PM2** — production processes (root `ecosystem.config.js`, MCS `ecosystem.config.js`). Recent fix `start-mcs.bat` uses `pm2 startOrRestart` to handle empty-daemon state.
+- **PM2** — all five production services are defined in the repo-root `ecosystem.prod.config.js` and run from the dedicated clone `C:\imms\prod`; deploys/rollbacks go through `scripts\deploy.ps1` (see `docs/deployment/PROD_OPERATIONS.md`).
 - **Cloud targets** — Fly.io (`backend/fly.toml`, `frontend/fly.toml`, `deploy-fly.sh`), Netlify (`netlify.toml`), generic SSH (`deploy.sh`).
 - **CI** — Jenkins (`Jenkinsfile`, `jenkins/setup.groovy`).
 - **Monitoring** — `prometheus.yml` + `alerts.yml` (Prometheus scrape and alerting rules).

@@ -240,11 +240,7 @@ The team conventions live in `PROGRAMMING_PRINCIPLES.md`. Highlights:
 
 ## Deployment
 
-Both apps are stateless and run with PM2 in production (`ecosystem.config.js` at the repo root).
-
-```bash
-pm2 start ecosystem.config.js
-```
+Both apps are stateless and run under PM2 in production as `mcs-api` and `mcs-web`, defined in `ecosystem.prod.config.js` at the **monorepo root** alongside the IMMS services. Production runs from the dedicated clone `C:\imms\prod`, and deploys go through `scripts\deploy.ps1` — see `docs/deployment/PROD_OPERATIONS.md` at the monorepo root.
 
 Production env vars (set in the system or PM2 ecosystem file):
 - `NODE_ENV=production`

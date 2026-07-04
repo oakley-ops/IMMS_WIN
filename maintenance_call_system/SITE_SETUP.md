@@ -89,8 +89,10 @@ sudo nginx -t && sudo systemctl reload nginx
 
 ## Step 5 — Start with PM2
 
+The repo no longer ships an MCS-local PM2 ecosystem file — the two MCS apps are defined as `mcs-api`/`mcs-web` in `ecosystem.prod.config.js` at the monorepo root (single-site, alongside the IMMS services; see `docs/deployment/PROD_OPERATIONS.md`). For an independent MCS-only site, create a site-local PM2 config by adapting those two app entries, then:
+
 ```bash
-pm2 start ecosystem.config.js --name mcs-<site>
+pm2 start ecosystem.<site>.config.js
 pm2 save
 pm2 startup   # follow the printed command to enable on boot
 ```
@@ -141,4 +143,4 @@ Assign different ports per site and use Nginx server blocks:
 | Plant 2 | 4002 | 3004 | mcs-plant2 |
 | Plant 3 | 4003 | 3005 | mcs-plant3 |
 
-Update `ecosystem.config.js` and `nginx.conf` per site with the appropriate ports.
+Update each site's local PM2 config (see Step 5) and `nginx.conf` with the appropriate ports.

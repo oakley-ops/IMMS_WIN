@@ -261,47 +261,22 @@ PM2 keeps both Node processes alive across reboots and restarts them on crash.
 npm install -g pm2
 ```
 
-### `ecosystem.config.js` (place in `maintenance_call_system/`)
+### PM2 apps — implemented in `ecosystem.prod.config.js` (monorepo root)
 
-```js
-module.exports = {
-  apps: [
-    {
-      name: 'mcs-backend',
-      cwd: './backend',
-      script: 'index.js',
-      env: { NODE_ENV: 'production', PORT: 4001 },
-      watch: false,
-      max_memory_restart: '200M',
-    },
-    {
-      name: 'mcs-frontend',
-      cwd: './frontend',
-      script: 'node_modules/.bin/next',
-      args: 'start',
-      env: { NODE_ENV: 'production', PORT: 3003 },
-      watch: false,
-    },
-  ],
-};
-```
+Shipped with the 2026-07 prod/dev split: the two MCS apps run as `mcs-api` / `mcs-web`, defined in `ecosystem.prod.config.js` at the **monorepo root** alongside the IMMS services — not in a `maintenance_call_system/`-local file as this roadmap originally sketched.
 
 ### Start and Auto-restart on Boot
 
-```bash
-pm2 start ecosystem.config.js
-pm2 save
-pm2 startup    # follow the printed command to enable on boot
-```
+Production runs from the dedicated clone `C:\imms\prod`; deploys reload PM2 via `scripts\deploy.ps1`, and boot persistence (`pm2 save` + startup task) is part of the cutover checklist — see `docs/deployment/PROD_OPERATIONS.md`.
 
 ### Useful PM2 Commands
 
 ```bash
-pm2 status                 # see all processes
-pm2 logs mcs-backend       # tail backend logs
-pm2 logs mcs-frontend      # tail frontend logs
-pm2 restart mcs-backend    # restart after config change
-pm2 reload mcs-frontend    # zero-downtime reload
+pm2 status              # see all processes
+pm2 logs mcs-api        # tail backend logs
+pm2 logs mcs-web        # tail frontend logs
+pm2 restart mcs-api     # restart after config change
+pm2 reload mcs-web      # zero-downtime reload
 ```
 
 ---
