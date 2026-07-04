@@ -46,7 +46,13 @@ trigger that says "do it now," and the first concrete step in this repo.
 - **Why:** Today tests run only when someone remembers. Every professional
   team gates merges on automated tests; it's the single cheapest defect net
   that exists.
-- **Trigger:** Fire now. Near-zero cost, immediate payoff.
+- **Status:** ✅ Done 2026-07-04 — `.github/workflows/ci.yml` runs `imms-backend`
+  (jest, 5 legacy suites quarantined via `backend` `test:ci`), `mcs-backend`
+  (vitest), and `frontends` (tsc ×2) on every PR to `main`; the three checks are
+  required (admin bypass on). **Follow-ups:** add a Postgres service and
+  un-quarantine the 3 DB suites; fix/remove the broken `integration/api.test.js`
+  import; move the Selenium e2e suite to its own opt-in workflow; regenerate the
+  IMMS frontend lockfile so it can use `npm ci`.
 - **First steps:**
   1. Fix or quarantine the 5 known-failing IMMS suites first — CI that is
      always red is worse than no CI. Options: provide a Postgres service
