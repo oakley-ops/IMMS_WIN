@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  imms-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+      - run: npm ci
+      - run: npm run test:ci
+
+  mcs-backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: maintenance_call_system/backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: maintenance_call_system/backend/package-lock.json
+      - run: npm ci
+      - run: npx vitest run
+
+  frontends:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: IMMS frontend typecheck
+        working-directory: frontend
+        run: |
+          npm install --no-audit --no-fund
+          npx tsc --noEmit
+      - name: MCS frontend typecheck
+        working-directory: maintenance_call_system/frontend
+        run: |
+          npm ci
+          npx tsc --noEmit
