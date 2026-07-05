@@ -47,7 +47,7 @@ trigger that says "do it now," and the first concrete step in this repo.
   team gates merges on automated tests; it's the single cheapest defect net
   that exists.
 - **Status:** ✅ Done 2026-07-04 — `.github/workflows/ci.yml` runs `imms-backend`
-  (jest, 5 legacy suites quarantined via `backend` `test:ci`), `mcs-backend`
+  (jest, 7 legacy suites quarantined via the `backend` `test:ci` script), `mcs-backend`
   (vitest), and `frontends` (tsc ×2) on every PR to `main`; the three checks are
   required (admin bypass on). **Follow-ups:** add a Postgres service and
   un-quarantine the 3 DB suites; fix/remove the broken `integration/api.test.js`

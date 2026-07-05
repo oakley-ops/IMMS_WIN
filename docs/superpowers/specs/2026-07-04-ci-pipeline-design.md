@@ -45,9 +45,13 @@ un-quarantining the 5 legacy suites (tracked follow-up); CD / auto-deploy
 | `backend/__tests__/integration/purchaseOrderDocuments.test.js` | needs live Postgres | same |
 | `backend/__tests__/services/poDocumentService.test.js` | needs live Postgres | same |
 | `backend/__tests__/integration/api.test.js` | broken import: `Cannot find module '../../src/config/db'` | fix or delete the stale test |
+| `backend/__tests__/integration/search/parts-search.test.js` | DB-dependent — imports `db.js`, which `process.exit(1)`s when `DATABASE_URL` is unset (passed locally only because the dev `.env` set it; CI surfaced this) | add a Postgres service container + `DATABASE_URL` |
+| `backend/__tests__/integration/search/search.test.js` | same (DB-dependent) | same |
 | `backend/src/__tests__/e2e/inventory.test.js` | Selenium/WebDriver, needs a browser | move to a separate opt-in `e2e` workflow |
 
-The other 21 IMMS backend suites pass reliably and are the CI gate.
+The `integration/` pattern quarantines the whole integration folder (all four
+suites need the DB or are broken). The other **19** IMMS backend suites pass
+reliably with no DB and are the CI gate.
 
 ## Architecture
 
@@ -81,10 +85,10 @@ A version-controlled npm script in `backend/package.json` — the ignore list
 lives in one documented place, not buried in YAML:
 
 ```json
-"test:ci": "jest --ci --testPathIgnorePatterns \"/node_modules/\" \"purchaseOrderDocuments\" \"poDocumentService\" \"integration/api\" \"e2e/\""
+"test:ci": "jest --ci --testPathIgnorePatterns \"/node_modules/\" \"purchaseOrderDocuments\" \"poDocumentService\" \"integration/\" \"e2e/\""
 ```
 
-These four patterns match exactly the five suites above (`purchaseOrderDocuments`
+The patterns match exactly the seven quarantined suites above (`purchaseOrderDocuments`
 matches the two PO-document suites). `--ci` makes jest deterministic (no
 snapshot writes, no interactive).
 
@@ -113,9 +117,9 @@ click through once.
 ## Testing / acceptance
 
 - The underlying commands are already confirmed locally: plain `jest` shows the
-  same 21 pass / 5 fail split; MCS `vitest run` is green; both frontends `tsc
+  same 19 pass / 7 fail split; MCS `vitest run` is green; both frontends `tsc
   --noEmit` exit 0. Implementation Task 1 verifies the new `test:ci` script
-  excludes exactly the 5 and leaves 21 green.
+  excludes exactly the 7 and leaves 19 green.
 - Acceptance: open a trivial PR against `main`; all three checks run and pass
   green; confirm a deliberately-broken PR (e.g. a type error) turns the
   `frontends` check red and blocks merge; then enable branch protection.
