@@ -71,5 +71,16 @@ module.exports = {
       },
       max_memory_restart: '150M',
     },
+    {
+      ...common,
+      // Standalone uptime monitor — separate process so it survives any single
+      // service crashing. No NODE_ENV override (mirrors imms-api; it requires
+      // emailService whose pg Pool must not get the production-SSL treatment).
+      // No-op (no email) until OPS_ALERT_RECIPIENTS is set in backend/.env.
+      name: 'uptime-monitor',
+      cwd: path.join(__dirname, 'backend'),
+      script: 'src/scripts/uptimeMonitor.js',
+      max_memory_restart: '100M',
+    },
   ],
 };
