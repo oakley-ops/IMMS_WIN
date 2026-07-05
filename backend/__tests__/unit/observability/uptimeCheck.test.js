@@ -32,3 +32,9 @@ test('mixed: only the changed URL transitions', () => {
   const { transitions } = computeTransitions({ a: true, b: true }, [{ url: 'a', up: true }, { url: 'b', up: false }]);
   expect(transitions).toEqual([{ url: 'b', up: false }]);
 });
+
+test('does not mutate the caller\'s prevStates (purity)', () => {
+  const prev = { a: true };
+  computeTransitions(prev, [{ url: 'a', up: false }, { url: 'b', up: true }]);
+  expect(prev).toEqual({ a: true });
+});
