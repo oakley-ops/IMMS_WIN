@@ -27,12 +27,11 @@ imms-web-local, imms-web-network — all online). The dev folder
 `IMMS Prod Resurrect` scheduled task is registered (runs `pm2 resurrect` at
 Fiser logon).
 
-Known follow-ups (not blockers; deploys of non-frontend-dep changes work today):
-- **Frontend `npm ci` fails on `@esbuild/*` platform packages** in the
-  committed lockfile (see Troubleshooting). `deploy.ps1` skips the frontend
-  install when `frontend/package-lock.json` is unchanged (the `.installed-ref`
-  marker was seeded to the deployed commit at cutover), so normal deploys are
-  fine. A deploy that changes frontend deps needs the lockfile fixed first.
+Known follow-ups:
+- ~~Frontend `npm ci` fails on `@esbuild/*` platform packages~~ — **FIXED
+  2026-07-04** by removing the unused `netlify-cli` devDependency (the actual
+  cause; it dragged in a nested esbuild). `deploy.ps1`'s frontend `npm ci` now
+  works normally; no workaround needed.
 - Reboot-recovery (resurrect) is configured but not yet validated by an
   actual reboot — confirm at the next planned restart.
 - The full deploy→rollback acceptance test was deferred (causes a reload
@@ -138,4 +137,4 @@ Known follow-ups (not blockers; deploys of non-frontend-dep changes work today):
   deploy.ps1 gate to fetch index.html and probe one referenced asset.
 - **Stray idle `nodemon` processes after stopping the dev stack** → killing a dev backend's listening PID leaves nodemon's parent supervisor resident (idle, no port). Prefer closing the four `start-dev.bat` windows; if killing by port, also check for residual `node ... nodemon.js` processes (identify by command line, never `taskkill /IM`).
 - **`npm ci` fails with EPERM/EBUSY on backend during a deploy** → a running API holds native modules (bcrypt/sharp) locked. deploy.ps1 stops the affected API before backend installs; if hit anyway: `node <pm2> stop imms-api`, re-run the same deploy command — the reload step restarts it. A failed deploy may leave the stopped API down — re-running the deploy restarts it via the reload step.
-- **`npm ci` fails in `frontend` with `notsup ... @esbuild/*` platform error** → the committed `frontend/package-lock.json` records esbuild platform packages in a form `npm ci` won't skip. `deploy.ps1` avoids this by skipping the frontend install when the lockfile is unchanged (the `.installed-ref` marker). If a deploy legitimately changes frontend deps and hits this: in `C:\imms\prod\frontend` run `npm install --no-audit --no-fund` (lenient; reproduces the running tree), `git checkout -- package-lock.json` to keep the tree clean, then re-run the deploy (it will skip the now-satisfied frontend install). Permanent fix: regenerate a `ci`-clean lockfile and commit it (test the build + app afterward — deliberate change, not a mid-deploy one). `frontend/.npmrc` already sets `legacy-peer-deps=true` for the MUI peer conflict.
+- **`npm ci` fails in `frontend` with `notsup ... @esbuild/*` platform error** → RESOLVED 2026-07-04. The cause was the unused `netlify-cli` devDependency pulling in a nested esbuild whose platform package wasn't marked optional; it was removed, so `frontend` `npm ci` works cleanly. `frontend/.npmrc` still sets `legacy-peer-deps=true` for the MUI v5/lab-v7 peer conflict (keep it).

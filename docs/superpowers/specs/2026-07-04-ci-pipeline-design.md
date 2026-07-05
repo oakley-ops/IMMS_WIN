@@ -72,12 +72,10 @@ Single workflow `.github/workflows/ci.yml`:
 | `mcs-backend` | `maintenance_call_system/backend` | `npm ci` | `npx vitest run` |
 | `frontends` | (two steps) | see below | `npx tsc --noEmit` in each frontend |
 
-- `frontends` job runs two typecheck steps. IMMS frontend install uses
-  `npm install --no-audit --no-fund` (its committed lockfile has the
-  `@esbuild/*` platform-optional-dep issue that breaks `npm ci` on any OS — the
-  documented deferred lockfile follow-up; lenient install sidesteps it and tsc
-  doesn't need bit-exact deps). MCS frontend uses `npm ci` (its lockfile is
-  clean).
+- `frontends` job runs two typecheck steps; both frontends use `npm ci`.
+  (Originally the IMMS frontend needed a lenient `npm install` because
+  `netlify-cli` dragged in a nested `@esbuild/*` platform dep that broke
+  `npm ci`; `netlify-cli` was removed 2026-07-04, so both are clean now.)
 
 ### Quarantine mechanism
 
@@ -129,7 +127,7 @@ click through once.
 - Add a Postgres service container and un-quarantine the 3 DB suites.
 - Fix or remove the broken `integration/api.test.js` import.
 - Move the Selenium e2e suite to its own opt-in `e2e.yml` workflow.
-- Regenerate the IMMS frontend lockfile so it can use `npm ci` (also unblocks
-  the deploy pipeline's frontend install — see the prod/dev-separation
-  follow-ups).
+- ~~Regenerate the IMMS frontend lockfile so it can use `npm ci`.~~ Done
+  2026-07-04 by removing the unused `netlify-cli` (the actual cause); both CI
+  and `deploy.ps1` frontend installs now use `npm ci`.
 - Later increment: add frontend unit/component tests to CI.
