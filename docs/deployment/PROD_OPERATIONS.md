@@ -112,8 +112,10 @@ runs, the deploy's migrate step will **abort** with "Existing database detected 
 — that is the first-run guard protecting prod, not a failure to fix by forcing.
 
 **Adding a new migration.** Create `backend/migrations/YYYYMMDDHHMM_description.sql`
-(timestamp prefix so it sorts after everything baselined; one concern per file;
-forward-only — there is no down step). The next deploy applies it automatically via
+(timestamp prefix so multiple new files sort chronologically among themselves; one
+concern per file; forward-only — there is no down step). Absolute sort position
+versus the historical files doesn't matter — every baselined file is skipped by
+name, so only pending files run. The next deploy applies it automatically via
 `npm run migrate`; each file runs in its own transaction and is recorded once.
 
 **Manual apply (outside a deploy):** `cd backend && npm run migrate`. Legacy `.js`
