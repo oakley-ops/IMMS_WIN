@@ -40,12 +40,24 @@ const runMigrations = async (db, { dir = DEFAULT_DIR, baseline = false, force = 
       );
     }
 
-    for (const file of pending) {
-      if (baseline) {
-        await client.query('INSERT INTO imms_schema_migrations (filename) VALUES ($1)', [file]);
-        applied.push(file);
-        continue;
+    if (baseline) {
+      // Atomic: record all pending files in one transaction so an interrupted
+      // baseline can't leave a partial set (which would defeat the first-run guard).
+      try {
+        await client.query('BEGIN');
+        for (const file of pending) {
+          await client.query('INSERT INTO imms_schema_migrations (filename) VALUES ($1)', [file]);
+          applied.push(file);
+        }
+        await client.query('COMMIT');
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
       }
+      return { applied, skipped: files.length - applied.length };
+    }
+
+    for (const file of pending) {
       const sql = fs.readFileSync(path.join(dir, file), 'utf8');
       try {
         await client.query('BEGIN');
@@ -68,6 +80,7 @@ const runMigrations = async (db, { dir = DEFAULT_DIR, baseline = false, force = 
 module.exports = { runMigrations };
 
 if (require.main === module) {
+  require('dotenv').config();
   const db = require('../../db');
   const baseline = process.argv.includes('--baseline');
   const force = process.argv.includes('--force');

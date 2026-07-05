@@ -67,8 +67,17 @@ describe('runMigrations', () => {
     expect(result.applied).toEqual(['001_first.sql', '002_second.sql']);
     // no MIGRATION-file DDL ran (the tracking-table bootstrap CREATE TABLE is expected and excluded)
     expect(calls.filter((s) => typeof s === 'string' && /CREATE TABLE/i.test(s) && !/imms_schema_migrations/i.test(s))).toHaveLength(0);
-    expect(calls.some((s) => s === 'BEGIN')).toBe(false);
+    expect(calls.filter((s) => s === 'BEGIN')).toHaveLength(1);
+    expect(calls.filter((s) => s === 'COMMIT')).toHaveLength(1);
     expect(calls.filter((s) => typeof s === 'string' && s.startsWith('INSERT INTO imms_schema_migrations'))).toHaveLength(2);
+  });
+
+  test('--baseline rolls back if an insert fails (atomic, no partial record)', async () => {
+    const dir = makeDir({ '001_first.sql': 'CREATE TABLE one (id int);', '002_second.sql': 'CREATE TABLE two (id int);' });
+    const { db, calls } = makeDb({ failOn: 'INSERT INTO imms_schema_migrations' });
+    await expect(runMigrations(db, { dir, baseline: true })).rejects.toThrow();
+    expect(calls.some((s) => s === 'ROLLBACK')).toBe(true);
+    expect(calls.some((s) => s === 'COMMIT')).toBe(false);
   });
 
   test('first-run guard: refuses to apply when nothing recorded and >5 pending', async () => {
