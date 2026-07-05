@@ -18,4 +18,10 @@ describe('initSentry', () => {
     expect(sentry.init).toHaveBeenCalledTimes(1);
     expect(sentry.init.mock.calls[0][0].tracesSampleRate).toBe(0);
   });
+
+  test('returns false (does not throw) when init throws', () => {
+    process.env.SENTRY_DSN = 'bad';
+    const sentry = { init: jest.fn(() => { throw new Error('bad dsn'); }) };
+    expect(initSentry(sentry)).toBe(false);
+  });
 });
