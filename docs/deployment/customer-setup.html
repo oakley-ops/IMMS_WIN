@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>IMMS — Customer Instance Setup Guide</title>
+<style>
+  @page { size: Letter; margin: 20mm 18mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1a2230; line-height: 1.5; font-size: 10.5pt; margin: 0;
+  }
+  h1 { font-size: 24pt; margin: 0 0 4px; color: #0f2a4a; letter-spacing: -0.4px; }
+  h2 {
+    font-size: 14pt; color: #0f2a4a; margin: 26px 0 8px;
+    padding-bottom: 5px; border-bottom: 2px solid #d7e2f0; break-after: avoid;
+  }
+  h3 { font-size: 11.5pt; color: #16406e; margin: 16px 0 4px; break-after: avoid; }
+  p { margin: 6px 0; }
+  code, pre { font-family: "SF Mono", Consolas, "Roboto Mono", monospace; font-size: 9pt; }
+  code { background: #eef2f7; padding: 1px 5px; border-radius: 3px; color: #204; }
+  pre {
+    background: #0f1b2d; color: #e6edf6; padding: 11px 13px; border-radius: 6px;
+    overflow-x: auto; margin: 8px 0; line-height: 1.45; white-space: pre-wrap;
+  }
+  pre code { background: none; color: inherit; padding: 0; }
+  ul, ol { margin: 6px 0; padding-left: 22px; }
+  li { margin: 3px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 9.5pt; }
+  th, td { border: 1px solid #cdd8e6; padding: 6px 9px; text-align: left; vertical-align: top; }
+  th { background: #eef2f7; color: #0f2a4a; font-weight: 600; }
+  .subtitle { color: #5a6a80; font-size: 11pt; margin: 2px 0 0; }
+  .meta { color: #8494a8; font-size: 8.5pt; margin-top: 6px; }
+  .rule { height: 3px; background: linear-gradient(90deg,#16406e,#2f7fd1); border-radius: 2px; margin: 12px 0 0; }
+  .callout {
+    border-left: 4px solid #2f7fd1; background: #f2f7fc; padding: 9px 13px;
+    border-radius: 0 6px 6px 0; margin: 10px 0;
+  }
+  .warn { border-left-color: #d1742f; background: #fdf6ef; }
+  .callout .lbl { font-weight: 700; color: #16406e; text-transform: uppercase; font-size: 8pt; letter-spacing: 0.6px; }
+  .warn .lbl { color: #a5561f; }
+  .step { break-inside: avoid; }
+  .foot { margin-top: 30px; padding-top: 10px; border-top: 1px solid #d7e2f0; color: #8494a8; font-size: 8.5pt; }
+  .pill { display: inline-block; background: #16406e; color: #fff; font-size: 8pt; padding: 2px 8px; border-radius: 10px; margin-right: 4px; }
+</style>
+</head>
+<body>
+
+<h1>IMMS — Customer Instance Setup Guide</h1>
+<p class="subtitle">Standing up a new, isolated customer deployment of the Inventory Management System + Maintenance Call System.</p>
+<div class="rule"></div>
+<p class="meta">Operational runbook · Version 1.0 · Generated 2026&#8209;07&#8209;05 · Companion to <code>docs/deployment/PROD_OPERATIONS.md</code></p>
+
+<div class="callout">
+  <span class="lbl">Who this is for</span>
+  <p style="margin:4px 0 0">The person provisioning a fresh instance for a new customer — one dedicated host (physical box or cloud VM) running its own PostgreSQL database, isolated from every other customer. Each customer gets their own database, their own secrets, and their own processes. This is the manual procedure using today's tooling; fully-automated per-customer provisioning is a planned increment (see <em>Roadmap notes</em>).</p>
+</div>
+
+<h2>1. What you are deploying</h2>
+<p>One customer instance is five long-running processes plus one database, all on a single host:</p>
+<table>
+  <tr><th>Component</th><th>Default port</th><th>Purpose</th></tr>
+  <tr><td>IMMS API</td><td>4000</td><td>Inventory, parts, machines, purchase orders, work orders, analytics. The sole login authority.</td></tr>
+  <tr><td>MCS API</td><td>4001</td><td>Maintenance Call System — call board, badge swipes, technician calls.</td></tr>
+  <tr><td>IMMS UI (local)</td><td>3002</td><td>React frontend for the PC/kiosk with a camera.</td></tr>
+  <tr><td>IMMS UI (network)</td><td>3001</td><td>React frontend served to networked displays (e.g. a Raspberry&nbsp;Pi kiosk).</td></tr>
+  <tr><td>MCS UI</td><td>3003</td><td>Next.js call-board frontend.</td></tr>
+  <tr><td>PostgreSQL</td><td>5432</td><td>One database per customer (e.g. <code>imms_&lt;customer&gt;</code>). Shared by IMMS and MCS.</td></tr>
+</table>
+<p>IMMS and MCS <strong>share one database and one <code>JWT_SECRET</code></strong>: MCS redirects to the IMMS login page and trusts the JWT it receives back. Keep those two values in lockstep across both apps.</p>
+
+<h2>2. Prerequisites</h2>
+<ul>
+  <li><strong>Host:</strong> a dedicated Windows machine or VM (the reference deployment is Windows&nbsp;10/11 + PM2). One host per customer — never colocate a customer with development or another customer.</li>
+  <li><strong>Node.js 22.x</strong> (matches the CI/runtime target) and <strong>npm</strong>.</li>
+  <li><strong>PostgreSQL 14+</strong> reachable locally, with a superuser or a role that can create databases.</li>
+  <li><strong>PM2</strong> (<code>npm i -g pm2</code>) for process supervision + boot resurrection.</li>
+  <li><strong>Git</strong>, and network access to the application repository.</li>
+  <li>Decide the customer's <strong>identifier</strong> (used in the DB name and hostnames) and which <strong>URLs/IPs</strong> the frontends will be reached at.</li>
+</ul>
+
+<h2>3. Provision the database</h2>
+<div class="step">
+<p>Create the customer's own database (empty). Replace <code>&lt;customer&gt;</code> throughout.</p>
+<pre><code>psql -U postgres -c "CREATE DATABASE imms_&lt;customer&gt;;"</code></pre>
+<p>Note the connection string you will use — it becomes <code>DATABASE_URL</code>:</p>
+<pre><code>postgresql://USER:PASSWORD@localhost:5432/imms_&lt;customer&gt;</code></pre>
+</div>
+
+<h2>4. Get the code and install dependencies</h2>
+<pre><code>git clone &lt;repo-url&gt; C:\imms\&lt;customer&gt;
+cd C:\imms\&lt;customer&gt;
+
+# Backends (reproducible installs)
+cd backend                       &amp;&amp; npm ci
+cd ..\maintenance_call_system\backend  &amp;&amp; npm ci
+
+# Frontends
+cd ..\..\frontend                &amp;&amp; npm ci
+cd ..\maintenance_call_system\frontend &amp;&amp; npm ci</code></pre>
+<p class="meta">Both backends and both frontends use <code>npm ci</code> against committed lockfiles — the same installs CI verifies on every change.</p>
+
+<h2>5. Configure environment</h2>
+<p>Each app reads its own <code>.env</code>. Start from the checked-in <code>.env.example</code> in each backend and set, at minimum:</p>
+<table>
+  <tr><th>Variable</th><th>App</th><th>Value</th></tr>
+  <tr><td><code>DATABASE_URL</code></td><td>both backends</td><td>The customer's connection string from step&nbsp;3.</td></tr>
+  <tr><td><code>JWT_SECRET</code></td><td>both backends</td><td>A single strong random value — <strong>identical</strong> in both apps.</td></tr>
+  <tr><td><code>SESSION_SECRET</code></td><td>IMMS backend</td><td>A separate strong random value.</td></tr>
+  <tr><td><code>PORT</code></td><td>each</td><td>4000 (IMMS API), 4001 (MCS API), etc.</td></tr>
+  <tr><td><code>CORS_ORIGINS</code></td><td>IMMS backend</td><td>Comma-separated frontend origins (e.g. the :3001/:3002 URLs).</td></tr>
+  <tr><td><code>CORS_ORIGIN</code></td><td>MCS backend</td><td>The MCS frontend origin (singular).</td></tr>
+</table>
+<p><strong>Frontend URLs are baked at build time</strong>, not read at runtime. Set the API/MCS URLs for this customer in the frontend build (see step&nbsp;7), or the UI will not reach the backend.</p>
+<div class="callout">
+  <span class="lbl">Generate secrets</span>
+  <p style="margin:4px 0 0">Use unique, unpredictable values per customer, e.g. <code>node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"</code>. Never reuse another customer's secrets. Keep <code>.env</code> files off shared drives and out of version control.</p>
+</div>
+
+<h2>6. Initialize the database schema</h2>
+<div class="step">
+<p>The database is empty, so load the base schema, then apply and record every tracked migration:</p>
+<pre><code>cd C:\imms\&lt;customer&gt;\backend
+
+# 1) Base schema (creates the initial tables)
+npm run migrate:bootstrap
+
+# 2) Apply all tracked migrations to a brand-new DB.
+#    --force is required ONLY here: a fresh empty DB legitimately has many
+#    pending files, which the first-run guard would otherwise refuse.
+npm run migrate -- --force
+
+# MCS schema
+cd ..\maintenance_call_system\backend
+npm run migrate</code></pre>
+<div class="callout warn">
+  <span class="lbl">Important — the guard</span>
+  <p style="margin:4px 0 0">On an <em>existing</em> database that already has migrations applied by hand, do <strong>not</strong> use <code>--force</code>. Run <code>npm run migrate:baseline</code> once to record them as applied without re-running. <code>--force</code> is only for a genuinely empty new database, as in this fresh-customer case. See <code>PROD_OPERATIONS.md → "IMMS schema migrations"</code>.</p>
+</div>
+</div>
+
+<h2>7. Build the frontends</h2>
+<p>Bake this customer's backend URLs into the production builds:</p>
+<pre><code>cd C:\imms\&lt;customer&gt;\frontend
+# Choose/adjust the build target that sets REACT_APP_API_URL + REACT_APP_MCS_URL
+# for THIS customer's host (see the build:localhost / build:network scripts).
+npm run build:localhost      # or build:network for a networked kiosk
+
+cd ..\maintenance_call_system\frontend
+npm run build</code></pre>
+<p class="meta">If the customer's host/IP differs from the reference, update the API/MCS URL the build script bakes in before building, then rebuild.</p>
+
+<h2>8. Start under PM2 and enable boot recovery</h2>
+<pre><code>cd C:\imms\&lt;customer&gt;
+pm2 start ecosystem.prod.config.js
+pm2 save                     # snapshot the process list
+# Recreate boot resurrection so the stack returns after a reboot
+#   (Task Scheduler job running `pm2 resurrect` at logon — see PROD_OPERATIONS.md)</code></pre>
+<p><code>ecosystem.prod.config.js</code> defines all five processes (IMMS/MCS APIs, both IMMS UIs, MCS UI, and the standalone <code>uptime-monitor</code>). Confirm the ports and paths match this customer before starting.</p>
+
+<h2>9. Create the first administrator</h2>
+<p>IMMS is the login authority. Seed one admin account for the customer (via the app's user-creation flow or the seed/admin script), then hand those credentials over securely. All subsequent users are created in-app under an account with <code>CAN_MANAGE_USERS</code>.</p>
+
+<h2>10. Verify the instance</h2>
+<ul>
+  <li><span class="pill">Health</span> <code>GET :4000/health</code> and <code>:4001/health</code> return 200.</li>
+  <li><span class="pill">UI</span> Load a real hashed asset (not just <code>/</code>) on the frontends — a plain <code>/</code> can 200 via SPA fallback even when assets fail.</li>
+  <li><span class="pill">Login</span> Sign in as the admin; confirm the JWT round-trips and MCS accepts the same session.</li>
+  <li><span class="pill">DB</span> <code>SELECT count(*) FROM imms_schema_migrations;</code> equals the number of <code>backend/migrations/*.sql</code> files.</li>
+  <li><span class="pill">MCS→IMMS</span> Log a part on a maintenance call and confirm the inventory decrement (MCS → IMMS <code>POST /api/v1/parts/usage</code>).</li>
+</ul>
+
+<h2>11. Recommended hardening (before go-live)</h2>
+<ul>
+  <li><strong>Backups:</strong> schedule <code>pg_dump</code> of the customer database on a retention cycle (the reference deploy keeps per-prefix dumps and gates every deploy on a fresh backup).</li>
+  <li><strong>Error tracking:</strong> set <code>SENTRY_DSN</code> (Sentry.io or self-hosted GlitchTip) in both backends — off by default until set. Errors then reach a dashboard instead of a console.</li>
+  <li><strong>Uptime alerts:</strong> set <code>OPS_ALERT_RECIPIENTS</code> so the <code>uptime-monitor</code> emails on any service going down or recovering. The URLs are LAN-only, so this internal monitor is what watches them.</li>
+  <li><strong>Secrets:</strong> restrict access to the <code>.env</code> files; move them to a managed secret store for cloud instances.</li>
+</ul>
+
+<h2>12. Ongoing operations</h2>
+<p>After go-live, this instance is maintained exactly like the reference production:</p>
+<ul>
+  <li><strong>Releases:</strong> <code>scripts/deploy.ps1</code> — backup-gated, tagged, health-checked, with <code>-Ref &lt;tag&gt;</code> rollback.</li>
+  <li><strong>Schema changes:</strong> add <code>backend/migrations/YYYYMMDDHHMM_description.sql</code>; the deploy applies it automatically (tracked, transactional, forward-only).</li>
+  <li><strong>Runbook:</strong> cutover, deploy, rollback, restore, and troubleshooting all live in <code>docs/deployment/PROD_OPERATIONS.md</code>.</li>
+</ul>
+
+<div class="callout">
+  <span class="lbl">Roadmap notes</span>
+  <p style="margin:4px 0 0">This guide is the manual path. Two planned increments make per-customer setup a file rather than a checklist: <strong>containerization</strong> (build-once images deployed with one <code>compose up</code>) and <strong>parameterized provisioning</strong> (extracting host/DB/PM2 paths into a config block so one script provisions any box). Adopt them when customer&nbsp;#2 arrives — not before.</p>
+</div>
+
+<div class="foot">
+  IMMS Customer Instance Setup Guide · Internal operational document · Pair with <code>docs/deployment/PROD_OPERATIONS.md</code> and <code>docs/ENGINEERING_MATURITY_ROADMAP.md</code>.
+</div>
+
+</body>
+</html>

@@ -98,18 +98,36 @@ Known follow-ups:
 IMMS schema changes are tracked, per-file, by `backend/src/database/migrate.js`
 (table `imms_schema_migrations`), the same pattern as MCS.
 
-**One-time prod baseline (do this ONCE, before the next deploy).** Prod already
-has all current `backend/migrations/*.sql` applied by hand, so record them as
-applied without re-running:
+**One-time prod baseline (do this ONCE).** Prod already has all current
+`backend/migrations/*.sql` applied by hand, so they must be recorded as applied
+*without* re-running. There is a bootstrapping wrinkle: the runner code only
+reaches `C:\imms\prod` via a deploy's checkout step, so you cannot baseline prod
+until the new code is checked out there. The deploy pipeline is ordered to make
+this safe — `checkout → npm ci → migrate → build → pm2 reload` — so the first
+deploy carrying the runner checks out the code, then **aborts at the migrate step
+before any build or reload**, leaving the running floor untouched. Sequence:
 
 ```
+# 1) Run the deploy. It backs up, checks out the new code, then ABORTS at migrate
+#    with "Existing database detected …". The floor is unchanged (no reload yet).
+cd C:\imms\prod
+powershell -File scripts\deploy.ps1
+
+# 2) The runner is now present in prod. Baseline (records the ~72 files, runs none):
 cd C:\imms\prod\backend
-npm run migrate:baseline
+npm run migrate:baseline          # expect: baselined: <all .sql> | already recorded: 0
+
+# 3) Re-run the deploy. migrate now finds the DB baselined and is a no-op, so the
+#    deploy proceeds through build + reload + health gate normally.
+cd C:\imms\prod
+powershell -File scripts\deploy.ps1
 ```
 
-Expected: `baselined: <all current .sql files> | already recorded: 0`. Until this
-runs, the deploy's migrate step will **abort** with "Existing database detected …"
-— that is the first-run guard protecting prod, not a failure to fix by forcing.
+The abort in step 1 is the first-run guard protecting prod, **not** a failure to
+force past. Do NOT pass `--force` against prod — that would execute all 72
+already-applied migrations. (Alternatively, baseline can be run against the prod
+DB from any checkout that has the runner by pointing `DATABASE_URL` at prod, but
+the deploy-abort sequence above is safer because it uses prod's own `.env`.)
 
 **Adding a new migration.** Create `backend/migrations/YYYYMMDDHHMM_description.sql`
 (timestamp prefix so multiple new files sort chronologically among themselves; one
