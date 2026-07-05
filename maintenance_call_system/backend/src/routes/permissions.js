@@ -6,10 +6,12 @@ const validate = require('../middleware/validate');
 const { errors } = require('../middleware/errors');
 const S = require('../schemas/permissions');
 const repo = require('../repositories/permissionsRepo');
+const { captureException } = require('../observability/sentry');
 
 const handler = (fn) => (req, res) =>
   fn(req, res).catch((err) => {
     (req.log || console).error(err);
+    captureException(err);
     return errors.serverError(res);
   });
 
