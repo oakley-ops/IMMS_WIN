@@ -1,4 +1,6 @@
 require('dotenv').config();
+const { Sentry, initSentry } = require('./src/observability/sentry');
+const sentryEnabled = initSentry(); // before express so the SDK can instrument it
 const express = require('express');
 const cors = require('cors');
 const { allowedOrigins } = require('./src/config/corsOrigins');
@@ -468,6 +470,8 @@ app.post('/api/v1/public/email/purchase-order', async (req, res) => {
 
 // Use regular routes with middleware
 app.use('/api/v1/purchase-orders', purchaseOrderRoutes);
+
+if (sentryEnabled) Sentry.setupExpressErrorHandler(app);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
