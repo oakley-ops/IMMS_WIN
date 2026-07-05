@@ -7,6 +7,7 @@ const validate = require('../middleware/validate');
 const { errors } = require('../middleware/errors');
 const S = require('../schemas/callBoardLayouts');
 const repo = require('../repositories/callBoardLayoutsRepo');
+const { captureException } = require('../observability/sentry');
 
 const log = (req) => req.log || logger;
 
@@ -16,6 +17,7 @@ const emit = (event, payload) => {
 
 const handler = (fn) => (req, res) => fn(req, res).catch((err) => {
   log(req).error({ err }, 'Layouts route error');
+  captureException(err);
   return errors.serverError(res);
 });
 

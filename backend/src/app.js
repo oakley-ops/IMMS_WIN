@@ -6,6 +6,11 @@ require('dotenv').config();
 
 const app = express();
 
+// Report any 5xx response to Sentry (no-op unless SENTRY_DSN is set). Registered
+// before all routes so it covers every route in app.js and index.js.
+const capture5xx = require('./observability/capture5xx');
+app.use(capture5xx);
+
 // CORS Configuration - single source of truth for allowed origins
 const { allowedOrigins } = require('./config/corsOrigins');
 

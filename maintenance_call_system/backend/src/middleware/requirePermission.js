@@ -1,6 +1,7 @@
 const db = require('../database/db');
 const { errors } = require('./errors');
 const { ROLE_DEFAULTS } = require('../repositories/permissionsRepo');
+const { captureException } = require('../observability/sentry');
 
 // Keys that can be checked — validates at factory time to catch typos.
 const VALID_KEYS = new Set([
@@ -50,6 +51,7 @@ const requirePermission = (key) => {
 
       return errors.forbidden(res, 'Insufficient MCS permissions');
     } catch (err) {
+      captureException(err);
       return errors.serverError(res);
     }
   };

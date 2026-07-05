@@ -10,6 +10,7 @@ const S = require('../schemas/maintenanceCalls');
 const repo = require('../repositories/maintenanceCallsRepo');
 const { handleBadgeSwipe, DomainError } = require('../services/badgeSwipeService');
 const { logCallParts } = require('../services/callPartsService');
+const { captureException } = require('../observability/sentry');
 
 const log = (req) => req.log || logger;
 
@@ -25,6 +26,7 @@ const handler = (fn) => (req, res) => fn(req, res).catch((err) => {
     return errors.badRequest(res, err.message);
   }
   log(req).error({ err }, 'Route error');
+  captureException(err);
   return errors.serverError(res);
 });
 
@@ -228,6 +230,7 @@ router.post(
     .catch((err) => {
       if (err.code === '23505') return errors.conflict(res, 'reader_key already exists');
       log(req).error({ err }, 'Reader create error');
+      captureException(err);
       return errors.serverError(res);
     })
 );

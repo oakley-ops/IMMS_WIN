@@ -11,6 +11,7 @@ const S = require('../schemas/maintenanceCalls');
 const repo = require('../repositories/maintenanceCallsRepo');
 const { buildAnalyticsDocDef } = require('../templates/analyticsReport');
 const logger = require('../lib/logger');
+const { captureException } = require('../observability/sentry');
 
 const printer = new PdfPrinter({
   Helvetica: {
@@ -77,6 +78,7 @@ router.get(
       });
       pdfDoc.on('error', (err) => {
         log.error({ err }, 'pdfmake stream error');
+        captureException(err);
         if (!res.headersSent) {
           res.status(500).json({ error: 'pdf_generation_failed', message: 'Failed to generate PDF' });
         }
@@ -84,6 +86,7 @@ router.get(
       pdfDoc.end();
     } catch (err) {
       log.error({ err }, 'analytics PDF generation failed');
+      captureException(err);
       res.status(500).json({ error: 'pdf_generation_failed', message: 'Failed to generate PDF' });
     }
   }
