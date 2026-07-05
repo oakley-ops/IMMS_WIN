@@ -116,7 +116,8 @@ describe('runMigrations', () => {
     const { db, calls } = makeDb();
     const result = await runMigrations(db, { dir, baseline: true });
     expect(result.applied).toEqual(['001_first.sql', '002_second.sql']);
-    expect(calls.some((s) => typeof s === 'string' && s.includes('CREATE TABLE'))).toBe(false);
+    // no MIGRATION-file DDL ran (the tracking-table bootstrap CREATE TABLE is expected and excluded)
+    expect(calls.filter((s) => typeof s === 'string' && /CREATE TABLE/i.test(s) && !/imms_schema_migrations/i.test(s))).toHaveLength(0);
     expect(calls.some((s) => s === 'BEGIN')).toBe(false);
     expect(calls.filter((s) => typeof s === 'string' && s.startsWith('INSERT INTO imms_schema_migrations'))).toHaveLength(2);
   });
@@ -125,7 +126,8 @@ describe('runMigrations', () => {
     const dir = makeDir(sixFiles());
     const { db, calls } = makeDb(); // appliedRows empty -> 0 recorded
     await expect(runMigrations(db, { dir })).rejects.toThrow(/Existing database detected/);
-    expect(calls.some((s) => typeof s === 'string' && s.includes('CREATE TABLE'))).toBe(false);
+    // no MIGRATION-file DDL ran (the tracking-table bootstrap CREATE TABLE is expected and excluded)
+    expect(calls.filter((s) => typeof s === 'string' && /CREATE TABLE/i.test(s) && !/imms_schema_migrations/i.test(s))).toHaveLength(0);
   });
 
   test('--force bypasses the guard and applies all', async () => {
