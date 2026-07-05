@@ -8,6 +8,9 @@
 const sentry = require('./sentry');
 
 function capture5xx(req, res, next) {
+  // Note: IMMS routes never call next(err), so Sentry.setupExpressErrorHandler
+  // does not also fire for these — no double-report. If a route ever adopts
+  // next(err), dedupe against it.
   res.on('finish', () => {
     if (res.statusCode >= 500) {
       sentry.captureException(new Error(`HTTP ${res.statusCode} on ${req.method} ${req.originalUrl}`));
