@@ -86,8 +86,11 @@ trigger that says "do it now," and the first concrete step in this repo.
 - **Why:** The deploy script's migrate step is currently a no-op for real
   IMMS schema changes; hand-psql against prod is exactly the class of
   unaudited change this whole effort eliminates.
-- **Trigger:** The first IMMS schema change after cutover. Do NOT wait for
-  the second.
+- **Status:** ✅ Tooling done 2026-07-05 — `backend/src/database/migrate.js`
+  (table `imms_schema_migrations`) applies tracked `backend/migrations/*.sql`
+  with `migrate:baseline` and a first-run guard; wired into `deploy.ps1`. The
+  remaining step is the **one-time prod baseline** (`npm run migrate:baseline`,
+  see PROD_OPERATIONS.md) before the next prod deploy that changes schema.
 - **First steps:** Copy the MCS runner + tests, point at
   `backend/migrations/`, add a baseline step to the runbook mirroring the
   existing MCS/IMMS baseline entries. One session of work; the pattern is

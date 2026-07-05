@@ -14,7 +14,9 @@
     "test:e2e": "jest __tests__/e2e --coverage",
     "test:ci": "jest --ci --testPathIgnorePatterns \"/node_modules/\" \"purchaseOrderDocuments\" \"poDocumentService\" \"integration/\" \"e2e/\"",
     "test:watch": "jest --watch",
-    "migrate": "node migrations/run-migrations.js",
+    "migrate": "node src/database/migrate.js",
+    "migrate:baseline": "node src/database/migrate.js --baseline",
+    "migrate:bootstrap": "node migrations/run-migrations.js",
     "report:monthly": "node src/scripts/sendMonthlyReport.js",
     "seed:demo": "node src/scripts/seedDemo.js",
     "search:reindex": "node src/scripts/reindexSearch.js"

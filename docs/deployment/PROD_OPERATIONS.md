@@ -93,6 +93,36 @@ Known follow-ups:
     `npm start`, MCS frontend `npm run dev`, frontend
     `npm run start:localhost-3002` and `npm run start:network-pi`.
 
+### IMMS schema migrations
+
+IMMS schema changes are tracked, per-file, by `backend/src/database/migrate.js`
+(table `imms_schema_migrations`), the same pattern as MCS.
+
+**One-time prod baseline (do this ONCE, before the next deploy).** Prod already
+has all current `backend/migrations/*.sql` applied by hand, so record them as
+applied without re-running:
+
+```
+cd C:\imms\prod\backend
+npm run migrate:baseline
+```
+
+Expected: `baselined: <all current .sql files> | already recorded: 0`. Until this
+runs, the deploy's migrate step will **abort** with "Existing database detected …"
+— that is the first-run guard protecting prod, not a failure to fix by forcing.
+
+**Adding a new migration.** Create `backend/migrations/YYYYMMDDHHMM_description.sql`
+(timestamp prefix so multiple new files sort chronologically among themselves; one
+concern per file; forward-only — there is no down step). Absolute sort position
+versus the historical files doesn't matter — every baselined file is skipped by
+name, so only pending files run. The next deploy applies it automatically via
+`npm run migrate`; each file runs in its own transaction and is recorded once.
+
+**Manual apply (outside a deploy):** `cd backend && npm run migrate`. Legacy `.js`
+migrations in `backend/migrations/` are ignored (already applied historically). The
+old initial-schema loader remains available as `npm run migrate:bootstrap` for a
+genuinely empty database.
+
 ## Restore production from a dump (last resort)
 
 1. Stop the two APIs: `node <pm2> stop imms-api mcs-api`.
