@@ -62,32 +62,36 @@ Expected: `@sentry/node` appears in `backend/package.json` `dependencies`; `pack
 
 Create `backend/__tests__/unit/observability/sentry.test.js`:
 
+The Sentry client is INJECTED (default = the real one) so on/off gating is
+testable in both jest and vitest without module mocking — `vi.mock('@sentry/node')`
+cannot intercept the SDK's dual CJS/ESM conditional exports.
+
 ```javascript
-jest.mock('@sentry/node', () => ({ init: jest.fn(), setupExpressErrorHandler: jest.fn() }));
-const Sentry = require('@sentry/node');
 const { initSentry } = require('../../../src/observability/sentry');
 
 describe('initSentry', () => {
-  beforeEach(() => { jest.clearAllMocks(); delete process.env.SENTRY_DSN; });
+  const OLD = process.env.SENTRY_DSN;
+  afterEach(() => { if (OLD === undefined) delete process.env.SENTRY_DSN; else process.env.SENTRY_DSN = OLD; });
 
   test('no-op and returns false when SENTRY_DSN is unset', () => {
-    expect(initSentry()).toBe(false);
-    expect(Sentry.init).not.toHaveBeenCalled();
+    delete process.env.SENTRY_DSN;
+    const sentry = { init: jest.fn() };
+    expect(initSentry(sentry)).toBe(false);
+    expect(sentry.init).not.toHaveBeenCalled();
   });
 
   test('initializes errors-only and returns true when SENTRY_DSN is set', () => {
     process.env.SENTRY_DSN = 'https://k@o0.ingest.sentry.io/0';
-    expect(initSentry()).toBe(true);
-    expect(Sentry.init).toHaveBeenCalledTimes(1);
-    expect(Sentry.init.mock.calls[0][0]).toMatchObject({ tracesSampleRate: 0 });
-    delete process.env.SENTRY_DSN;
+    const sentry = { init: jest.fn() };
+    expect(initSentry(sentry)).toBe(true);
+    expect(sentry.init).toHaveBeenCalledTimes(1);
+    expect(sentry.init.mock.calls[0][0]).toMatchObject({ tracesSampleRate: 0 });
   });
 
   test('returns false (does not throw) when init throws', () => {
     process.env.SENTRY_DSN = 'bad';
-    Sentry.init.mockImplementationOnce(() => { throw new Error('bad dsn'); });
-    expect(initSentry()).toBe(false);
-    delete process.env.SENTRY_DSN;
+    const sentry = { init: jest.fn(() => { throw new Error('bad dsn'); }) };
+    expect(initSentry(sentry)).toBe(false);
   });
 });
 ```
@@ -107,12 +111,15 @@ Create `backend/src/observability/sentry.js`:
 // Error tracking via @sentry/node. Fully no-op unless SENTRY_DSN is set.
 // initSentry() MUST be called before `express` is required in the entry file
 // so the SDK can instrument express/http/pg. Errors only (no perf tracing).
-const Sentry = require('@sentry/node');
+// The Sentry client is injectable (default = the real module) so the on/off
+// gating is testable in both jest and vitest without module mocking — vitest
+// cannot intercept @sentry/node's dual CJS/ESM conditional exports.
+const defaultSentry = require('@sentry/node');
 
-function initSentry() {
+function initSentry(sentry = defaultSentry) {
   if (!process.env.SENTRY_DSN) return false;
   try {
-    Sentry.init({
+    sentry.init({
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV || 'development',
       release: process.env.SENTRY_RELEASE || undefined,
@@ -125,7 +132,7 @@ function initSentry() {
   }
 }
 
-module.exports = { Sentry, initSentry };
+module.exports = { Sentry: defaultSentry, initSentry };
 ```
 
 - [ ] **Step 5: Run test to verify it passes**
@@ -201,27 +208,31 @@ Expected: added to `dependencies`; lockfile updated; exit 0.
 
 Create `maintenance_call_system/backend/src/observability/sentry.test.js`:
 
-```javascript
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+The injected Sentry client (Task 1's DI form) makes this testable WITHOUT
+`vi.mock` — which cannot intercept `@sentry/node`'s conditional exports.
 
-vi.mock('@sentry/node', () => ({ default: {}, init: vi.fn(), setupExpressErrorHandler: vi.fn() }));
-const Sentry = require('@sentry/node');
+```javascript
+import { describe, it, expect, vi, afterEach } from 'vitest';
+
 const { initSentry } = require('./sentry');
 
 describe('initSentry (MCS)', () => {
-  beforeEach(() => { vi.clearAllMocks(); delete process.env.SENTRY_DSN; });
+  const OLD = process.env.SENTRY_DSN;
+  afterEach(() => { if (OLD === undefined) delete process.env.SENTRY_DSN; else process.env.SENTRY_DSN = OLD; });
 
   it('no-ops and returns false without SENTRY_DSN', () => {
-    expect(initSentry()).toBe(false);
-    expect(Sentry.init).not.toHaveBeenCalled();
+    delete process.env.SENTRY_DSN;
+    const sentry = { init: vi.fn() };
+    expect(initSentry(sentry)).toBe(false);
+    expect(sentry.init).not.toHaveBeenCalled();
   });
 
   it('initializes errors-only with SENTRY_DSN', () => {
     process.env.SENTRY_DSN = 'https://k@o0.ingest.sentry.io/0';
-    expect(initSentry()).toBe(true);
-    expect(Sentry.init).toHaveBeenCalledTimes(1);
-    expect(Sentry.init.mock.calls[0][0].tracesSampleRate).toBe(0);
-    delete process.env.SENTRY_DSN;
+    const sentry = { init: vi.fn() };
+    expect(initSentry(sentry)).toBe(true);
+    expect(sentry.init).toHaveBeenCalledTimes(1);
+    expect(sentry.init.mock.calls[0][0].tracesSampleRate).toBe(0);
   });
 });
 ```
@@ -241,12 +252,15 @@ Create `maintenance_call_system/backend/src/observability/sentry.js` — identic
 // Error tracking via @sentry/node. Fully no-op unless SENTRY_DSN is set.
 // initSentry() MUST be called before `express` is required in the entry file
 // so the SDK can instrument express/http/pg. Errors only (no perf tracing).
-const Sentry = require('@sentry/node');
+// The Sentry client is injectable (default = the real module) so the on/off
+// gating is testable in both jest and vitest without module mocking — vitest
+// cannot intercept @sentry/node's dual CJS/ESM conditional exports.
+const defaultSentry = require('@sentry/node');
 
-function initSentry() {
+function initSentry(sentry = defaultSentry) {
   if (!process.env.SENTRY_DSN) return false;
   try {
-    Sentry.init({
+    sentry.init({
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV || 'development',
       release: process.env.SENTRY_RELEASE || undefined,
@@ -259,7 +273,7 @@ function initSentry() {
   }
 }
 
-module.exports = { Sentry, initSentry };
+module.exports = { Sentry: defaultSentry, initSentry };
 ```
 
 - [ ] **Step 5: Run test to verify it passes**
