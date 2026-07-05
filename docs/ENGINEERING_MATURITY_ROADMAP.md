@@ -70,11 +70,13 @@ trigger that says "do it now," and the first concrete step in this repo.
 - **Why:** Right now the first detector of a production error is a
   technician at a kiosk. Industry practice is that *you* know before they
   do. This also feeds the commercialization plan's support-SLA story.
-- **Trigger:** Fire at cutover (the new prod URLs are stable targets), and
-  before any paying customer.
-- **First steps:** Sentry SDK in `backend/index.js` + MCS `index.js` error
-  middleware; DSNs via env; uptime monitor pointed at `:4000/health`,
-  `:4001/health`, `:3003/board`.
+- **Status:** ✅ Done 2026-07-05 — Sentry (`@sentry/node`) in both backends,
+  off unless `SENTRY_DSN` set; a standalone `uptime-monitor` PM2 app emails on
+  up/down transitions of the 5 LAN URLs (off unless `OPS_ALERT_RECIPIENTS` set);
+  and caught route-500s are captured (MCS with stacks at its `handler()` catches,
+  IMMS via a 5xx-response middleware). Manual acceptance (live SMTP + a Sentry/
+  GlitchTip project) is the remaining user step. Follow-up: frontend (React)
+  error capture; performance tracing.
 
 ### 2.3 IMMS per-file tracked migration runner
 - **What:** Extend the MCS pattern (`migrate.js`, tracking table, baseline)
