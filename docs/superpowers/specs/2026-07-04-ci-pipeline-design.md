@@ -47,7 +47,7 @@ un-quarantining the 5 legacy suites (tracked follow-up); CD / auto-deploy
 | `backend/__tests__/integration/api.test.js` | broken import: `Cannot find module '../../src/config/db'` | fix or delete the stale test |
 | `backend/src/__tests__/e2e/inventory.test.js` | Selenium/WebDriver, needs a browser | move to a separate opt-in `e2e` workflow |
 
-The other 20 IMMS backend suites pass reliably and are the CI gate.
+The other 21 IMMS backend suites pass reliably and are the CI gate.
 
 ## Architecture
 
@@ -113,9 +113,9 @@ click through once.
 ## Testing / acceptance
 
 - The underlying commands are already confirmed locally: plain `jest` shows the
-  same 20 pass / 5 fail split; MCS `vitest run` is green; both frontends `tsc
+  same 21 pass / 5 fail split; MCS `vitest run` is green; both frontends `tsc
   --noEmit` exit 0. Implementation Task 1 verifies the new `test:ci` script
-  excludes exactly the 5 and leaves 20 green.
+  excludes exactly the 5 and leaves 21 green.
 - Acceptance: open a trivial PR against `main`; all three checks run and pass
   green; confirm a deliberately-broken PR (e.g. a type error) turns the
   `frontends` check red and blocks merge; then enable branch protection.
