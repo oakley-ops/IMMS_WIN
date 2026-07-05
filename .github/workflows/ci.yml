@@ -48,10 +48,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            maintenance_call_system/frontend/package-lock.json
       - name: IMMS frontend typecheck
         working-directory: frontend
         run: |
-          npm install --no-audit --no-fund
+          npm ci
           npx tsc --noEmit
       - name: MCS frontend typecheck
         working-directory: maintenance_call_system/frontend

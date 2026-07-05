@@ -51,15 +51,16 @@ trigger that says "do it now," and the first concrete step in this repo.
   (vitest), and `frontends` (tsc ×2) on every PR to `main`; the three checks are
   required (admin bypass on). **Follow-ups:** add a Postgres service and
   un-quarantine the 3 DB suites; fix/remove the broken `integration/api.test.js`
-  import; move the Selenium e2e suite to its own opt-in workflow; regenerate the
-  IMMS frontend lockfile so it can use `npm ci`.
+  import; move the Selenium e2e suite to its own opt-in workflow. (The IMMS
+  frontend lockfile is fixed — `netlify-cli` removed 2026-07-04 — so both CI
+  frontend steps and `deploy.ps1` use `npm ci`.)
 - **How it was done:** quarantined the 5 red suites via a `backend` `test:ci`
   script (rather than a Postgres service up front) to get a green gate fast;
   three jobs (`imms-backend`, `mcs-backend`, `frontends`) on `ubuntu-latest` +
   Node 22 with npm caching on the backend jobs; branch protection on `main`
   requires the three checks with admin bypass left on. Design/plan:
   `docs/superpowers/specs/2026-07-04-ci-pipeline-design.md`. The un-quarantine
-  work (Postgres service, e2e workflow, broken-import fix, frontend lockfile) is
+  work (Postgres service, e2e workflow, broken-import fix) is
   the follow-up list above.
 
 ### 2.2 Error tracking + uptime monitoring
