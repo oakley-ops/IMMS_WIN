@@ -1,4 +1,6 @@
 require('dotenv').config();
+const { Sentry, initSentry } = require('./src/observability/sentry');
+const sentryEnabled = initSentry(); // before express so the SDK can instrument it
 const http = require('http');
 const crypto = require('crypto');
 const express = require('express');
@@ -89,6 +91,8 @@ app.use('/api/v1/mcs/permissions', permissionsRouter);
 app.use('/api/v1/mcs/analytics', analyticsRouter);
 
 // ─── Error handler ────────────────────────────────────────────────────────────
+
+if (sentryEnabled) Sentry.setupExpressErrorHandler(app);
 
 // eslint-disable-next-line no-unused-vars
 app.use((err, req, res, next) => {
