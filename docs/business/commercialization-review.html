@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>IMMS — Commercialization Readiness Review</title>
+<style>
+  @page { size: Letter; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1a2230; line-height: 1.5; font-size: 10.5pt; margin: 0; }
+  h1 { font-size: 23pt; margin: 0 0 4px; color: #0f2a4a; letter-spacing: -0.4px; }
+  h2 { font-size: 14pt; color: #0f2a4a; margin: 24px 0 8px; padding-bottom: 5px; border-bottom: 2px solid #d7e2f0; break-after: avoid; }
+  h3 { font-size: 11.5pt; color: #16406e; margin: 15px 0 4px; break-after: avoid; }
+  p { margin: 6px 0; }
+  code { font-family: "SF Mono", Consolas, monospace; font-size: 9pt; background: #eef2f7; padding: 1px 5px; border-radius: 3px; color: #204; }
+  ul, ol { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 9.5pt; }
+  th, td { border: 1px solid #cdd8e6; padding: 6px 9px; text-align: left; vertical-align: top; }
+  th { background: #eef2f7; color: #0f2a4a; font-weight: 600; }
+  .subtitle { color: #5a6a80; font-size: 11pt; margin: 2px 0 0; }
+  .meta { color: #8494a8; font-size: 8.5pt; margin-top: 6px; }
+  .rule { height: 3px; background: linear-gradient(90deg,#16406e,#2f7fd1); border-radius: 2px; margin: 12px 0 0; }
+  .callout { border-left: 4px solid #2f7fd1; background: #f2f7fc; padding: 9px 13px; border-radius: 0 6px 6px 0; margin: 10px 0; }
+  .warn { border-left-color: #d1742f; background: #fdf6ef; }
+  .good { border-left-color: #2f9e5f; background: #f0f9f3; }
+  .callout .lbl { font-weight: 700; color: #16406e; text-transform: uppercase; font-size: 8pt; letter-spacing: 0.6px; }
+  .warn .lbl { color: #a5561f; } .good .lbl { color: #1f7a48; }
+  .foot { margin-top: 26px; padding-top: 10px; border-top: 1px solid #d7e2f0; color: #8494a8; font-size: 8.5pt; }
+  .y { color: #1f7a48; font-weight: 700; } .n { color: #b23b3b; font-weight: 700; } .part { color: #a5561f; font-weight: 700; }
+  .price { font-size: 15pt; color: #0f2a4a; font-weight: 700; }
+  .tier th { background: #16406e; color: #fff; }
+  .page-break { break-before: page; }
+  .tag { display: inline-block; background: #16406e; color: #fff; font-size: 7.5pt; padding: 2px 7px; border-radius: 9px; margin-right: 3px; vertical-align: middle; }
+  blockquote { margin: 8px 0; padding: 10px 14px; background: #f7f9fc; border: 1px solid #e1e8f0; border-radius: 6px; font-size: 9.8pt; }
+</style>
+</head>
+<body>
+
+<h1>Commercialization Readiness Review</h1>
+<p class="subtitle">Where the product stands for selling &mdash; and a starter kit to close the gap.</p>
+<div class="rule"></div>
+<p class="meta">Strategy review + go-to-market artifacts &middot; 2026&#8209;07&#8209;05 &middot; Companion to <code>docs/ENGINEERING_MATURITY_ROADMAP.md</code></p>
+
+<div class="callout warn">
+  <span class="lbl">The honest headline</span>
+  <p style="margin:4px 0 0">The <strong>engineering</strong> side took a big step this week and is arguably ready to responsibly run a first customer. The <strong>business</strong> side is still near zero &mdash; no pricing, no billing, no legal, no support model, and no evidence yet that anyone will pay. That gap, not more code, is now what stands between you and selling. The single highest-leverage next move is getting <em>one real user</em> in front of the product.</p>
+</div>
+
+<h2>1. Readiness scorecard</h2>
+<table>
+  <tr><th>Dimension</th><th>A week ago</th><th>Now</th><th>Gap to sellable</th></tr>
+  <tr><td>Ship changes without risking the live floor</td><td class="n">No</td><td class="y">Yes</td><td>Done &mdash; deploy pipeline (backup-gated, tagged, rollback, health gate)</td></tr>
+  <tr><td>Catch regressions before shipping</td><td class="part">Ad hoc</td><td class="y">Yes</td><td>Done &mdash; CI gates every change</td></tr>
+  <tr><td>Know when production breaks</td><td class="n">No</td><td class="part">Built</td><td>Wired but off until you set <code>SENTRY_DSN</code> / alert recipients</td></tr>
+  <tr><td>Auditable, repeatable schema changes</td><td class="n">Hand-psql</td><td class="y">Yes</td><td>Tracked migration runner (prod baseline is your pending step)</td></tr>
+  <tr><td>Stand up a new customer</td><td class="n">No runbook</td><td class="part">Manual</td><td>Works for #1; needs automation by #3</td></tr>
+  <tr><td>Take payment</td><td class="n">No</td><td class="n">No</td><td><strong>Not started</strong></td></tr>
+  <tr><td>Legally sell B2B (ToS / Privacy / MSA)</td><td class="n">No</td><td class="n">No</td><td><strong>Not started</strong></td></tr>
+  <tr><td>Answer a buyer security questionnaire</td><td class="n">No</td><td class="part">Good practices, undocumented</td><td><strong>Needs a security one-pager</strong> (§6)</td></tr>
+  <tr><td>Support model / SLA</td><td class="n">No</td><td class="n">No</td><td><strong>Not started</strong></td></tr>
+  <tr><td>A paying or pilot customer</td><td class="n">No</td><td class="n">No</td><td><strong>The #1 gap</strong></td></tr>
+</table>
+<p><strong>The pattern:</strong> every "Yes" is engineering; every red is business.</p>
+
+<h2>2. What changed this week (the update)</h2>
+<p>Seven engineering-maturity items shipped, each through the new CI gate. Together they cross a real threshold &mdash; from "an app I run by hand" to "an app I could responsibly operate for someone who pays me":</p>
+<ul>
+  <li><span class="tag">Foundation</span><strong>Prod/dev separation + deploy pipeline</strong> &mdash; the prerequisite for having any customer without one edit taking the floor down.</li>
+  <li><span class="tag">Trust</span><strong>CI on every change</strong> &mdash; technical-due-diligence table stakes; no blind regressions.</li>
+  <li><span class="tag">Ops</span><strong>Error tracking + uptime monitoring</strong> &mdash; the machinery any support promise stands on.</li>
+  <li><span class="tag">Data</span><strong>Tracked migration runner</strong> &mdash; required to run multiple customer databases without hand-surgery.</li>
+  <li><span class="tag">GTM</span><strong>Customer setup guide</strong> &mdash; you can now provision customer&nbsp;#1 deliberately.</li>
+</ul>
+<div class="callout good"><span class="lbl">Net effect</span><p style="margin:4px 0 0">The engineering foundation for a first customer is essentially in place. That is a genuine milestone and de-risks everything downstream.</p></div>
+
+<h2>3. What still needs doing</h2>
+<h3>Technical &mdash; correctly deferred (trigger-based)</h3>
+<p>Building these now would be premature; each has a clear trigger:</p>
+<ul>
+  <li><strong>Dedicated prod hardware / VM per customer</strong> &mdash; at customer&nbsp;#1 (their instance is born isolated).</li>
+  <li><strong>Containerization / repeatable provisioning</strong> &mdash; at customer&nbsp;#2, when manual setup starts to hurt.</li>
+  <li><strong>Secrets management</strong> (out of plaintext <code>.env</code>) &mdash; at the first customer or the pre-sale hardening sprint; every security questionnaire asks.</li>
+  <li><strong>Staging environment</strong> &mdash; at a second developer or the first customer-facing regression.</li>
+</ul>
+<h3>Commercial &mdash; the actual blocker for "selling"</h3>
+<ol>
+  <li><strong>A pilot / design-partner customer.</strong> Highest leverage that exists: validates that anyone will pay, produces a reference, and exercises provisioning for real.</li>
+  <li><strong>Pricing &amp; packaging.</strong> None defined. (Starting proposal in §5.)</li>
+  <li><strong>Billing.</strong> No way to collect money. Add Stripe subscriptions &mdash; but only once someone commits to pay.</li>
+  <li><strong>Legal.</strong> No Terms of Service, Privacy Policy, customer MSA, or data-processing terms. Non-negotiable for B2B (templates + one lawyer pass).</li>
+  <li><strong>Security posture, documented.</strong> Good practices exist; nothing written to hand a buyer. (One-pager in §6.)</li>
+  <li><strong>Support model.</strong> Hours, channel, response SLA &mdash; what happens when a floor is down after hours?</li>
+  <li><strong>Onboarding / data import.</strong> No path today for a customer to load <em>their</em> parts and machines. White-glove or tooling.</li>
+  <li><strong>Product identity.</strong> Needs its own name + a one-page value prop. (Note: not to carry the Fiserv name.)</li>
+</ol>
+
+<div class="page-break"></div>
+<h2>4. Recommended sequence (business-first from here)</h2>
+<ol>
+  <li><strong>Land 1 design partner</strong> (free or steeply discounted) &rarr; validates value, gives a reference.</li>
+  <li><strong>Name + one-page value prop + a live demo instance</strong> you can show.</li>
+  <li><strong>Draft the commercial basics</strong> &mdash; pricing tiers, ToS/Privacy (templates), security one-pager.</li>
+  <li><strong>Stand up customer&nbsp;#1 on its own VM/box</strong> using the setup guide (exercises provisioning for real).</li>
+  <li><strong>Add Stripe billing</strong> once someone has committed to pay.</li>
+  <li><strong>Build data-import tooling</strong> (the practical onboarding blocker).</li>
+  <li><strong>Containerize</strong> heading toward customer&nbsp;#2.</li>
+</ol>
+<blockquote>The order is deliberate: prove demand and shake out delivery with a real user <em>before</em> investing in billing, containers, or a bigger sales motion. Solo products die by building machinery for customers who never showed up.</blockquote>
+
+<h2>5. Pricing &amp; packaging &mdash; one-pager (starting hypothesis)</h2>
+<p>A membership/subscription model priced <strong>per site (facility)</strong> fits an operations tool better than per-seat (usage scales with the plant, not headcount). Treat these as hypotheses to validate with the pilot &mdash; not final numbers.</p>
+<table class="tier">
+  <tr><th>&nbsp;</th><th>Starter</th><th>Professional</th><th>Enterprise</th></tr>
+  <tr><td><strong>Price</strong></td><td class="price">$199<span style="font-size:9pt">/site/mo</span></td><td class="price">$499<span style="font-size:9pt">/site/mo</span></td><td class="price">Custom</td></tr>
+  <tr><td><strong>Core inventory</strong> (parts, machines, transactions, POs)</td><td>&#10003;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td><strong>Maintenance Call System</strong>, work orders, analytics</td><td>&mdash;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Uptime alerts + error monitoring</td><td>&mdash;</td><td>&#10003;</td><td>&#10003;</td></tr>
+  <tr><td>Multi-site, SSO, dedicated hardware, custom SLA</td><td>&mdash;</td><td>&mdash;</td><td>&#10003;</td></tr>
+  <tr><td>Support</td><td>Email, business hours</td><td>Priority email, next-business-day</td><td>SLA + named contact</td></tr>
+</table>
+<ul>
+  <li><strong>Annual option:</strong> pay yearly, get ~2 months free (~15&ndash;20% off) &mdash; improves cash flow and retention.</li>
+  <li><strong>One-time onboarding fee:</strong> $1,000&ndash;$3,000 (data import + configuration + training). Signals seriousness and covers white-glove setup.</li>
+  <li><strong>Pilot pricing:</strong> free or heavily discounted for the first 1&ndash;3 customers <em>in exchange for a reference + feedback</em> &mdash; not a permanent giveaway.</li>
+</ul>
+<div class="callout"><span class="lbl">Membership-model best practices</span>
+<p style="margin:4px 0 0">Keep tiers few and legible (3 is ideal). Anchor on the middle tier. Bill recurring via Stripe with automated invoices + dunning (failed-payment retries). Offer annual to lock in cash and cut churn. Price on <em>value delivered</em> (downtime avoided, stockouts prevented), not cost-plus. Publish pricing once validated &mdash; opacity slows SMB deals.</p></div>
+
+<div class="page-break"></div>
+<h2>6. Security one-pager (from your actual practices)</h2>
+<p>Hand this to a prospective buyer. It is written to be <strong>truthful</strong> &mdash; it claims only what is real today and is explicit about what is on the roadmap. Do not add claims (SOC 2, pen-test, encryption-at-rest) you cannot back.</p>
+<h3>What is true today</h3>
+<table>
+  <tr><th>Area</th><th>Practice</th></tr>
+  <tr><td>Tenant isolation</td><td>Each customer runs a dedicated instance with its own database and its own secrets &mdash; no shared multi-tenant data store.</td></tr>
+  <tr><td>Authentication &amp; access</td><td>JWT-based auth with role-based access control (view/edit/PO-manage/user-manage permissions). Single login authority across both apps.</td></tr>
+  <tr><td>Backups</td><td>Automated database backups (<code>pg_dump</code>), taken and <em>gated</em> before every release, with per-prefix retention. Restore procedure is documented and exercised.</td></tr>
+  <tr><td>Change management</td><td>Every change is tested by CI before merge; releases are tagged and reversible (one-command rollback); schema changes are tracked, transactional, and forward-only.</td></tr>
+  <tr><td>Monitoring</td><td>Application error tracking and service uptime monitoring with alerting.</td></tr>
+  <tr><td>Environment separation</td><td>Production is fully isolated from development; no developer activity touches customer data.</td></tr>
+  <tr><td>Transport</td><td>Deploy behind HTTPS/TLS for any internet-exposed instance (reverse proxy).</td></tr>
+</table>
+<h3>On the roadmap (be upfront)</h3>
+<ul>
+  <li>Secrets moved from local <code>.env</code> files into a managed secret store (per-instance).</li>
+  <li>Formal encryption-at-rest and a documented incident-response process.</li>
+  <li>Third-party review (pen-test) and a compliance path (e.g., SOC&nbsp;2) if/when enterprise buyers require it.</li>
+</ul>
+<div class="callout warn"><span class="lbl">Do not overclaim</span><p style="margin:4px 0 0">If asked about something not yet in place, say "on the roadmap, targeted for [trigger]." Honesty survives due diligence; a bluff does not.</p></div>
+
+<h2>7. Pilot / design-partner outreach template</h2>
+<p>Short, specific, and asks for a conversation &mdash; not a sale. Target an operations or maintenance manager at an SMB manufacturer/facility you have a warm path to.</p>
+<blockquote>
+Subject: A better way to track your parts &amp; maintenance &mdash; free pilot<br><br>
+Hi [Name],<br><br>
+I've built an inventory &amp; maintenance-tracking system for shops like [Company] &mdash; it keeps live parts counts, flags low stock before you run out, manages purchase orders, and ties maintenance calls to the parts they consume, all on one screen your team already understands.<br><br>
+I'm looking for <strong>one or two operations to pilot it, free</strong>, in exchange for candid feedback and (if it earns it) a reference. I'd set it up for you, import your existing parts and machines, and train your team &mdash; no cost, no commitment.<br><br>
+Could I show you a 15-minute demo next week? If it's not a fit, no hard feelings.<br><br>
+Thanks,<br>[Your name]
+</blockquote>
+<p class="meta">Tips: lead with their pain (stockouts, spreadsheet chaos, downtime), not your features. Offer to do the setup and data import yourself &mdash; friction kills pilots. Aim for a live demo on a real instance, not slides.</p>
+
+<h2>8. Prioritized next 90 days</h2>
+<table>
+  <tr><th>#</th><th>Action</th><th>Why it's ordered here</th></tr>
+  <tr><td>1</td><td>Name the product + one-page value prop + a demo instance</td><td>You can't pitch what you can't name or show.</td></tr>
+  <tr><td>2</td><td>Send the pilot outreach to 5&ndash;10 warm contacts</td><td>Demand validation is the gating unknown.</td></tr>
+  <tr><td>3</td><td>Stand up the pilot on its own VM (setup guide) + import their data</td><td>Proves delivery; the data-import gap surfaces here.</td></tr>
+  <tr><td>4</td><td>Draft ToS / Privacy (templates) + the security one-pager (§6)</td><td>Needed before money changes hands.</td></tr>
+  <tr><td>5</td><td>Turn on Sentry + uptime alerts on the pilot instance</td><td>Backs your first support promise; already built.</td></tr>
+  <tr><td>6</td><td>Validate pricing (§5) against what the pilot would actually pay</td><td>Real willingness-to-pay beats a guess.</td></tr>
+  <tr><td>7</td><td>Add Stripe billing once a customer commits</td><td>Build the register only when there's a sale to ring up.</td></tr>
+</table>
+
+<div class="foot">
+  Commercialization Readiness Review &middot; Internal strategy document &middot; Pricing and security content are starting drafts to validate &mdash; the legal documents require a lawyer's review before use. Pair with <code>docs/deployment/customer-setup.html</code> and <code>docs/ENGINEERING_MATURITY_ROADMAP.md</code>.
+</div>
+
+</body>
+</html>
