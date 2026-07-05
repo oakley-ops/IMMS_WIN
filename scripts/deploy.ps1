@@ -136,7 +136,10 @@ try {
 Set-Content -Path $InstalledRefFile -Value $installedSha -Encoding ascii
 
 # ---- Migrate -------------------------------------------------------------------
-# IMMS migrate is an idempotent no-op on an existing DB (applies db/schema.sql once).
+# IMMS migrate runs the tracked runner (backend/src/database/migrate.js): applies
+# pending backend/migrations/*.sql. Its first-run guard aborts this deploy if prod
+# has not been baselined yet (run `npm run migrate:baseline` once) — see
+# docs/deployment/PROD_OPERATIONS.md, "IMMS schema migrations".
 Exec 'npm run migrate' (Join-Path $ProdRoot 'backend')
 Exec 'npm run migrate' (Join-Path $ProdRoot 'maintenance_call_system\backend')
 
