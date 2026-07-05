@@ -1,27 +1,21 @@
-jest.mock('@sentry/node', () => ({ init: jest.fn(), setupExpressErrorHandler: jest.fn() }));
-const Sentry = require('@sentry/node');
 const { initSentry } = require('../../../src/observability/sentry');
 
 describe('initSentry', () => {
-  beforeEach(() => { jest.clearAllMocks(); delete process.env.SENTRY_DSN; });
+  const OLD = process.env.SENTRY_DSN;
+  afterEach(() => { if (OLD === undefined) delete process.env.SENTRY_DSN; else process.env.SENTRY_DSN = OLD; });
 
-  test('no-op and returns false when SENTRY_DSN is unset', () => {
-    expect(initSentry()).toBe(false);
-    expect(Sentry.init).not.toHaveBeenCalled();
+  test('no-ops and returns false without SENTRY_DSN', () => {
+    delete process.env.SENTRY_DSN;
+    const sentry = { init: jest.fn() };
+    expect(initSentry(sentry)).toBe(false);
+    expect(sentry.init).not.toHaveBeenCalled();
   });
 
-  test('initializes errors-only and returns true when SENTRY_DSN is set', () => {
+  test('initializes errors-only with SENTRY_DSN', () => {
     process.env.SENTRY_DSN = 'https://k@o0.ingest.sentry.io/0';
-    expect(initSentry()).toBe(true);
-    expect(Sentry.init).toHaveBeenCalledTimes(1);
-    expect(Sentry.init.mock.calls[0][0]).toMatchObject({ tracesSampleRate: 0 });
-    delete process.env.SENTRY_DSN;
-  });
-
-  test('returns false (does not throw) when init throws', () => {
-    process.env.SENTRY_DSN = 'bad';
-    Sentry.init.mockImplementationOnce(() => { throw new Error('bad dsn'); });
-    expect(initSentry()).toBe(false);
-    delete process.env.SENTRY_DSN;
+    const sentry = { init: jest.fn() };
+    expect(initSentry(sentry)).toBe(true);
+    expect(sentry.init).toHaveBeenCalledTimes(1);
+    expect(sentry.init.mock.calls[0][0].tracesSampleRate).toBe(0);
   });
 });

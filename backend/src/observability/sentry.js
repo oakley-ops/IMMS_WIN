@@ -3,12 +3,15 @@
 // Error tracking via @sentry/node. Fully no-op unless SENTRY_DSN is set.
 // initSentry() MUST be called before `express` is required in the entry file
 // so the SDK can instrument express/http/pg. Errors only (no perf tracing).
-const Sentry = require('@sentry/node');
+// The Sentry client is injectable (default = the real module) so the on/off
+// gating is testable in both jest and vitest without module mocking — vitest
+// cannot intercept @sentry/node's dual CJS/ESM conditional exports.
+const defaultSentry = require('@sentry/node');
 
-function initSentry() {
+function initSentry(sentry = defaultSentry) {
   if (!process.env.SENTRY_DSN) return false;
   try {
-    Sentry.init({
+    sentry.init({
       dsn: process.env.SENTRY_DSN,
       environment: process.env.NODE_ENV || 'development',
       release: process.env.SENTRY_RELEASE || undefined,
@@ -21,4 +24,4 @@ function initSentry() {
   }
 }
 
-module.exports = { Sentry, initSentry };
+module.exports = { Sentry: defaultSentry, initSentry };
