@@ -96,6 +96,17 @@ describe('runMigrations', () => {
     expect(result.applied).toEqual([]);
   });
 
+  test('guard does not fire when SOMETHING is recorded even with >5 pending (doneSet.size clause is load-bearing)', async () => {
+    // 7 files, 1 already recorded -> doneSet.size = 1 (not 0), 6 pending (>5).
+    // The guard must NOT fire (it keys on doneSet.size === 0), so all 6 pending apply.
+    const files = {};
+    for (let i = 1; i <= 7; i++) files[`00${i}_m.sql`] = `CREATE TABLE t${i} (id int);`;
+    const dir = makeDir(files);
+    const { db } = makeDb({ appliedRows: [{ filename: '001_m.sql' }] });
+    const result = await runMigrations(db, { dir });
+    expect(result.applied).toHaveLength(6);
+  });
+
   test('a failing migration rolls back and throws a wrapped error', async () => {
     const dir = makeDir({ '001_first.sql': 'CREATE TABLE one (id int);', '002_bad.sql': 'THIS IS BAD SQL;' });
     const { db, calls } = makeDb({ failOn: 'THIS IS BAD SQL' });
