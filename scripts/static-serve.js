@@ -7,7 +7,15 @@
 // path.sep correctly, serves the right Content-Type, and falls back to
 // index.html for client-side routes.
 //
-// Config via env (or argv): SERVE_PATH (directory), SERVE_PORT (port).
+// It also proxies /api/* to the backend so the SPA works same-origin (like the
+// CRA dev-server proxy). Prod is a standalone serve with no reverse proxy, so a
+// relative `/api/...` request from a component using raw axios would otherwise
+// hit THIS static server, fall through to the SPA shell (index.html), and hand
+// the frontend an HTML string where it expected JSON — crashing screens like
+// Transactions. Proxying /api here fixes that class for every component at once.
+//
+// Config via env (or argv): SERVE_PATH (directory), SERVE_PORT (port),
+// API_TARGET (backend origin for /api proxying, default http://localhost:4000).
 'use strict';
 const http = require('http');
 const fs = require('fs');
@@ -16,6 +24,31 @@ const path = require('path');
 const ROOT = path.resolve(process.env.SERVE_PATH || process.argv[2] || '.');
 const PORT = parseInt(process.env.SERVE_PORT || process.argv[3] || '8080', 10);
 const INDEX = path.join(ROOT, 'index.html');
+const API_TARGET = new URL(process.env.API_TARGET || 'http://localhost:4000');
+
+// Forward an /api/* request to the backend, streaming both ways (method, headers,
+// body, and the upstream's status/headers/body). Zero-dep — Node http only.
+function proxyApi(req, res) {
+  const upstream = http.request(
+    {
+      protocol: API_TARGET.protocol,
+      hostname: API_TARGET.hostname,
+      port: API_TARGET.port || 80,
+      method: req.method,
+      path: req.url, // preserve the full /api/... path + query string
+      headers: { ...req.headers, host: API_TARGET.host },
+    },
+    (upRes) => {
+      res.writeHead(upRes.statusCode, upRes.headers);
+      upRes.pipe(res);
+    }
+  );
+  upstream.on('error', () => {
+    if (!res.headersSent) res.writeHead(502, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'bad_gateway', message: 'API upstream unreachable' }));
+  });
+  req.pipe(upstream);
+}
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -48,6 +81,9 @@ const server = http.createServer((req, res) => {
   } catch (e) {
     res.writeHead(400, { 'Content-Type': 'text/plain' }); return res.end('Bad Request');
   }
+
+  // API calls are proxied to the backend, never treated as static files / SPA routes.
+  if (urlPath === '/api' || urlPath.startsWith('/api/')) return proxyApi(req, res);
 
   const resolved = path.resolve(ROOT, urlPath.replace(/^\/+/, ''));
   // Range-check with path.sep so Windows backslash paths are handled correctly.
