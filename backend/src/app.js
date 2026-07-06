@@ -6,6 +6,10 @@ require('dotenv').config();
 
 const app = express();
 
+// Security headers (helmet) — applied before all routes so every response carries
+// them. See src/middleware/securityHeaders.js (CSP intentionally disabled for now).
+app.use(require('./middleware/securityHeaders'));
+
 // Report any 5xx response to Sentry (no-op unless SENTRY_DSN is set). Registered
 // before all routes so it covers every route in app.js and index.js.
 const capture5xx = require('./observability/capture5xx');
