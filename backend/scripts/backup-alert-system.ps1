@@ -100,7 +100,7 @@ function Send-DesktopAlert {
         $xml.LoadXml($toastXml)
         
         $toast = New-Object Windows.UI.Notifications.ToastNotification $xml
-        [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Fiserv Inventory Backup").Show($toast)
+        [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("IMMS Inventory Backup").Show($toast)
         
         Write-Log "Desktop alert sent: $Title"
         

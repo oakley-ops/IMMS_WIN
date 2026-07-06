@@ -87,7 +87,7 @@ function Setup-ScheduledTasks {
         Unregister-ScheduledTask -TaskName $backupTaskName -Confirm:$false -ErrorAction SilentlyContinue
     } catch {}
     
-    Register-ScheduledTask -TaskName $backupTaskName -Action $backupAction -Trigger $backupTrigger -Settings $backupSettings -Principal $backupPrincipal -Description "Daily backup of Fiserv Inventory database" | Out-Null
+    Register-ScheduledTask -TaskName $backupTaskName -Action $backupAction -Trigger $backupTrigger -Settings $backupSettings -Principal $backupPrincipal -Description "Daily backup of IMMS Inventory database" | Out-Null
     Write-Log "Created scheduled task: $backupTaskName"
     
     # Health check task (daily at 8 AM)
@@ -207,7 +207,7 @@ pause
     $quickAccessBat = "$scriptDir\backup-control-panel.bat"
     $batContent = @"
 @echo off
-title Fiserv Inventory Backup Control Panel
+title IMMS Inventory Backup Control Panel
 echo.
 echo ===================================
 echo   Backup Control Panel

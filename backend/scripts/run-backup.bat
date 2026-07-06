@@ -2,7 +2,7 @@
 REM Manual Database Backup - Double-click to run
 echo.
 echo =====================================
-echo  Fiserv Inventory Database Backup
+echo  IMMS Inventory Database Backup
 echo =====================================
 echo.
 

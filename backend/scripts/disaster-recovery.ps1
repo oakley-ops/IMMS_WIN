@@ -1,4 +1,4 @@
-# Disaster Recovery Script for Fiserv Inventory Database
+# Disaster Recovery Script for IMMS Inventory Database
 # Handles various disaster recovery scenarios with guided recovery
 
 param(
