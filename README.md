@@ -1,4 +1,4 @@
-# Fiserv Inventory / IMMS
+# IMMS
 
 An in-house, full-stack **Inventory Management System (IMMS)** built for a manufacturing/maintenance environment. It tracks parts, machines, dies, purchase orders, work orders, preventive maintenance, technicians, projects, and analytics. The repo also contains a sibling **Maintenance Call System (MCS)** for factory-floor badge-driven call requests, and a substantial collection of operational scripts, Raspberry Pi kiosk setup, and data-matching tooling.
 
@@ -12,10 +12,9 @@ fiservinventory_win/
 ├── migrations/                 # Root-level legacy SQL migrations
 ├── camera-setup/               # Raspberry Pi camera + HTTPS proxy scripts
 ├── nginx/                      # Reverse-proxy configs
-├── jenkins/                    # CI pipeline configs
 ├── scripts/                    # SSL / test-data helpers
 ├── docs/                       # Mobile + PO troubleshooting docs
-├── images/, Fiservlogo/        # Static assets
+├── images/                     # Static assets
 └── *.py, *.xlsx                # Inventory-matching / reconciliation tooling
 ```
 
@@ -78,9 +77,8 @@ fiservinventory_win/
 ### Infrastructure
 - **Process manager**: PM2 — all five production services (IMMS API, MCS API, MCS web, two IMMS web builds) are defined in the repo-root `ecosystem.prod.config.js` and run from the dedicated production clone `C:\imms\prod` (see `docs/deployment/PROD_OPERATIONS.md`)
 - **Reverse proxy**: nginx (`nginx/`, `camera-setup/`)
-- **CI**: Jenkins (`Jenkinsfile`, `jenkins/setup.groovy`)
 - **Containers**: Dockerfiles in both `backend/` and `frontend/`
-- **Hosting hints**: `fly.toml` (backend & frontend), `netlify.toml`, `deploy-fly.sh`, `deploy.sh`
+- **Hosting hints**: `netlify.toml`, `deploy.sh`
 - **Monitoring config**: `prometheus.yml`, `alerts.yml`
 
 ---
@@ -300,8 +298,7 @@ Real-time: Socket.io shares the HTTP server; events fire on parts usage and stoc
 - **Raspberry Pi kiosk** — `camera-setup/`, plus dozens of `RASPBERRY_PI_*.md` guides cover DHCP, kiosk mode, HTTPS proxy for camera access, and WebSocket fixes.
 - **Reverse proxy** — `nginx/imms-inventory.conf` for production; `imms-inventory-local.conf` for dev.
 - **PM2** — all five production services are defined in the repo-root `ecosystem.prod.config.js` and run from the dedicated clone `C:\imms\prod`; deploys/rollbacks go through `scripts\deploy.ps1` (see `docs/deployment/PROD_OPERATIONS.md`).
-- **Cloud targets** — Fly.io (`backend/fly.toml`, `frontend/fly.toml`, `deploy-fly.sh`), Netlify (`netlify.toml`), generic SSH (`deploy.sh`).
-- **CI** — Jenkins (`Jenkinsfile`, `jenkins/setup.groovy`).
+- **Cloud targets** — Netlify (`netlify.toml`), generic SSH (`deploy.sh`).
 - **Monitoring** — `prometheus.yml` + `alerts.yml` (Prometheus scrape and alerting rules).
 
 ---

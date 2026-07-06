@@ -77,7 +77,7 @@ function Setup-ScheduledTasks {
     $scriptDir = $PSScriptRoot
     
     # Main backup task (daily at 2 AM)
-    $backupTaskName = "FiservInventory-DatabaseBackup"
+    $backupTaskName = "IMMSInventory-DatabaseBackup"
     $backupAction = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$scriptDir\backup-database.ps1`""
     $backupTrigger = New-ScheduledTaskTrigger -Daily -At "02:00"
     $backupSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 2) -RestartCount 3
@@ -87,11 +87,11 @@ function Setup-ScheduledTasks {
         Unregister-ScheduledTask -TaskName $backupTaskName -Confirm:$false -ErrorAction SilentlyContinue
     } catch {}
     
-    Register-ScheduledTask -TaskName $backupTaskName -Action $backupAction -Trigger $backupTrigger -Settings $backupSettings -Principal $backupPrincipal -Description "Daily backup of Fiserv Inventory database" | Out-Null
+    Register-ScheduledTask -TaskName $backupTaskName -Action $backupAction -Trigger $backupTrigger -Settings $backupSettings -Principal $backupPrincipal -Description "Daily backup of IMMS Inventory database" | Out-Null
     Write-Log "Created scheduled task: $backupTaskName"
     
     # Health check task (daily at 8 AM)
-    $healthTaskName = "FiservInventory-BackupHealthCheck"
+    $healthTaskName = "IMMSInventory-BackupHealthCheck"
     $healthAction = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$scriptDir\backup-health-check.ps1`""
     $healthTrigger = New-ScheduledTaskTrigger -Daily -At "08:00"
     $healthSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 1) -RestartCount 2
@@ -105,7 +105,7 @@ function Setup-ScheduledTasks {
     Write-Log "Created scheduled task: $healthTaskName"
     
     # Alert system task (every 4 hours)
-    $alertTaskName = "FiservInventory-BackupAlerts"
+    $alertTaskName = "IMMSInventory-BackupAlerts"
     $alertAction = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$scriptDir\backup-alert-system.ps1`""
     $alertTrigger = New-ScheduledTaskTrigger -Once -At (Get-Date) -RepetitionInterval (New-TimeSpan -Hours 4) -RepetitionDuration (New-TimeSpan -Days 365)
     $alertSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Minutes 30) -RestartCount 2
@@ -120,7 +120,7 @@ function Setup-ScheduledTasks {
     
     if ($EnableCloudSync) {
         # Cloud sync task (daily at 3 AM)
-        $cloudTaskName = "FiservInventory-CloudSync"
+        $cloudTaskName = "IMMSInventory-CloudSync"
         $cloudAction = New-ScheduledTaskAction -Execute "PowerShell.exe" -Argument "-ExecutionPolicy Bypass -File `"$scriptDir\cloud-sync-backup.ps1`""
         $cloudTrigger = New-ScheduledTaskTrigger -Daily -At "03:00"
         $cloudSettings = New-ScheduledTaskSettingsSet -ExecutionTimeLimit (New-TimeSpan -Hours 2) -RestartCount 3
@@ -207,7 +207,7 @@ pause
     $quickAccessBat = "$scriptDir\backup-control-panel.bat"
     $batContent = @"
 @echo off
-title Fiserv Inventory Backup Control Panel
+title IMMS Inventory Backup Control Panel
 echo.
 echo ===================================
 echo   Backup Control Panel

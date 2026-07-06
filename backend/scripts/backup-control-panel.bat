@@ -1,5 +1,5 @@
 @echo off
-title Fiserv Inventory Backup Control Panel
+title IMMS Inventory Backup Control Panel
 echo.
 echo ===================================
 echo   Backup Control Panel

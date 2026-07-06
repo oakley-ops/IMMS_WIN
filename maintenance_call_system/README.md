@@ -4,7 +4,7 @@ A factory-floor maintenance call system. Operators tap a badge at a machine-side
 
 ## Multi-tenancy status (Step 2a complete)
 
-Every domain table has a `tenant_id INT NOT NULL DEFAULT 1` column with a FK to `auth.tenants(tenant_id)` and an index on `tenant_id`. The seeded `fiserv` tenant has `tenant_id = 1`, so every existing row is correctly scoped.
+Every domain table has a `tenant_id INT NOT NULL DEFAULT 1` column with a FK to `auth.tenants(tenant_id)` and an index on `tenant_id`. The seeded `imms` tenant has `tenant_id = 1`, so every existing row is correctly scoped.
 
 **What works today:** schema is multi-tenant-ready; one tenant in operation.
 

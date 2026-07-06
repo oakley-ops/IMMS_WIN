@@ -9,7 +9,7 @@ param(
     [bool]$EnableAWS = $false,
     [string]$GoogleDriveFolder = "DatabaseBackups",
     [string]$OneDriveFolder = "DatabaseBackups",
-    [string]$AWSBucket = "fiserv-inventory-backups"
+    [string]$AWSBucket = "imms-inventory-backups"
 )
 
 function Write-Log {

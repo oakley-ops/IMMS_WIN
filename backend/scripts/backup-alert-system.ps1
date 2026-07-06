@@ -100,7 +100,7 @@ function Send-DesktopAlert {
         $xml.LoadXml($toastXml)
         
         $toast = New-Object Windows.UI.Notifications.ToastNotification $xml
-        [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("Fiserv Inventory Backup").Show($toast)
+        [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier("IMMS Inventory Backup").Show($toast)
         
         Write-Log "Desktop alert sent: $Title"
         
@@ -124,7 +124,7 @@ function Write-EventLog {
     }
     
     try {
-        $source = "FiservInventoryBackup"
+        $source = "IMMSInventoryBackup"
         
         # Create event source if it doesn't exist
         if (-not [System.Diagnostics.EventLog]::SourceExists($source)) {
@@ -249,7 +249,7 @@ function Check-ScheduledTask {
     Write-Log "Checking scheduled task status..."
     
     try {
-        $task = Get-ScheduledTask -TaskName "FiservInventory-DatabaseBackup" -ErrorAction Stop
+        $task = Get-ScheduledTask -TaskName "IMMSInventory-DatabaseBackup" -ErrorAction Stop
         
         if ($task.State -ne "Ready") {
             $alertMessage = "Backup scheduled task is not ready (State: $($task.State))"
@@ -262,7 +262,7 @@ function Check-ScheduledTask {
         }
         
         # Check if task failed recently
-        $taskInfo = Get-ScheduledTaskInfo -TaskName "FiservInventory-DatabaseBackup"
+        $taskInfo = Get-ScheduledTaskInfo -TaskName "IMMSInventory-DatabaseBackup"
         if ($taskInfo.LastTaskResult -ne 0) {
             $alertMessage = "Backup scheduled task last result was not successful (Code: $($taskInfo.LastTaskResult))"
             Write-Log $alertMessage "WARN"

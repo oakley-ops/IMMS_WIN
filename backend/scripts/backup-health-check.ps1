@@ -178,13 +178,13 @@ function Test-ScheduledTask {
     Write-Log "Testing scheduled task..."
     
     try {
-        $task = Get-ScheduledTask -TaskName "FiservInventory-DatabaseBackup" -ErrorAction Stop
+        $task = Get-ScheduledTask -TaskName "IMMSInventory-DatabaseBackup" -ErrorAction Stop
         
         if ($task.State -eq "Ready") {
             Write-Log "Scheduled task is active and ready"
             
             # Check last run time
-            $taskInfo = Get-ScheduledTaskInfo -TaskName "FiservInventory-DatabaseBackup"
+            $taskInfo = Get-ScheduledTaskInfo -TaskName "IMMSInventory-DatabaseBackup"
             if ($taskInfo.LastRunTime) {
                 $lastRun = (Get-Date) - $taskInfo.LastRunTime
                 Write-Log "Last run: $($taskInfo.LastRunTime) ($($lastRun.TotalHours.ToString('F1')) hours ago)"

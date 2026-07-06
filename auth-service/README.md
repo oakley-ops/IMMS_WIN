@@ -9,7 +9,7 @@ cp .env.example .env       # edit DB_*, COOKIE_DOMAIN
 npm install
 npm run keys               # generate RS256 keypair into ./keys
 npm run migrate            # apply auth schema to the database
-npm run seed               # create Fiserv tenant + admin@fiserv user
+npm run seed               # create IMMS tenant + admin@imms user
 npm run dev                # http://localhost:4002
 ```
 

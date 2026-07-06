@@ -18,4 +18,4 @@ Project documentation organized by topic. Root-level docs are limited to `README
 - `backend/docs/api.md` — API reference.
 - `backend/DEPLOYMENT.md` — Backend-specific deployment notes.
 - `maintenance_call_system/` — MCS subproject has its own docs at its root (`PROGRAMMING_PRINCIPLES.md`, `TESTING.md`, `SCHEMA_CONTRACT.md`, etc.).
-- `frontend/README.md`, `jenkins/README.md` — subproject READMEs.
+- `frontend/README.md` — subproject README.

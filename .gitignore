@@ -3,6 +3,10 @@ node_modules/
 .pnp/
 .pnp.js
 
+# Python build artifacts
+__pycache__/
+*.pyc
+
 # Testing
 coverage/
 .coverage/

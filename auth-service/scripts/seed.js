@@ -7,9 +7,9 @@ const tenantsRepo = require('../src/repositories/tenantsRepo');
 const usersRepo = require('../src/repositories/usersRepo');
 const rolesRepo = require('../src/repositories/rolesRepo');
 
-const TENANT_SLUG = 'fiserv';
-const TENANT_NAME = 'Fiserv';
-const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@fiserv';
+const TENANT_SLUG = 'imms';
+const TENANT_NAME = 'IMMS';
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@imms';
 
 const promptPassword = async () => {
   if (process.env.SEED_ADMIN_PASSWORD) return process.env.SEED_ADMIN_PASSWORD;

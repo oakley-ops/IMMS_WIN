@@ -375,7 +375,7 @@ REACT_APP_MCS_URL=http://localhost:3003
 - [ ] **Step 2: Commit**
 
 ```bash
-cd C:\Users\Fiservinventory_win
+cd C:\Users\Fiser\fiservinventory_win
 git add frontend/.env
 git commit -m "feat(imms): add REACT_APP_MCS_URL env var"
 ```
