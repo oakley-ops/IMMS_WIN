@@ -2,7 +2,7 @@
 const { verify } = require('../lib/jwt');
 const { DomainError } = require('../lib/errors');
 
-const COOKIE_NAME = process.env.COOKIE_NAME || 'fiserv_auth';
+const COOKIE_NAME = process.env.COOKIE_NAME || 'imms_auth';
 
 const requireAuth = (req, res, next) => {
   const token = req.cookies?.[COOKIE_NAME];

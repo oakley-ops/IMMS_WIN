@@ -12,7 +12,7 @@ const tenantsRepo = require('../repositories/tenantsRepo');
 const usersRepo = require('../repositories/usersRepo');
 const rolesRepo = require('../repositories/rolesRepo');
 
-const ensureTenant = async (slug = 'fiserv', display_name = 'Fiserv') => {
+const ensureTenant = async (slug = 'imms', display_name = 'IMMS') => {
   let tenant = await tenantsRepo.findBySlug(pool, slug);
   if (!tenant) tenant = await tenantsRepo.insert(pool, { slug, display_name });
   return tenant;

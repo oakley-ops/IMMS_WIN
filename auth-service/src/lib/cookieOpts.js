@@ -1,5 +1,5 @@
 // src/lib/cookieOpts.js
-// Cookie options for the fiserv_auth JWT cookie.
+// Cookie options for the imms_auth JWT cookie.
 //
 // `secure` defaults to TRUE. To disable (local HTTP dev only), set
 // COOKIE_SECURE=false in your .env file.

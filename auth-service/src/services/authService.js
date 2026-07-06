@@ -6,7 +6,7 @@ const usersRepo = require('../repositories/usersRepo');
 const rolesRepo = require('../repositories/rolesRepo');
 const tenantsRepo = require('../repositories/tenantsRepo');
 
-const DEFAULT_TENANT_SLUG = 'fiserv';
+const DEFAULT_TENANT_SLUG = 'imms';
 
 const stripSecrets = (user, roles) => {
   const { password_hash, ...safe } = user;
