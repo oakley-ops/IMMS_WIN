@@ -13,5 +13,5 @@ module.exports = helmet({
   referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   // 1-year HSTS, host-scoped only. Deliberately no includeSubDomains/preload
   // (per the spec) so it never over-reaches to the immsystem.com apex/siblings.
-  hsts: { maxAge: 31536000 },
+  hsts: { maxAge: 31536000, includeSubDomains: false },
 });
