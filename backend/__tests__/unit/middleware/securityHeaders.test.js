@@ -23,8 +23,13 @@ describe('securityHeaders middleware', () => {
     expect(res.headers['x-powered-by']).toBeUndefined();
   });
 
-  test('does NOT set a Content-Security-Policy (intentionally disabled)', async () => {
+  test('sets CSP in report-only mode (observes, does not enforce/block)', async () => {
     const res = await request(makeApp()).get('/t');
+    // Report-only: the enforced header is absent, the report-only header is present.
     expect(res.headers['content-security-policy']).toBeUndefined();
+    expect(res.headers['content-security-policy-report-only']).toBeDefined();
+    // Reflects real sources (jsdelivr for Bootstrap, ws/wss for Socket.io).
+    expect(res.headers['content-security-policy-report-only']).toContain('cdn.jsdelivr.net');
+    expect(res.headers['content-security-policy-report-only']).toContain('connect-src');
   });
 });
