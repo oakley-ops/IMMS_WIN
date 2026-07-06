@@ -1,0 +1,30 @@
+# Render Blueprint for the IMMS sales demo (demo.immsystem.com).
+#
+# The demo is the SAME app as production, built from this repo's Dockerfile — which
+# bakes REACT_APP_DEMO_MODE=true and an empty REACT_APP_API_URL (same-origin API),
+# copies the React build into backend/public, and runs `node index.js`. Setting
+# DEMO_MODE=true at runtime turns on the /api/v1/demo router, the /demo landing page
+# with one-click "Enter Demo" login, the noindex header, and the nightly reseed cron.
+#
+# BEST-EFFORT blueprint — reconcile with the live Render service. The authoritative
+# procedure is docs/deployment/DEMO_OPERATIONS.md.
+services:
+  - type: web
+    name: imms-demo
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    branch: main
+    autoDeploy: true
+    envVars:
+      - key: DEMO_MODE
+        value: "true"
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "8000"
+      - key: DATABASE_URL
+        sync: false   # set in the dashboard — the demo (throwaway) database
+      - key: JWT_SECRET
+        sync: false
+      - key: SESSION_SECRET
+        sync: false
