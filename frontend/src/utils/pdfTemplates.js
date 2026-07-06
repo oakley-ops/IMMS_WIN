@@ -12,8 +12,6 @@ import html2pdf from 'html2pdf.js';
  */
 export const generatePurchaseOrderPDF = async (purchaseOrder, returnBlob = false) => {
   try {
-    // Always show the "IMMS" text logo
-    const isDemo = process.env.REACT_APP_DEMO_MODE === 'true';
     // Format dates
     const formatDate = (dateString) => {
       if (!dateString) return 'N/A';
