@@ -28,7 +28,7 @@ auth-service/
 │   └── 20260521000000_create_auth_schema.sql   # NEW
 ├── scripts/
 │   ├── generate-keys.js           # NEW — writes keys/private.pem + keys/public.pem
-│   └── seed.js                    # NEW — Fiserv tenant + admin user
+│   └── seed.js                    # NEW — IMMS tenant + admin user
 ├── keys/                          # NEW (gitignored)
 └── src/
     ├── app.js                     # NEW — builds the express app (factored out for tests)
@@ -154,9 +154,9 @@ CORS_ORIGIN=http://localhost:3000,http://localhost:3001,http://localhost:3003
 
 # ─── Cookies ───────────────────────────────────────────────────────────────
 # Parent domain for the auth cookie. Leave unset for localhost dev.
-# In production: .fiserv.local (or your real parent domain).
-# COOKIE_DOMAIN=.fiserv.local
-COOKIE_NAME=fiserv_auth
+# In production: .imms.local (or your real parent domain).
+# COOKIE_DOMAIN=.imms.local
+COOKIE_NAME=imms_auth
 COOKIE_SECURE=false   # set true in production (HTTPS)
 TOKEN_TTL_SECONDS=86400
 
@@ -201,7 +201,7 @@ cp .env.example .env       # edit DB_*, COOKIE_DOMAIN
 npm install
 npm run keys               # generate RS256 keypair into ./keys
 npm run migrate            # apply auth schema to the database
-npm run seed               # create Fiserv tenant + admin@fiserv user
+npm run seed               # create IMMS tenant + admin@imms user
 npm run dev                # http://localhost:4002
 ```
 
@@ -866,7 +866,7 @@ git commit -m "feat(auth-service): add error handler"
 const { verify } = require('../lib/jwt');
 const { DomainError } = require('../lib/errors');
 
-const COOKIE_NAME = process.env.COOKIE_NAME || 'fiserv_auth';
+const COOKIE_NAME = process.env.COOKIE_NAME || 'imms_auth';
 
 const requireAuth = (req, res, next) => {
   const token = req.cookies?.[COOKIE_NAME];
@@ -1130,7 +1130,7 @@ const { z } = require('zod');
 const loginSchema = z.object({
   email:    z.string().email().max(254),
   password: z.string().min(1).max(200),
-  tenant_slug: z.string().min(1).max(64).optional(), // defaults to 'fiserv' if absent
+  tenant_slug: z.string().min(1).max(64).optional(), // defaults to 'imms' if absent
 });
 
 module.exports = { loginSchema };
@@ -1175,7 +1175,7 @@ const authService = require('./authService');
 const FIXED_USER = {
   user_id: 42,
   tenant_id: 1,
-  email: 'maria@fiserv',
+  email: 'maria@imms',
   password_hash: '<replaced-in-beforeEach>',
   display_name: 'Maria',
   status: 'active',
@@ -1205,19 +1205,19 @@ describe('authService.login', () => {
   beforeEach(async () => {
     FIXED_USER.password_hash = await password.hash('hunter2');
     vi.clearAllMocks();
-    tenantsRepo.findBySlug.mockResolvedValue({ tenant_id: 1, slug: 'fiserv', status: 'active' });
+    tenantsRepo.findBySlug.mockResolvedValue({ tenant_id: 1, slug: 'imms', status: 'active' });
     usersRepo.findByEmail.mockResolvedValue(FIXED_USER);
     rolesRepo.findKeysForUser.mockResolvedValue(['mcs.admin']);
   });
 
   it('returns a JWT and user shape on correct credentials', async () => {
     const db = makeDb();
-    const result = await authService.login(db, { email: 'maria@fiserv', password: 'hunter2', tenant_slug: 'fiserv' });
+    const result = await authService.login(db, { email: 'maria@imms', password: 'hunter2', tenant_slug: 'imms' });
     expect(result.token).toBeTypeOf('string');
     expect(result.user).toMatchObject({
       user_id: 42,
       tenant_id: 1,
-      email: 'maria@fiserv',
+      email: 'maria@imms',
       display_name: 'Maria',
       roles: ['mcs.admin'],
     });
@@ -1227,7 +1227,7 @@ describe('authService.login', () => {
   it('throws unauthorized on wrong password', async () => {
     const db = makeDb();
     await expect(
-      authService.login(db, { email: 'maria@fiserv', password: 'wrong', tenant_slug: 'fiserv' })
+      authService.login(db, { email: 'maria@imms', password: 'wrong', tenant_slug: 'imms' })
     ).rejects.toThrow(DomainError);
   });
 
@@ -1235,15 +1235,15 @@ describe('authService.login', () => {
     usersRepo.findByEmail.mockResolvedValue(null);
     const db = makeDb();
     await expect(
-      authService.login(db, { email: 'ghost@fiserv', password: 'whatever', tenant_slug: 'fiserv' })
+      authService.login(db, { email: 'ghost@imms', password: 'whatever', tenant_slug: 'imms' })
     ).rejects.toMatchObject({ code: 'unauthorized' });
   });
 
   it('throws unauthorized when tenant is missing or suspended', async () => {
-    tenantsRepo.findBySlug.mockResolvedValue({ tenant_id: 1, slug: 'fiserv', status: 'suspended' });
+    tenantsRepo.findBySlug.mockResolvedValue({ tenant_id: 1, slug: 'imms', status: 'suspended' });
     const db = makeDb();
     await expect(
-      authService.login(db, { email: 'maria@fiserv', password: 'hunter2', tenant_slug: 'fiserv' })
+      authService.login(db, { email: 'maria@imms', password: 'hunter2', tenant_slug: 'imms' })
     ).rejects.toMatchObject({ code: 'unauthorized' });
   });
 
@@ -1251,7 +1251,7 @@ describe('authService.login', () => {
     usersRepo.findByEmail.mockResolvedValue({ ...FIXED_USER, status: 'disabled' });
     const db = makeDb();
     await expect(
-      authService.login(db, { email: 'maria@fiserv', password: 'hunter2', tenant_slug: 'fiserv' })
+      authService.login(db, { email: 'maria@imms', password: 'hunter2', tenant_slug: 'imms' })
     ).rejects.toMatchObject({ code: 'unauthorized' });
   });
 });
@@ -1262,7 +1262,7 @@ describe('authService.me', () => {
     rolesRepo.findKeysForUser.mockResolvedValue(['mcs.tech']);
     const db = makeDb();
     const out = await authService.me(db, { user_id: 42, tenant_id: 1 });
-    expect(out).toMatchObject({ user_id: 42, email: 'maria@fiserv', roles: ['mcs.tech'] });
+    expect(out).toMatchObject({ user_id: 42, email: 'maria@imms', roles: ['mcs.tech'] });
     expect(out.password_hash).toBeUndefined();
   });
 });
@@ -1287,7 +1287,7 @@ const usersRepo = require('../repositories/usersRepo');
 const rolesRepo = require('../repositories/rolesRepo');
 const tenantsRepo = require('../repositories/tenantsRepo');
 
-const DEFAULT_TENANT_SLUG = 'fiserv';
+const DEFAULT_TENANT_SLUG = 'imms';
 
 const stripSecrets = (user, roles) => {
   const { password_hash, ...safe } = user;
@@ -1858,7 +1858,7 @@ git commit -m "feat(auth-service): start http server"
 
 ```js
 // scripts/seed.js
-// Creates the 'fiserv' tenant and a single admin user with all admin roles.
+// Creates the 'imms' tenant and a single admin user with all admin roles.
 // Idempotent: re-running prints a notice but doesn't error.
 
 require('dotenv').config();
@@ -1869,9 +1869,9 @@ const tenantsRepo = require('../src/repositories/tenantsRepo');
 const usersRepo = require('../src/repositories/usersRepo');
 const rolesRepo = require('../src/repositories/rolesRepo');
 
-const TENANT_SLUG = 'fiserv';
-const TENANT_NAME = 'Fiserv';
-const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@fiserv';
+const TENANT_SLUG = 'imms';
+const TENANT_NAME = 'IMMS';
+const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL || 'admin@imms';
 
 const promptPassword = async () => {
   if (process.env.SEED_ADMIN_PASSWORD) return process.env.SEED_ADMIN_PASSWORD;
@@ -1925,8 +1925,8 @@ SEED_ADMIN_PASSWORD=changemeplease npm run seed
 
 Expected output:
 ```
-Created tenant: fiserv (id=1)
-Created admin user: admin@fiserv (id=1) with imms.admin + mcs.admin
+Created tenant: imms (id=1)
+Created admin user: admin@imms (id=1) with imms.admin + mcs.admin
 ```
 
 Re-run: should print "already exists" messages and exit 0.
@@ -1935,7 +1935,7 @@ Re-run: should print "already exists" messages and exit 0.
 
 ```bash
 git add auth-service/scripts/seed.js
-git commit -m "feat(auth-service): add seed script (Fiserv tenant + admin user)"
+git commit -m "feat(auth-service): add seed script (IMMS tenant + admin user)"
 ```
 
 ---
@@ -1965,7 +1965,7 @@ const tenantsRepo = require('../repositories/tenantsRepo');
 const usersRepo = require('../repositories/usersRepo');
 const rolesRepo = require('../repositories/rolesRepo');
 
-const ensureTenant = async (slug = 'fiserv', display_name = 'Fiserv') => {
+const ensureTenant = async (slug = 'imms', display_name = 'IMMS') => {
   let tenant = await tenantsRepo.findBySlug(pool, slug);
   if (!tenant) tenant = await tenantsRepo.insert(pool, { slug, display_name });
   return tenant;
@@ -1999,13 +1999,13 @@ module.exports = { app, agent, ensureTenant, createTestUser, pool };
 const { describe, it, expect, beforeAll, afterAll } = require('vitest');
 const { agent, ensureTenant, createTestUser, pool } = require('../test/helpers');
 
-const EMAIL = 'integration@fiserv';
+const EMAIL = 'integration@imms';
 const PASSWORD = 'integration-pw-1234';
 
 let tenant;
 
 beforeAll(async () => {
-  tenant = await ensureTenant('fiserv', 'Fiserv');
+  tenant = await ensureTenant('imms', 'IMMS');
   await createTestUser(tenant.tenant_id, { email: EMAIL, password: PASSWORD, roles: ['mcs.admin'] });
 });
 
@@ -2022,7 +2022,7 @@ describe('auth integration', () => {
     expect(res.body.user.email).toBe(EMAIL);
     expect(res.body.user.roles).toContain('mcs.admin');
     expect(res.body.user.password_hash).toBeUndefined();
-    expect(res.headers['set-cookie']?.join(';')).toMatch(/fiserv_auth=/);
+    expect(res.headers['set-cookie']?.join(';')).toMatch(/imms_auth=/);
   });
 
   it('GET /auth/me without cookie → 401', async () => {
@@ -2050,7 +2050,7 @@ describe('auth integration', () => {
 
   it('POST /auth/login with unknown email → identical 401 envelope', async () => {
     const a = agent();
-    const res = await a.post('/auth/login').send({ email: 'ghost@fiserv', password: 'whatever' });
+    const res = await a.post('/auth/login').send({ email: 'ghost@imms', password: 'whatever' });
     expect(res.status).toBe(401);
     expect(res.body.error).toBe('unauthorized');
     expect(res.body.message).toBe('Invalid credentials');
@@ -2062,7 +2062,7 @@ describe('auth integration', () => {
     const out = await a.post('/auth/logout');
     expect(out.status).toBe(200);
     const cookie = out.headers['set-cookie']?.join(';') || '';
-    expect(cookie).toMatch(/fiserv_auth=;/);
+    expect(cookie).toMatch(/imms_auth=;/);
     const after = await a.get('/auth/me');
     expect(after.status).toBe(401);
   });
@@ -2074,30 +2074,30 @@ describe('/admin/users integration', () => {
     await a.post('/auth/login').send({ email: EMAIL, password: PASSWORD });
 
     const create = await a.post('/admin/users').send({
-      email: 'newbie@fiserv',
+      email: 'newbie@imms',
       display_name: 'Newbie',
       password: 'newbie-pw-1234',
       roles: ['mcs.tech'],
     });
     expect(create.status).toBe(201);
-    expect(create.body.user.email).toBe('newbie@fiserv');
+    expect(create.body.user.email).toBe('newbie@imms');
     expect(create.body.user.roles).toEqual(['mcs.tech']);
 
     const list = await a.get('/admin/users');
     expect(list.status).toBe(200);
-    expect(list.body.users.find((u) => u.email === 'newbie@fiserv')).toBeTruthy();
+    expect(list.body.users.find((u) => u.email === 'newbie@imms')).toBeTruthy();
 
-    await pool.query(`DELETE FROM auth.users WHERE email = $1`, ['newbie@fiserv']);
+    await pool.query(`DELETE FROM auth.users WHERE email = $1`, ['newbie@imms']);
   });
 
   it('non-admin role → 403 on /admin/users', async () => {
-    await createTestUser(tenant.tenant_id, { email: 'viewer@fiserv', password: 'viewer-pw-1234', roles: ['mcs.viewer'] });
+    await createTestUser(tenant.tenant_id, { email: 'viewer@imms', password: 'viewer-pw-1234', roles: ['mcs.viewer'] });
     const a = agent();
-    await a.post('/auth/login').send({ email: 'viewer@fiserv', password: 'viewer-pw-1234' });
+    await a.post('/auth/login').send({ email: 'viewer@imms', password: 'viewer-pw-1234' });
     const res = await a.get('/admin/users');
     expect(res.status).toBe(403);
     expect(res.body.error).toBe('forbidden');
-    await pool.query(`DELETE FROM auth.users WHERE email = $1`, ['viewer@fiserv']);
+    await pool.query(`DELETE FROM auth.users WHERE email = $1`, ['viewer@imms']);
   });
 });
 ```
@@ -2182,13 +2182,13 @@ In another shell — login and call /me using the cookie jar:
 ```bash
 curl -i -c /tmp/auth.jar -b /tmp/auth.jar \
      -H "Content-Type: application/json" \
-     -d '{"email":"admin@fiserv","password":"changemeplease"}' \
+     -d '{"email":"admin@imms","password":"changemeplease"}' \
      http://localhost:4002/auth/login
 
 curl -i -b /tmp/auth.jar http://localhost:4002/auth/me
 ```
 
-Expected: first call returns 200 with `Set-Cookie: fiserv_auth=...`; second call returns 200 with the admin user.
+Expected: first call returns 200 with `Set-Cookie: imms_auth=...`; second call returns 200 with the admin user.
 
 Stop the dev server.
 

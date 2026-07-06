@@ -4,7 +4,7 @@
 
 **Goal:** Add a `tenant_id INT NOT NULL DEFAULT 1` column (with FK to `auth.tenants` and an index) to every IMMS and MCS domain table, plus a small `currentTenantId(req)` helper in each app. **Does not rewrite any existing SQL queries** — that work is deferred to Step 2b. Ships in hours, not weeks.
 
-**Architecture:** Two SQL migrations (one per app, both idempotent), each app gets a tiny tenant helper for future use, and both READMEs gain a "Tenant_id rollout status" section so the next contributor knows where we are. Since every row has `tenant_id = 1` (the Fiserv tenant from Step 1) and no query filters on it yet, the behavior of both apps is **functionally unchanged** — same data, same responses, same tests. The migrations are a no-op at runtime; they just lay groundwork.
+**Architecture:** Two SQL migrations (one per app, both idempotent), each app gets a tiny tenant helper for future use, and both READMEs gain a "Tenant_id rollout status" section so the next contributor knows where we are. Since every row has `tenant_id = 1` (the IMMS tenant from Step 1) and no query filters on it yet, the behavior of both apps is **functionally unchanged** — same data, same responses, same tests. The migrations are a no-op at runtime; they just lay groundwork.
 
 **Tech Stack:** PostgreSQL (existing `fiservinventory` database), node-pg, Node helper modules.
 
@@ -67,7 +67,7 @@ maintenance_call_system/README.md                    # MODIFY — add "Tenant_id
 
 - **Idempotent SQL** — every ALTER uses `ADD COLUMN IF NOT EXISTS`. Every index uses `CREATE INDEX IF NOT EXISTS`. Safe to re-run.
 - **FK to `auth.tenants(tenant_id)`** with default action (`NO ACTION` / `RESTRICT`). Cross-schema FKs work fine in Postgres.
-- **`DEFAULT 1`** because the seeded Fiserv tenant has `tenant_id = 1`. This default stays through Step 2a; it's dropped in a later step once code is migrated.
+- **`DEFAULT 1`** because the seeded IMMS tenant has `tenant_id = 1`. This default stays through Step 2a; it's dropped in a later step once code is migrated.
 - **One index per table on `tenant_id` alone.** Compound indexes (`(tenant_id, foo)`) are deferred — we don't know the query patterns yet because queries aren't rewritten.
 - **TDD does not apply** — these are pure SQL migrations and a trivial helper. Verification is done by running the migration and inspecting the schema, plus running existing test suites to confirm no regressions.
 
@@ -83,7 +83,7 @@ maintenance_call_system/README.md                    # MODIFY — add "Tenant_id
 psql "postgres://postgres:1234@localhost:5432/fiservinventory" -c "SELECT tenant_id, slug FROM auth.tenants ORDER BY tenant_id;"
 ```
 
-Expected: at least one row, `(1, 'fiserv')`. If absent, run `cd auth-service && SEED_ADMIN_PASSWORD=changemeplease npm run seed` first.
+Expected: at least one row, `(1, 'imms')`. If absent, run `cd auth-service && SEED_ADMIN_PASSWORD=changemeplease npm run seed` first.
 
 - [ ] **Step 2: Capture the row counts of every domain table (baseline)**
 
@@ -279,7 +279,7 @@ Expected: a series of `ALTER TABLE` and `CREATE INDEX` notices (or `NOTICE: colu
 - [ ] **Step 2: Verify a sample table has the column with FK + index**
 
 ```bash
-psql "postgres://postgres:1234@localhost:5432/fiservinventory" -c "\d+ parts" | grep -E "tenant_id|fiserv|tenants"
+psql "postgres://postgres:1234@localhost:5432/fiservinventory" -c "\d+ parts" | grep -E "tenant_id|imms|tenants"
 ```
 
 Expected: a `tenant_id` column (`integer`, `not null`, default `1`), and a row in the "Foreign-key constraints" section pointing to `auth.tenants(tenant_id)`, and `parts_tenant_id_idx`.
@@ -431,7 +431,7 @@ git commit -m "feat(db): add tenant_id to MCS domain tables (Step 2a)"
 ```js
 // backend/src/middleware/tenantScope.js
 // Single source of truth for "which tenant is this request?". Until Step 3
-// wires the auth-service JWT into req.user, this returns 1 (the Fiserv
+// wires the auth-service JWT into req.user, this returns 1 (the IMMS
 // tenant) for every call. After Step 3, it returns req.user.tenant_id.
 //
 // Usage in a service or controller:
@@ -441,7 +441,7 @@ git commit -m "feat(db): add tenant_id to MCS domain tables (Step 2a)"
 // Step 2b will add a tenantScope() express middleware that enforces this
 // at the route level. For now the helper is plumbing — nothing calls it.
 
-const FALLBACK_TENANT_ID = 1; // Fiserv
+const FALLBACK_TENANT_ID = 1; // IMMS
 
 const currentTenantId = (req) => {
   return req?.user?.tenant_id ?? FALLBACK_TENANT_ID;
@@ -469,13 +469,13 @@ git commit -m "feat(backend): add currentTenantId(req) helper"
 ```js
 // maintenance_call_system/backend/src/middleware/tenantScope.js
 // Single source of truth for "which tenant is this request?". Until Step 3
-// wires the auth-service JWT into req.user, this returns 1 (the Fiserv
+// wires the auth-service JWT into req.user, this returns 1 (the IMMS
 // tenant) for every call. After Step 3, it returns req.user.tenant_id.
 //
 // Cross-app DRY shim deferred — both apps keep their own copy until/unless
 // we extract a shared package.
 
-const FALLBACK_TENANT_ID = 1; // Fiserv
+const FALLBACK_TENANT_ID = 1; // IMMS
 
 const currentTenantId = (req) => {
   return req?.user?.tenant_id ?? FALLBACK_TENANT_ID;
@@ -516,7 +516,7 @@ Section content (paste verbatim into both files, just below the project title or
 ```markdown
 ## Multi-tenancy status (Step 2a complete)
 
-Every domain table has a `tenant_id INT NOT NULL DEFAULT 1` column with a FK to `auth.tenants(tenant_id)` and an index on `tenant_id`. The seeded `fiserv` tenant has `tenant_id = 1`, so every existing row is correctly scoped.
+Every domain table has a `tenant_id INT NOT NULL DEFAULT 1` column with a FK to `auth.tenants(tenant_id)` and an index on `tenant_id`. The seeded `imms` tenant has `tenant_id = 1`, so every existing row is correctly scoped.
 
 **What works today:** schema is multi-tenant-ready; one tenant in operation.
 

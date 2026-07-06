@@ -3,7 +3,7 @@
 
 param(
     [string]$BackupDir = "C:\DatabaseBackups",
-    [string]$TaskName = "FiservInventory-DatabaseBackup",
+    [string]$TaskName = "IMMSInventory-DatabaseBackup",
     [string]$BackupTime = "02:00",  # 2 AM daily
     [string]$ScriptPath = ""
 )

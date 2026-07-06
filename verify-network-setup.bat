@@ -1,6 +1,6 @@
 @echo off
 echo ===============================================
-echo Fiserv Inventory Network Setup Verification
+echo IMMS Inventory Network Setup Verification
 echo ===============================================
 echo.
 
@@ -27,8 +27,8 @@ curl -s http://localhost:4000/health 2>nul || echo Could not reach backend at lo
 echo.
 echo 5. Firewall status check:
 echo -------------------------
-netsh advfirewall firewall show rule name="Fiserv Inventory Frontend" 2>nul | findstr "Rule Name" || echo Firewall rule for Frontend not found
-netsh advfirewall firewall show rule name="Fiserv Inventory Backend" 2>nul | findstr "Rule Name" || echo Firewall rule for Backend not found
+netsh advfirewall firewall show rule name="IMMS Inventory Frontend" 2>nul | findstr "Rule Name" || echo Firewall rule for Frontend not found
+netsh advfirewall firewall show rule name="IMMS Inventory Backend" 2>nul | findstr "Rule Name" || echo Firewall rule for Backend not found
 
 echo.
 echo ===============================================
@@ -36,8 +36,8 @@ echo Next Steps:
 echo ===============================================
 echo 1. If ports 3000/4000 are not listening: run start-dev.bat for the dev stack, or see docs\deployment\PROD_OPERATIONS.md for production.
 echo 2. If firewall rules are missing, run as Administrator:
-echo    netsh advfirewall firewall add rule name="Fiserv Inventory Frontend" dir=in action=allow protocol=TCP localport=3000
-echo    netsh advfirewall firewall add rule name="Fiserv Inventory Backend" dir=in action=allow protocol=TCP localport=4000
+echo    netsh advfirewall firewall add rule name="IMMS Inventory Frontend" dir=in action=allow protocol=TCP localport=3000
+echo    netsh advfirewall firewall add rule name="IMMS Inventory Backend" dir=in action=allow protocol=TCP localport=4000
 echo 3. Access from Raspberry Pi: http://10.1.10.171:3000
 echo 4. Login with: admin / admin123
 echo.

@@ -176,6 +176,15 @@ Cheap items, batch them into any nearby session:
   health gate can resurrect a bad build after a reboot mid-incident.
 - Runbook: one line on backward-compatible-migration discipline (new schema
   serves old code for the minutes between migrate and reload).
+- **Deferred (branding scrub, 2026-07-06):** the `fiservinventory`/
+  `fiservinventory_dev` **database name** and the `fiserv_part_number`
+  **column** intentionally still carry the old brand name. Both are
+  structural identifiers (a live DB name and a column referenced across
+  the codebase) — renaming either requires a migration plus prod-coordinated
+  downtime (rename/alias the DB, update every connection string and env
+  file, backfill/rename the column and every query that references it).
+  Out of scope for a branding-text scrub; revisit as a deliberate,
+  scheduled migration.
 
 ---
 

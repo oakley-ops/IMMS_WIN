@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make IMMS and MCS recognize and accept the auth-service's RS256 JWT (delivered via the `fiserv_auth` httpOnly cookie set in Step 1) **in addition to** their existing HS256 Bearer-token flow. Both auth paths work simultaneously — old IMMS/MCS logins stay live; the auth-service is now a parallel option. Step 6 later deletes the old paths.
+**Goal:** Make IMMS and MCS recognize and accept the auth-service's RS256 JWT (delivered via the `imms_auth` httpOnly cookie set in Step 1) **in addition to** their existing HS256 Bearer-token flow. Both auth paths work simultaneously — old IMMS/MCS logins stay live; the auth-service is now a parallel option. Step 6 later deletes the old paths.
 
 **Architecture:** Each app gets a small helper module that verifies the auth-service JWT against the auth-service's public RSA key (loaded once at startup). Each app's existing auth middleware is updated to first check the cookie; if absent or invalid, fall through to the existing Bearer-header logic. `req.user` is populated with a unified shape that satisfies both old controllers (`id`, `username`, `role`) and new code (`tenant_id`, `roles[]`).
 
@@ -28,10 +28,10 @@ So this step is purely **additive**: same surface area, more accepted credential
 
 1. **Public key distribution:** Each app reads the auth-service's `public.pem` at startup from a path given by env var `AUTH_PUBLIC_KEY_PATH`. Default for dev: `../../auth-service/keys/public.pem` (relative to each app's backend root). Production override: any absolute path or PEM content via `AUTH_PUBLIC_KEY` (raw PEM, takes precedence over path).
 
-2. **Cookie name:** `fiserv_auth` (matches what auth-service sets in Step 1). Configurable via `AUTH_COOKIE_NAME` env var, defaults to that name.
+2. **Cookie name:** `imms_auth` (matches what auth-service sets in Step 1). Configurable via `AUTH_COOKIE_NAME` env var, defaults to that name.
 
 3. **Auth precedence on each request:**
-   - If `req.cookies.fiserv_auth` exists and verifies against the auth-service public key → use it. Populate `req.user`.
+   - If `req.cookies.imms_auth` exists and verifies against the auth-service public key → use it. Populate `req.user`.
    - Else if `Authorization: Bearer <token>` header exists and verifies against the legacy `JWT_SECRET` (HS256) → use existing flow. Populate `req.user` as before.
    - Else → 401 (same envelope each app already uses).
 
@@ -562,7 +562,7 @@ Replace the entire file with:
 const jwt = require('jsonwebtoken');
 const verifyAuthServiceJwt = require('./verifyAuthServiceJwt');
 
-const COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'fiserv_auth';
+const COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'imms_auth';
 
 const populateFromAuthService = (payload) => ({
   // New shape:
@@ -632,7 +632,7 @@ const jwt = require('jsonwebtoken');
 const verifyAuthServiceJwt = require('./verifyAuthServiceJwt');
 const { pool } = require('../../db');
 
-const COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'fiserv_auth';
+const COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'imms_auth';
 
 const populateFromAuthService = (payload) => ({
   user_id:   payload.sub,
@@ -757,7 +757,7 @@ const jwt = require('jsonwebtoken');
 const { errors } = require('./errors');
 const verifyAuthServiceJwt = require('./verifyAuthServiceJwt');
 
-const COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'fiserv_auth';
+const COOKIE_NAME = process.env.AUTH_COOKIE_NAME || 'imms_auth';
 
 const populateFromAuthService = (payload) => ({
   user_id:   payload.sub,
@@ -863,7 +863,7 @@ const makeRes = () => {
 describe('auth middleware — auth-service cookie path', () => {
   it('populates req.user from a valid auth-service cookie', (done) => {
     const token = jwt.sign({ sub: 7, tenant_id: 1, roles: ['mcs.admin'] }, privateKey, { algorithm: 'RS256', expiresIn: '5m' });
-    const req = makeReq({ fiserv_auth: token }, {});
+    const req = makeReq({ imms_auth: token }, {});
     auth(req, makeRes(), () => {
       expect(req.user.user_id).toBe(7);
       expect(req.user.tenant_id).toBe(1);
@@ -959,7 +959,7 @@ describe('auth middleware — auth-service cookie path', () => {
 
   it('populates req.user from a valid auth-service cookie', () => new Promise((resolve) => {
     const token = jwt.sign({ sub: 7, tenant_id: 1, roles: ['mcs.admin'] }, privateKey, { algorithm: 'RS256', expiresIn: '5m' });
-    const req = makeReq({ fiserv_auth: token }, {});
+    const req = makeReq({ imms_auth: token }, {});
     auth(req, makeRes(), () => {
       expect(req.user.user_id).toBe(7);
       expect(req.user.tenant_id).toBe(1);
@@ -1006,12 +1006,12 @@ git commit -m "test(mcs): cover auth-service cookie path in auth middleware"
 ```markdown
 ## Auth-service JWT support (Step 3 complete)
 
-MCS now accepts auth-service-issued RS256 JWTs in the `fiserv_auth` httpOnly cookie **in addition to** the existing HS256 Bearer-token flow. Verification is local using the auth-service's public key — no per-request HTTP call to the auth-service.
+MCS now accepts auth-service-issued RS256 JWTs in the `imms_auth` httpOnly cookie **in addition to** the existing HS256 Bearer-token flow. Verification is local using the auth-service's public key — no per-request HTTP call to the auth-service.
 
 **Configuration:**
 - `AUTH_PUBLIC_KEY_PATH` (default: `../../../../auth-service/keys/public.pem`) — file path
 - `AUTH_PUBLIC_KEY` (production preferred) — raw PEM content; takes precedence over path
-- `AUTH_COOKIE_NAME` (default: `fiserv_auth`) — cookie name to read
+- `AUTH_COOKIE_NAME` (default: `imms_auth`) — cookie name to read
 
 **What works today:** users can log in via either path. Auth-service users land with `req.user.tenant_id` and `req.user.roles[]` populated; legacy users land with `req.user.role` (string) as before.
 
@@ -1049,11 +1049,11 @@ cd maintenance_call_system/backend && npm run dev &  # MCS backend, :4001
 
 ```bash
 curl -i -c /tmp/auth.jar -H "Content-Type: application/json" \
-  -d '{"email":"admin@fiserv","password":"changemeplease"}' \
+  -d '{"email":"admin@imms","password":"changemeplease"}' \
   http://localhost:4002/auth/login
 ```
 
-Expected: 200 + `Set-Cookie: fiserv_auth=...` in headers.
+Expected: 200 + `Set-Cookie: imms_auth=...` in headers.
 
 - [ ] **Step 3: Hit MCS using that cookie** (no Bearer header)
 

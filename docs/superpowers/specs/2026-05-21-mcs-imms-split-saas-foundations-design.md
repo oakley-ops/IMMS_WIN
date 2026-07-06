@@ -96,7 +96,7 @@ Signs JWTs with **RS256** (asymmetric). Private key in auth service, public key 
 ```
 
 - 24h expiry, signed RS256.
-- Lives in an **httpOnly cookie** scoped to the parent domain (`.fiserv.local` in dev, real domain in prod).
+- Lives in an **httpOnly cookie** scoped to the parent domain (`.imms.local` in dev, real domain in prod).
 - Fixes the XSS exposure that MCS's README already flagged with `localStorage` storage.
 
 ## Data model
@@ -138,7 +138,7 @@ CREATE TABLE auth.user_roles (
 ```
 
 Seed:
-- One row in `tenants`: `(1, 'fiserv', 'Fiserv')`.
+- One row in `tenants`: `(1, 'imms', 'IMMS')`.
 - Backfill every current IMMS user into `auth.users` with `tenant_id = 1`. Preserve password hashes if compatible; otherwise force a password reset on first login.
 - Seed `roles` with the matrix below.
 
@@ -270,7 +270,7 @@ src/components/
 
 ### Auth integration
 
-- No login page in MCS. If `/auth/me` returns 401, redirect to `auth.fiserv.local/login?next=mcs.fiserv.local`.
+- No login page in MCS. If `/auth/me` returns 401, redirect to `auth.imms.local/login?next=mcs.imms.local`.
 - A `useCurrentUser()` hook calls `/auth/me` once on mount, caches in context, drives role-gating.
 
 ### Kiosk (`/station`)
@@ -312,7 +312,7 @@ UX:
 
 ```
 ┌──────────────────────────────────────────────────────┐
-│ Fiserv Apps                         Maria ▾    ⎋    │
+│ IMMS Apps                           Maria ▾    ⎋    │
 ├──────────────────────────────────────────────────────┤
 │                                                      │
 │   ┌──────────────────┐    ┌──────────────────┐      │
@@ -332,15 +332,15 @@ Tiles are role-gated. Tile click is a plain `<a>` — cookie is shared across th
 nginx routes by Host header:
 
 ```
-auth.fiserv.local       →  localhost:4002   (NEW auth service)
-app.fiserv.local        →  localhost:3000   (NEW portal)
-imms.fiserv.local       →  localhost:3001   (existing IMMS frontend)
-imms.fiserv.local/api   →  localhost:4000   (existing IMMS backend)
-mcs.fiserv.local        →  localhost:3003   (existing MCS frontend)
-mcs.fiserv.local/api    →  localhost:4001   (existing MCS backend)
+auth.imms.local       →  localhost:4002   (NEW auth service)
+app.imms.local        →  localhost:3000   (NEW portal)
+imms.imms.local       →  localhost:3001   (existing IMMS frontend)
+imms.imms.local/api   →  localhost:4000   (existing IMMS backend)
+mcs.imms.local        →  localhost:3003   (existing MCS frontend)
+mcs.imms.local/api    →  localhost:4001   (existing MCS backend)
 ```
 
-Cookie scoped to `.fiserv.local`. When going to prod under a real domain (`yourcompany.com`), swap the suffix and tenant subdomains (`acme.yourcompany.com`) drop in cleanly later.
+Cookie scoped to `.imms.local`. When going to prod under a real domain (`yourcompany.com`), swap the suffix and tenant subdomains (`acme.yourcompany.com`) drop in cleanly later.
 
 PM2 ecosystem grows by two processes (`auth-service`, `portal`). Existing ecosystem files stay as they are.
 
@@ -348,7 +348,7 @@ PM2 ecosystem grows by two processes (`auth-service`, `portal`). Existing ecosys
 
 Each step ships independently and the system keeps working between steps.
 
-1. **Auth service standalone.** Schema, login, /me, JWT signing with RS256. Seed Fiserv tenant + one admin user. No callers yet.
+1. **Auth service standalone.** Schema, login, /me, JWT signing with RS256. Seed IMMS tenant + one admin user. No callers yet.
 2. **Tenant_id migrations.** Add column to every domain table in IMMS and MCS, default `1`. Update repos to filter. Add CI grep guard.
 3. **Cookie + verify middleware in IMMS and MCS.** Both apps accept the new JWT alongside their existing one (transitional).
 4. **MCS admin section + top nav.** Port BadgeAdmin, build Readers/Users/Layouts pages.
