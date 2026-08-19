@@ -7,15 +7,21 @@
 // path.sep correctly, serves the right Content-Type, and falls back to
 // index.html for client-side routes.
 //
-// It also proxies /api/* to the backend so the SPA works same-origin (like the
-// CRA dev-server proxy). Prod is a standalone serve with no reverse proxy, so a
-// relative `/api/...` request from a component using raw axios would otherwise
-// hit THIS static server, fall through to the SPA shell (index.html), and hand
-// the frontend an HTML string where it expected JSON — crashing screens like
-// Transactions. Proxying /api here fixes that class for every component at once.
+// It also proxies /api/* and /uploads/* to the backend so the SPA works
+// same-origin (like the CRA dev-server proxy). Prod is a standalone serve with
+// no reverse proxy, so a relative `/api/...` request from a component using
+// raw axios would otherwise hit THIS static server, fall through to the SPA
+// shell (index.html), and hand the frontend an HTML string where it expected
+// JSON — crashing screens like Transactions. The same failure hits part
+// images: they're stored as relative `/uploads/part_images/...` paths served
+// by the backend's express.static('/uploads'), so without a proxy here the
+// request 200s with index.html and the browser shows a broken image icon
+// instead of the photo. Proxying both prefixes here fixes that class for
+// every component/asset at once.
 //
 // Config via env (or argv): SERVE_PATH (directory), SERVE_PORT (port),
-// API_TARGET (backend origin for /api proxying, default http://localhost:4000).
+// API_TARGET (backend origin for /api and /uploads proxying, default
+// http://localhost:4000).
 'use strict';
 const http = require('http');
 const fs = require('fs');
@@ -26,9 +32,9 @@ const PORT = parseInt(process.env.SERVE_PORT || process.argv[3] || '8080', 10);
 const INDEX = path.join(ROOT, 'index.html');
 const API_TARGET = new URL(process.env.API_TARGET || 'http://localhost:4000');
 
-// Forward an /api/* request to the backend, streaming both ways (method, headers,
-// body, and the upstream's status/headers/body). Zero-dep — Node http only.
-function proxyApi(req, res) {
+// Forward an /api/* or /uploads/* request to the backend, streaming both ways
+// (method, headers, body, and the upstream's status/headers/body). Zero-dep — Node http only.
+function proxyToBackend(req, res) {
   const upstream = http.request(
     {
       protocol: API_TARGET.protocol,
@@ -82,8 +88,10 @@ const server = http.createServer((req, res) => {
     res.writeHead(400, { 'Content-Type': 'text/plain' }); return res.end('Bad Request');
   }
 
-  // API calls are proxied to the backend, never treated as static files / SPA routes.
-  if (urlPath === '/api' || urlPath.startsWith('/api/')) return proxyApi(req, res);
+  // API calls and uploaded assets are proxied to the backend, never treated as
+  // static files / SPA routes.
+  if (urlPath === '/api' || urlPath.startsWith('/api/')) return proxyToBackend(req, res);
+  if (urlPath === '/uploads' || urlPath.startsWith('/uploads/')) return proxyToBackend(req, res);
 
   const resolved = path.resolve(ROOT, urlPath.replace(/^\/+/, ''));
   // Range-check with path.sep so Windows backslash paths are handled correctly.

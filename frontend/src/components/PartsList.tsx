@@ -50,6 +50,7 @@ import { Part } from '../types';
 import DataTable, { ColumnDef } from './DataTable';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { resolveAssetUrl } from '../config';
 
 interface BinLocation {
   location_id: number;
@@ -225,7 +226,7 @@ const PartsList: React.FC = () => {
               sx={{ p: 0.5 }}
             >
               <img
-                src={row.image_url}
+                src={resolveAssetUrl(row.image_url)}
                 alt="Part"
                 style={{
                   width: 32,
@@ -2163,9 +2164,9 @@ const PartsList: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           {previewImage && (
-            <img 
-              src={previewImage} 
-              alt="Part" 
+            <img
+              src={resolveAssetUrl(previewImage)}
+              alt="Part"
               style={{ 
                 width: '100%', 
                 maxWidth: '600px',

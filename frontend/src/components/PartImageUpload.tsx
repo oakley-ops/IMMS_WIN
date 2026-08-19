@@ -26,6 +26,7 @@ import {
   Refresh
 } from '@mui/icons-material';
 import axiosInstance from '../utils/axios';
+import { resolveAssetUrl } from '../config';
 
 interface PartImageUploadProps {
   partId: number;
@@ -285,11 +286,11 @@ const PartImageUpload: React.FC<PartImageUploadProps> = ({
       {currentImageUrl && (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{ position: 'relative' }}>
-            <img 
-              src={currentImageUrl} 
-              alt="Part" 
-              style={{ 
-                width: 120, 
+            <img
+              src={resolveAssetUrl(currentImageUrl)}
+              alt="Part"
+              style={{
+                width: 120,
                 height: 120, 
                 objectFit: 'cover', 
                 borderRadius: 8,
@@ -526,11 +527,11 @@ const PartImageUpload: React.FC<PartImageUploadProps> = ({
         </DialogTitle>
         <DialogContent>
           {currentImageUrl && (
-            <img 
-              src={currentImageUrl} 
-              alt="Part" 
-              style={{ 
-                width: '100%', 
+            <img
+              src={resolveAssetUrl(currentImageUrl)}
+              alt="Part"
+              style={{
+                width: '100%',
                 maxWidth: '600px',
                 height: 'auto',
                 borderRadius: 8
