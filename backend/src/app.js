@@ -97,7 +97,15 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something broke!' });
 });
 
-// Serve uploaded files statically
+// Serve uploaded files statically. These are embedded via <img> from the app's
+// own frontends on other origins/ports (localhost:3001/3002/3003 vs this API's
+// :4000/:4001 — see Network Configuration in CLAUDE.md), so relax the global
+// same-origin Cross-Origin-Resource-Policy (set by securityHeaders.js) just for
+// this route. Without it, browsers block the <img> load client-side
+// (net::ERR_BLOCKED_BY_RESPONSE.NotSameOrigin) even though the request itself
+// succeeds — CORP is enforced for no-cors tag loads, unlike the JSON API calls
+// which go through CORS-mode fetch/XHR instead.
+app.use('/uploads', require('helmet').crossOriginResourcePolicy({ policy: 'cross-origin' }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // NOTE: Static file serving and SPA fallback are handled in index.js
