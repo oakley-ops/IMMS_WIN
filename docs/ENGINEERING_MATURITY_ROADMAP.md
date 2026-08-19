@@ -185,6 +185,38 @@ Cheap items, batch them into any nearby session:
   file, backfill/rename the column and every query that references it).
   Out of scope for a branding-text scrub; revisit as a deliberate,
   scheduled migration.
+- **TODO (found 2026-08-19): Parts Usage History white-screens on a bad
+  API response.** `frontend/src/pages/Transactions.tsx` (routed at
+  `/transactions`, titled "Parts Usage History") calls `.map`/`.filter`
+  on `transactions`/`filteredTransactions` assuming the API always
+  returns a JSON array. If the backend ever returns something else for
+  `GET /api/v1/transactions` — an HTML SPA-fallback page from a
+  misconfigured proxy, an auth-redirect page, a non-array error body —
+  that array method throws. The app has **no top-level React
+  `ErrorBoundary`** (confirmed: no `ErrorBoundary` anywhere under
+  `frontend/src`), so the uncaught error unmounts the whole React tree
+  instead of showing an error, and the user just sees a blank white
+  page. This is the same bug class already hit once in prod, fixed at
+  the infra layer in commit `2dfd2a8e` ("fix(prod): proxy /api/* to the
+  backend in static-serve (fixes r.map crash)").
+  - Current state: an **uncommitted** local guard already exists in
+    `fetchTransactions()` (`frontend/src/pages/Transactions.tsx` ~line
+    118) that checks `Array.isArray(response.data)` and throws a
+    controlled error instead, which the existing `catch` turns into a
+    visible `setError(...)` message. That covers only this one fetch
+    path on this one page.
+  - Root-cause fix (not yet done): add a real `ErrorBoundary` component
+    wrapping the routed content in `frontend/src/App.tsx` so *any*
+    uncaught render/effect error on *any* page degrades to a friendly
+    "something went wrong, reload" screen instead of a blank white
+    page. This is defense-in-depth on top of (not a replacement for)
+    the `Array.isArray` guard.
+  - Side note found while investigating: `frontend/src/components/
+    PartsUsageHistory.tsx` and `frontend/src/components/
+    TransactionHistory.tsx` are near-duplicate, older implementations
+    of this same "Parts Usage History" screen — neither is imported or
+    routed anywhere. Dead code; worth deleting when someone's in this
+    area, but out of scope for the white-screen fix itself.
 
 ---
 
