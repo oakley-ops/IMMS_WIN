@@ -342,6 +342,9 @@ const Transactions = () => {
     },
   ];
 
+  // TEMP BUG (test/parts-usage-history-crash): intentionally throws to reproduce white-screen-on-click
+  throw new Error('Intentional test crash: Parts Usage History');
+
   return (
     <Box sx={{ p: 3 }}>
       {/* Apply IMMS brand styling */}
