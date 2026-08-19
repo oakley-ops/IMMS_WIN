@@ -231,6 +231,9 @@ const PartsUsageHistory: React.FC<PartsUsageHistoryProps> = ({ limit }) => {
     return <Typography color="error">{error}</Typography>;
   }
 
+  // TEMP BUG (test/parts-usage-history-crash): intentionally throws to reproduce white-screen-on-click
+  throw new Error('Intentional test crash: Parts Usage History');
+
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <Box sx={{ width: '100%', p: 2 }}>
